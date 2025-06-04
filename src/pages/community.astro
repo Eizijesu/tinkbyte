@@ -1,0 +1,182 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Button from "../components/ui/Button.astro";
+
+const communityChannels = [
+  {
+    name: "Discord Community",
+    description:
+      "Real-time discussions, Q&A, and networking with fellow builders.",
+    icon: "fab fa-discord",
+    link: "https://discord.gg/tinkbyte",
+    color: "purple",
+  },
+  {
+    name: "GitHub Discussions",
+    description:
+      "Technical discussions, code reviews, and open source collaboration.",
+    icon: "fab fa-github",
+    link: "https://github.com/tinkbyte/community",
+    color: "gray",
+  },
+  {
+    name: "LinkedIn Group",
+    description: "Professional networking and industry insights sharing.",
+    icon: "fab fa-linkedin",
+    link: "https://linkedin.com/groups/tinkbyte",
+    color: "blue",
+  },
+  {
+    name: "Twitter Community",
+    description:
+      "Quick updates, tech news discussions, and community highlights.",
+    icon: "fab fa-twitter",
+    link: "https://twitter.com/tinkbytehq",
+    color: "sky",
+  },
+];
+
+const guidelines = [
+  {
+    type: "do",
+    title: "Substance Over Hype",
+    description:
+      "Share practical insights, real experiences, and honest analysis.",
+  },
+  {
+    type: "do",
+    title: "Constructive Discussion",
+    description:
+      "Engage thoughtfully, ask good questions, and help others learn.",
+  },
+  {
+    type: "dont",
+    title: "No Self-Promotion",
+    description:
+      "Avoid excessive promotion. Share value first, promotion sparingly.",
+  },
+  {
+    type: "dont",
+    title: "No Low-Effort Posts",
+    description:
+      "Provide context and detailed information to help others help you.",
+  },
+];
+---
+
+<Layout
+  title="Community | TinkByte"
+  description="Join the TinkByte community. Connect, learn, and grow with fellow technologists who value substance over hype."
+>
+  <!-- Hero Section -->
+  <section class="py-16 lg:py-24 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1
+        class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 font-space-grotesk uppercase tracking-wide"
+      >
+        Join the Community
+      </h1>
+      <p
+        class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-400 leading-relaxed"
+      >
+        Connect with builders who value substance over hype. Share knowledge,
+        get feedback, and grow together.
+      </p>
+    </div>
+  </section>
+
+  <!-- Community Channels -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-12">
+        <h2
+          class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 font-space-grotesk uppercase tracking-wide"
+        >
+          Where We Connect
+        </h2>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-8">
+        {
+          communityChannels.map((channel) => (
+            <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-8 hover:shadow-lg transition-all duration-300 group">
+              <div class="flex items-start gap-4 mb-6">
+                <div
+                  class={`w-12 h-12 rounded-full flex items-center justify-center text-white ${
+                    channel.color === "purple"
+                      ? "bg-purple-500"
+                      : channel.color === "gray"
+                        ? "bg-gray-700"
+                        : channel.color === "blue"
+                          ? "bg-blue-600"
+                          : "bg-sky-500"
+                  }`}
+                >
+                  <i class={`${channel.icon} text-lg`} />
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2 uppercase tracking-wide">
+                    {channel.name}
+                  </h3>
+                </div>
+              </div>
+
+              <p class="text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
+                {channel.description}
+              </p>
+
+              <Button
+                variant="outline"
+                href={channel.link}
+                className="rounded uppercase tracking-wide"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Join Community
+              </Button>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Community Guidelines -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-12">
+        <h2
+          class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 font-space-grotesk uppercase tracking-wide"
+        >
+          Community Guidelines
+        </h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        {
+          guidelines.map((guideline) => (
+            <div class="flex items-start gap-4">
+              <div
+                class={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  guideline.type === "do" ? "bg-green-500" : "bg-red-500"
+                }`}
+              >
+                <i
+                  class={`fas fa-${guideline.type === "do" ? "check" : "times"} text-white text-sm`}
+                />
+              </div>
+              <div>
+                <h3 class="font-semibold text-zinc-900 dark:text-zinc-100 mb-2 uppercase tracking-wide">
+                  {guideline.title}
+                </h3>
+                <p class="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
+                  {guideline.description}
+                </p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,52 @@
+---
+export interface Props {
+  variant?: "default" | "outlined" | "elevated" | "gradient";
+  padding?: "none" | "sm" | "md" | "lg";
+  className?: string;
+  href?: string;
+  clickable?: boolean;
+}
+
+const {
+  variant = "default",
+  padding = "md",
+  className = "",
+  href,
+  clickable = false,
+} = Astro.props;
+
+const variantClasses = {
+  default:
+    "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800",
+  outlined: "bg-transparent border-2 border-zinc-300 dark:border-zinc-700",
+  elevated:
+    "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg",
+  gradient:
+    "bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 border border-zinc-200 dark:border-zinc-700",
+};
+
+const paddingClasses = {
+  none: "",
+  sm: "p-4",
+  md: "p-6",
+  lg: "p-8",
+};
+
+const baseClasses = "rounded transition-all duration-300";
+const hoverClasses =
+  clickable || href
+    ? "hover:shadow-lg hover:-translate-y-1 cursor-pointer"
+    : "";
+const Component = href ? "a" : "div";
+---
+
+<Component
+  href={href}
+  class={`${baseClasses} ${variantClasses[variant]} ${paddingClasses[padding]} ${hoverClasses} ${className}`}
+  {...href && {
+    target: href.startsWith("http") ? "_blank" : undefined,
+    rel: href.startsWith("http") ? "noopener noreferrer" : undefined,
+  }}
+>
+  <slot />
+</Component>

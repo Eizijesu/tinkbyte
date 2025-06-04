@@ -1,0 +1,155 @@
+---
+// src/pages/audio.astro
+import { getCollection } from "astro:content";
+import Layout from "../layouts/Layout.astro";
+
+// Get podcast episodes
+const podcastEpisodes = await getCollection("podcast");
+
+// Get blog posts with audio
+const blogPosts = await getCollection("blog", ({ data }) => {
+  return !data.draft && data.audioUrl;
+});
+
+// Sort by date
+const sortedPodcasts = podcastEpisodes.sort(
+  (a, b) =>
+    new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
+);
+
+const sortedAudioPosts = blogPosts.sort(
+  (a, b) =>
+    new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
+);
+---
+
+<Layout
+  title="Audio Content | TinkByte"
+  description="Listen to our podcast episodes and audio versions of our articles on tech innovation and insights."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+        Audio Content
+      </h1>
+      <p class="text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
+        Listen to our podcast episodes and audio versions of our articles
+      </p>
+    </div>
+
+    <!-- Podcast Episodes -->
+    {
+      sortedPodcasts.length > 0 && (
+        <section class="mb-16">
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-8">
+            Podcast Episodes
+          </h2>
+          <div class="space-y-6">
+            {sortedPodcasts.map((episode) => (
+              <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <div class="flex items-start space-x-4">
+                  {episode.data.image && (
+                    <img
+                      src={episode.data.image}
+                      alt={episode.data.title}
+                      class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                    />
+                  )}
+                  <div class="flex-1">
+                    <h3 class="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                      {episode.data.title}
+                    </h3>
+                    <p class="text-zinc-600 dark:text-zinc-400 mb-4">
+                      {episode.data.description}
+                    </p>
+                    <div class="flex items-center space-x-4 text-sm text-zinc-500 dark:text-zinc-400">
+                      <span>Episode {episode.data.episode}</span>
+                      <span>•</span>
+                      <span>{episode.data.duration}</span>
+                      <span>•</span>
+                      <span>
+                        {new Date(episode.data.pubDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <audio controls class="w-64">
+                    <source src={episode.data.audioUrl} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <!-- Audio Articles -->
+    {
+      sortedAudioPosts.length > 0 && (
+        <section>
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-8">
+            Audio Articles
+          </h2>
+          <div class="space-y-6">
+            {sortedAudioPosts.map((post) => (
+              <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+                <div class="flex items-start space-x-4">
+                  {post.data.image && (
+                    <img
+                      src={post.data.image}
+                      alt={post.data.imageAlt || post.data.title}
+                      class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                    />
+                  )}
+                  <div class="flex-1">
+                    <h3 class="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                      <a
+                        href={`/blog/${post.slug}`}
+                        class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
+                        {post.data.title}
+                      </a>
+                    </h3>
+                    <p class="text-zinc-600 dark:text-zinc-400 mb-4">
+                      {post.data.excerpt}
+                    </p>
+                    <div class="flex items-center space-x-4 text-sm text-zinc-500 dark:text-zinc-400">
+                      <span>{post.data.readTime}</span>
+                      <span>•</span>
+                      <span>
+                        {new Date(post.data.pubDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <audio controls class="w-64">
+                    <source src={post.data.audioUrl} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <!-- Empty State -->
+    {
+      sortedPodcasts.length === 0 && sortedAudioPosts.length === 0 && (
+        <div class="text-center py-16">
+          <div class="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-headphones text-3xl text-zinc-400" />
+          </div>
+          <h3 class="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+            Coming Soon
+          </h3>
+          <p class="text-zinc-600 dark:text-zinc-400">
+            We're working on bringing you amazing audio content. Stay tuned!
+          </p>
+        </div>
+      )
+    }
+  </div>
+</Layout>

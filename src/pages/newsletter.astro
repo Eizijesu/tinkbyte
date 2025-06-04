@@ -1,0 +1,99 @@
+---
+import Layout from "../layouts/Layout.astro";
+import NewsletterForm from "../components/forms/NewsletterForm.astro";
+import { SITE } from "../config/site";
+
+const benefits = [
+  {
+    icon: "brain",
+    title: "Deep Analysis",
+    description:
+      "In-depth technical insights that go beyond surface-level coverage",
+  },
+  {
+    icon: "rocket",
+    title: "Practical Focus",
+    description: "Actionable strategies you can implement immediately",
+  },
+  {
+    icon: "users",
+    title: "Expert Network",
+    description: "Insights from industry veterans and practitioners",
+  },
+  {
+    icon: "shield-alt",
+    title: "No Spam Promise",
+    description: "Quality over quantity - we respect your inbox",
+  },
+];
+---
+
+<Layout
+  title="Newsletter | TinkStacks Weekly"
+  description="Subscribe to TinkStacks Weekly for curated tech insights and industry trends."
+>
+  <!-- Hero Section -->
+  <section class="py-16 lg:py-24 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1
+        class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 font-space-grotesk uppercase tracking-wide"
+      >
+        {SITE.newsletter.name}
+      </h1>
+      <h2
+        class="text-2xl lg:text-3xl text-zinc-600 dark:text-zinc-400 font-light mb-8"
+      >
+        Tech Insights Without the Hype
+      </h2>
+      <p
+        class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-400 leading-relaxed mb-12"
+      >
+        {SITE.newsletter.description}
+      </p>
+
+      <!-- Newsletter Form -->
+      <div class="max-w-lg mx-auto mb-16">
+        <NewsletterForm
+          variant="hero"
+          title=""
+          description=""
+          placeholder="Enter your email address"
+          buttonText="Subscribe Now"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits Section -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <h2
+          class="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 font-space-grotesk uppercase tracking-wide"
+        >
+          What You Get Every Week
+        </h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {
+          benefits.map((benefit) => (
+            <div class="text-center">
+              <div class="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i
+                  class={`fas fa-${benefit.icon} text-2xl text-zinc-600 dark:text-zinc-400`}
+                />
+              </div>
+              <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
+                {benefit.title}
+              </h3>
+              <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                {benefit.description}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Layout>

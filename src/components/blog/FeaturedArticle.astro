@@ -1,0 +1,216 @@
+---
+export interface Props {
+  title: string;
+  excerpt: string;
+  date: string;
+  readTime: string;
+  slug: string;
+  image: string;
+  tags: string[];
+  category: string;
+  author: {
+    name: string;
+    avatar: string;
+    role?: string;
+  };
+  layout?: 'horizontal' | 'vertical' | 'hero';
+  size?: 'small' | 'medium' | 'large';
+  showOverlay?: boolean;
+}
+
+const {
+  title,
+  excerpt,
+  date,
+  readTime,
+  slug,
+  image,
+  tags,
+  category,
+  author,
+  layout = 'hero',
+  size = 'large',
+  showOverlay = true
+} = Astro.props;
+
+const sizeClasses = {
+  small: 'min-h-[300px]',
+  medium: 'min-h-[400px]',
+  large: 'min-h-[500px] lg:min-h-[600px]'
+};
+
+const layoutClasses = {
+  horizontal: 'grid lg:grid-cols-2 gap-8 items-center',
+  vertical: 'flex flex-col',
+  hero: 'relative'
+};
+---
+
+<article class={`group featured-article ${layoutClasses[layout]} ${layout === 'hero' ? sizeClasses[size] : ''} overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-500 hover:shadow-2xl`}>
+  
+  {layout === 'hero' ? (
+    <!-- Hero Layout -->
+    <>
+      <!-- Background Image -->
+      <div class="absolute inset-0 z-0">
+        <img 
+          src={image} 
+          alt={title}
+          class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          loading="eager"
+        />
+        {showOverlay && (
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+        )}
+      </div>
+
+      <!-- Content Overlay -->
+      <div class="relative z-10 h-full flex flex-col justify-end p-8 lg:p-12">
+        
+        <!-- Category Badge -->
+        <div class="mb-4">
+          <span class="inline-flex items-center px-3 py-1 bg-white/20 backdrop-blur-sm text-white border border-white/30 rounded-full text-sm font-medium uppercase tracking-wide">
+            <i class="fas fa-star mr-2"></i>
+            Featured
+          </span>
+        </div>
+
+        <!-- Article Meta -->
+        <div class="flex items-center gap-4 text-white/80 text-sm mb-4">
+          <span class="px-2 py-1 bg-white/20 backdrop-blur-sm rounded uppercase tracking-wide font-medium">
+            {category}
+          </span>
+          <time datetime={date}>{new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</time>
+          <span class="flex items-center gap-1">
+            <i class="fas fa-clock"></i>
+            {readTime}
+          </span>
+        </div>
+
+        <!-- Title -->
+        <h2 class="text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-4 leading-tight group-hover:text-yellow-300 transition-colors duration-300">
+          <a href={`/blog/${slug}`} class="hover:underline">
+            {title}
+          </a>
+        </h2>
+
+        <!-- Excerpt -->
+        <p class="text-white/90 text-lg lg:text-xl mb-6 leading-relaxed max-w-3xl">
+          {excerpt}
+        </p>
+
+        <!-- Author & CTA -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <img 
+              src={author.avatar} 
+              alt={author.name}
+              class="w-10 h-10 rounded-full border-2 border-white/30"
+              loading="lazy"
+            />
+            <div>
+              <div class="text-white font-medium uppercase tracking-wide">{author.name}</div>
+              {author.role && (
+                <div class="text-white/70 text-sm uppercase tracking-wide">{author.role}</div>
+              )}
+            </div>
+          </div>
+
+          <a 
+            href={`/blog/${slug}`}
+            class="inline-flex items-center gap-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white border border-white/30 rounded-full font-medium transition-all duration-300 hover:bg-white/30 hover:gap-3 group/btn uppercase tracking-wide"
+          >
+            Read Article
+            <i class="fas fa-arrow-right text-sm transition-transform duration-300 group-hover/btn:translate-x-1"></i>
+          </a>
+        </div>
+      </div>
+    </>
+  ) : (
+    <!-- Horizontal/Vertical Layouts -->
+    <>
+      <!-- Image Section -->
+      <div class={`${layout === 'horizontal' ? 'order-2 lg:order-1' : ''} overflow-hidden rounded-xl`}>
+        <a href={`/blog/${slug}`} class="block group/img">
+          <img 
+            src={image} 
+            alt={title}
+            class="w-full h-64 lg:h-80 object-cover transition-transform duration-500 group-hover/img:scale-105"
+            loading="lazy"
+          />
+        </a>
+      </div>
+
+      <!-- Content Section -->
+      <div class={`${layout === 'horizontal' ? 'order-1 lg:order-2' : ''} p-6 lg:p-8 flex flex-col justify-center`}>
+        
+        <!-- Featured Badge -->
+        <div class="mb-4">
+          <span class="inline-flex items-center px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-full text-sm font-medium uppercase tracking-wide">
+            <i class="fas fa-star mr-2"></i>
+            Featured Article
+          </span>
+        </div>
+
+        <!-- Meta -->
+        <div class="flex flex-wrap items-center gap-4 text-zinc-500 dark:text-zinc-400 text-sm mb-4">
+          <span class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 rounded uppercase tracking-wide font-medium">
+            {category}
+          </span>
+          <time datetime={date}>{new Date(date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</time>
+          <span class="flex items-center gap-1">
+            <i class="fas fa-clock"></i>
+            {readTime}
+          </span>
+        </div>
+
+        <!-- Title -->
+        <h2 class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 leading-tight group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
+          <a href={`/blog/${slug}`} class="hover:underline">
+            {title}
+          </a>
+        </h2>
+
+        <!-- Excerpt -->
+        <p class="text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed text-lg">
+          {excerpt}
+        </p>
+
+        <!-- Tags -->
+        <div class="flex flex-wrap gap-2 mb-6">
+          {tags.slice(0, 3).map(tag => (
+            <span class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm rounded uppercase tracking-wide">
+              #{tag}
+            </span>
+          ))}
+        </div>
+
+        <!-- Author & CTA -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <img 
+              src={author.avatar} 
+              alt={author.name}
+              class="w-8 h-8 rounded-full"
+              loading="lazy"
+            />
+            <div>
+              <div class="text-zinc-900 dark:text-zinc-100 font-medium text-sm uppercase tracking-wide">{author.name}</div>
+              {author.role && (
+                <div class="text-zinc-500 dark:text-zinc-400 text-xs uppercase tracking-wide">{author.role}</div>
+              )}
+            </div>
+          </div>
+
+          <a 
+            href={`/blog/${slug}`}
+            class="inline-flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-medium hover:gap-3 transition-all duration-300 group/btn uppercase tracking-wide text-sm"
+          >
+            Read More
+            <i class="fas fa-arrow-right text-xs transition-transform duration-300 group-hover/btn:translate-x-1"></i>
+          </a>
+        </div>
+      </div>
+    </>
+  )}
+</article>

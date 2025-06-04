@@ -1,0 +1,56 @@
+---
+export interface Props {
+  variant?: "primary" | "secondary" | "ghost" | "outline";
+  size?: "sm" | "md" | "lg";
+  className?: string;
+  href?: string;
+  type?: "button" | "submit" | "reset";
+  disabled?: boolean;
+  id?: string;
+}
+
+const {
+  variant = "primary",
+  size = "md",
+  className = "",
+  href,
+  type = "button",
+  disabled = false,
+  id,
+  ...rest
+} = Astro.props;
+
+const baseClasses =
+  "inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+
+const variants = {
+  primary:
+    "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:ring-zinc-500 shadow-sm hover:shadow-md",
+  secondary:
+    "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 focus:ring-zinc-500",
+  ghost:
+    "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:ring-zinc-500",
+  outline:
+    "border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 focus:ring-zinc-500",
+};
+
+const sizes = {
+  sm: "px-3 py-1.5 text-sm",
+  md: "px-4 py-2 text-sm",
+  lg: "px-6 py-3 text-base",
+};
+
+const classes = `${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`;
+---
+
+{
+  href ? (
+    <a href={href} class={classes} {...rest}>
+      <slot />
+    </a>
+  ) : (
+    <button type={type} class={classes} disabled={disabled} id={id} {...rest}>
+      <slot />
+    </button>
+  )
+}

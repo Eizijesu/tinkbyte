@@ -1,0 +1,126 @@
+---
+import Layout from "../layouts/Layout.astro";
+import NewsletterForm from "../components/forms/NewsletterForm.astro";
+
+// Simple team info that can be managed via TinaCMS later
+const values = [
+  {
+    icon: "search",
+    title: "Depth Over Hype",
+    description:
+      "We dig deep into topics, providing comprehensive analysis rather than surface-level coverage.",
+  },
+  {
+    icon: "tools",
+    title: "Practical Focus",
+    description:
+      "Every insight is designed to be actionable, helping readers apply knowledge in their work.",
+  },
+  {
+    icon: "users",
+    title: "Community First",
+    description:
+      "We're building a community of thoughtful builders who value quality over quantity.",
+  },
+];
+---
+
+<Layout
+  title="About | TinkByte"
+  description="Learn about TinkByte's mission to deliver practical tech insights without the hype."
+>
+  <!-- Hero Section -->
+  <section class="py-16 lg:py-24 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1
+        class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 font-space-grotesk uppercase tracking-wide"
+      >
+        Tech Insights Without the Hype
+      </h1>
+      <p
+        class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-400 leading-relaxed"
+      >
+        TinkByte delivers practical analysis and real-world insights for
+        builders who value substance over speculation.
+      </p>
+    </div>
+  </section>
+
+  <!-- Mission Section -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <h2
+            class="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 font-space-grotesk uppercase tracking-wide"
+          >
+            Our Mission
+          </h2>
+          <div class="prose prose-lg prose-zinc dark:prose-invert">
+            <p>
+              In a world saturated with tech hype and surface-level analysis,
+              TinkByte cuts through the noise to deliver insights that actually
+              matter to builders, founders, and innovators.
+            </p>
+            <p>
+              We believe in practical knowledge over theoretical speculation,
+              real-world applications over buzzword-driven content, and
+              substance over style.
+            </p>
+          </div>
+        </div>
+        <div class="aspect-[4/3] overflow-hidden rounded-2xl">
+          <img
+            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop"
+            alt="Team collaboration"
+            class="w-full h-full object-cover"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Values Section -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <h2
+          class="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 font-space-grotesk uppercase tracking-wide"
+        >
+          What We Stand For
+        </h2>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        {
+          values.map((value) => (
+            <div class="text-center p-8">
+              <div class="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i
+                  class={`fas fa-${value.icon} text-2xl text-zinc-600 dark:text-zinc-400`}
+                />
+              </div>
+              <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
+                {value.title}
+              </h3>
+              <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                {value.description}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="max-w-4xl mx-auto">
+      <NewsletterForm
+        variant="minimal"
+        title="Stay Updated"
+        description="Get weekly insights delivered to your inbox."
+      />
+    </div>
+  </section>
+</Layout>

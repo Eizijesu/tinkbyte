@@ -1,0 +1,239 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Button from "../components/ui/Button.astro";
+import BlogHero from "../components/blog/BlogHero.astro";
+
+const popularPages = [
+  { title: "Latest Articles", href: "/blog", icon: "fas fa-newspaper" },
+  { title: "Search Content", href: "/search", icon: "fas fa-search" },
+  { title: "About TinkByte", href: "/about", icon: "fas fa-info-circle" },
+  { title: "Contact Us", href: "/contact", icon: "fas fa-envelope" },
+  { title: "Newsletter", href: "/newsletter", icon: "fas fa-paper-plane" },
+  { title: "Categories", href: "/categories", icon: "fas fa-folder" },
+];
+
+const recentArticles = [
+  {
+    title: "AI Evolution: Beyond the Hype Cycle",
+    href: "/blog/ai-evolution-beyond-hype",
+    date: "Jan 25, 2024",
+  },
+  {
+    title: "Building Products That Scale Globally",
+    href: "/blog/building-products-scale-globally",
+    date: "Jan 22, 2024",
+  },
+  {
+    title: "The Human Side of Tech Culture",
+    href: "/blog/human-side-tech-culture",
+    date: "Jan 20, 2024",
+  },
+];
+---
+
+<Layout
+  title="Page Not Found | TinkByte"
+  description="The page you're looking for doesn't exist. Explore our latest tech insights and articles instead."
+>
+  <!-- 404 Hero -->
+  <section class="py-20 lg:py-32 px-4 sm:px-6 text-center">
+    <div class="max-w-4xl mx-auto">
+      <!-- 404 Animation -->
+      <div class="mb-8">
+        <div
+          class="text-8xl lg:text-9xl font-bold text-zinc-200 dark:text-zinc-800 mb-4 select-none"
+        >
+          404
+        </div>
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div
+              class="w-32 h-32 bg-zinc-100 dark:bg-zinc-800/30 rounded-full blur-3xl opacity-50 animate-pulse"
+            >
+            </div>
+          </div>
+          <div class="relative text-6xl text-zinc-400 dark:text-zinc-600 mb-6">
+            <i class="fas fa-search animate-bounce"></i>
+          </div>
+        </div>
+      </div>
+
+      <h1
+        class="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-4"
+      >
+        Page Not Found
+      </h1>
+
+      <p
+        class="text-xl text-zinc-600 dark:text-zinc-400 mb-8 max-w-2xl mx-auto leading-relaxed"
+      >
+        The page you're looking for doesn't exist or has been moved. Let's get
+        you back on track with some helpful options.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+        <Button
+          variant="primary"
+          size="lg"
+          href="/"
+          className="rounded uppercase tracking-wide"
+        >
+          <i class="fas fa-home mr-2"></i>
+          GO HOME
+        </Button>
+
+        <Button
+          variant="outline"
+          size="lg"
+          href="/search"
+          className="rounded uppercase tracking-wide"
+        >
+          <i class="fas fa-search mr-2"></i>
+          SEARCH CONTENT
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Helpful Links -->
+  <section
+    class="py-16 px-4 sm:px-6 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
+  >
+    <div class="max-w-6xl mx-auto">
+      <h2
+        class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 text-center mb-12 uppercase tracking-wide"
+      >
+        POPULAR PAGES
+      </h2>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {
+          popularPages.map((page) => (
+            <a
+              href={page.href}
+              class="group p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center text-zinc-600 dark:text-zinc-400 group-hover:bg-zinc-900 dark:group-hover:bg-zinc-100 group-hover:text-white dark:group-hover:text-zinc-900 transition-colors">
+                  <i class={page.icon} />
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors uppercase tracking-wide">
+                    {page.title}
+                  </h3>
+                </div>
+                <div class="text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
+                  <i class="fas fa-arrow-right" />
+                </div>
+              </div>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent Articles -->
+  <section
+    class="py-16 px-4 sm:px-6 border-t border-zinc-200 dark:border-zinc-800"
+  >
+    <div class="max-w-4xl mx-auto">
+      <h2
+        class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 text-center mb-12 uppercase tracking-wide"
+      >
+        RECENT ARTICLES
+      </h2>
+
+      <div class="space-y-6">
+        {
+          recentArticles.map((article) => (
+            <article class="group">
+              <a
+                href={article.href}
+                class="block p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              >
+                <div class="flex items-center justify-between">
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors mb-1">
+                      {article.title}
+                    </h3>
+                    <p class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      {article.date}
+                    </p>
+                  </div>
+                  <div class="text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors ml-4">
+                    <i class="fas fa-arrow-right" />
+                  </div>
+                </div>
+              </a>
+            </article>
+          ))
+        }
+      </div>
+
+      <div class="text-center mt-12">
+        <Button
+          variant="outline"
+          href="/blog"
+          className="rounded uppercase tracking-wide"
+        >
+          VIEW ALL ARTICLES
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Help Section -->
+  <section
+    class="py-16 px-4 sm:px-6 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50"
+  >
+    <div class="max-w-2xl mx-auto text-center">
+      <h2
+        class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide"
+      >
+        STILL CAN'T FIND WHAT YOU'RE LOOKING FOR?
+      </h2>
+
+      <p class="text-zinc-600 dark:text-zinc-400 mb-8">
+        Our team is here to help. Reach out and we'll get you pointed in the
+        right direction.
+      </p>
+
+      <Button
+        variant="primary"
+        href="/contact"
+        className="rounded uppercase tracking-wide"
+      >
+        <i class="fas fa-envelope mr-2"></i>
+        CONTACT SUPPORT
+      </Button>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  @keyframes bounce {
+    0%,
+    20%,
+    53%,
+    80%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    40%,
+    43% {
+      transform: translate3d(0, -30px, 0);
+    }
+    70% {
+      transform: translate3d(0, -15px, 0);
+    }
+    90% {
+      transform: translate3d(0, -4px, 0);
+    }
+  }
+
+  .animate-bounce {
+    animation: bounce 2s infinite;
+  }
+</style>

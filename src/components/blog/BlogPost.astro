@@ -1,0 +1,150 @@
+---
+// src/components/blog/BlogHero.astro
+export interface Props {
+  title: string;
+  excerpt: string;
+  image?: string;
+  category: string;
+  readTime: string;
+  date: string;
+  author: {
+    name: string;
+    avatar: string;
+  };
+  featured?: boolean;
+  size?: 'large' | 'medium' | 'small';
+}
+
+const {
+  title,
+  excerpt,
+  image,
+  category,
+  readTime,
+  date,
+  author,
+  featured = false,
+  size = 'large'
+} = Astro.props;
+
+const sizeClasses = {
+  large: 'min-h-[70vh] lg:min-h-[80vh]',
+  medium: 'min-h-[50vh] lg:min-h-[60vh]',
+  small: 'min-h-[40vh] lg:min-h-[45vh]'
+};
+
+const titleClasses = {
+  large: 'text-4xl sm:text-5xl lg:text-7xl xl:text-8xl',
+  medium: 'text-3xl sm:text-4xl lg:text-5xl xl:text-6xl',
+  small: 'text-2xl sm:text-3xl lg:text-4xl xl:text-5xl'
+};
+---
+
+<section class={`relative overflow-hidden ${sizeClasses[size]} flex items-end`}>
+  <!-- Background Image with Overlay -->
+  {image && (
+    <div class="absolute inset-0 z-0">
+      <img 
+        src={image} 
+        alt={title}
+        class="w-full h-full object-cover"
+        loading="eager"
+      />
+      <!-- Gradient Overlays for Editorial Feel -->
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent"></div>
+      
+      <!-- Dynamic Color Accent based on category -->
+      <div class="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-80"></div>
+    </div>
+  )}
+
+  <!-- Content Container -->
+  <div class="relative z-10 w-full">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 lg:pb-16">
+      <div class="max-w-4xl">
+        
+        <!-- Category Badge - Editorial Style -->
+        <div class="flex items-center gap-3 mb-6">
+          <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm font-semibold uppercase tracking-wider rounded-full border border-white/30">
+            {category}
+          </span>
+          {featured && (
+            <span class="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-bold uppercase tracking-wider rounded-full">
+              Featured
+            </span>
+          )}
+        </div>
+
+        <!-- Main Headline - Editorial Typography -->
+        <h1 class={`${titleClasses[size]} font-bold text-white mb-6 leading-[0.9] tracking-tight`}>
+          <span class="block">
+            {title.split(' ').map((word, index) => (
+              <span 
+                class="inline-block mr-3 hover:text-blue-300 transition-colors duration-300"
+                style={`animation-delay: ${index * 100}ms`}
+              >
+                {word}
+              </span>
+            ))}
+          </span>
+        </h1>
+
+        <!-- Excerpt - Editorial Style -->
+        <p class="text-xl lg:text-2xl text-gray-200 mb-8 max-w-3xl leading-relaxed font-light">
+          {excerpt}
+        </p>
+
+        <!-- Meta Information - Magazine Style -->
+        <div class="flex flex-wrap items-center gap-6 text-white/80">
+          <div class="flex items-center gap-3">
+            <img 
+              src={author.avatar} 
+              alt={author.name}
+              class="w-12 h-12 rounded-full border-2 border-white/30"
+            />
+            <div>
+              <p class="font-semibold text-white">{author.name}</p>
+              <div class="flex items-center gap-2 text-sm">
+                <time>{date}</time>
+                <span class="w-1 h-1 bg-white/60 rounded-full"></span>
+                <span>{readTime}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Reading Progress Indicator -->
+          <div class="hidden lg:flex items-center gap-2 ml-auto">
+            <span class="text-sm font-medium">Scroll to read</span>
+            <div class="w-8 h-8 border-2 border-white/40 rounded-full flex items-center justify-center">
+              <i class="fas fa-arrow-down text-sm animate-bounce"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decorative Elements - Editorial Flair -->
+  <div class="absolute top-8 right-8 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-xl"></div>
+  <div class="absolute bottom-20 right-20 w-24 h-24 bg-gradient-to-br from-pink-500/20 to-red-500/20 rounded-full blur-lg"></div>
+</section>
+
+<style>
+  /* Editorial animation for title words */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  h1 span {
+    animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+</style>

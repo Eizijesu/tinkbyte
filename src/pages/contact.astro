@@ -1,0 +1,120 @@
+---
+import Layout from "../layouts/Layout.astro";
+import NewsletterForm from "../components/forms/NewsletterForm.astro";
+import { SITE } from "../config/site";
+
+const contactMethods = [
+  {
+    title: "Email Us",
+    description: "For partnerships, feedback, or general inquiries",
+    icon: "envelope",
+    action: {
+      text: SITE.social.email,
+      href: `mailto:${SITE.social.email}`
+    }
+  },
+  {
+    title: "Follow Us",
+    description: "Stay updated with our latest insights and discussions",
+    icon: "users",
+    action: {
+      text: "Social Media",
+      href: `https://twitter.com/${SITE.social.twitter.replace('@', '')}`
+    }
+  }
+];
+
+const faqs = [
+  {
+    question: "Can I contribute to TinkByte?",
+    answer: "We're always looking for quality content from industry experts. Email us your ideas and writing samples."
+  },
+  {
+    question: "How often do you publish?",
+    answer: "We publish new articles weekly, with our newsletter going out every Tuesday."
+  },
+  {
+    question: "Do you offer partnerships?",
+    answer: "Yes! We partner with companies that align with our mission. Reach out to discuss."
+  },
+  {
+    question: "Can I republish your content?",
+    answer: "Please email us for permission. We're usually happy to allow republishing with proper attribution."
+  }
+];
+---
+
+<Layout
+  title="Contact | TinkByte"
+  description="Get in touch with the TinkByte team. We'd love to hear from you."
+>
+  <!-- Hero Section -->
+  <section class="py-16 lg:py-24 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 font-space-grotesk uppercase tracking-wide">
+        Let's Connect
+      </h1>
+      <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-400 leading-relaxed">
+        Have a question, feedback, or just want to say hello? We'd love to hear from you.
+      </p>
+    </div>
+  </section>
+
+  <!-- Contact Methods -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-8 mb-16">
+        {contactMethods.map((method) => (
+          <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow">
+            <div class="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i class={`fas fa-${method.icon} text-2xl text-zinc-600 dark:text-zinc-400`}></i>
+            </div>
+            <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
+              {method.title}
+            </h3>
+            <p class="text-zinc-600 dark:text-zinc-400 mb-6">
+              {method.description}
+            </p>
+            <a
+              href={method.action.href}
+              class="inline-flex items-center gap-2 px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors uppercase tracking-wide"
+            >
+              {method.action.text}
+            </a>
+          </div>
+        ))}
+      </div>
+
+      <!-- FAQ Section -->
+      <div class="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-8 lg:p-12">
+        <h2 class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 text-center font-space-grotesk uppercase tracking-wide">
+          Frequently Asked Questions
+        </h2>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          {faqs.map((faq) => (
+            <div>
+              <h4 class="font-semibold text-zinc-900 dark:text-zinc-100 mb-2 uppercase tracking-wide">
+                {faq.question}
+              </h4>
+              <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                {faq.answer}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter Section -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="max-w-4xl mx-auto">
+      <NewsletterForm
+        variant="minimal"
+        title="Stay in the Loop"
+        description="Join our community and get weekly insights delivered to your inbox."
+      />
+    </div>
+  </section>
+</Layout>

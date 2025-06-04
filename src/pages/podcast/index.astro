@@ -1,0 +1,325 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import BlogHero from "../../components/blog/BlogHero.astro";
+import AudioPlayer from "../../components/ui/AudioPlayer.astro";
+import Button from "../../components/ui/Button.astro";
+
+// Sample audio content
+const featuredEpisode = {
+  title: "AI Evolution: Beyond the Hype Cycle",
+  description: "A deep dive into practical AI implementation with Dr. Elena Vasquez, exploring what actually works when you strip away the marketing buzz.",
+  audioUrl: "/audio/ai-evolution-beyond-hype.mp3",
+  duration: "28:45",
+  publishDate: "2024-01-25",
+  slug: "ai-evolution-beyond-hype",
+  image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
+  host: "TinkByte Team",
+  guest: "Dr. Elena Vasquez",
+  tags: ["AI", "Product Strategy", "Implementation"],
+  transcript: "Full transcript available..."
+};
+
+const recentEpisodes = [
+  {
+    title: "Building Products That Scale Globally",
+    description: "Lessons from the trenches of global product development with Alex Chen.",
+    audioUrl: "/audio/building-products-scale.mp3",
+    duration: "35:20",
+    publishDate: "2024-01-22",
+    slug: "building-products-scale-globally",
+    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=400&fit=crop",
+    host: "TinkByte Team",
+    guest: "Alex Chen"
+  },
+  {
+    title: "The Human Side of Tech Culture",
+    description: "Exploring team dynamics and building sustainable tech organizations.",
+    audioUrl: "/audio/human-side-tech-culture.mp3",
+    duration: "22:15",
+    publishDate: "2024-01-20",
+    slug: "human-side-tech-culture",
+    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=400&fit=crop",
+    host: "TinkByte Team",
+    guest: "Sarah Kim"
+  },
+  {
+    title: "Low-Code Revolution in Enterprise",
+    description: "How low-code platforms are solving real enterprise challenges.",
+    audioUrl: "/audio/low-code-enterprise.mp3",
+    duration: "31:30",
+    publishDate: "2024-01-12",
+    slug: "low-code-enterprise-revolution",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=400&fit=crop",
+    host: "TinkByte Team",
+    guest: "Rachel Torres"
+  }
+];
+
+const categories = [
+  { name: "AI & Machine Learning", count: 8, slug: "ai-ml" },
+  { name: "Product Strategy", count: 12, slug: "product-strategy" },
+  { name: "Tech Culture", count: 6, slug: "tech-culture" },
+  { name: "Developer Tools", count: 9, slug: "dev-tools" },
+  { name: "Startup Insights", count: 7, slug: "startup-insights" }
+];
+---
+
+<Layout
+  title="Audio Content | TinkByte"
+  description="Listen to in-depth conversations about technology, product development, and innovation. Audio content for builders who value substance over hype."
+>
+  
+  <!-- Hero Section -->
+  <BlogHero 
+    title="TinkByte Audio"
+    description="In-depth conversations about technology, product development, and innovation. Listen while you build."
+    size="medium"
+    gradient="purple"
+    showPattern={true}
+  />
+
+  <!-- Featured Episode -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto">
+      
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
+          Featured Episode
+        </h2>
+      </div>
+
+      <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+        <div class="grid lg:grid-cols-2 gap-0">
+          
+          <!-- Episode Image -->
+          <div class="aspect-square lg:aspect-auto">
+            <img 
+              src={featuredEpisode.image} 
+              alt={featuredEpisode.title}
+              class="w-full h-full object-cover"
+              loading="eager"
+            />
+          </div>
+
+          <!-- Episode Details -->
+          <div class="p-8 flex flex-col justify-center">
+            
+            <!-- Episode Meta -->
+            <div class="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+              <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded uppercase tracking-wide font-medium">
+                Featured
+              </span>
+              <time datetime={featuredEpisode.publishDate}>
+                {new Date(featuredEpisode.publishDate).toLocaleDateString('en-US', { 
+                  month: 'long', 
+                  day: 'numeric', 
+                  year: 'numeric' 
+                })}
+              </time>
+              <span class="flex items-center gap-1">
+                <i class="fas fa-clock"></i>
+                {featuredEpisode.duration}
+              </span>
+            </div>
+
+            <!-- Title -->
+            <h3 class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 leading-tight">
+              {featuredEpisode.title}
+            </h3>
+
+            <!-- Description -->
+            <p class="text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
+              {featuredEpisode.description}
+            </p>
+
+            <!-- Host & Guest -->
+            <div class="flex items-center gap-6 text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+              <div>
+                <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Host:</span>
+                <span class="ml-1">{featuredEpisode.host}</span>
+              </div>
+              <div>
+                <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Guest:</span>
+                <span class="ml-1">{featuredEpisode.guest}</span>
+              </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="flex flex-wrap gap-2 mb-6">
+              {featuredEpisode.tags.map(tag => (
+                <span class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs rounded uppercase tracking-wide">
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            <!-- Audio Player -->
+            <AudioPlayer
+              src={featuredEpisode.audioUrl}
+              title={featuredEpisode.title}
+              duration={featuredEpisode.duration}
+              transcript={featuredEpisode.transcript}
+              downloadUrl={featuredEpisode.audioUrl}
+            />
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Recent Episodes -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800">
+    <div class="max-w-7xl mx-auto">
+      
+      <div class="flex items-center justify-between mb-12">
+        <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
+          Recent Episodes
+        </h2>
+        <Button
+          variant="outline"
+          href="/audio/archive"
+          className="uppercase tracking-wide"
+        >
+          View All Episodes
+        </Button>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-8">
+        {recentEpisodes.map(episode => (
+          <article class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 hover:shadow-lg group">
+            
+            <!-- Episode Image -->
+            <div class="aspect-square overflow-hidden">
+              <img 
+                src={episode.image} 
+                alt={episode.title}
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+              />
+            </div>
+
+            <!-- Episode Content -->
+            <div class="p-6">
+              
+              <!-- Meta -->
+              <div class="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-3">
+                <time datetime={episode.publishDate}>
+                  {new Date(episode.publishDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </time>
+                <span class="flex items-center gap-1">
+                  <i class="fas fa-clock"></i>
+                  {episode.duration}
+                </span>
+              </div>
+
+              <!-- Title -->
+              <h3 class="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-3 leading-tight group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
+                <a href={`/audio/${episode.slug}`} class="hover:underline">
+                  {episode.title}
+                </a>
+              </h3>
+
+              <!-- Description -->
+              <p class="text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-3">
+                {episode.description}
+              </p>
+
+              <!-- Guest -->
+              <div class="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Guest:</span>
+                <span class="ml-1">{episode.guest}</span>
+              </div>
+
+              <!-- CTA -->
+              <a 
+                href={`/audio/${episode.slug}`}
+                class="inline-flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-medium hover:gap-3 transition-all duration-300 group/btn uppercase tracking-wide text-sm"
+              >
+                Listen Now
+                <i class="fas fa-play text-xs transition-transform duration-300 group-hover/btn:translate-x-1"></i>
+              </a>
+
+            </div>
+          </article>
+        ))}
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="py-16 px-4 sm:px-6 border-t border-zinc-200 dark:border-zinc-800">
+    <div class="max-w-4xl mx-auto">
+      
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-12 text-center uppercase tracking-wide">
+        Browse by Category
+      </h2>
+
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        {categories.map(category => (
+          <a
+            href={`/audio/category/${category.slug}`}
+            class="p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 hover:shadow-lg group text-center"
+          >
+            <h3 class="font-semibold text-zinc-900 dark:text-zinc-100 mb-2 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors uppercase tracking-wide">
+              {category.name}
+            </h3>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              {category.count} Episodes
+            </p>
+          </a>
+        ))}
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Subscribe Section -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800">
+    <div class="max-w-2xl mx-auto text-center">
+      
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
+        Never Miss an Episode
+      </h2>
+      
+      <p class="text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
+        Subscribe to get notified when new audio content is published. Join 12,500+ builders who value substance over hype.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <Button 
+          variant="primary" 
+          href="/newsletter" 
+          className="rounded uppercase tracking-wide"
+        >
+          <i class="fas fa-envelope mr-2"></i>
+          Subscribe to Newsletter
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          href="/rss.xml" 
+          className="rounded uppercase tracking-wide"
+        >
+          <i class="fas fa-rss mr-2"></i>
+          RSS Feed
+        </Button>
+      </div>
+
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

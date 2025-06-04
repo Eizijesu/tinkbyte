@@ -1,0 +1,104 @@
+---
+// src/components/blog/CommentSection.astro
+---
+
+<section class="mt-16 pt-8 border-t border-zinc-200 dark:border-zinc-800">
+  <div class="mb-8">
+    <h3
+      class="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2 font-space-grotesk"
+    >
+      Join the Discussion
+    </h3>
+    <p class="text-zinc-600 dark:text-zinc-400 text-sm">
+      Share your thoughts and engage with the TinkByte community. Comments are
+      powered by GitHub Discussions.
+    </p>
+  </div>
+
+  <div id="giscus-container" class="giscus-container">
+    <!-- Giscus will be loaded here -->
+  </div>
+</section>
+
+<script>
+  function loadGiscus() {
+    const container = document.getElementById("giscus-container");
+    if (!container) return;
+
+    // Check if Giscus is already loaded
+    if (container.querySelector(".giscus")) return;
+
+    // Create and configure Giscus script
+    const script = document.createElement("script");
+    script.src = "https://giscus.app/client.js";
+    script.setAttribute("data-repo", "Eizijesu/tinkbyte");
+    script.setAttribute("data-repo-id", "R_kgDOO14dQA");
+    script.setAttribute("data-category", "Announcements");
+    script.setAttribute("data-category-id", "DIC_kwDOO14dQM4CrB7G");
+    script.setAttribute("data-mapping", "pathname");
+    script.setAttribute("data-strict", "0");
+    script.setAttribute("data-reactions-enabled", "1");
+    script.setAttribute("data-emit-metadata", "1");
+    script.setAttribute("data-input-position", "bottom");
+    script.setAttribute("data-theme", "preferred_color_scheme");
+    script.setAttribute("data-lang", "en");
+    script.setAttribute("crossorigin", "anonymous");
+    script.async = true;
+
+    container.appendChild(script);
+  }
+
+  // Load Giscus when the page is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadGiscus);
+  } else {
+    loadGiscus();
+  }
+
+  // Handle theme changes for Giscus
+  document.addEventListener("DOMContentLoaded", () => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "class"
+        ) {
+          const isDark = document.documentElement.classList.contains("dark");
+          const giscusFrame = document.querySelector("iframe.giscus-frame");
+          if (giscusFrame) {
+            const theme = isDark ? "dark" : "light";
+            giscusFrame.contentWindow?.postMessage(
+              { giscus: { setConfig: { theme } } },
+              "https://giscus.app"
+            );
+          }
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  });
+</script>
+
+<style>
+  .giscus-container {
+    min-height: 200px;
+  }
+
+  /* Custom styling for Giscus integration */
+  :global(.giscus) {
+    width: 100%;
+  }
+
+  :global(.giscus-frame) {
+    border-radius: 0.5rem;
+    border: 1px solid rgb(228 228 231);
+  }
+
+  :global(.dark .giscus-frame) {
+    border-color: rgb(63 63 70);
+  }
+</style>
