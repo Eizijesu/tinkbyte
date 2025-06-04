@@ -1,0 +1,416 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import AudioPlayer from "../../components/ui/AudioPlayer.astro";
+import ShareButtons from "../../components/ui/ShareButtons.astro";
+import RelatedPosts from "../../components/blog/RelatedPosts.astro";
+
+export async function getStaticPaths() {
+  // In real implementation, this would fetch from your CMS
+  return [
+    {
+      params: { episode: "ai-evolution-beyond-hype" },
+      props: {
+        episode: {
+          title: "AI Evolution: Beyond the Hype Cycle",
+          description:
+            "A deep dive into practical AI implementation with Dr. Elena Vasquez, exploring what actually works when you strip away the marketing buzz and focus on delivering real value.",
+          audioUrl: "/audio/ai-evolution-beyond-hype.mp3",
+          duration: "28:45",
+          publishDate: "2024-01-25",
+          slug: "ai-evolution-beyond-hype",
+          image:
+            "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=800&fit=crop",
+          host: "TinkByte Team",
+          guest: {
+            name: "Dr. Elena Vasquez",
+            bio: "AI researcher turned product strategist with 12+ years in machine learning",
+            avatar:
+              "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=face",
+            role: "Chief AI Officer",
+            social: {
+              twitter: "https://twitter.com/elenavasquez",
+              linkedin: "https://linkedin.com/in/elenavasquez",
+            },
+          },
+          tags: ["AI", "Product Strategy", "Implementation"],
+          transcript: `
+            [00:00] Welcome to TinkByte Audio. I'm here with Dr. Elena Vasquez...
+            [00:30] Elena, let's start with the reality check about AI implementation...
+            [01:15] The gap between AI marketing and AI reality is wider than most people realize...
+            [02:00] What are the three characteristics of successful AI implementations?...
+            [Continue with full transcript...]
+          `,
+          showNotes: [
+            {
+              timestamp: "00:00",
+              title: "Introduction",
+              description: "Welcome and guest introduction",
+            },
+            {
+              timestamp: "02:00",
+              title: "AI Reality Check",
+              description: "The gap between marketing and reality",
+            },
+            {
+              timestamp: "05:30",
+              title: "Success Characteristics",
+              description: "Three traits of successful AI implementations",
+            },
+            {
+              timestamp: "12:15",
+              title: "E-commerce Case Study",
+              description: "Real-world recommendation engine example",
+            },
+            {
+              timestamp: "20:00",
+              title: "Implementation Framework",
+              description: "Practical framework for AI adoption",
+            },
+            {
+              timestamp: "25:30",
+              title: "Common Pitfalls",
+              description: "Mistakes to avoid in AI projects",
+            },
+          ],
+        },
+      },
+    },
+    // Add more episodes...
+  ];
+}
+
+const { episode } = Astro.props;
+
+const relatedEpisodes = [
+  {
+    title: "Building Products That Scale Globally",
+    excerpt: "Lessons from the trenches of global product development.",
+    date: "January 22, 2024",
+    readTime: "35 min listen",
+    slug: "building-products-scale-globally",
+    image:
+      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop",
+    tags: ["product-strategy", "scaling"],
+    category: "Product Strategy",
+    author: {
+      name: "Alex Chen",
+      avatar:
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+      role: "Senior Product Manager",
+    },
+  },
+  {
+    title: "The Human Side of Tech Culture",
+    excerpt: "Building sustainable technology organizations.",
+    date: "January 20, 2024",
+    readTime: "22 min listen",
+    slug: "human-side-tech-culture",
+    image:
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop",
+    tags: ["tech-culture", "team-building"],
+    category: "Tech Culture",
+    author: {
+      name: "Sarah Kim",
+      avatar:
+        "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=100&h=100&fit=crop&crop=face",
+      role: "Culture Analyst",
+    },
+  },
+];
+---
+
+<Layout
+  title={`${episode.title} | TinkByte Audio`}
+  description={episode.description}
+  image={episode.image}
+  type="article"
+  publishedTime={new Date(episode.publishDate).toISOString()}
+  author={episode.guest.name}
+  tags={episode.tags}
+>
+  <!-- Episode Header -->
+  <article class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+    <!-- Episode Meta -->
+    <header class="mb-8">
+      <!-- Breadcrumb -->
+      <nav class="mb-6">
+        <ol
+          class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400"
+        >
+          <li>
+            <a
+              href="/audio"
+              class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide"
+              >Audio</a>
+          </li>
+          <li><i class="fas fa-chevron-right text-xs"></i></li>
+          <li class="text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
+            Episode
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Episode Badge -->
+      <div class="mb-4">
+        <span
+          class="inline-flex items-center px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-full text-sm font-medium uppercase tracking-wide"
+        >
+          <i class="fas fa-headphones mr-2"></i>
+          Audio Episode
+        </span>
+      </div>
+
+      <!-- Title -->
+      <h1
+        class="text-3xl sm:text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 leading-tight"
+      >
+        {episode.title}
+      </h1>
+
+      <!-- Episode Meta Info -->
+      <div
+        class="flex flex-wrap items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-6"
+      >
+        <time datetime={episode.publishDate}>
+          {
+            new Date(episode.publishDate).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })
+          }
+        </time>
+        <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+        <span class="flex items-center gap-1">
+          <i class="fas fa-clock"></i>
+          {episode.duration}
+        </span>
+        <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+        <span class="flex items-center gap-1">
+          <i class="fas fa-download"></i>
+          Download Available
+        </span>
+      </div>
+
+      <!-- Host & Guest Info -->
+      <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-6 mb-8">
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Host -->
+          <div>
+            <h3
+              class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2 uppercase tracking-wide"
+            >
+              Hosted by
+            </h3>
+            <p class="text-zinc-900 dark:text-zinc-100 font-medium">
+              {episode.host}
+            </p>
+          </div>
+
+          <!-- Guest -->
+          <div>
+            <h3
+              class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2 uppercase tracking-wide"
+            >
+              Featuring
+            </h3>
+            <div class="flex items-center gap-3">
+              <img
+                src={episode.guest.avatar}
+                alt={episode.guest.name}
+                class="w-10 h-10 rounded-full"
+                loading="lazy"
+              />
+              <div>
+                <p class="text-zinc-900 dark:text-zinc-100 font-medium">
+                  {episode.guest.name}
+                </p>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  {episode.guest.role}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Episode Image -->
+    <div class="aspect-[16/9] overflow-hidden rounded-xl mb-8">
+      <img
+        src={episode.image}
+        alt={episode.title}
+        class="w-full h-full object-cover"
+        loading="eager"
+      />
+    </div>
+
+    <!-- Audio Player -->
+    <div class="mb-8">
+      <AudioPlayer
+        src={episode.audioUrl}
+        title={episode.title}
+        duration={episode.duration}
+        transcript={episode.transcript}
+        downloadUrl={episode.audioUrl}
+      />
+    </div>
+
+    <!-- Episode Description -->
+    <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none mb-8">
+      <p class="text-xl leading-relaxed">
+        {episode.description}
+      </p>
+    </div>
+
+    <!-- Show Notes -->
+    {
+      episode.showNotes && (
+        <section class="mb-8">
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wide">
+            Show Notes
+          </h2>
+          <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
+            <div class="space-y-4">
+              {episode.showNotes.map((note) => (
+                <div class="flex gap-4 group">
+                  <div class="flex-shrink-0">
+                    <span class="inline-block px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm font-mono rounded">
+                      {note.timestamp}
+                    </span>
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                      {note.title}
+                    </h3>
+                    <p class="text-zinc-600 dark:text-zinc-400 text-sm">
+                      {note.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    <!-- Transcript -->
+    {
+      episode.transcript && (
+        <section class="mb-8">
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wide">
+            Transcript
+          </h2>
+          <details class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <summary class="p-6 cursor-pointer font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+              <span class="uppercase tracking-wide">Show Full Transcript</span>
+            </summary>
+            <div class="px-6 pb-6">
+              <div class="prose prose-sm prose-zinc dark:prose-invert max-w-none">
+                <pre class="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                  {episode.transcript}
+                </pre>
+              </div>
+            </div>
+          </details>
+        </section>
+      )
+    }
+
+    <!-- Tags -->
+    <div class="flex flex-wrap gap-2 mb-8">
+      <span
+        class="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide"
+      >
+        Tags:
+      </span>
+      {
+        episode.tags.map((tag) => (
+          <a
+            href={`/audio/tag/${tag.toLowerCase().replace(/\s+/g, "-")}`}
+            class="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors uppercase tracking-wide"
+          >
+            #{tag}
+          </a>
+        ))
+      }
+    </div>
+
+    <!-- Share Buttons -->
+    <div class="border-t border-zinc-200 dark:border-zinc-800 pt-8 mb-8">
+      <ShareButtons
+        title={episode.title}
+        url={`/audio/${episode.slug}`}
+        description={episode.description}
+      />
+    </div>
+
+    <!-- Guest Bio -->
+    <section class="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-6 mb-8">
+      <h2
+        class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide"
+      >
+        About the Guest
+      </h2>
+      <div class="flex items-start gap-4">
+        <img
+          src={episode.guest.avatar}
+          alt={episode.guest.name}
+          class="w-16 h-16 rounded-full flex-shrink-0"
+          loading="lazy"
+        />
+        <div class="flex-1">
+          <h3
+            class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1"
+          >
+            {episode.guest.name}
+          </h3>
+          <p
+            class="text-sm text-zinc-600 dark:text-zinc-400 mb-3 uppercase tracking-wide"
+          >
+            {episode.guest.role}
+          </p>
+          <p class="text-zinc-700 dark:text-zinc-300 mb-4 leading-relaxed">
+            {episode.guest.bio}
+          </p>
+          {
+            episode.guest.social && (
+              <div class="flex gap-3">
+                {episode.guest.social.twitter && (
+                  <a
+                    href={episode.guest.social.twitter}
+                    class="text-zinc-500 hover:text-blue-500 transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Twitter"
+                  >
+                    <i class="fab fa-twitter" />
+                  </a>
+                )}
+                {episode.guest.social.linkedin && (
+                  <a
+                    href={episode.guest.social.linkedin}
+                    class="text-zinc-500 hover:text-blue-600 transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="LinkedIn"
+                  >
+                    <i class="fab fa-linkedin" />
+                  </a>
+                )}
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </section>
+  </article>
+
+  <!-- Related Episodes -->
+  <RelatedPosts
+    posts={relatedEpisodes}
+    title="Related Episodes"
+    description="More conversations you might enjoy"
+  />
+</Layout>

@@ -1,0 +1,370 @@
+---
+import Layout from "../layouts/Layout.astro";
+import BlogHero from "../components/blog/BlogHero.astro";
+import Button from "../components/ui/Button.astro";
+
+const researchAreas = [
+  {
+    title: "AI Implementation Patterns",
+    description:
+      "Studying successful AI adoption strategies across different industries and organization sizes.",
+    status: "Ongoing",
+    publications: 3,
+    lastUpdated: "2024-01-20",
+    tags: ["AI", "Implementation", "Enterprise"],
+  },
+  {
+    title: "Remote Team Productivity",
+    description:
+      "Analyzing productivity patterns and collaboration effectiveness in distributed technology teams.",
+    status: "Phase 2",
+    publications: 2,
+    lastUpdated: "2024-01-15",
+    tags: ["Remote Work", "Productivity", "Teams"],
+  },
+  {
+    title: "Product Development Velocity",
+    description:
+      "Measuring factors that impact product development speed and quality in global markets.",
+    status: "Data Collection",
+    publications: 1,
+    lastUpdated: "2024-01-10",
+    tags: ["Product", "Development", "Metrics"],
+  },
+  {
+    title: "Tech Culture Impact",
+    description:
+      "Quantifying the relationship between company culture and technical innovation outcomes.",
+    status: "Planning",
+    publications: 0,
+    lastUpdated: "2024-01-05",
+    tags: ["Culture", "Innovation", "Leadership"],
+  },
+];
+
+const recentPublications = [
+  {
+    title: "AI Implementation Success Factors: A Multi-Industry Analysis",
+    authors: ["Dr. Elena Vasquez", "TinkByte Research Team"],
+    publishDate: "2024-01-20",
+    type: "Research Report",
+    downloadUrl: "/research/ai-implementation-success-factors.pdf",
+    abstract:
+      "Analysis of 150+ AI implementations across 12 industries, identifying key success factors and common failure patterns.",
+    tags: ["AI", "Implementation", "Enterprise"],
+  },
+  {
+    title: "Remote Team Collaboration Patterns in Tech Organizations",
+    authors: ["Sarah Kim", "Alex Chen"],
+    publishDate: "2024-01-15",
+    type: "White Paper",
+    downloadUrl: "/research/remote-team-collaboration.pdf",
+    abstract:
+      "Study of 50 distributed tech teams, analyzing communication patterns and productivity metrics over 12 months.",
+    tags: ["Remote Work", "Teams", "Productivity"],
+  },
+  {
+    title: "Global Product Development: Constraint-Driven Innovation",
+    authors: ["Alex Chen", "Marcus Rodriguez"],
+    publishDate: "2024-01-10",
+    type: "Case Study",
+    downloadUrl: "/research/global-product-development.pdf",
+    abstract:
+      "Examination of product development strategies for global markets, focusing on constraint-driven design approaches.",
+    tags: ["Product", "Global", "Innovation"],
+  },
+];
+
+const researchMethodology = [
+  {
+    title: "Data Collection",
+    description:
+      "Surveys, interviews, and behavioral analysis from real organizations and practitioners.",
+    icon: "fas fa-database",
+  },
+  {
+    title: "Quantitative Analysis",
+    description:
+      "Statistical analysis of performance metrics, productivity data, and outcome measurements.",
+    icon: "fas fa-chart-line",
+  },
+  {
+    title: "Qualitative Research",
+    description:
+      "In-depth interviews, case studies, and ethnographic observation of team dynamics.",
+    icon: "fas fa-comments",
+  },
+  {
+    title: "Peer Review",
+    description:
+      "All research undergoes rigorous peer review by industry experts and academic partners.",
+    icon: "fas fa-check-circle",
+  },
+];
+---
+
+<Layout
+  title="Research | TinkByte"
+  description="Evidence-based research on technology adoption, team productivity, and innovation patterns. Data-driven insights for building better products and teams."
+>
+  <!-- Hero Section -->
+  <BlogHero
+    title="TinkByte Research"
+    description="Evidence-based insights on technology adoption, team productivity, and innovation patterns. Research that informs practice."
+    size="medium"
+    gradient="green"
+    showPattern={true}
+  />
+
+  <!-- Research Overview -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-12">
+        <h2
+          class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide"
+        >
+          Our Research Mission
+        </h2>
+        <p
+          class="text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed"
+        >
+          We conduct practical research that bridges the gap between academic
+          theory and real-world implementation. Our studies focus on what
+          actually works in technology organizations.
+        </p>
+      </div>
+
+      <!-- Methodology -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        {
+          researchMethodology.map((method) => (
+            <div class="text-center">
+              <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i
+                  class={`${method.icon} text-green-600 dark:text-green-400 text-xl`}
+                />
+              </div>
+              <h3 class="font-semibold text-zinc-900 dark:text-zinc-100 mb-2 uppercase tracking-wide">
+                {method.title}
+              </h3>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                {method.description}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Active Research Areas -->
+  <section
+    class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800"
+  >
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-12">
+        <h2
+          class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide"
+        >
+          Active Research Areas
+        </h2>
+        <p
+          class="text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed"
+        >
+          Current research projects examining critical questions in technology
+          adoption and team performance.
+        </p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-8">
+        {
+          researchAreas.map((area) => (
+            <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 hover:shadow-lg">
+              <div class="flex items-start justify-between mb-4">
+                <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex-1">
+                  {area.title}
+                </h3>
+                <span
+                  class={`px-2 py-1 text-xs rounded uppercase tracking-wide font-medium ${
+                    area.status === "Ongoing"
+                      ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+                      : area.status === "Phase 2"
+                        ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                        : area.status === "Data Collection"
+                          ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                  }`}
+                >
+                  {area.status}
+                </span>
+              </div>
+
+              <p class="text-zinc-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                {area.description}
+              </p>
+
+              <div class="flex items-center justify-between text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                <div class="flex items-center gap-4">
+                  <span>
+                    <i class="fas fa-file-alt mr-1" />
+                    {area.publications} Publications
+                  </span>
+                  <span>
+                    <i class="fas fa-calendar mr-1" />
+                    Updated{" "}
+                    {new Date(area.lastUpdated).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                {area.tags.map((tag) => (
+                  <span class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs rounded uppercase tracking-wide">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent Publications -->
+  <section
+    class="py-16 px-4 sm:px-6 border-t border-zinc-200 dark:border-zinc-800"
+  >
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-12">
+        <h2
+          class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide"
+        >
+          Recent Publications
+        </h2>
+        <p
+          class="text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed"
+        >
+          Our latest research findings, available for free download. All
+          publications are peer-reviewed and based on real-world data.
+        </p>
+      </div>
+
+      <div class="space-y-8">
+        {
+          recentPublications.map((publication) => (
+            <article class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 hover:shadow-lg">
+              <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+                      {publication.title}
+                    </h3>
+                    <span class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs rounded uppercase tracking-wide">
+                      {publication.type}
+                    </span>
+                  </div>
+
+                  <div class="text-sm text-zinc-500 dark:text-zinc-400 mb-3">
+                    <span class="font-medium text-zinc-700 dark:text-zinc-300">
+                      Authors:
+                    </span>
+                    <span class="ml-1">{publication.authors.join(", ")}</span>
+                    <span class="mx-2">•</span>
+                    <time datetime={publication.publishDate}>
+                      {new Date(publication.publishDate).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )}
+                    </time>
+                  </div>
+                </div>
+
+                <div class="flex-shrink-0">
+                  <Button
+                    variant="outline"
+                    href={publication.downloadUrl}
+                    className="rounded uppercase tracking-wide"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i class="fas fa-download mr-2" />
+                    Download PDF
+                  </Button>
+                </div>
+              </div>
+
+              <p class="text-zinc-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                {publication.abstract}
+              </p>
+
+              <div class="flex flex-wrap gap-2">
+                {publication.tags.map((tag) => (
+                  <span class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs rounded uppercase tracking-wide">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))
+        }
+      </div>
+
+      <div class="text-center mt-12">
+        <Button
+          variant="outline"
+          href="/research/archive"
+          className="rounded uppercase tracking-wide"
+        >
+          View All Publications
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Collaboration -->
+  <section
+    class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800"
+  >
+    <div class="max-w-2xl mx-auto text-center">
+      <h2
+        class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide"
+      >
+        Research Collaboration
+      </h2>
+
+      <p class="text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
+        Interested in participating in our research or proposing a
+        collaboration? We're always looking for organizations willing to share
+        anonymized data for the greater good.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <Button
+          variant="primary"
+          href="/contact?subject=research"
+          className="rounded uppercase tracking-wide"
+        >
+          <i class="fas fa-envelope mr-2"></i>
+          Contact Research Team
+        </Button>
+
+        <Button
+          variant="outline"
+          href="/research/participate"
+          className="rounded uppercase tracking-wide"
+        >
+          <i class="fas fa-users mr-2"></i>
+          Participate in Study
+        </Button>
+      </div>
+    </div>
+  </section>
+</Layout>

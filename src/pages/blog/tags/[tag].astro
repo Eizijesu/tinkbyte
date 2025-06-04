@@ -1,0 +1,305 @@
+---
+// src/pages/tags/[tag].astro
+import Layout from "../../layouts/Layout.astro";
+import ArticleCard from "../../components/blog/ArticleCard.astro";
+import NewsletterForm from "../../components/forms/NewsletterForm.astro";
+import Button from "../../components/ui/Button.astro";
+
+export async function getStaticPaths() {
+  // Define all available tags
+  const tags = [
+    {
+      slug: "artificial-intelligence",
+      name: "Artificial Intelligence",
+      description:
+        "Practical insights into AI implementation, machine learning applications, and the future of intelligent systems.",
+      color: "purple",
+    },
+    {
+      slug: "product-management",
+      name: "Product Management",
+      description:
+        "Product strategy, user experience design, and growth tactics from experienced product leaders.",
+      color: "green",
+    },
+    {
+      slug: "remote-work",
+      name: "Remote Work",
+      description:
+        "Best practices for distributed teams, remote collaboration tools, and future of work insights.",
+      color: "blue",
+    },
+    {
+      slug: "startup-culture",
+      name: "Startup Culture",
+      description:
+        "Entrepreneurship lessons, company building, and insights from the startup ecosystem.",
+      color: "orange",
+    },
+    {
+      slug: "web3",
+      name: "Web3",
+      description:
+        "Blockchain technology, decentralized systems, and the evolution of the internet.",
+      color: "indigo",
+    },
+    {
+      slug: "developer-experience",
+      name: "Developer Experience",
+      description:
+        "Tools, frameworks, and practices that make developers more productive and happy.",
+      color: "teal",
+    },
+    {
+      slug: "tech-trends",
+      name: "Tech Trends",
+      description:
+        "Emerging technologies, industry analysis, and future predictions that matter.",
+      color: "pink",
+    },
+    {
+      slug: "innovation",
+      name: "Innovation",
+      description:
+        "Innovation strategies, disruptive technologies, and breakthrough thinking in tech.",
+      color: "red",
+    },
+  ];
+
+  return tags.map((tag) => ({
+    params: { tag: tag.slug },
+    props: { tag },
+  }));
+}
+
+const { tag } = Astro.props;
+
+// Sample articles for each tag (in real implementation, this would come from your CMS)
+const tagArticles = [
+  {
+    title: `Advanced ${tag.name} Strategies`,
+    excerpt: `Deep dive into cutting-edge ${tag.name.toLowerCase()} approaches and practical implementation strategies.`,
+    date: "January 20, 2024",
+    readTime: "8 min read",
+    slug: `advanced-${tag.slug}-strategies`,
+    image: `https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=600&fit=crop`,
+    tags: [tag.slug, "strategy", "advanced"],
+    category: tag.name,
+    author: {
+      name: "Expert Author",
+      avatar:
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+      role: "Senior Specialist",
+      bio: `Expert in ${tag.name} with over 10 years of experience`,
+    },
+  },
+  {
+    title: `${tag.name} Best Practices Guide`,
+    excerpt: `Essential best practices and proven methodologies for success in ${tag.name.toLowerCase()}.`,
+    date: "January 15, 2024",
+    readTime: "6 min read",
+    slug: `${tag.slug}-best-practices`,
+    image: `https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=600&fit=crop`,
+    tags: [tag.slug, "best-practices", "guide"],
+    category: tag.name,
+    author: {
+      name: "Industry Expert",
+      avatar:
+        "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=100&h=100&fit=crop&crop=face",
+      role: "Lead Consultant",
+      bio: `Consultant specializing in ${tag.name} implementation`,
+    },
+  },
+  {
+    title: `The Future of ${tag.name}`,
+    excerpt: `Exploring emerging trends and future possibilities in the ${tag.name.toLowerCase()} landscape.`,
+    date: "January 10, 2024",
+    readTime: "10 min read",
+    slug: `future-of-${tag.slug}`,
+    image: `https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=800&h=600&fit=crop`,
+    tags: [tag.slug, "future", "trends"],
+    category: tag.name,
+    author: {
+      name: "Futurist Analyst",
+      avatar:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+      role: "Technology Researcher",
+      bio: `Researcher focused on emerging ${tag.name} trends`,
+    },
+  },
+];
+
+const colorClasses = {
+  purple: "from-purple-500 to-pink-500",
+  green: "from-green-500 to-emerald-500",
+  blue: "from-blue-500 to-cyan-500",
+  orange: "from-orange-500 to-red-500",
+  indigo: "from-indigo-500 to-purple-500",
+  teal: "from-teal-500 to-blue-500",
+  pink: "from-pink-500 to-rose-500",
+  red: "from-red-500 to-pink-500",
+};
+
+// Related tags
+const relatedTags = [
+  "artificial-intelligence",
+  "product-management",
+  "remote-work",
+  "startup-culture",
+  "web3",
+  "developer-experience",
+]
+  .filter((t) => t !== tag.slug)
+  .slice(0, 4);
+---
+
+<Layout
+  title={`${tag.name} Articles | TinkByte`}
+  description={`${tag.description} Browse our collection of ${tag.name.toLowerCase()} articles and insights.`}
+>
+  <!-- Tag Hero -->
+  <section class="relative py-20 lg:py-24 px-4 sm:px-6 overflow-hidden">
+    <!-- Background -->
+    <div class="absolute inset-0">
+      <div class={`bg-gradient-to-br ${colorClasses[tag.color]} opacity-10`}>
+      </div>
+      <div class="absolute inset-0 bg-white/50 dark:bg-zinc-900/50"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="relative z-10 max-w-4xl mx-auto text-center">
+      <!-- Tag Badge -->
+      <div
+        class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full mb-6"
+      >
+        <div
+          class={`w-3 h-3 rounded-full bg-gradient-to-r ${colorClasses[tag.color]}`}
+        >
+        </div>
+        <span
+          class="text-sm font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400"
+          >Tag</span
+        >
+      </div>
+
+      <h1
+        class="text-4xl lg:text-5xl xl:text-6xl font-bold text-zinc-900 dark:text-zinc-100 mb-6"
+      >
+        #{tag.name}
+      </h1>
+
+      <p
+        class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-3xl mx-auto mb-8"
+      >
+        {tag.description}
+      </p>
+
+      <!-- Stats -->
+      <div class="flex justify-center gap-8 text-center">
+        <div>
+          <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+            {tagArticles.length}+
+          </div>
+          <div
+            class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
+          >
+            Articles
+          </div>
+        </div>
+        <div>
+          <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+            2.5K+
+          </div>
+          <div
+            class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
+          >
+            Readers
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Articles Grid -->
+  <section class="py-16 lg:py-20 px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto">
+      <!-- Section Header -->
+      <div class="flex items-center justify-between mb-12">
+        <div>
+          <h2
+            class="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-4"
+          >
+            Latest Articles
+          </h2>
+          <p class="text-xl text-zinc-600 dark:text-zinc-400">
+            {tagArticles.length} articles tagged with #{tag.name}
+          </p>
+        </div>
+        <Button variant="outline" href="/blog" className="group">
+          <span class="flex items-center gap-1">
+            All Articles
+            <i
+              class="fas fa-arrow-right text-sm transition-transform duration-300 group-hover:translate-x-1"
+            ></i>
+          </span>
+        </Button>
+      </div>
+
+      <!-- Articles -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        {tagArticles.map((article) => <ArticleCard {...article} />)}
+      </div>
+
+      <!-- Load More -->
+      <div class="text-center">
+        <Button variant="outline" href="#" className="px-8 py-3">
+          Load More Articles
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Related Tags -->
+  <section class="py-16 lg:py-20 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-12">
+        <h2
+          class="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-6"
+        >
+          Related Topics
+        </h2>
+        <p class="text-xl text-zinc-600 dark:text-zinc-400">
+          Explore more topics that might interest you
+        </p>
+      </div>
+
+      <div class="flex flex-wrap justify-center gap-4">
+        {
+          relatedTags.map((relatedTag) => (
+            <a
+              href={`/tags/${relatedTag}`}
+              class="px-6 py-3 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 rounded-full border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 hover:scale-105 font-medium"
+            >
+              #{relatedTag.replace(/-/g, " ")}
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section
+    class="py-16 lg:py-20 px-4 sm:px-6 border-t border-zinc-200 dark:border-zinc-800"
+  >
+    <div class="max-w-4xl mx-auto">
+      <NewsletterForm
+        variant="hero"
+        title={`Stay Updated on ${tag.name}`}
+        description={`Get the latest insights and analysis on ${tag.name.toLowerCase()} delivered to your inbox.`}
+        showFeatures={false}
+        convertKitFormId="8ebf39e7b2"
+      />
+    </div>
+  </section>
+</Layout>
