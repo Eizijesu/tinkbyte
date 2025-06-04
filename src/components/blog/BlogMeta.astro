@@ -1,0 +1,196 @@
+---
+// src/components/blog/BlogMeta.astro
+export interface Props {
+  date: string;
+  readTime: string;
+  category: string;
+  tags?: string[];
+  author: {
+    name: string;
+    avatar: string;
+    role?: string;
+  };
+  views?: number;
+  likes?: number;
+  comments?: number;
+  layout?: "horizontal" | "vertical" | "compact";
+  showSocial?: boolean;
+}
+
+const {
+  date,
+  readTime,
+  category,
+  tags = [],
+  author,
+  views,
+  likes,
+  comments,
+  layout = "horizontal",
+  showSocial = true,
+} = Astro.props;
+
+// Format date
+const formattedDate = new Date(date).toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+---
+
+<div
+  class={`blog-meta ${
+    layout === "vertical"
+      ? "flex flex-col gap-4"
+      : layout === "compact"
+        ? "flex items-center gap-3 text-sm"
+        : "flex flex-wrap items-center gap-6"
+  }`}
+>
+  <!-- Author Information -->
+  <div class="flex items-center gap-3">
+    <img
+      src={author.avatar}
+      alt={author.name}
+      class={`rounded-full border-2 border-zinc-200 dark:border-zinc-700 ${
+        layout === "compact" ? "w-8 h-8" : "w-12 h-12"
+      }`}
+    />
+    <div>
+      <p
+        class={`font-semibold text-zinc-900 dark:text-zinc-100 ${
+          layout === "compact" ? "text-sm" : "text-base"
+        }`}
+      >
+        {author.name}
+      </p>
+      {
+        author.role && layout !== "compact" && (
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">{author.role}</p>
+        )
+      }
+    </div>
+  </div>
+
+  <!-- Publication Details -->
+  <div
+    class={`flex items-center gap-4 text-zinc-500 dark:text-zinc-400 ${
+      layout === "compact" ? "text-xs" : "text-sm"
+    }`}
+  >
+    <!-- Category -->
+    <span
+      class="font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wider"
+    >
+      {category}
+    </span>
+
+    <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+
+    <!-- Date -->
+    <time
+      datetime={date}
+      class="hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+    >
+      {formattedDate}
+    </time>
+
+    <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+
+    <!-- Read Time -->
+    <span class="flex items-center gap-1">
+      <i class="fas fa-clock text-xs"></i>
+      {readTime}
+    </span>
+  </div>
+
+  <!-- Engagement Stats -->
+  {
+    (views || likes || comments) && (
+      <div
+        class={`flex items-center gap-4 text-zinc-500 dark:text-zinc-400 ${
+          layout === "compact" ? "text-xs" : "text-sm"
+        }`}
+      >
+        {views && (
+          <span class="flex items-center gap-1 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
+            <i class="fas fa-eye text-xs" />
+            {views.toLocaleString()}
+          </span>
+        )}
+
+        {likes && (
+          <span class="flex items-center gap-1 hover:text-red-500 transition-colors cursor-pointer">
+            <i class="fas fa-heart text-xs" />
+            {likes.toLocaleString()}
+          </span>
+        )}
+
+        {comments && (
+          <span class="flex items-center gap-1 hover:text-blue-500 transition-colors cursor-pointer">
+            <i class="fas fa-comment text-xs" />
+            {comments.toLocaleString()}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  <!-- Tags -->
+  {
+    tags.length > 0 && layout !== "compact" && (
+      <div class="flex flex-wrap gap-2">
+        {tags.slice(0, 3).map((tag) => (
+          <a
+            href={`/tags/${tag.toLowerCase().replace(/\s+/g, "-")}`}
+            class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+          >
+            #{tag}
+          </a>
+        ))}
+        {tags.length > 3 && (
+          <span class="px-2 py-1 text-zinc-500 dark:text-zinc-400 text-xs">
+            +{tags.length - 3} more
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  <!-- Social Share -->
+  {
+    showSocial && layout !== "compact" && (
+      <div class="flex items-center gap-3 ml-auto">
+        <span class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+          Share:
+        </span>
+        <div class="flex items-center gap-2">
+          <button class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-500 hover:text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
+            <i class="fab fa-twitter text-xs" />
+          </button>
+          <button class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-600 hover:text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
+            <i class="fab fa-linkedin text-xs" />
+          </button>
+          <button class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-green-600 hover:text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
+            <i class="fas fa-link text-xs" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .blog-meta {
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  /* Hover animations for interactive elements */
+  .blog-meta button:hover {
+    transform: translateY(-1px);
+  }
+
+  .blog-meta a:hover {
+    transform: translateY(-1px);
+  }
+</style>

@@ -1,0 +1,44 @@
+---
+// src/components/blog/BlogNavigation.astro
+export interface Props {
+  currentPath?: string;
+  className?: string;
+}
+
+const { currentPath = "", className = "" } = Astro.props;
+
+const navItems = [
+  { label: "All Articles", href: "/blog", exact: true },
+  { label: "Featured", href: "/blog/featured" },
+  { label: "AI Evolution", href: "/blog/categories/ai-evolution" },
+  { label: "Product Strategy", href: "/blog/categories/product-strategy" },
+  { label: "Tech Culture", href: "/blog/categories/tech-culture" },
+  { label: "Developer Tools", href: "/blog/categories/developer-tools" },
+];
+
+function isActive(href: string, exact: boolean = false) {
+  if (exact) {
+    return currentPath === href;
+  }
+  return currentPath.startsWith(href);
+}
+---
+
+<nav class={`blog-navigation ${className}`}>
+  <div class="flex flex-wrap gap-1">
+    {
+      navItems.map((item) => (
+        <a
+          href={item.href}
+          class={`nav-link px-4 py-2 rounded text-sm font-medium transition-all duration-200 uppercase tracking-wide ${
+            isActive(item.href, item.exact)
+              ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+              : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          }`}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+  </div>
+</nav>

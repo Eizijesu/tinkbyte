@@ -1,0 +1,151 @@
+---
+// src/components/blog/PodcastCard.astro
+export interface Props {
+  title: string;
+  description: string;
+  duration: string;
+  publishDate: string;
+  audioUrl: string;
+  episode?: number;
+  season?: number;
+  image?: string;
+  guests?: string[];
+  className?: string;
+}
+
+const {
+  title,
+  description,
+  duration,
+  publishDate,
+  audioUrl,
+  episode,
+  season,
+  image,
+  guests = [],
+  className = "",
+} = Astro.props;
+---
+
+<article
+  class={`podcast-card bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-lg transition-all duration-300 ${className}`}
+>
+  {
+    image && (
+      <div class="aspect-video overflow-hidden">
+        <img
+          src={image}
+          alt={title}
+          class="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+    )
+  }
+
+  <div class="p-6">
+    <!-- Episode Info -->
+    <div class="flex items-center gap-2 mb-3">
+      {
+        season && episode && (
+          <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded text-xs font-bold uppercase tracking-wide">
+            S{season}E{episode}
+          </span>
+        )
+      }
+      <span
+        class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs font-bold uppercase tracking-wide"
+      >
+        PODCAST
+      </span>
+      <span
+        class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide"
+      >
+        {duration}
+      </span>
+    </div>
+
+    <!-- Title -->
+    <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+      {title}
+    </h3>
+
+    <!-- Description -->
+    <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2">
+      {description}
+    </p>
+
+    <!-- Guests -->
+    {
+      guests.length > 0 && (
+        <div class="mb-4">
+          <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+            GUESTS:
+          </span>
+          <span class="text-sm text-zinc-700 dark:text-zinc-300 ml-2">
+            {guests.join(", ")}
+          </span>
+        </div>
+      )
+    }
+
+    <!-- Audio Player Controls -->
+    <div class="flex items-center justify-between">
+      <button
+        class="play-button flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
+        data-audio-url={audioUrl}
+      >
+        <i class="fas fa-play text-sm"></i>
+        <span class="text-sm font-medium uppercase tracking-wide">PLAY</span>
+      </button>
+
+      <span
+        class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide"
+      >
+        {publishDate}
+      </span>
+    </div>
+  </div>
+</article>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const playButtons = document.querySelectorAll(".play-button");
+
+    playButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const audioUrl = button.getAttribute("data-audio-url");
+        if (audioUrl) {
+          // Simple audio player - you can enhance this
+          const audio = new Audio(audioUrl);
+          audio.play();
+
+          // Update button state
+          const icon = button.querySelector("i");
+          const text = button.querySelector("span");
+
+          if (icon && text) {
+            icon.className = "fas fa-pause text-sm";
+            text.textContent = "PAUSE";
+          }
+
+          audio.addEventListener("ended", () => {
+            if (icon && text) {
+              icon.className = "fas fa-play text-sm";
+              text.textContent = "PLAY";
+            }
+          });
+        }
+      });
+    });
+  });
+</script>

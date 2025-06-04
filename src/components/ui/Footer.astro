@@ -1,0 +1,236 @@
+---
+import Logo from "./Logo.astro";
+import NewsletterForm from "../forms/NewsletterForm.astro";
+
+const currentYear = new Date().getFullYear();
+
+const navLinks = [
+  { text: "ARTICLES", href: "/blog" },
+  { text: "AUDIO", href: "/audio" },
+  { text: "COMMUNITY", href: "/community" },
+  { text: "CONTACT", href: "/contact" },
+  { text: "NEWSLETTER", href: "/newsletter" },
+];
+
+const legalLinks = [
+  { text: "PRIVACY POLICY", href: "/privacy" },
+  { text: "TERMS OF USE", href: "/terms" },
+  { text: "SITEMAP", href: "/sitemap.xml" },
+];
+
+const categoryLinks = [
+  { text: "AI EVOLUTION", href: "/category/ai-evolution" },
+  { text: "PRODUCT STRATEGY", href: "/category/product-strategy" },
+  { text: "TECH CULTURE", href: "/category/tech-culture" },
+  { text: "DEVELOPER TOOLS", href: "/category/developer-tools" },
+];
+
+const resourceLinks = [
+  { text: "COMMUNITY", href: "/community" },
+  { text: "RESEARCH", href: "/research" },
+  { text: "PODCAST", href: "/podcast" },
+  { text: "ARCHIVE", href: "/archive" },
+];
+
+const socialLinks = [
+  {
+    name: "Twitter",
+    href: "https://twitter.com/tinkbytehq",
+    icon: "fab fa-twitter",
+  },
+  {
+    name: "LinkedIn",
+    href: "https://linkedin.com/company/tinkbytehq",
+    icon: "fab fa-linkedin",
+  },
+  {
+    name: "YouTube",
+    href: "https://youtube.com/@tinkbytehq",
+    icon: "fab fa-youtube",
+  },
+  {
+    name: "Instagram",
+    href: "https://instagram.com/tinkbytehq",
+    icon: "fab fa-instagram",
+  },
+  { name: "RSS", href: "/rss.xml", icon: "fas fa-rss" },
+];
+
+const contactInfo = {
+  email: "feedback@tinkbyte.com",
+};
+---
+
+<footer
+  class="bg-zinc-900 text-zinc-300"
+  style="font-family: 'Space Grotesk', sans-serif;"
+>
+
+  <!-- Main Footer Content -->
+  <div class="py-16 px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto">
+      <!-- Top Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-12 mb-16">
+        <!-- Brand & Contact -->
+        <div class="lg:col-span-1">
+          <div class="mb-6">
+            <Logo size="default" className="text-white" />
+          </div>
+          <p class="text-zinc-400 mb-8 leading-relaxed">
+            Cutting through the noise with substance-driven tech insights. Real
+            knowledge for builders who value depth.
+          </p>
+
+          <!-- Contact Information -->
+          <div class="space-y-4 mb-8">
+            <h4
+              class="text-white font-semibold text-sm uppercase tracking-wider mb-4"
+            >
+              Contact Us
+            </h4>
+            <div class="space-y-3">
+              <a
+                href={`mailto:${contactInfo.email}`}
+                class="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors group"
+              >
+                <i class="fas fa-envelope w-4 text-blue-400"></i>
+                <span class="group-hover:underline">{contactInfo.email}</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Social Links -->
+          <div class="flex space-x-4">
+            {
+              socialLinks.map((social) => (
+                <a
+                  href={social.href}
+                  class="text-zinc-400 hover:text-white transition-all duration-200 transform hover:scale-110 p-2 rounded-lg hover:bg-zinc-800"
+                  aria-label={`Follow TinkByte on ${social.name}`}
+                  target={social.name !== "RSS" ? "_blank" : undefined}
+                  rel={
+                    social.name !== "RSS" ? "noopener noreferrer" : undefined
+                  }
+                >
+                  <i class={`${social.icon} text-lg`} />
+                </a>
+              ))
+            }
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div>
+          <h3
+            class="text-white font-semibold mb-6 text-sm uppercase tracking-wider"
+          >
+            Navigation
+          </h3>
+          <ul class="space-y-3">
+            {
+              navLinks.map((link) => (
+                <li>
+                  <a
+                    href={link.href}
+                    class="text-zinc-400 hover:text-white transition-colors duration-200 relative group text-sm uppercase tracking-wide"
+                  >
+                    <span class="relative">
+                      {link.text}
+                      <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full" />
+                    </span>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <!-- Categories -->
+        <div>
+          <h3
+            class="text-white font-semibold mb-6 text-sm uppercase tracking-wider"
+          >
+            Categories
+          </h3>
+          <div class="space-y-3">
+            {
+              categoryLinks.map((category) => (
+                <a
+                  href={category.href}
+                  class="block text-zinc-400 hover:text-white transition-all duration-200 text-sm uppercase tracking-wide hover:translate-x-2 transform"
+                >
+                  {category.text}
+                </a>
+              ))
+            }
+          </div>
+        </div>
+
+        <!-- Resources (Community & Research) -->
+        <div>
+          <h3
+            class="text-white font-semibold mb-6 text-sm uppercase tracking-wider"
+          >
+            Resources
+          </h3>
+          <div class="space-y-3">
+            {
+              resourceLinks.map((resource) => (
+                <a
+                  href={resource.href}
+                  class="block text-zinc-400 hover:text-white transition-all duration-200 text-sm uppercase tracking-wide hover:translate-x-2 transform"
+                >
+                  {resource.text}
+                </a>
+              ))
+            }
+          </div>
+        </div>
+
+        <!-- Legal -->
+        <div>
+          <h3
+            class="text-white font-semibold mb-6 text-sm uppercase tracking-wider"
+          >
+            Legal
+          </h3>
+          <ul class="space-y-3">
+            {
+              legalLinks.map((link) => (
+                <li>
+                  <a
+                    href={link.href}
+                    class="text-zinc-400 hover:text-white transition-colors duration-200 text-sm uppercase tracking-wide"
+                  >
+                    {link.text}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="pt-8 border-t border-zinc-800">
+        <div
+          class="flex flex-col md:flex-row justify-between items-center gap-6"
+        >
+          <div
+            class="flex flex-col md:flex-row items-center gap-4 text-sm text-zinc-400"
+          >
+            <p class="uppercase tracking-wider">
+              &copy; {currentYear} TinkByte. All rights reserved.
+            </p>
+          </div>
+
+          <div class="flex items-center space-x-2 text-sm text-zinc-400">
+            <span class="uppercase tracking-wider">Made with</span>
+            <i class="fas fa-heart text-red-500 mx-1"></i>
+            <span class="uppercase tracking-wider">from TinkByte</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>

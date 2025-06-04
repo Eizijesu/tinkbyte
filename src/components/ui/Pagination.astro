@@ -1,0 +1,175 @@
+---
+export interface Props {
+  currentPage: number;
+  totalPages: number;
+  baseUrl: string;
+  className?: string;
+}
+
+const { currentPage, totalPages, baseUrl, className = "" } = Astro.props;
+
+// Generate page numbers to show
+const generatePageNumbers = () => {
+  const pages = [];
+  const maxVisible = 5;
+
+  if (totalPages <= maxVisible) {
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+  } else {
+    if (currentPage <= 3) {
+      pages.push(1, 2, 3, 4, "...", totalPages);
+    } else if (currentPage >= totalPages - 2) {
+      pages.push(
+        1,
+        "...",
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages
+      );
+    } else {
+      pages.push(
+        1,
+        "...",
+        currentPage - 1,
+        currentPage,
+        currentPage + 1,
+        "...",
+        totalPages
+      );
+    }
+  }
+
+  return pages;
+};
+
+const pageNumbers = generatePageNumbers();
+const prevPage = currentPage > 1 ? currentPage - 1 : null;
+const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+---
+
+<nav
+  aria-label="Pagination"
+  class={`flex items-center justify-center gap-2 ${className}`}
+>
+  <!-- Previous Button -->
+  {
+    prevPage ? (
+      <a
+        href={`${baseUrl}${prevPage > 1 ? `?page=${prevPage}` : ""}`}
+        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors uppercase tracking-wide"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        PREVIOUS
+      </a>
+    ) : (
+      <span class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded cursor-not-allowed uppercase tracking-wide">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        PREVIOUS
+      </span>
+    )
+  }
+
+  <!-- Page Numbers -->
+  <div class="flex items-center gap-1">
+    {
+      pageNumbers.map((page) =>
+        page === "..." ? (
+          <span class="px-3 py-2 text-sm text-zinc-400 uppercase tracking-wide">
+            ...
+          </span>
+        ) : page === currentPage ? (
+          <span class="px-3 py-2 text-sm font-medium text-white bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 rounded uppercase tracking-wide">
+            {page}
+          </span>
+        ) : (
+          <a
+            href={`${baseUrl}${page > 1 ? `?page=${page}` : ""}`}
+            class="px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors uppercase tracking-wide"
+          >
+            {page}
+          </a>
+        )
+      )
+    }
+  </div>
+
+  <!-- Next Button -->
+  {
+    nextPage ? (
+      <a
+        href={`${baseUrl}?page=${nextPage}`}
+        class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors uppercase tracking-wide"
+      >
+        NEXT
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      </a>
+    ) : (
+      <span class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded cursor-not-allowed uppercase tracking-wide">
+        NEXT
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      </span>
+    )
+  }
+</nav>
+
+<!-- Page Info -->
+<div class="text-center mt-4">
+  <p class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+    PAGE {currentPage} OF {totalPages}
+  </p>
+</div>

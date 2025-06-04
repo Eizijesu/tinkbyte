@@ -1,0 +1,273 @@
+---
+export interface Props {
+  src: string;
+  title?: string;
+  className?: string;
+  autoplay?: boolean;
+  showDownload?: boolean;
+}
+
+const {
+  src,
+  title = "Audio Player",
+  className = "",
+  autoplay = false,
+  showDownload = true,
+} = Astro.props;
+---
+
+<div
+  class={`audio-player bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-4 ${className}`}
+>
+  <!-- Audio Title -->
+  {
+    title && (
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
+          {title}
+        </h3>
+      </div>
+    )
+  }
+
+  <!-- Audio Controls -->
+  <div class="flex items-center gap-4">
+    <!-- Play/Pause Button -->
+    <button
+      id="play-pause-btn"
+      class="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-full hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
+      aria-label="Play/Pause"
+    >
+      <!-- Play Icon -->
+      <svg
+        id="play-icon"
+        class="w-5 h-5 ml-0.5"
+        fill="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path d="M8 5v14l11-7z"></path>
+      </svg>
+
+      <!-- Pause Icon -->
+      <svg
+        id="pause-icon"
+        class="w-5 h-5 hidden"
+        fill="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+      </svg>
+    </button>
+
+    <!-- Progress Container -->
+    <div class="flex-1">
+      <!-- Time Display -->
+      <div
+        class="flex justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wide"
+      >
+        <span id="current-time">00:00</span>
+        <span id="duration">00:00</span>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="relative">
+        <div
+          class="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full cursor-pointer"
+          id="progress-container"
+        >
+          <div
+            id="progress-bar"
+            class="h-full bg-zinc-900 dark:bg-zinc-100 rounded-full transition-all duration-150"
+            style="width: 0%"
+          >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Volume Control -->
+    <div class="flex items-center gap-2">
+      <button
+        id="mute-btn"
+        class="text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+        aria-label="Mute/Unmute"
+      >
+        <!-- Volume Icon -->
+        <svg
+          id="volume-icon"
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+          ></path>
+        </svg>
+
+        <!-- Mute Icon -->
+        <svg
+          id="mute-icon"
+          class="w-5 h-5 hidden"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+          ></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Download Button -->
+    {
+      showDownload && (
+        <a
+          href={src}
+          download
+          class="flex-shrink-0 p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+          aria-label="Download audio"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+        </a>
+      )
+    }
+  </div>
+
+  <!-- Hidden Audio Element -->
+  <audio
+    id="audio-element"
+    preload="metadata"
+    {autoplay ? { autoplay: true } : {}}
+  >
+    <source src={src} type="audio/mpeg" />
+    <source src={src} type="audio/mp4" />
+    <source src={src} type="audio/wav" />
+    Your browser does not support the audio element.
+  </audio>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const audio = document.getElementById("audio-element") as HTMLAudioElement;
+    const playPauseBtn = document.getElementById("play-pause-btn");
+    const playIcon = document.getElementById("play-icon");
+    const pauseIcon = document.getElementById("pause-icon");
+    const currentTimeEl = document.getElementById("current-time");
+    const durationEl = document.getElementById("duration");
+    const progressContainer = document.getElementById("progress-container");
+    const progressBar = document.getElementById("progress-bar");
+    const muteBtn = document.getElementById("mute-btn");
+    const volumeIcon = document.getElementById("volume-icon");
+    const muteIcon = document.getElementById("mute-icon");
+
+    if (
+      !audio ||
+      !playPauseBtn ||
+      !playIcon ||
+      !pauseIcon ||
+      !currentTimeEl ||
+      !durationEl ||
+      !progressContainer ||
+      !progressBar ||
+      !muteBtn ||
+      !volumeIcon ||
+      !muteIcon
+    ) {
+      console.warn("Audio player elements not found");
+      return;
+    }
+
+    // Format time
+    function formatTime(seconds: number): string {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+
+    // Update progress
+    function updateProgress() {
+      if (audio.duration) {
+        const progress = (audio.currentTime / audio.duration) * 100;
+        progressBar.style.width = `${progress}%`;
+        currentTimeEl.textContent = formatTime(audio.currentTime);
+      }
+    }
+
+    // Play/Pause functionality
+    playPauseBtn.addEventListener("click", () => {
+      if (audio.paused) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
+    });
+
+    // Update play/pause button
+    audio.addEventListener("play", () => {
+      playIcon.classList.add("hidden");
+      pauseIcon.classList.remove("hidden");
+    });
+
+    audio.addEventListener("pause", () => {
+      playIcon.classList.remove("hidden");
+      pauseIcon.classList.add("hidden");
+    });
+
+    // Update duration when metadata loads
+    audio.addEventListener("loadedmetadata", () => {
+      durationEl.textContent = formatTime(audio.duration);
+    });
+
+    // Update progress
+    audio.addEventListener("timeupdate", updateProgress);
+
+    // Seek functionality
+    progressContainer.addEventListener("click", (e) => {
+      const rect = progressContainer.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const width = rect.width;
+      const seekTime = (clickX / width) * audio.duration;
+      audio.currentTime = seekTime;
+    });
+
+    // Mute functionality
+    muteBtn.addEventListener("click", () => {
+      audio.muted = !audio.muted;
+      if (audio.muted) {
+        volumeIcon.classList.add("hidden");
+        muteIcon.classList.remove("hidden");
+      } else {
+        volumeIcon.classList.remove("hidden");
+        muteIcon.classList.add("hidden");
+      }
+    });
+
+    // Reset when ended
+    audio.addEventListener("ended", () => {
+      progressBar.style.width = "0%";
+      currentTimeEl.textContent = "00:00";
+      playIcon.classList.remove("hidden");
+      pauseIcon.classList.add("hidden");
+    });
+  });
+</script>
