@@ -1,77 +1,107 @@
 ---
-// src/components/blog/CommentSection.astro
+// src/components/blog/CommentSection.astro - FIXED TypeScript assertions
+export interface Props {
+  postSlug: string;
+  postTitle: string;
+}
+
+const { postSlug, postTitle } = Astro.props;
+
+// Giscus configuration from environment variables
+const giscusConfig = {
+  repo: import.meta.env.PUBLIC_GISCUS_REPO,
+  repoId: import.meta.env.PUBLIC_GISCUS_REPO_ID,
+  category: import.meta.env.PUBLIC_GISCUS_CATEGORY,
+  categoryId: import.meta.env.PUBLIC_GISCUS_CATEGORY_ID,
+  mapping: import.meta.env.PUBLIC_GISCUS_MAPPING || "pathname",
+  strict: import.meta.env.PUBLIC_GISCUS_STRICT || "0",
+  reactionsEnabled: import.meta.env.PUBLIC_GISCUS_REACTIONS_ENABLED || "1",
+  emitMetadata: import.meta.env.PUBLIC_GISCUS_EMIT_METADATA || "0",
+  inputPosition: import.meta.env.PUBLIC_GISCUS_INPUT_POSITION || "top",
+  theme: import.meta.env.PUBLIC_GISCUS_THEME || "preferred_color_scheme",
+  lang: import.meta.env.PUBLIC_GISCUS_LANG || "en",
+};
 ---
 
-<section class="mt-16 pt-8 border-t border-zinc-200 dark:border-zinc-800">
-  <div class="mb-8">
-    <h3
-      class="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2 font-space-grotesk"
-    >
-      Join the Discussion
-    </h3>
-    <p class="text-zinc-600 dark:text-zinc-400 text-sm">
-      Share your thoughts and engage with the TinkByte community. Comments are
-      powered by GitHub Discussions.
-    </p>
-  </div>
+{
+  giscusConfig.repo && giscusConfig.repoId && giscusConfig.categoryId && (
+    <section class="comments-section py-12 border-t border-zinc-200 dark:border-zinc-800">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6">
+        <div class="comments-header mb-8 text-center">
+          <h3 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2 font-space-grotesk uppercase tracking-wide">
+            Comments & Discussion
+          </h3>
+          <p class="text-zinc-600 dark:text-zinc-400">
+            Join the conversation about "{postTitle}"
+          </p>
+        </div>
 
-  <div id="giscus-container" class="giscus-container">
-    <!-- Giscus will be loaded here -->
-  </div>
-</section>
+        <div class="comments-container bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 p-6">
+          <div id="giscus-container" class="min-h-[200px]" />
+        </div>
+      </div>
+    </section>
+  )
+}
 
-<script>
-  function loadGiscus() {
-    const container = document.getElementById("giscus-container");
-    if (!container) return;
+<script define:vars={{ giscusConfig }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    const giscusContainer = document.getElementById("giscus-container");
 
-    // Check if Giscus is already loaded
-    if (container.querySelector(".giscus")) return;
+    if (!giscusContainer || !giscusConfig.repo) return;
 
-    // Create and configure Giscus script
+    // Load Giscus script
     const script = document.createElement("script");
     script.src = "https://giscus.app/client.js";
-    script.setAttribute("data-repo", "Eizijesu/tinkbyte");
-    script.setAttribute("data-repo-id", "R_kgDOO14dQA");
-    script.setAttribute("data-category", "Announcements");
-    script.setAttribute("data-category-id", "DIC_kwDOO14dQM4CrB7G");
-    script.setAttribute("data-mapping", "pathname");
-    script.setAttribute("data-strict", "0");
-    script.setAttribute("data-reactions-enabled", "1");
-    script.setAttribute("data-emit-metadata", "1");
-    script.setAttribute("data-input-position", "bottom");
-    script.setAttribute("data-theme", "preferred_color_scheme");
-    script.setAttribute("data-lang", "en");
-    script.setAttribute("crossorigin", "anonymous");
     script.async = true;
+    script.crossOrigin = "anonymous";
 
-    container.appendChild(script);
-  }
+    // Set Giscus attributes
+    script.setAttribute("data-repo", giscusConfig.repo);
+    script.setAttribute("data-repo-id", giscusConfig.repoId);
+    script.setAttribute("data-category", giscusConfig.category);
+    script.setAttribute("data-category-id", giscusConfig.categoryId);
+    script.setAttribute("data-mapping", giscusConfig.mapping);
+    script.setAttribute("data-strict", giscusConfig.strict);
+    script.setAttribute(
+      "data-reactions-enabled",
+      giscusConfig.reactionsEnabled
+    );
+    script.setAttribute("data-emit-metadata", giscusConfig.emitMetadata);
+    script.setAttribute("data-input-position", giscusConfig.inputPosition);
+    script.setAttribute("data-theme", giscusConfig.theme);
+    script.setAttribute("data-lang", giscusConfig.lang);
 
-  // Load Giscus when the page is ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", loadGiscus);
-  } else {
-    loadGiscus();
-  }
+    giscusContainer.appendChild(script);
 
-  // Handle theme changes for Giscus
-  document.addEventListener("DOMContentLoaded", () => {
+    // Theme change handler
+    const handleThemeChange = () => {
+      // ✅ FIXED: Removed TypeScript assertion
+      const giscusFrame = document.querySelector("iframe.giscus-frame");
+
+      if (giscusFrame && giscusFrame.contentWindow) {
+        const isDark = document.documentElement.classList.contains("dark");
+        const theme = isDark ? "dark" : "light";
+
+        giscusFrame.contentWindow.postMessage(
+          {
+            giscus: {
+              setConfig: { theme: theme },
+            },
+          },
+          "https://giscus.app"
+        );
+      }
+    };
+
+    // Listen for theme changes
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (
           mutation.type === "attributes" &&
           mutation.attributeName === "class"
         ) {
-          const isDark = document.documentElement.classList.contains("dark");
-          const giscusFrame = document.querySelector("iframe.giscus-frame");
-          if (giscusFrame) {
-            const theme = isDark ? "dark" : "light";
-            giscusFrame.contentWindow?.postMessage(
-              { giscus: { setConfig: { theme } } },
-              "https://giscus.app"
-            );
-          }
+          handleThemeChange();
         }
       });
     });
@@ -82,23 +112,3 @@
     });
   });
 </script>
-
-<style>
-  .giscus-container {
-    min-height: 200px;
-  }
-
-  /* Custom styling for Giscus integration */
-  :global(.giscus) {
-    width: 100%;
-  }
-
-  :global(.giscus-frame) {
-    border-radius: 0.5rem;
-    border: 1px solid rgb(228 228 231);
-  }
-
-  :global(.dark .giscus-frame) {
-    border-color: rgb(63 63 70);
-  }
-</style>

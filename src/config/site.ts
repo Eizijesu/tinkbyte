@@ -1,4 +1,4 @@
-// src/config/site.ts
+// src/config/site.ts - FIXED Environment Variable Access
 export const SITE = {
   name: 'TinkByte',
   title: 'TinkByte | Digital Tech Innovation Weekly',
@@ -44,16 +44,21 @@ export const SITE = {
     cloudflareAnalytics: true // Free with Cloudflare Pages
   },
 
-  // Comment system configuration
+  // Comment system configuration - FIXED: Removed import.meta.env references
   comments: {
-    provider: 'giscus',
+    provider: 'giscus' as const,
     giscusConfig: {
-      repo: 'tinkbyte/tinkbyte-website',
-      repoId: '', // Will be generated when you set up Giscus
-      category: 'Comments',
-      categoryId: '', // Will be generated
-      mapping: 'pathname',
-      theme: 'preferred_color_scheme'
+      repo: 'Eizijesu/tinkbyte', // Set your default values or make this configurable elsewhere
+      repoId: 'R_kgDOO14dQA',
+      category: 'General',
+      categoryId: 'DIC_kwDOO14dQM4CrB7H',
+      mapping: 'pathname' as const,
+      theme: 'preferred_color_scheme' as const,
+      reactionsEnabled: true,
+      emitMetadata: false,
+      inputPosition: 'top' as const,
+      lang: 'en',
+      loading: 'lazy' as const
     }
   }
 } as const;

@@ -1,5 +1,5 @@
 ---
-// src/components/forms/NewsletterForm.astro
+// src/components/forms/NewsletterForm.astro - Clean & Optimized
 export interface Props {
   variant?: "inline" | "modal" | "sidebar" | "hero" | "minimal" | "footer";
   size?: "small" | "medium" | "large";
@@ -8,7 +8,6 @@ export interface Props {
   placeholder?: string;
   buttonText?: string;
   showFeatures?: boolean;
-  convertKitFormId?: string;
   className?: string;
 }
 
@@ -20,9 +19,11 @@ const {
   placeholder = "Enter your email address",
   buttonText = "Subscribe",
   showFeatures = false,
-  convertKitFormId = "8ebf39e7b2",
   className = "",
 } = Astro.props;
+
+// Get ConvertKit form ID from environment variables
+const convertKitFormId = import.meta.env.PUBLIC_CONVERTKIT_FORM_ID;
 
 const sizeClasses = {
   small: "text-sm",
@@ -32,17 +33,16 @@ const sizeClasses = {
 
 const variantStyles = {
   inline:
-    "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6",
-  modal: "bg-white dark:bg-zinc-900 rounded-xl p-8 shadow-2xl",
+    "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm p-6",
+  modal: "bg-white dark:bg-zinc-900 rounded-sm p-8 shadow-2xl",
   sidebar:
-    "bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white rounded-xl p-6",
-  hero: "bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white rounded-xl p-8 lg:p-12",
-  minimal: "bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-6",
+    "bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white rounded-sm p-6",
+  hero: "bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white rounded-sm p-8 lg:p-12",
+  minimal: "bg-zinc-50 dark:bg-zinc-800/50 rounded-sm p-6",
   footer:
-    "bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/50 rounded-xl p-6",
+    "bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/50 rounded-sm p-6",
 };
 
-// Magazine-style features
 const features = [
   {
     icon: "fas fa-brain",
@@ -58,7 +58,7 @@ const features = [
   },
   {
     icon: "fas fa-users",
-    title: "12,500+ Builders",
+    title: "1,200+ Builders",
     description: "Join the community",
     color: "green",
   },
@@ -71,7 +71,7 @@ const features = [
   <!-- Background decorations for gradient variants -->
   {
     (variant === "sidebar" || variant === "hero" || variant === "footer") && (
-      <div class="absolute inset-0 overflow-hidden rounded-xl">
+      <div class="absolute inset-0 overflow-hidden rounded-sm">
         <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl animate-pulse" />
         <div
           class="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-xl animate-pulse"
@@ -130,11 +130,11 @@ const features = [
     <form
       action={`https://app.convertkit.com/forms/${convertKitFormId}/subscriptions`}
       method="post"
+      class="newsletter-signup-form"
       data-sv-form={convertKitFormId}
       data-uid={convertKitFormId}
       data-format="inline"
       data-version="5"
-      class="newsletter-signup-form"
     >
       <div
         class={`flex gap-3 ${variant === "hero" ? "flex-col sm:flex-row" : "flex-col sm:flex-row"}`}
@@ -144,7 +144,7 @@ const features = [
           name="email_address"
           placeholder={placeholder}
           required
-          class={`flex-1 px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+          class={`flex-1 px-4 py-3 rounded-sm border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
             variant === "sidebar" || variant === "hero" || variant === "footer"
               ? "bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder-zinc-300 focus:bg-white/20 focus:border-white/40"
               : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:border-zinc-500 dark:focus:border-zinc-400"
@@ -153,7 +153,7 @@ const features = [
 
         <button
           type="submit"
-          class={`px-6 py-3 font-semibold rounded-lg transition-all duration-200 hover:scale-105 uppercase tracking-wider whitespace-nowrap ${
+          class={`px-6 py-3 font-semibold rounded-sm transition-all duration-200 hover:scale-105 uppercase tracking-wider whitespace-nowrap ${
             variant === "sidebar" || variant === "hero" || variant === "footer"
               ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-xl"
               : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 hover:shadow-lg"
@@ -168,7 +168,7 @@ const features = [
       <input type="hidden" name="authenticity_token" value="" />
     </form>
 
-    <!-- Features (Magazine Style) -->
+    <!-- Features -->
     {
       showFeatures && (
         <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -221,12 +221,12 @@ const features = [
       )
     }
 
-    <!-- Stats Bar (Optional for hero/footer variants) -->
+    <!-- Stats Bar -->
     {
       (variant === "hero" || variant === "footer") && (
         <div class="mt-6 flex items-center justify-center gap-8 text-center">
           <div>
-            <div class="text-2xl font-bold text-white">12.5K+</div>
+            <div class="text-2xl font-bold text-white">1.2K+</div>
             <div class="text-xs text-zinc-300 uppercase tracking-wide">
               Subscribers
             </div>
@@ -270,16 +270,26 @@ const features = [
       </a>.
     </p>
 
-    <!-- Success Message Container -->
+    <!-- Messages -->
     <div
       id="newsletter-success"
-      class="hidden mt-4 p-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg"
+      class="hidden mt-4 p-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-sm"
     >
       <div class="flex items-center gap-2 text-green-800 dark:text-green-300">
         <i class="fas fa-check-circle"></i>
         <span class="font-medium"
-          >Successfully subscribed! Check your email for confirmation.</span
+          >Thanks for subscribing! Check your email to confirm.</span
         >
+      </div>
+    </div>
+
+    <div
+      id="newsletter-error"
+      class="hidden mt-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-sm"
+    >
+      <div class="flex items-center gap-2 text-red-800 dark:text-red-300">
+        <i class="fas fa-exclamation-circle"></i>
+        <span class="font-medium">Something went wrong. Please try again.</span>
       </div>
     </div>
   </div>
@@ -290,18 +300,20 @@ const features = [
     font-family: "Space Grotesk", sans-serif;
   }
 
-  /* ConvertKit success message styling */
-  :global(.formkit-alert-success) {
-    background-color: rgb(34 197 94);
-    color: white;
-    padding: 1rem;
-    border-radius: 0.75rem;
-    margin-top: 1rem;
-    border: none;
-    font-family: "Space Grotesk", sans-serif;
+  .newsletter-form input,
+  .newsletter-form button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Loading state */
+  .newsletter-form input:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .newsletter-form input:focus {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
   .newsletter-signup-form.loading button {
     opacity: 0.7;
     cursor: not-allowed;
@@ -311,108 +323,83 @@ const features = [
   .newsletter-signup-form.loading input {
     pointer-events: none;
   }
-
-  /* Enhanced hover effects */
-  .newsletter-form:hover .animate-pulse {
-    animation-duration: 1s;
-  }
-
-  /* Smooth transitions for all interactive elements */
-  .newsletter-form input,
-  .newsletter-form button {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Focus states */
-  .newsletter-form input:focus {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  .dark .newsletter-form input:focus {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
 </style>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // Enhanced form submission handling
     document.querySelectorAll(".newsletter-signup-form").forEach((form) => {
-      form.addEventListener("submit", function (e) {
-        const button = this.querySelector(
-          'button[type="submit"]'
-        ) as HTMLButtonElement;
-        const input = this.querySelector(
-          'input[type="email"]'
-        ) as HTMLInputElement;
-        const originalText = button.textContent;
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
 
-        // Validate email
+        const button = this.querySelector('button[type="submit"]');
+        const input = this.querySelector('input[type="email"]');
+        const successDiv = document.getElementById("newsletter-success");
+        const errorDiv = document.getElementById("newsletter-error");
+
+        if (!button || !input) return;
+
+        const originalText = button.textContent;
         const email = input.value.trim();
+
         if (!email || !email.includes("@")) {
           input.focus();
           return;
         }
 
-        // Loading state
+        if (successDiv) successDiv.classList.add("hidden");
+        if (errorDiv) errorDiv.classList.add("hidden");
+
         button.textContent = "Subscribing...";
         button.disabled = true;
         this.classList.add("loading");
 
-        // Add success handling
-        const handleSuccess = () => {
-          button.textContent = "Subscribed!";
-          button.className = button.className.replace(
-            /bg-\w+-\d+/g,
-            "bg-green-600"
-          );
+        try {
+          const formData = new FormData(this);
+          const response = await fetch(this.action, {
+            method: "POST",
+            body: formData,
+            headers: { Accept: "application/json" },
+          });
 
-          // Show success message
-          const successDiv = document.getElementById("newsletter-success");
-          if (successDiv) {
-            successDiv.classList.remove("hidden");
+          if (response.ok) {
+            button.textContent = "Subscribed!";
+            button.className = button.className.replace(
+              /bg-\w+-\d+/g,
+              "bg-green-600"
+            );
+
+            if (successDiv) successDiv.classList.remove("hidden");
+            input.value = "";
+
+            setTimeout(() => {
+              button.textContent = originalText || "Subscribe";
+              button.disabled = false;
+              button.className = button.className.replace(
+                "bg-green-600",
+                "bg-zinc-900"
+              );
+              this.classList.remove("loading");
+              if (successDiv) successDiv.classList.add("hidden");
+            }, 3000);
+          } else {
+            throw new Error("Network response was not ok");
           }
+        } catch (error) {
+          console.error("Newsletter subscription error:", error);
 
-          // Reset form
-          input.value = "";
+          button.textContent = "Try Again";
+          button.disabled = false;
+          this.classList.remove("loading");
+          if (errorDiv) errorDiv.classList.remove("hidden");
 
-          // Reset button after delay
           setTimeout(() => {
             button.textContent = originalText || "Subscribe";
-            button.disabled = false;
-            button.className = button.className.replace(
-              "bg-green-600",
-              "bg-zinc-900"
-            );
-            this.classList.remove("loading");
+            if (errorDiv) errorDiv.classList.add("hidden");
           }, 3000);
-        };
-
-        // Listen for ConvertKit success
-        const checkForSuccess = () => {
-          const successMessage = document.querySelector(
-            ".formkit-alert-success"
-          );
-          if (successMessage) {
-            handleSuccess();
-          } else {
-            // Reset if no success after 5 seconds
-            setTimeout(() => {
-              if (button.textContent === "Subscribing...") {
-                button.textContent = originalText || "Subscribe";
-                button.disabled = false;
-                this.classList.remove("loading");
-              }
-            }, 5000);
-          }
-        };
-
-        // Check for success message after form submission
-        setTimeout(checkForSuccess, 1000);
+        }
       });
     });
 
-    // Form validation enhancement
     document.querySelectorAll('input[type="email"]').forEach((input) => {
       input.addEventListener("blur", function () {
         const email = this.value.trim();

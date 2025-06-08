@@ -1,22 +1,45 @@
 ---
 import { getCollection } from "astro:content";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import AuthorBio from "../../components/blog/AuthorBio.astro";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import AuthorBio from "../../../components/blog/AuthorBio.astro";
+
+interface Author {
+  slug: string;
+  name: string;
+  bio?: string;
+  avatar?: string;
+  role?: string;
+  social?: {
+    twitter?: string;
+    linkedin?: string;
+    website?: string;
+    github?: string;
+  };
+}
 
 export async function getStaticPaths() {
   const authors = await getCollection("authors");
   return authors.map((author) => ({
     params: { author: author.slug },
-    props: { author },
+    props: { author: author.data },
   }));
 }
 
-const { author } = Astro.props;
+const { author } = Astro.props as { author: Author };
+
+const authorWithDefaults: Author = {
+  name: author.name,
+  bio: author.bio ?? "",
+  avatar: author.avatar ?? "/default-avatar.png",
+  role: author.role ?? "",
+  social: author.social ?? {},
+  slug: author.slug,
+};
 ---
 
-<BaseLayout>
+<BaseLayout title={`Author: ${authorWithDefaults.name}`}>
   <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16">
-    <AuthorBio author={author} />
+    <AuthorBio author={authorWithDefaults} />
 
     <h2 class="text-2xl font-bold mt-12 mb-8">Recent Articles</h2>
     <div class="space-y-6">

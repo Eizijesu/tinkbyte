@@ -1,120 +1,475 @@
 ---
+// src/pages/contact.astro - Enhanced design without contact form
 import Layout from "../layouts/Layout.astro";
-import NewsletterForm from "../components/forms/NewsletterForm.astro";
-import { SITE } from "../config/site";
+import Button from "../components/ui/Button.astro";
 
+// Contact methods
 const contactMethods = [
   {
-    title: "Email Us",
-    description: "For partnerships, feedback, or general inquiries",
+    title: "General Inquiries",
+    description: "Questions about TinkByte, partnerships, or general feedback",
+    email: "hello@tinkbyte.com",
     icon: "envelope",
-    action: {
-      text: SITE.social.email,
-      href: `mailto:${SITE.social.email}`
-    }
+    color: "blue",
   },
   {
-    title: "Follow Us",
-    description: "Stay updated with our latest insights and discussions",
+    title: "Editorial",
+    description: "Story ideas, guest posts, or editorial collaborations",
+    email: "editorial@tinkbyte.com",
+    icon: "edit",
+    color: "purple",
+  },
+  {
+    title: "Community",
+    description: "Community events, meetups, or speaker opportunities",
+    email: "community@tinkbyte.com",
     icon: "users",
-    action: {
-      text: "Social Media",
-      href: `https://twitter.com/${SITE.social.twitter.replace('@', '')}`
-    }
-  }
+    color: "green",
+  },
+  {
+    title: "Business",
+    description: "Sponsorships, advertising, or business partnerships",
+    email: "business@tinkbyte.com",
+    icon: "handshake",
+    color: "orange",
+  },
 ];
 
-const faqs = [
+// FAQ items
+const faqItems = [
   {
-    question: "Can I contribute to TinkByte?",
-    answer: "We're always looking for quality content from industry experts. Email us your ideas and writing samples."
+    question: "How can I contribute to TinkByte?",
+    answer:
+      "We welcome guest posts, case studies, and story ideas. Email us at editorial@tinkbyte.com with your pitch and writing samples.",
   },
   {
-    question: "How often do you publish?",
-    answer: "We publish new articles weekly, with our newsletter going out every Tuesday."
+    question: "Do you offer sponsored content?",
+    answer:
+      "We offer selective sponsorship opportunities that align with our values. Contact business@tinkbyte.com for our media kit.",
   },
   {
-    question: "Do you offer partnerships?",
-    answer: "Yes! We partner with companies that align with our mission. Reach out to discuss."
+    question: "Can I republish TinkByte articles?",
+    answer:
+      "Most of our content is available under Creative Commons. Please contact us for specific republishing requests.",
   },
   {
-    question: "Can I republish your content?",
-    answer: "Please email us for permission. We're usually happy to allow republishing with proper attribution."
-  }
+    question: "How do I report a technical issue?",
+    answer:
+      "For website bugs or technical issues, please email us at feedback@tinkbyte.com with details about the problem.",
+  },
+  {
+    question: "Do you accept guest writers?",
+    answer:
+      "Yes! We're always looking for fresh perspectives. Send your pitch and 2-3 writing samples to editorial@tinkbyte.com.",
+  },
+  {
+    question: "How can I stay updated with TinkByte?",
+    answer:
+      "Subscribe to our weekly newsletter TinkStacks for the latest insights, or follow us on social media for daily updates.",
+  },
+];
+
+// Social links
+const socialLinks = [
+  {
+    name: "Twitter",
+    url: "https://twitter.com/tinkbyte",
+    icon: "fab fa-twitter",
+    color: "blue",
+  },
+  {
+    name: "LinkedIn",
+    url: "https://linkedin.com/company/tinkbyte",
+    icon: "fab fa-linkedin",
+    color: "blue",
+  },
+  {
+    name: "GitHub",
+    url: "https://github.com/tinkbyte",
+    icon: "fab fa-github",
+    color: "gray",
+  },
+  {
+    name: "Discord",
+    url: "https://discord.gg/tinkbyte",
+    icon: "fab fa-discord",
+    color: "purple",
+  },
 ];
 ---
 
 <Layout
-  title="Contact | TinkByte"
-  description="Get in touch with the TinkByte team. We'd love to hear from you."
+  title="Contact | TinkByte - Get in Touch"
+  description="Get in touch with the TinkByte team. We'd love to hear from you about partnerships, contributions, or just to say hello."
 >
-  <!-- Hero Section -->
-  <section class="py-16 lg:py-24 px-4 sm:px-6">
-    <div class="max-w-4xl mx-auto text-center">
-      <h1 class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 font-space-grotesk uppercase tracking-wide">
-        Let's Connect
-      </h1>
-      <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-400 leading-relaxed">
-        Have a question, feedback, or just want to say hello? We'd love to hear from you.
-      </p>
+  <!-- Enhanced Contact Hero -->
+  <section class="relative py-16 lg:py-24 overflow-hidden">
+    <div
+      class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 opacity-10"
+    >
     </div>
-  </section>
+    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5">
+    </div>
 
-  <!-- Contact Methods -->
-  <section class="py-16 px-4 sm:px-6">
-    <div class="max-w-4xl mx-auto">
-      <div class="grid md:grid-cols-2 gap-8 mb-16">
-        {contactMethods.map((method) => (
-          <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow">
-            <div class="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
-              <i class={`fas fa-${method.icon} text-2xl text-zinc-600 dark:text-zinc-400`}></i>
-            </div>
-            <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
-              {method.title}
-            </h3>
-            <p class="text-zinc-600 dark:text-zinc-400 mb-6">
-              {method.description}
-            </p>
-            <a
-              href={method.action.href}
-              class="inline-flex items-center gap-2 px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-semibold rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors uppercase tracking-wide"
-            >
-              {method.action.text}
-            </a>
-          </div>
-        ))}
-      </div>
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-4xl mx-auto text-center">
+        <h1
+          class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6"
+        >
+          Let's
+          <span
+            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+          >
+            Connect
+          </span>
+        </h1>
 
-      <!-- FAQ Section -->
-      <div class="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-8 lg:p-12">
-        <h2 class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 text-center font-space-grotesk uppercase tracking-wide">
-          Frequently Asked Questions
-        </h2>
+        <p
+          class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12"
+        >
+          Have a story idea? Want to collaborate? Looking to partner with us?
+          We'd love to hear from you and explore how we can work together.
+        </p>
 
-        <div class="grid md:grid-cols-2 gap-8">
-          {faqs.map((faq) => (
-            <div>
-              <h4 class="font-semibold text-zinc-900 dark:text-zinc-100 mb-2 uppercase tracking-wide">
-                {faq.question}
-              </h4>
-              <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                {faq.answer}
-              </p>
-            </div>
-          ))}
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-sm border border-green-200 dark:border-green-700"
+        >
+          <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+          <span
+            class="text-sm font-bold uppercase tracking-wider text-green-800 dark:text-green-300"
+          >
+            We usually respond within 24 hours
+          </span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Newsletter Section -->
+  <!-- Contact Methods -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="container mx-auto">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+          How to
+          <span
+            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+          >
+            Reach Us
+          </span>
+        </h2>
+        <p class="text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
+          Choose the best way to get in touch based on your needs. We're here to
+          help and collaborate.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        {
+          contactMethods.map((method) => (
+            <div class="group bg-white dark:bg-zinc-800 p-6 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200">
+              <div class="flex items-start gap-4">
+                <div
+                  class={`w-16 h-16 bg-${method.color}-100 dark:bg-${method.color}-900/30 rounded-sm flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}
+                >
+                  <i
+                    class={`fas fa-${method.icon} text-2xl text-${method.color}-600 dark:text-${method.color}-400`}
+                  />
+                </div>
+
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2 uppercase tracking-wide group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
+                    {method.title}
+                  </h3>
+
+                  <p class="text-zinc-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                    {method.description}
+                  </p>
+
+                  <a
+                    href={`mailto:${method.email}`}
+                    class="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors group/link"
+                  >
+                    {method.email}
+                    <i class="fas fa-external-link-alt text-sm group-hover/link:translate-x-1 transition-transform duration-200" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Social Media Links -->
   <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
-    <div class="max-w-4xl mx-auto">
-      <NewsletterForm
-        variant="minimal"
-        title="Stay in the Loop"
-        description="Join our community and get weekly insights delivered to your inbox."
-      />
+    <div class="container mx-auto">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+          Follow
+          <span
+            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+          >
+            Our Journey
+          </span>
+        </h2>
+        <p class="text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
+          Stay connected with us on social media for daily updates,
+          behind-the-scenes content, and community discussions.
+        </p>
+      </div>
+
+      <div class="flex justify-center gap-6 flex-wrap">
+        {
+          socialLinks.map((social) => (
+            <a
+              href={social.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group flex items-center gap-3 px-6 py-4 bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200"
+            >
+              <i
+                class={`${social.icon} text-xl text-zinc-600 dark:text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200`}
+              />
+              <span class="font-medium text-zinc-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
+                {social.name}
+              </span>
+              <i class="fas fa-external-link-alt text-sm text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-1 transition-all duration-200" />
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Collapsible FAQ Section -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="container mx-auto">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-8">
+          <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+            Frequently
+            <span
+              class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+            >
+              Asked Questions
+            </span>
+          </h2>
+          <p class="text-xl text-zinc-600 dark:text-zinc-400 mb-6">
+            Quick answers to common questions about working with TinkByte
+          </p>
+
+          <!-- Collapsible Toggle Button -->
+          <button
+            id="faq-toggle"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 group"
+            aria-expanded="false"
+            aria-controls="faq-content"
+          >
+            <span class="font-medium text-zinc-900 dark:text-white"
+              >View FAQs</span
+            >
+            <svg
+              class="w-5 h-5 text-zinc-500 dark:text-zinc-400 transition-transform duration-200 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+              id="faq-icon"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Collapsible Content -->
+        <div
+          id="faq-content"
+          class="overflow-hidden transition-all duration-300 ease-in-out"
+          style="max-height: 0;"
+        >
+          <div class="space-y-6 pt-6">
+            {
+              faqItems.map((item, index) => (
+                <div class="group bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200">
+                  <button
+                    class="w-full text-left p-6 focus:outline-none faq-trigger"
+                    data-faq-toggle={index}
+                    aria-expanded="false"
+                  >
+                    <div class="flex items-center justify-between">
+                      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200 pr-4">
+                        {item.question}
+                      </h3>
+                      <svg
+                        class="w-5 h-5 text-zinc-500 dark:text-zinc-400 transition-transform duration-200 flex-shrink-0"
+                        data-faq-icon={index}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                  <div
+                    class="overflow-hidden transition-all duration-300 ease-in-out"
+                    data-faq-content={index}
+                    style="max-height: 0;"
+                  >
+                    <div class="px-6 pb-6">
+                      <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed border-t border-zinc-100 dark:border-zinc-700 pt-4">
+                        {item.answer}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter CTA -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="container mx-auto">
+      <div class="max-w-2xl mx-auto text-center">
+        <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+          Stay
+          <span
+            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+          >
+            Connected
+          </span>
+        </h2>
+        <p class="text-xl text-zinc-600 dark:text-zinc-400 mb-8">
+          Join our weekly newsletter for the latest insights, stories, and
+          updates from the TinkByte community.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button
+            href="/newsletter"
+            variant="primary"
+            className="px-8 py-3 rounded-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
+          >
+            Subscribe to Newsletter
+          </Button>
+          <Button
+            href="/community"
+            variant="outline"
+            className="px-8 py-3 rounded-sm font-semibold border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200"
+          >
+            Join Community
+          </Button>
+        </div>
+      </div>
     </div>
   </section>
 </Layout>
+
+<style>
+  /* Enhanced styles */
+  .group:hover .group-hover\:scale-110 {
+    transform: scale(1.1);
+  }
+
+  /* Gradient text animation */
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .bg-gradient-to-r.bg-clip-text {
+    background-size: 200% 200%;
+    animation: gradient 3s ease-in-out infinite;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Main FAQ section toggle
+    function setupCollapsible(
+      toggleId: string,
+      contentId: string,
+      iconId: string
+    ) {
+      const toggle = document.getElementById(toggleId);
+      const content = document.getElementById(contentId);
+      const icon = document.getElementById(iconId);
+
+      if (!toggle || !content || !icon) return;
+
+      let isExpanded = false;
+
+      toggle.addEventListener("click", () => {
+        isExpanded = !isExpanded;
+
+        // Update ARIA attributes
+        toggle.setAttribute("aria-expanded", isExpanded.toString());
+
+        // Toggle content
+        if (isExpanded) {
+          content.style.maxHeight = content.scrollHeight + "px";
+          icon.style.transform = "rotate(180deg)";
+          toggle.querySelector("span")!.textContent = "Hide FAQs";
+        } else {
+          content.style.maxHeight = "0";
+          icon.style.transform = "rotate(0deg)";
+          toggle.querySelector("span")!.textContent = "View FAQs";
+        }
+      });
+    }
+
+    // Setup main FAQ toggle
+    setupCollapsible("faq-toggle", "faq-content", "faq-icon");
+
+    // Individual FAQ item toggles
+    document.querySelectorAll("[data-faq-toggle]").forEach((trigger) => {
+      const index = trigger.getAttribute("data-faq-toggle");
+      const content = document.querySelector(
+        `[data-faq-content="${index}"]`
+      ) as HTMLElement;
+      const icon = document.querySelector(
+        `[data-faq-icon="${index}"]`
+      ) as HTMLElement;
+
+      if (!content || !icon) return;
+
+      let isExpanded = false;
+
+      trigger.addEventListener("click", () => {
+        isExpanded = !isExpanded;
+
+        // Update ARIA attributes
+        trigger.setAttribute("aria-expanded", isExpanded.toString());
+
+        // Toggle content
+        if (isExpanded) {
+          content.style.maxHeight = content.scrollHeight + "px";
+          icon.style.transform = "rotate(180deg)";
+        } else {
+          content.style.maxHeight = "0";
+          icon.style.transform = "rotate(0deg)";
+        }
+      });
+    });
+  });
+</script>

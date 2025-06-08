@@ -1,19 +1,46 @@
 ---
 // src/components/blog/BlogHero.astro
+
 export interface Props {
   title: string;
   subtitle?: string;
   description?: string;
   image?: string;
   className?: string;
+  size?: "small" | "medium" | "large";
+  gradient?: string;
+  showPattern?: boolean; // Can be kept for future use or removed entirely
 }
 
-const { title, subtitle, description, image, className = "" } = Astro.props;
+const {
+  title,
+  subtitle,
+  description,
+  image,
+  className = "",
+  size = "medium",
+  gradient = "",
+  showPattern = false,
+} = Astro.props;
+
+const sizeClasses = {
+  small: "py-8",
+  medium: "py-16 lg:py-24",
+  large: "py-28",
+};
 ---
 
 <section
-  class={`relative py-16 lg:py-24 px-4 sm:px-6 overflow-hidden ${className}`}
+  class={`relative ${sizeClasses[size]} px-4 sm:px-6 overflow-hidden ${className}`}
 >
+  {
+    gradient && !image && (
+      <div
+        class={`absolute inset-0 z-0 bg-gradient-to-b from-${gradient}-500 to-${gradient}-700 opacity-40`}
+      />
+    )
+  }
+
   {
     image && (
       <div class="absolute inset-0 z-0">
@@ -35,7 +62,9 @@ const { title, subtitle, description, image, className = "" } = Astro.props;
     }
 
     <h1
-      class={`text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 font-space-grotesk uppercase tracking-wide ${image ? "text-white" : "text-zinc-900 dark:text-zinc-100"}`}
+      class={`text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 font-space-grotesk uppercase tracking-wide ${
+        image || gradient ? "text-white" : "text-zinc-900 dark:text-zinc-100"
+      }`}
     >
       {title}
     </h1>
@@ -43,7 +72,11 @@ const { title, subtitle, description, image, className = "" } = Astro.props;
     {
       description && (
         <p
-          class={`text-xl lg:text-2xl leading-relaxed max-w-3xl mx-auto ${image ? "text-gray-200" : "text-zinc-600 dark:text-zinc-400"}`}
+          class={`text-xl lg:text-2xl leading-relaxed max-w-3xl mx-auto ${
+            image || gradient
+              ? "text-gray-200"
+              : "text-zinc-600 dark:text-zinc-400"
+          }`}
         >
           {description}
         </p>

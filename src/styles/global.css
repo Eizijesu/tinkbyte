@@ -1,166 +1,644 @@
+/* src/styles/global.css - Fixed Version */
+
 /* Import Google Fonts */
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
 
-/* src/styles/global.css */
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Custom Properties for your brand */
+/* =================================
+   CSS Custom Properties
+   ================================= */
 :root {
-  --color-brand-primary: 36 55 136; /* #243788 in RGB */
-  --color-brand-secondary: 180 188 225; /* #b4bce1 in RGB */
-  --color-brand-dark: 26 43 92; /* #1a2b5c in RGB */
-  --color-brand-light: 232 235 244; /* #e8ebf4 in RGB */
+  /* Brand Colors */
+  --color-brand-primary: 36 55 136;
+  --color-brand-secondary: 180 188 225;
+  --color-brand-dark: 26 43 92;
+  --color-brand-light: 232 235 244;
+  
+  /* Border Radius */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  
+  /* Typography */
+  --font-size-hero: clamp(2rem, 5vw, 3.5rem);
+  --font-size-feature: clamp(1.5rem, 3vw, 2rem);
+  --font-size-section: 1.875rem;
+  
+  /* Spacing */
+  --space-magazine: 4.5rem;
+  --space-section: 6rem;
+  
+  /* Shadows */
+  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  --shadow-magazine: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --shadow-magazine-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+  --shadow-brand: 0 4px 25px -5px rgba(36, 55, 136, 0.1), 0 10px 10px -5px rgba(36, 55, 136, 0.04);
+  
+  /* Transitions */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  
+  /* Easings */
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Base font family */
-* {
-  font-family: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
+    --shadow-magazine: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-magazine-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
+  }
 }
 
-body {
-  font-family: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+/* =================================
+   FontAwesome - Optimized
+   ================================= */
+@font-face {
+  font-family: 'Font Awesome 6 Free';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-regular-400.woff2") format("woff2");
 }
 
-/* Enhanced reading experience */
-.prose {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  line-height: 1.7;
-  font-size: 1.125rem;
+@font-face {
+  font-family: 'Font Awesome 6 Free';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-solid-900.woff2") format("woff2");
 }
 
-.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-weight: 600;
-  letter-spacing: -0.025em;
+@font-face {
+  font-family: 'Font Awesome 6 Brands';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-brands-400.woff2") format("woff2");
 }
 
-/* Button hover effects */
-.button-hover-effect {
-  transform: translateY(0);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"] {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+  text-rendering: auto !important;
+  line-height: 1 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  display: inline-block !important;
+  text-decoration: none !important;
+  font-weight: 900 !important;
 }
 
-.button-hover-effect:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.fa-regular, .far { font-weight: 400 !important; }
+.fa-brands, .fab { 
+  font-weight: 400 !important; 
+  font-family: "Font Awesome 6 Brands" !important; 
 }
 
-.dark .button-hover-effect:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+/* =================================
+   Base Styles - Cross-Browser
+   ================================= */
+@layer base {
+  html {
+    font-family: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  body {
+    background-color: white;
+    color: rgb(17 24 39);
+    line-height: 1.6;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  .dark body {
+    background-color: rgb(17 24 39);
+    color: rgb(243 244 246);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.2;
+    font-feature-settings: "kern" 1, "liga" 1;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+    scroll-margin-top: 2rem;
+  }
+  
+  p {
+    margin-bottom: 1rem;
+    line-height: 1.75;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  pre, code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-feature-settings: "kern" 0;
+  }
+  
+  pre {
+    overflow-x: auto;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark pre {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  a {
+    color: rgb(59 130 246);
+    text-decoration: none;
+    text-decoration-skip-ink: auto;
+    transition: color var(--duration-normal) var(--ease-out);
+  }
+  
+  .dark a {
+    color: rgb(228, 228, 228);
+  }
+  
+  a:hover {
+    color: rgb(29 78 216);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+  }
+  
+  .dark a:hover {
+    color: rgb(147 197 253);
+  }
+  
+  *:focus-visible {
+    outline: 2px solid rgb(59 130 246);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  
+  input, textarea, select {
+    border: 1px solid rgb(209 213 219);
+    background-color: white;
+    color: rgb(17 24 39);
+    border-radius: var(--radius-sm);
+    transition: border-color var(--duration-normal) var(--ease-out);
+  }
+  
+  .dark input, .dark textarea, .dark select {
+    border-color: rgb(75 85 99);
+    background-color: rgb(31 41 55);
+    color: rgb(243 244 246);
+  }
+  
+  input:focus, textarea:focus, select:focus {
+    border-color: rgb(59 130 246);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  button {
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--duration-normal) var(--ease-out);
+  }
+  
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  
+  img {
+    height: auto;
+    max-width: 100%;
+    border-radius: var(--radius-md);
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  
+  th, td {
+    border-bottom: 1px solid rgb(229 231 235);
+    padding: 0.75rem;
+    text-align: left;
+  }
+  
+  .dark th, .dark td {
+    border-color: rgb(75 85 99);
+  }
+  
+  th {
+    font-weight: 600;
+    background-color: rgb(249 250 251);
+  }
+  
+  .dark th {
+    background-color: rgb(31 41 55);
+  }
 }
 
-/* Mobile menu smooth animation */
-#mobile-menu {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* =================================
+   Component Layer
+   ================================= */
+@layer components {
+  .btn {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    transition: all var(--duration-normal) var(--ease-out);
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
+  
+  .btn:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px rgb(59 130 246), 0 0 0 4px rgba(59, 130, 246, 0.2);
+  }
+  
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .btn-primary {
+    background-color: rgb(59 130 246);
+    color: white;
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    background-color: rgb(29 78 216);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  .btn-secondary {
+    background-color: rgb(229 231 235);
+    color: rgb(17 24 39);
+  }
+  
+  .dark .btn-secondary {
+    background-color: rgb(75 85 99);
+    color: rgb(243 244 246);
+  }
+  
+  .btn-secondary:hover:not(:disabled) {
+    background-color: rgb(209 213 219);
+  }
+  
+  .dark .btn-secondary:hover:not(:disabled) {
+    background-color: rgb(55 65 81);
+  }
+  
+  .card {
+    background-color: white;
+    border: 1px solid rgb(229 231 235);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+    transition: all var(--duration-normal) var(--ease-out);
+  }
+  
+  .dark .card {
+    background-color: rgb(31 41 55);
+    border-color: rgb(75 85 99);
+  }
+  
+  .card-hover:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .magazine-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-magazine);
+    border: 1px solid rgba(36, 55, 136, 0.1);
+    transition: all var(--duration-normal) var(--ease-out);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  
+  .dark .magazine-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .magazine-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-magazine-lg);
+  }
+  
+  .prose-custom {
+    max-width: none;
+    color: rgb(55 65 81);
+    line-height: 1.7;
+    font-size: 1.125rem;
+  }
+  
+  .dark .prose-custom {
+    color: rgb(209 213 219);
+  }
+  
+  .prose-custom h1,
+  .prose-custom h2,
+  .prose-custom h3,
+  .prose-custom h4,
+  .prose-custom h5,
+  .prose-custom h6 {
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: rgb(17 24 39);
+  }
+  
+  .dark .prose-custom h1,
+  .dark .prose-custom h2,
+  .dark .prose-custom h3,
+  .dark .prose-custom h4,
+  .dark .prose-custom h5,
+  .dark .prose-custom h6 {
+    color: rgb(243 244 246);
+  }
+  
+  .prose-custom a {
+    color: rgb(59 130 246);
+  }
+  
+  .dark .prose-custom a {
+    color: rgb(96 165 250);
+  }
+  
+  .prose-custom code {
+    background-color: rgb(243 244 246);
+    padding: 0.125rem 0.25rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875em;
+  }
+  
+  .dark .prose-custom code {
+    background-color: rgb(31 41 55);
+  }
 }
 
-#mobile-menu.hidden {
-  opacity: 0;
-  transform: translateY(-10px);
-  pointer-events: none;
+/* =================================
+   Utilities Layer
+   ================================= */
+@layer utilities {
+  .text-balance {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+  }
+  
+  @supports (text-wrap: balance) {
+    .text-balance {
+      text-wrap: balance;
+    }
+  }
+  
+  .text-pretty {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  @supports (text-wrap: pretty) {
+    .text-pretty {
+      text-wrap: pretty;
+    }
+  }
+  
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-clamp: 3;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgb(243 244 246);
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgb(31 41 55);
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgb(156 163 175);
+    border-radius: 3px;
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgb(75 85 99);
+  }
+  
+  .shadow-magazine { box-shadow: var(--shadow-magazine); }
+  .shadow-magazine-lg { box-shadow: var(--shadow-magazine-lg); }
+  .shadow-brand { box-shadow: var(--shadow-brand); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  
+  .animate-fade-in {
+    animation: fadeIn var(--duration-slow) var(--ease-out) forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp var(--duration-normal) var(--ease-out) forwards;
+  }
+  
+  .fade-in-observer {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out);
+  }
+  
+  .fade-in-observer.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .theme-transition {
+    transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out);
+  }
 }
 
-#mobile-menu:not(.hidden) {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
+/* =================================
+   Animation Keyframes
+   ================================= */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
 
-/* Theme toggle icon animations */
-#theme-toggle svg {
-  transition: transform 0.2s ease;
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
 
-#theme-toggle:hover svg {
-  transform: rotate(15deg) scale(1.1);
+/* =================================
+   Accessibility & Performance
+   ================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
-/* Logo hover effects */
-.group:hover svg {
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+@media (prefers-contrast: high) {
+  .card:hover,
+  .magazine-card:hover {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+  
+  .btn {
+    border: 2px solid currentColor;
+  }
 }
 
-.dark .group:hover svg {
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  
+  a, a:visited {
+    text-decoration: underline;
+  }
+  
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 90%;
+  }
+  
+  pre, blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+  
+  thead {
+    display: table-header-group;
+  }
+  
+  tr, img {
+    page-break-inside: avoid;
+  }
+  
+  img {
+    max-width: 100% !important;
+  }
+  
+  p, h2, h3 {
+    page-break-after: avoid;
+  }
 }
 
-/* Animation keyframes */
-@keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
+@supports (-webkit-backdrop-filter: blur(10px)) {
+  .backdrop-blur {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
 }
 
-@keyframes fade-in {
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-/* Utility classes */
-.animate-blob {
-  animation: blob 7s infinite;
-}
-
-.fade-in {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-}
-
-.fade-in.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-clamp: 2;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-clamp: 3;
-}
-
-.featured-shadow {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-}
-
-.card-hover {
-  transition: all 0.3s ease;
-}
-
-.card-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.theme-transition-all {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-.theme-transition-bg {
-  transition: background-color 0.3s ease;
-}
-
-.theme-transition-color {
-  transition: color 0.3s ease;
-}
-
-/* Typography utilities */
-.font-space-grotesk {
-  font-family: "Space Grotesk", system-ui, sans-serif;
-}
-
-.font-sans {
-  font-family: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+@supports not (backdrop-filter: blur(10px)) {
+  .magazine-card {
+    background: rgba(255, 255, 255, 0.95);
+  }
+  
+  .dark .magazine-card {
+    background: rgba(0, 0, 0, 0.8);
+  }
 }

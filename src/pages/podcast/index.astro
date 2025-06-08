@@ -1,325 +1,484 @@
 ---
+// src/pages/podcast/index.astro - TypeScript Fixed Version
 import Layout from "../../layouts/Layout.astro";
-import BlogHero from "../../components/blog/BlogHero.astro";
-import AudioPlayer from "../../components/ui/AudioPlayer.astro";
+import PodcastCard from "../../components/blog/PodcastCard.astro";
 import Button from "../../components/ui/Button.astro";
+import AudioPlayer from "../../components/ui/AudioPlayer.astro";
+import { getCollection } from "astro:content";
 
-// Sample audio content
-const featuredEpisode = {
-  title: "AI Evolution: Beyond the Hype Cycle",
-  description: "A deep dive into practical AI implementation with Dr. Elena Vasquez, exploring what actually works when you strip away the marketing buzz.",
-  audioUrl: "/audio/ai-evolution-beyond-hype.mp3",
-  duration: "28:45",
-  publishDate: "2024-01-25",
-  slug: "ai-evolution-beyond-hype",
-  image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop",
-  host: "TinkByte Team",
-  guest: "Dr. Elena Vasquez",
-  tags: ["AI", "Product Strategy", "Implementation"],
-  transcript: "Full transcript available..."
-};
+// Get all published podcast episodes
+const allEpisodes = await getCollection("podcast", ({ data }) => !data.draft);
 
-const recentEpisodes = [
-  {
-    title: "Building Products That Scale Globally",
-    description: "Lessons from the trenches of global product development with Alex Chen.",
-    audioUrl: "/audio/building-products-scale.mp3",
-    duration: "35:20",
-    publishDate: "2024-01-22",
-    slug: "building-products-scale-globally",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=400&fit=crop",
-    host: "TinkByte Team",
-    guest: "Alex Chen"
-  },
-  {
-    title: "The Human Side of Tech Culture",
-    description: "Exploring team dynamics and building sustainable tech organizations.",
-    audioUrl: "/audio/human-side-tech-culture.mp3",
-    duration: "22:15",
-    publishDate: "2024-01-20",
-    slug: "human-side-tech-culture",
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=400&fit=crop",
-    host: "TinkByte Team",
-    guest: "Sarah Kim"
-  },
-  {
-    title: "Low-Code Revolution in Enterprise",
-    description: "How low-code platforms are solving real enterprise challenges.",
-    audioUrl: "/audio/low-code-enterprise.mp3",
-    duration: "31:30",
-    publishDate: "2024-01-12",
-    slug: "low-code-enterprise-revolution",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=400&fit=crop",
-    host: "TinkByte Team",
-    guest: "Rachel Torres"
-  }
-];
+// Sort episodes by publication date (newest first)
+const sortedEpisodes = allEpisodes.sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+);
 
-const categories = [
-  { name: "AI & Machine Learning", count: 8, slug: "ai-ml" },
-  { name: "Product Strategy", count: 12, slug: "product-strategy" },
-  { name: "Tech Culture", count: 6, slug: "tech-culture" },
-  { name: "Developer Tools", count: 9, slug: "dev-tools" },
-  { name: "Startup Insights", count: 7, slug: "startup-insights" }
-];
+// Get featured episodes
+const featuredEpisodes = sortedEpisodes.filter(episode => episode.data.featured);
+
+// Get recent episodes (excluding featured ones)
+const recentEpisodes = sortedEpisodes
+  .filter(episode => !episode.data.featured)
+  .slice(0, 6);
+
+// Get categories with episode counts - FIXED: Proper type handling
+const allCategories = [...new Set(allEpisodes.map(episode => episode.data.category).filter(Boolean))];
+const categoriesWithCounts = allCategories.map(category => ({
+  name: category as string,
+  slug: (category as string)?.toLowerCase().replace(/\s+/g, '-') || '',
+  count: allEpisodes.filter(episode => episode.data.category === category).length,
+  // Map category to icon
+  icon: {
+    'ai-ml': 'brain',
+    'product-strategy': 'bullseye',
+    'tech-culture': 'users',
+    'dev-tools': 'tools',
+    'startup-insights': 'rocket',
+    'interviews': 'microphone',
+    'deep-dives': 'search'
+  }[(category as string)?.toLowerCase().replace(/\s+/g, '-')] || 'podcast'
+}));
+
+// Calculate stats
+const totalEpisodes = allEpisodes.length;
+const totalHosts = [...new Set(allEpisodes.map(episode => episode.data.host).filter(Boolean))].length;
+const totalGuests = [...new Set(allEpisodes.flatMap(episode => episode.data.guests || []))].length;
+
+// Calculate total duration (simplified - you might want to parse actual durations)
+const totalDuration = "24h 30m"; // You can calculate this from actual episode durations
+const avgDuration = "28 min";
+
+// Transform episodes for PodcastCard component
+const transformEpisode = (episode: any) => ({
+  title: episode.data.title,
+  description: episode.data.description,
+  date: episode.data.pubDate.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long", 
+    day: "numeric",
+  }),
+  duration: episode.data.duration || "30:00",
+  slug: episode.slug,
+  image: episode.data.image || "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=600&h=600&fit=crop",
+  audioUrl: episode.data.audioUrl,
+  guests: episode.data.guests || [],
+  host: episode.data.host || "TinkByte Team",
+  season: episode.data.season,
+  episode: episode.data.episode,
+  featured: episode.data.featured,
+  transcript: episode.data.transcript
+});
 ---
 
 <Layout
-  title="Audio Content | TinkByte"
+  title="Podcast | TinkByte - Tech Conversations That Matter"
   description="Listen to in-depth conversations about technology, product development, and innovation. Audio content for builders who value substance over hype."
 >
   
   <!-- Hero Section -->
-  <BlogHero 
-    title="TinkByte Audio"
-    description="In-depth conversations about technology, product development, and innovation. Listen while you build."
-    size="medium"
-    gradient="purple"
-    showPattern={true}
-  />
+  <section class="relative py-16 lg:py-24 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 opacity-10"></div>
+    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5"></div>
+    
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-4xl mx-auto text-center">
+        
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm rounded-sm border border-zinc-200 dark:border-zinc-700 mb-6">
+          <div class="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+          <span class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+            Podcast Episodes
+          </span>
+        </div>
 
-  <!-- Featured Episode -->
-  <section class="py-16 px-4 sm:px-6">
-    <div class="max-w-4xl mx-auto">
-      
-      <div class="mb-8">
-        <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
-          Featured Episode
-        </h2>
-      </div>
+        <!-- Title -->
+        <h1 class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6">
+          Listen to
+          <span class="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            Tech Conversations
+          </span>
+          That Matter
+        </h1>
 
-      <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div class="grid lg:grid-cols-2 gap-0">
-          
-          <!-- Episode Image -->
-          <div class="aspect-square lg:aspect-auto">
-            <img 
-              src={featuredEpisode.image} 
-              alt={featuredEpisode.title}
-              class="w-full h-full object-cover"
-              loading="eager"
-            />
+        <!-- Subtitle -->
+        <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12">
+          In-depth conversations about technology, product development, and innovation. Listen while you build, commute, or take a break from the screen.
+        </p>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-4 gap-8 max-w-2xl mx-auto">
+          <div class="text-center">
+            <div class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white mb-1">{totalEpisodes}</div>
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Episodes</div>
           </div>
-
-          <!-- Episode Details -->
-          <div class="p-8 flex flex-col justify-center">
-            
-            <!-- Episode Meta -->
-            <div class="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-              <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded uppercase tracking-wide font-medium">
-                Featured
-              </span>
-              <time datetime={featuredEpisode.publishDate}>
-                {new Date(featuredEpisode.publishDate).toLocaleDateString('en-US', { 
-                  month: 'long', 
-                  day: 'numeric', 
-                  year: 'numeric' 
-                })}
-              </time>
-              <span class="flex items-center gap-1">
-                <i class="fas fa-clock"></i>
-                {featuredEpisode.duration}
-              </span>
-            </div>
-
-            <!-- Title -->
-            <h3 class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 leading-tight">
-              {featuredEpisode.title}
-            </h3>
-
-            <!-- Description -->
-            <p class="text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
-              {featuredEpisode.description}
-            </p>
-
-            <!-- Host & Guest -->
-            <div class="flex items-center gap-6 text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-              <div>
-                <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Host:</span>
-                <span class="ml-1">{featuredEpisode.host}</span>
-              </div>
-              <div>
-                <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Guest:</span>
-                <span class="ml-1">{featuredEpisode.guest}</span>
-              </div>
-            </div>
-
-            <!-- Tags -->
-            <div class="flex flex-wrap gap-2 mb-6">
-              {featuredEpisode.tags.map(tag => (
-                <span class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs rounded uppercase tracking-wide">
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            <!-- Audio Player -->
-            <AudioPlayer
-              src={featuredEpisode.audioUrl}
-              title={featuredEpisode.title}
-              duration={featuredEpisode.duration}
-              transcript={featuredEpisode.transcript}
-              downloadUrl={featuredEpisode.audioUrl}
-            />
-
+          <div class="text-center">
+            <div class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white mb-1">{totalDuration}</div>
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Content</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white mb-1">{avgDuration}</div>
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Avg Length</div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white mb-1">{totalGuests}</div>
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Guests</div>
           </div>
         </div>
       </div>
-
     </div>
   </section>
+
+  <!-- Featured Episode -->
+  {featuredEpisodes.length > 0 && (
+    <section class="py-16 px-4">
+      <div class="container mx-auto">
+        <div class="max-w-6xl mx-auto">
+          
+          <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+              Featured
+              <span class="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Episode
+              </span>
+            </h2>
+            <p class="text-xl text-zinc-600 dark:text-zinc-400">
+              Our latest deep dive into what's really happening in tech
+            </p>
+          </div>
+
+          {featuredEpisodes.slice(0, 1).map(episode => (
+            <div class="group bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-xl transition-all duration-300 overflow-hidden">
+              <div class="grid lg:grid-cols-2 gap-0">
+                
+                <!-- Episode Image -->
+                <div class="aspect-square lg:aspect-auto relative overflow-hidden">
+                  <img 
+                    src={transformEpisode(episode).image} 
+                    alt={transformEpisode(episode).title}
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="eager"
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                  <div class="absolute top-4 left-4">
+                    <span class="px-3 py-1 bg-purple-500 text-white text-xs font-semibold rounded uppercase tracking-wider">
+                      Featured
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Episode Details -->
+                <div class="p-8 flex flex-col justify-center">
+                  
+                  <!-- Episode Meta -->
+                  <div class="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                    <time datetime={episode.data.pubDate.toISOString()}>
+                      {transformEpisode(episode).date}
+                    </time>
+                    <span class="flex items-center gap-1">
+                      <i class="fas fa-clock"></i>
+                      {transformEpisode(episode).duration}
+                    </span>
+                    {episode.data.episode && (
+                      <span class="flex items-center gap-1">
+                        <i class="fas fa-hashtag"></i>
+                        Episode {episode.data.episode}
+                      </span>
+                    )}
+                  </div>
+
+                  <!-- Title -->
+                  <h3 class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white mb-4 leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-200">
+                    {transformEpisode(episode).title}
+                  </h3>
+
+                  <!-- Description -->
+                  <p class="text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
+                    {transformEpisode(episode).description}
+                  </p>
+
+                  <!-- Host & Guests -->
+                  <div class="flex flex-wrap items-center gap-6 text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+                    <div>
+                      <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Host:</span>
+                      <span class="ml-1">{transformEpisode(episode).host}</span>
+                    </div>
+                    {transformEpisode(episode).guests.length > 0 && (
+                      <div>
+                        <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Guests:</span>
+                        <span class="ml-1">{transformEpisode(episode).guests.join(', ')}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <!-- Audio Player -->
+                  {transformEpisode(episode).audioUrl && (
+                    <AudioPlayer
+                      audioUrl={transformEpisode(episode).audioUrl}
+                      title={transformEpisode(episode).title}
+                      duration={transformEpisode(episode).duration}
+                      transcript={transformEpisode(episode).transcript}
+                    />
+                  )}
+
+                </div>
+              </div>
+            </div>
+          ))}
+
+        </div>
+      </div>
+    </section>
+  )}
 
   <!-- Recent Episodes -->
-  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800">
-    <div class="max-w-7xl mx-auto">
-      
-      <div class="flex items-center justify-between mb-12">
-        <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
-          Recent Episodes
-        </h2>
-        <Button
-          variant="outline"
-          href="/audio/archive"
-          className="uppercase tracking-wide"
-        >
-          View All Episodes
-        </Button>
-      </div>
-
-      <div class="grid lg:grid-cols-3 gap-8">
-        {recentEpisodes.map(episode => (
-          <article class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 hover:shadow-lg group">
-            
-            <!-- Episode Image -->
-            <div class="aspect-square overflow-hidden">
-              <img 
-                src={episode.image} 
-                alt={episode.title}
-                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-              />
-            </div>
-
-            <!-- Episode Content -->
-            <div class="p-6">
-              
-              <!-- Meta -->
-              <div class="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-3">
-                <time datetime={episode.publishDate}>
-                  {new Date(episode.publishDate).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}
-                </time>
-                <span class="flex items-center gap-1">
-                  <i class="fas fa-clock"></i>
-                  {episode.duration}
+  {recentEpisodes.length > 0 && (
+    <section class="py-16 px-4 bg-zinc-50 dark:bg-zinc-900/50">
+      <div class="container mx-auto">
+        <div class="max-w-7xl mx-auto">
+          
+          <div class="flex items-center justify-between mb-12">
+            <div>
+              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">
+                Recent
+                <span class="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  Episodes
                 </span>
-              </div>
-
-              <!-- Title -->
-              <h3 class="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-3 leading-tight group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
-                <a href={`/audio/${episode.slug}`} class="hover:underline">
-                  {episode.title}
-                </a>
-              </h3>
-
-              <!-- Description -->
-              <p class="text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-3">
-                {episode.description}
+              </h2>
+              <p class="text-zinc-600 dark:text-zinc-400">
+                Catch up on our latest conversations with industry leaders
               </p>
-
-              <!-- Guest -->
-              <div class="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Guest:</span>
-                <span class="ml-1">{episode.guest}</span>
-              </div>
-
-              <!-- CTA -->
-              <a 
-                href={`/audio/${episode.slug}`}
-                class="inline-flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-medium hover:gap-3 transition-all duration-300 group/btn uppercase tracking-wide text-sm"
-              >
-                Listen Now
-                <i class="fas fa-play text-xs transition-transform duration-300 group-hover/btn:translate-x-1"></i>
-              </a>
-
             </div>
-          </article>
-        ))}
-      </div>
+            <Button
+              variant="outline"
+              href="/podcast/archive"
+              className="hidden sm:flex border-2 hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200"
+            >
+              View All Episodes
+            </Button>
+          </div>
 
-    </div>
-  </section>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {recentEpisodes.map(episode => (
+              <PodcastCard {...transformEpisode(episode)} />
+            ))}
+          </div>
+
+          <!-- Mobile View All Button -->
+          <div class="text-center mt-12 sm:hidden">
+            <Button
+              variant="outline"
+              href="/podcast/archive"
+              className="border-2 hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200"
+            >
+              View All Episodes
+            </Button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  )}
 
   <!-- Categories -->
-  <section class="py-16 px-4 sm:px-6 border-t border-zinc-200 dark:border-zinc-800">
-    <div class="max-w-4xl mx-auto">
-      
-      <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-12 text-center uppercase tracking-wide">
-        Browse by Category
-      </h2>
-
-      <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.map(category => (
-          <a
-            href={`/audio/category/${category.slug}`}
-            class="p-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 hover:shadow-lg group text-center"
-          >
-            <h3 class="font-semibold text-zinc-900 dark:text-zinc-100 mb-2 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors uppercase tracking-wide">
-              {category.name}
-            </h3>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-              {category.count} Episodes
+  {categoriesWithCounts.length > 0 && (
+    <section class="py-16 px-4">
+      <div class="container mx-auto">
+        <div class="max-w-6xl mx-auto">
+          
+          <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+              Browse by
+              <span class="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Category
+              </span>
+            </h2>
+            <p class="text-xl text-zinc-600 dark:text-zinc-400">
+              Find episodes that match your interests and expertise level
             </p>
-          </a>
-        ))}
-      </div>
+          </div>
 
-    </div>
-  </section>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {categoriesWithCounts.map(category => (
+              <a
+                href={`/podcast/category/${category.slug}`}
+                class="group p-6 bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-purple-300 dark:hover:border-purple-600 transition-all duration-300 hover:shadow-lg text-center"
+              >
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-sm flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-200">
+                  <i class={`fas fa-${category.icon} text-xl text-purple-600 dark:text-purple-400`}></i>
+                </div>
+                <h3 class="font-semibold text-zinc-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors uppercase tracking-wide text-sm">
+                  {(category.name as string)?.replace(/-/g, ' ')}
+                </h3>
+                <p class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                  {category.count} {category.count === 1 ? 'Episode' : 'Episodes'}
+                </p>
+              </a>
+            ))}
+          </div>
+
+        </div>
+      </div>
+    </section>
+  )}
 
   <!-- Subscribe Section -->
-  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800">
-    <div class="max-w-2xl mx-auto text-center">
-      
-      <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
-        Never Miss an Episode
-      </h2>
-      
-      <p class="text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
-        Subscribe to get notified when new audio content is published. Join 12,500+ builders who value substance over hype.
-      </p>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <Button 
-          variant="primary" 
-          href="/newsletter" 
-          className="rounded uppercase tracking-wide"
-        >
-          <i class="fas fa-envelope mr-2"></i>
-          Subscribe to Newsletter
-        </Button>
+  <section class="py-16 px-4 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="container mx-auto">
+      <div class="max-w-4xl mx-auto text-center">
         
-        <Button 
-          variant="outline" 
-          href="/rss.xml" 
-          className="rounded uppercase tracking-wide"
-        >
-          <i class="fas fa-rss mr-2"></i>
-          RSS Feed
-        </Button>
-      </div>
+        <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+          Never Miss
+          <span class="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            an Episode
+          </span>
+        </h2>
+        
+        <p class="text-xl text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
+          Subscribe to get notified when new episodes are published. Join 12,500+ builders who value substance over hype.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+          <Button 
+            variant="primary" 
+            href="/newsletter" 
+            className="px-8 py-3 rounded-sm font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
+          >
+            <i class="fas fa-envelope mr-2"></i>
+            Subscribe to Newsletter
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            href="/rss.xml" 
+            className="px-8 py-3 rounded-sm font-semibold border-2 hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200"
+          >
+            <i class="fas fa-rss mr-2"></i>
+            RSS Feed
+          </Button>
+        </div>
 
+        <!-- Additional Subscribe Options -->
+        <div class="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-700">
+          <p class="text-sm text-zinc-500 dark:text-zinc-400 mb-4 uppercase tracking-wide">
+            Listen on Your Favorite Platform
+          </p>
+          <div class="flex justify-center gap-4 flex-wrap">
+            <a href="#" class="text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+              <i class="fab fa-spotify text-xl"></i>
+            </a>
+            <a href="#" class="text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+              <i class="fab fa-apple text-xl"></i>
+            </a>
+            <a href="#" class="text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+              <i class="fab fa-google text-xl"></i>
+            </a>
+            <a href="#" class="text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+              <i class="fas fa-podcast text-xl"></i>
+            </a>
+          </div>
+        </div>
+
+      </div>
     </div>
   </section>
+
+  <!-- Empty State (if no episodes) -->
+  {allEpisodes.length === 0 && (
+    <section class="py-32 px-4">
+      <div class="container mx-auto">
+        <div class="max-w-2xl mx-auto text-center">
+          
+          <div class="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-sm flex items-center justify-center mx-auto mb-8">
+            <i class="fas fa-microphone text-3xl text-zinc-400"></i>
+          </div>
+          
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
+            No Episodes Yet
+          </h2>
+          
+          <p class="text-zinc-600 dark:text-zinc-400 mb-8">
+            We're working on bringing you great podcast content. Check back soon for conversations that matter.
+          </p>
+          
+          <Button 
+            variant="primary"
+            href="/"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+          >
+            <i class="fas fa-home mr-2"></i>
+            Back to Home
+          </Button>
+
+        </div>
+      </div>
+    </section>
+  )}
 
 </Layout>
 
 <style>
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  /* Same styles as blog index but with purple theme */
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .bg-gradient-to-r.bg-clip-text {
+    background-size: 200% 200%;
+    animation: gradient 3s ease-in-out infinite;
+  }
+  
+  .group:hover .group-hover\:scale-110 {
+    transform: scale(1.1);
+  }
+  
+  .group:hover .group-hover\:scale-105 {
+    transform: scale(1.05);
+  }
+
+  /* Responsive grids */
+  @media (max-width: 640px) {
+    .grid-cols-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    
+    .grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 </style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Add smooth scroll behavior
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Add loading states for episode cards
+    const episodeCards = document.querySelectorAll('.group');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-in');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    episodeCards.forEach(card => {
+      observer.observe(card);
+    });
+  });
+</script>

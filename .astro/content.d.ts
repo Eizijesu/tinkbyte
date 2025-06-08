@@ -188,6 +188,16 @@ declare module 'astro:content' {
   rendered?: RenderedContent;
   filePath?: string;
 }>;
+"legal": Record<string, {
+  id: string;
+  render(): Render[".md"];
+  slug: string;
+  body: string;
+  collection: "legal";
+  data: InferEntrySchema<"legal">;
+  rendered?: RenderedContent;
+  filePath?: string;
+}>;
 "newsletter": Record<string, {
   id: string;
   render(): Render[".md"];
@@ -222,7 +232,7 @@ declare module 'astro:content' {
   id: string;
   body?: string;
   collection: "settings";
-  data: any;
+  data: InferEntrySchema<"settings">;
   rendered?: RenderedContent;
   filePath?: string;
 }>;

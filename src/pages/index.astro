@@ -1,17 +1,15 @@
 ---
-// src/pages/index.astro
+// src/pages/index.astro - 
 import Layout from "../layouts/Layout.astro";
-import ArticleCard from "../components/blog/ArticleCard.astro";
-import Button from "../components/ui/Button.astro";
-import { SITE, CATEGORIES } from "../config/site";
+import PillarSection from "../components/magazine/PillarSection.astro";
+import NewsletterCTA from "../components/magazine/NewsletterCTA.astro";
+import { getCollection } from "astro:content";
 
-// TinaCMS-ready content with fallbacks
-let allPosts = [];
+// Get real content from TinaCMS
+let allPosts: any[] = [];
 let realContent = false;
 
-// Safely try to get content collections
 try {
-  const { getCollection } = await import("astro:content");
   const posts = await getCollection("blog", ({ data }) => !data.draft);
   if (posts && posts.length > 0) {
     allPosts = posts.sort(
@@ -21,1033 +19,648 @@ try {
   }
 } catch (error) {
   console.log("Content collections not ready yet, using demo content");
-  realContent = false;
 }
 
-// Demo content for initial setup and TinaCMS preview
+// Enhanced demo content that matches your brand
 const demoContent = {
-  heroArticle: {
-    title: "AI Evolution: Beyond the Hype Cycle",
+  heroStory: {
+    title: "Building Meaningful Tech Products That Actually Matter",
+    subtitle:
+      "Beyond the hype: practical insights for builders who value substance",
     excerpt:
-      "Real-world applications and practical insights into AI implementation. What actually works when you strip away the marketing buzz and focus on delivering value.",
+      "How we're cutting through the noise to focus on what really works in product development, team building, and global innovation.",
     date: "January 25, 2024",
     readTime: "8 min read",
-    slug: "ai-evolution-beyond-hype",
+    slug: "building-meaningful-tech-products",
     image:
-      "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop&crop=edges",
-    tags: ["ai-evolution", "product-insights"],
-    category: "AI Evolution",
-    author: {
-      name: "Dr. Elena Vasquez",
-      avatar:
-        "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=face",
-      bio: "AI researcher turned product strategist with 12+ years in machine learning",
-      role: "Chief AI Officer",
-    },
+      "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=600&fit=crop",
+    category: "Build Thinking",
+    author: "TinkByte Team",
     featured: true,
-    audioUrl: "/audio/ai-evolution-beyond-hype.mp3",
-    isEditorsPick: true,
-    trending: true,
-    engagement: 95,
   },
-
-  editorsPicks: [
+  sideStories: [
     {
-      title: "The Future of Remote Product Teams",
+      title: "Why Most MVPs Fail (And What to Build Instead)",
       excerpt:
-        "How distributed teams are reshaping product development and what it means for innovation.",
+        "73% of minimum viable products never reach product-market fit. Here's what successful teams do differently.",
       date: "January 24, 2024",
       readTime: "6 min read",
-      slug: "future-remote-product-teams",
-      image:
-        "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&h=400&fit=crop",
-      category: "Product Strategy",
-      engagement: 88,
-      isEditorsPick: true,
-      trending: false,
-      author: {
-        name: "Alex Chen",
-        avatar:
-          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-        bio: "Product strategist with 10+ years building scalable solutions",
-        role: "Senior Product Manager",
-      },
+      slug: "why-mvps-fail",
+      category: "Learning by Doing",
+      author: "Eiza",
     },
     {
-      title: "Sustainable Tech: Beyond Green Washing",
+      title: "Innovation Beyond Silicon Valley: The Lagos Story",
       excerpt:
-        "Real environmental impact in tech and how companies are making genuine change.",
+        "How African developers are solving global problems with local solutions.",
       date: "January 23, 2024",
-      readTime: "9 min read",
-      slug: "sustainable-tech-beyond-greenwashing",
-      image:
-        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop",
-      category: "Tech Culture",
-      engagement: 92,
-      isEditorsPick: true,
-      trending: false,
-      author: {
-        name: "Sarah Kim",
-        avatar:
-          "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=100&h=100&fit=crop&crop=face",
-        bio: "Tech culture researcher and community builder",
-        role: "Culture Analyst",
-      },
+      readTime: "7 min read",
+      slug: "innovation-beyond-silicon-valley",
+      category: "Global Perspective",
+      author: "Dr. Elena Vasquez",
     },
-  ],
-
-  featuredArticles: [
     {
-      title: "Building Products That Scale Globally",
+      title: "Community-Driven Development That Works",
       excerpt:
-        "Lessons from the trenches of product development. How constraint-driven innovation creates solutions that work everywhere, from Silicon Valley to emerging markets.",
+        "Real lessons from building products with 1,200+ contributors across 45 countries.",
       date: "January 22, 2024",
-      readTime: "12 min read",
-      slug: "building-products-scale-globally",
-      image:
-        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=500&fit=crop&crop=edges",
-      tags: ["product-insights", "startup-lessons"],
-      category: "Product Strategy",
-      author: {
-        name: "Alex Chen",
-        avatar:
-          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-        bio: "Product strategist with 10+ years building scalable solutions",
-        role: "Senior Product Manager",
-      },
-      audioUrl: "/audio/building-products-scale.mp3",
-    },
-    {
-      title: "The Human Side of Tech Culture",
-      excerpt:
-        "Community stories and ethical design discussions. Why culture matters more than code in successful product development and sustainable tech teams.",
-      date: "January 20, 2024",
-      readTime: "6 min read",
-      slug: "human-side-tech-culture",
-      image:
-        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=500&fit=crop&crop=edges",
-      tags: ["tech-culture", "industry-news"],
-      category: "Tech Culture",
-      author: {
-        name: "Sarah Kim",
-        avatar:
-          "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=100&h=100&fit=crop&crop=face",
-        bio: "Tech culture researcher and community builder",
-        role: "Culture Analyst",
-      },
-    },
-    {
-      title: "The Decentralized Future is Here",
-      excerpt:
-        "Breaking down complex distributed systems into accessible frameworks. Understanding blockchain, Web3, and decentralized technologies beyond the speculation.",
-      date: "January 18, 2024",
-      readTime: "9 min read",
-      slug: "decentralized-future",
-      image:
-        "https://images.unsplash.com/photo-1596524430615-b46475ddff4e?w=800&h=500&fit=crop&crop=edges",
-      tags: ["emerging-tech", "industry-news"],
-      category: "Emerging Tech",
-      author: {
-        name: "Marcus Rodriguez",
-        avatar:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-        bio: "Blockchain researcher and distributed systems expert",
-        role: "Tech Lead",
-      },
+      readTime: "5 min read",
+      slug: "community-driven-development",
+      category: "Community Innovation",
+      author: "Alex Chen",
     },
   ],
 };
 
-// Use real content if available, otherwise use demo content
-const heroArticle = realContent
-  ? allPosts.find((post) => post.data.featured) || allPosts[0]
-  : demoContent.heroArticle;
+// Use real content if available, otherwise demo
+const heroStory =
+  realContent && allPosts[0] ? allPosts[0] : demoContent.heroStory;
+const sideStories =
+  realContent && allPosts.length > 1
+    ? allPosts.slice(1, 4)
+    : demoContent.sideStories;
 
-const editorsPicks = realContent
-  ? allPosts.filter((post) => post.data.featured).slice(0, 2)
-  : demoContent.editorsPicks;
-
-const featuredArticles = realContent
-  ? allPosts.slice(0, 3)
-  : demoContent.featuredArticles;
-
-const trendingArticles = realContent
-  ? allPosts
-      .filter((post) => post.data.trending || post.data.featured)
-      .slice(0, 3)
-  : [demoContent.heroArticle, ...demoContent.editorsPicks].slice(0, 3);
-
-// Categories with real or demo counts
-const topicCategories = Object.entries(CATEGORIES).map(([slug, category]) => {
-  const count = realContent
-    ? allPosts.filter((post) => post.data.category === slug).length
-    : Math.floor(Math.random() * 15) + 5; // Demo counts
-
-  return {
-    name: category.name.toUpperCase(),
-    slug,
-    count,
-    color: category.color,
-    description: category.description,
-  };
-});
-
-// Community stats
-const communityStats = {
-  builders: "1,200+",
-  countries: 45,
-  hypeLevel: 0,
-  articles: realContent ? allPosts.length : 47,
+// Helper function to get posts by category
+const getPostsByCategory = (category: string, limit: number = 4) => {
+  if (realContent) {
+    return allPosts
+      .filter((post) => post.data.category === category)
+      .slice(0, limit);
+  }
+  return demoContent.sideStories
+    .filter((story) =>
+      story.category.toLowerCase().includes(category.toLowerCase())
+    )
+    .slice(0, limit);
 };
 
-// Convert real content to expected format
-const formatPost = (post) => {
-  if (realContent && post.data) {
+// Content pillars matching your TinaCMS categories
+const contentPillars = [
+  {
+    name: "Build Thinking",
+    description:
+      "How products actually get made - practical insights from the trenches",
+    slug: "build-thinking",
+    articles: getPostsByCategory("build-thinking", 4),
+    color: "#1A73E8",
+  },
+  {
+    name: "Learning by Doing",
+    description: "Real lessons from failures, MVPs, and successful launches",
+    slug: "learning-by-doing",
+    articles: getPostsByCategory("learning-by-doing", 4),
+    color: "#EA4335",
+  },
+  {
+    name: "Global Perspective",
+    description: "Innovation stories from Africa, Asia, and the Global South",
+    slug: "global-perspective",
+    articles: getPostsByCategory("global-perspective", 4),
+    color: "#9C27B0",
+  },
+  {
+    name: "Community Innovation",
+    description: "How communities drive breakthrough innovation",
+    slug: "community-innovation",
+    articles: getPostsByCategory("community-innovation", 4),
+    color: "#10B981",
+  },
+];
+
+// Helper function to format posts
+const formatPost = (post: any) => {
+  if (realContent && post && typeof post === "object" && "data" in post) {
     return {
       title: post.data.title,
+      subtitle: post.data.subtitle || "",
       excerpt: post.data.excerpt,
-      date: post.data.pubDate.toLocaleDateString(),
+      date: post.data.pubDate.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
       readTime: post.data.readTime || "5 min read",
       slug: post.slug,
-      image: post.data.image,
-      tags: post.data.tags || [],
-      category: CATEGORIES[post.data.category]?.name || post.data.category,
-      author: {
-        name: post.data.author,
-        avatar: post.data.authorAvatar,
-        bio: post.data.authorBio,
-        role: post.data.authorRole,
-      },
-      audioUrl: post.data.audioUrl,
+      image:
+        post.data.image ||
+        "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=600&fit=crop",
+      category: post.data.category,
+      author: post.data.author || "TinkByte Team",
     };
   }
   return post;
 };
 ---
 
-<Layout title={SITE.title} description={SITE.description}>
-  <!-- Hero Section with Latest Article -->
-  <section class="py-10 sm:py-16 md:py-20 px-4 sm:px-6 theme-transition-all">
-    <div class="max-w-7xl mx-auto">
-      <div class="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-        <!-- Hero Content -->
-        <div class="relative order-2 lg:order-1">
-          <!-- Decorative blobs -->
-          <div
-            class="absolute -top-10 -left-10 w-32 h-32 bg-zinc-100 dark:bg-zinc-800/30 rounded-full blur-3xl opacity-50 animate-blob theme-transition-bg"
-          >
-          </div>
-
-          <div class="relative">
-            <!-- TinkByte Badge -->
-            <div
-              class="inline-flex items-center px-3 py-1 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 mb-6 uppercase tracking-wide"
-            >
-              <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"
-              ></span>
-              {SITE.newsletter.description.toUpperCase()}
-            </div>
-
-            <!-- Hero Text -->
-            <div class="block group">
-              <h1
-                class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 theme-transition-color mb-6 leading-tight hero-text"
-              >
-                <span class="block fade-in" style="animation-delay:0.1s"
-                  >The tech publication</span
-                >
-                <span class="block mt-1 fade-in" style="animation-delay:0.2s"
-                  >that cuts through</span
-                >
-                <span class="block mt-1 fade-in" style="animation-delay:0.3s">
-                  <span class="relative inline-block">
-                    the noise.
-                    <span
-                      class="absolute -bottom-1 left-0 w-full h-1 bg-zinc-800 dark:bg-zinc-200 transform origin-left theme-transition-bg"
-                    ></span>
-                  </span>
-                </span>
-              </h1>
-            </div>
-
-            <p
-              class="text-lg sm:text-xl text-zinc-600 dark:text-zinc-400 leading-relaxed theme-transition-color mb-8 max-w-lg"
-            >
-              Real insights for builders who value substance over hype.
-              Practical knowledge from the trenches of digital innovation.
-            </p>
-
-            <!-- Newsletter Signup -->
-            <div
-              id="newsletter"
-              class="bg-gradient-to-r from-zinc-50 to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 rounded-lg p-6 mb-8 border border-zinc-200 dark:border-zinc-700"
-            >
-              <div class="flex items-center gap-2 mb-3">
-                <span
-                  class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs font-medium uppercase tracking-wide"
-                >
-                  {SITE.newsletter.name.toUpperCase()}
-                </span>
-                <span
-                  class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide"
-                >
-                  Join {communityStats.builders} builders
-                </span>
-              </div>
-              <h3 class="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-                Get the week's best tech insights
-              </h3>
-              <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                Curated articles, tools, and insights delivered every {
-                  SITE.newsletter.frequency?.split(" ")[1] || "Tuesday"
-                }. No spam, just value.
-              </p>
-              <form id="subscribe-form" class="flex gap-3">
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  required
-                  class="flex-1 px-4 py-2 rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-zinc-500 focus:border-transparent"
-                />
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  className="rounded uppercase tracking-wide whitespace-nowrap"
-                >
-                  Subscribe
-                </Button>
-              </form>
-            </div>
-
-            <!-- Latest Article Preview -->
-            <a
-              href={`/blog/${formatPost(heroArticle).slug}`}
-              class="block mb-8 group"
-            >
-              <div
-                class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-6 featured-shadow card-hover cursor-pointer group-hover:border-zinc-300 dark:group-hover:border-zinc-700 transition-colors"
-              >
-                <div
-                  class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 mb-3"
-                >
-                  <span
-                    class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded font-medium uppercase tracking-wide"
-                  >
-                    {realContent ? "LATEST ARTICLE" : "FEATURED ARTICLE"}
-                  </span>
-                  <span class="uppercase"
-                    >{formatPost(heroArticle).readTime}</span
-                  >
-                  {
-                    (heroArticle.isEditorsPick ||
-                      (realContent && heroArticle.data?.featured)) && (
-                      <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded font-medium uppercase tracking-wide">
-                        EDITOR'S PICK
-                      </span>
-                    )
-                  }
-                </div>
-                <h3
-                  class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors"
-                >
-                  {formatPost(heroArticle).title}
-                </h3>
-                <p
-                  class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2"
-                >
-                  {formatPost(heroArticle).excerpt}
-                </p>
-                <div
-                  class="inline-flex items-center text-sm font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors uppercase tracking-wide"
-                >
-                  READ FULL ARTICLE
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-                  </svg>
-                </div>
-              </div>
-            </a>
-
-            <!-- CTA Buttons -->
-            <div class="flex flex-wrap gap-4">
-              <Button
-                variant="outline"
-                size="lg"
-                href="/blog"
-                className="rounded uppercase tracking-wide"
-              >
-                <span>EXPLORE ARTICLES</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="w-4 h-4 ml-2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-                </svg>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Featured Article Image -->
-        <div class="relative order-1 lg:order-2">
-          <a href={`/blog/${formatPost(heroArticle).slug}`} class="block group">
-            <div
-              class="aspect-[4/3] rounded overflow-hidden bg-zinc-100 dark:bg-zinc-800 shadow-xl group-hover:shadow-2xl transition-shadow duration-300"
-            >
-              <img
-                src={formatPost(heroArticle).image}
-                alt={formatPost(heroArticle).title}
-                loading="eager"
-                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-
-              <!-- Overlay on hover -->
-              <div
-                class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center"
-              >
-                <div
-                  class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm px-4 py-2 rounded-full"
-                >
-                  <span
-                    class="text-sm font-medium text-zinc-900 dark:text-zinc-100 uppercase tracking-wide"
-                  >
-                    Read Article
-                  </span>
-                </div>
-              </div>
-            </div>
-          </a>
-
-          <!-- Floating Stats Card -->
-          <div
-            class="absolute -bottom-6 -left-6 bg-white dark:bg-zinc-900 p-6 rounded shadow-lg border border-zinc-200 dark:border-zinc-800 theme-transition-all featured-shadow"
-          >
-            <div class="flex items-center gap-4">
-              <div class="text-center">
-                <div
-                  class="text-2xl font-bold text-zinc-900 dark:text-zinc-100"
-                >
-                  {communityStats.builders}
-                </div>
-                <div
-                  class="text-xs text-zinc-600 dark:text-zinc-400 uppercase tracking-wide"
-                >
-                  BUILDERS
-                </div>
-              </div>
-              <div class="w-px h-8 bg-zinc-200 dark:bg-zinc-700"></div>
-              <div class="text-center">
-                <div
-                  class="text-2xl font-bold text-zinc-900 dark:text-zinc-100"
-                >
-                  {communityStats.countries}
-                </div>
-                <div
-                  class="text-xs text-zinc-600 dark:text-zinc-400 uppercase tracking-wide"
-                >
-                  COUNTRIES
-                </div>
-              </div>
-              <div class="w-px h-8 bg-zinc-200 dark:bg-zinc-700"></div>
-              <div class="text-center">
-                <div
-                  class="text-2xl font-bold text-zinc-900 dark:text-zinc-100"
-                >
-                  {communityStats.hypeLevel}
-                </div>
-                <div
-                  class="text-xs text-zinc-600 dark:text-zinc-400 uppercase tracking-wide"
-                >
-                  HYPE
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Trending Now Section -->
-  <section
-    class="py-12 px-4 sm:px-6 bg-gradient-to-r from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 border-t border-zinc-200 dark:border-zinc-700"
-  >
-    <div class="max-w-7xl mx-auto">
-      <div class="flex items-center gap-3 mb-8">
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-          <h2
-            class="text-xl font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide"
-          >
-            TRENDING NOW
-          </h2>
-        </div>
-        <div
-          class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide"
-        >
-          {realContent ? "Latest articles" : "Based on engagement"}
-        </div>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-6">
-        {
-          trendingArticles.map((article, index) => (
-            <a
-              href={`/blog/${formatPost(article).slug}`}
-              class="group block trending-article"
-            >
-              <div class="bg-white dark:bg-zinc-900 rounded-lg p-4 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-300 card-hover">
-                <div class="flex items-center gap-2 mb-2">
-                  <span class="text-lg font-bold text-red-500">
-                    #{index + 1}
-                  </span>
-                  <span class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                    {formatPost(article).readTime}
-                  </span>
-                  {(article.trending ||
-                    (realContent && article.data?.trending)) && (
-                    <span class="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded text-xs font-medium uppercase tracking-wide trending-badge">
-                      HOT
-                    </span>
-                  )}
-                </div>
-                <h3 class="font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors line-clamp-2">
-                  {formatPost(article).title}
-                </h3>
-                <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-2 line-clamp-2">
-                  {formatPost(article).excerpt}
-                </p>
-              </div>
-            </a>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- Editor's Pick Section -->
-  <section
-    class="py-16 px-4 sm:px-6 border-t border-zinc-100 dark:border-zinc-800"
-  >
-    <div class="max-w-7xl mx-auto">
-      <div class="flex items-center gap-3 mb-12">
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
-          <h2
-            class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide"
-          >
-            EDITOR'S PICK
-          </h2>
-        </div>
-        <div
-          class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide"
-        >
-          Curated by our editorial team
-        </div>
-      </div>
-
-      <div class="grid md:grid-cols-2 gap-8">
-        {
-          editorsPicks.map((article) => (
-            <a
-              href={`/blog/${formatPost(article).slug}`}
-              class="group block editors-pick"
-            >
-              <div class="bg-white dark:bg-zinc-900 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 hover:border-purple-300 dark:hover:border-purple-700 transition-all duration-300 card-hover">
-                <div class="aspect-[16/9] overflow-hidden image-container">
-                  <img
-                    src={formatPost(article).image}
-                    alt={formatPost(article).title}
-                    loading="lazy"
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform gpu-accelerated"
-                  />
-                </div>
-                <div class="p-6">
-                  <div class="flex items-center gap-2 mb-3">
-                    <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded text-xs font-medium uppercase tracking-wide">
-                      EDITOR'S PICK
-                    </span>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                      {formatPost(article).readTime}
-                    </span>
-                  </div>
-                  <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors mb-2">
-                    {formatPost(article).title}
-                  </h3>
-                  <p class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
-                    {formatPost(article).excerpt}
-                  </p>
-                </div>
-              </div>
-            </a>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- Featured Articles Section -->
-  <section
-    class="py-16 px-4 sm:px-6 border-t border-zinc-100 dark:border-zinc-800 theme-transition-all"
-  >
-    <div class="max-w-7xl mx-auto">
-      <div class="flex items-center justify-between mb-12">
-        <h2
-          class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide"
-        >
-          FEATURED ARTICLES
-        </h2>
-        <Button
-          variant="ghost"
-          href="/blog"
-          className="group uppercase tracking-wide"
-        >
-          <span class="flex items-center gap-1">
-            VIEW ALL
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-            </svg>
-          </span>
-        </Button>
-      </div>
-
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {
-          featuredArticles.map((article) => (
-            <ArticleCard {...formatPost(article)} />
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- Explore by Topic Section -->
-  <section
-    class="py-16 px-4 sm:px-6 border-t border-zinc-100 dark:border-zinc-800 theme-transition-all"
-  >
-    <div class="max-w-7xl mx-auto">
-      <h2
-        class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-12 text-center uppercase tracking-wide"
+<Layout
+  title="TinkByte - Building Meaningful Tech Products"
+  description="Practical insights for builders who value substance over hype. Real stories from product development, global innovation, and community building."
+>
+  <main class="magazine-layout">
+    <!-- Enhanced Hero Section with Search-Style Design -->
+    <section class="relative py-16 lg:py-24 overflow-hidden">
+      <div
+        class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-10"
       >
-        EXPLORE BY TOPIC
-      </h2>
+      </div>
+      <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5">
+      </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {
-          topicCategories.map((category) => (
-            <a
-              href={`/blog/categories/${category.slug}`}
-              class="fade-in group p-6 text-center rounded border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/70 transition-all duration-300 card-hover"
-            >
-              <div
-                class={`inline-block px-3 py-1 rounded text-xs font-medium mb-3 uppercase tracking-wide ${
-                  category.color === "blue"
-                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                    : category.color === "purple"
-                      ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                      : category.color === "green"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                        : category.color === "orange"
-                          ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
-                          : category.color === "cyan"
-                            ? "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300"
-                            : category.color === "red"
-                              ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                              : category.color === "indigo"
-                                ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300"
-                                : "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300"
-                }`}
-              >
-                {category.name}
+      <div class="max-w-7xl mx-auto px-4 relative z-10">
+        <div class="hero-grid">
+          <!-- Main Feature Story -->
+          <article class="hero-main">
+            <a href={`/blog/${formatPost(heroStory).slug}`} class="group block">
+              <div class="hero-image">
+                <img
+                  src={formatPost(heroStory).image}
+                  alt={formatPost(heroStory).title}
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="eager"
+                />
+                <div class="hero-overlay">
+                  <span class="category-tag">
+                    {formatPost(heroStory).category?.toUpperCase()}
+                  </span>
+                </div>
               </div>
-              <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1 uppercase tracking-wide">
-                {category.count} ARTICLES
-              </div>
-              <div class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                EXPLORE →
+              <div class="hero-content">
+                <h1 class="hero-headline">{formatPost(heroStory).title}</h1>
+                {
+                  formatPost(heroStory).subtitle && (
+                    <p class="hero-subtitle">
+                      {formatPost(heroStory).subtitle}
+                    </p>
+                  )
+                }
+                <p class="hero-excerpt">{formatPost(heroStory).excerpt}</p>
+                <div class="hero-meta">
+                  <span class="author">By {formatPost(heroStory).author}</span>
+                  <span class="separator">•</span>
+                  <time>{formatPost(heroStory).date}</time>
+                  <span class="separator">•</span>
+                  <span class="read-time">{formatPost(heroStory).readTime}</span
+                  >
+                </div>
               </div>
             </a>
-          ))
-        }
+          </article>
+
+          <!-- Side Stories -->
+          <aside class="hero-sidebar">
+            <div class="sidebar-header">
+              <h3 class="sidebar-title">Latest from TinkByte</h3>
+              <p class="sidebar-subtitle">Fresh insights for builders</p>
+            </div>
+
+            <div class="sidebar-stories">
+              {
+                sideStories.map((story) => (
+                  <article class="sidebar-story group">
+                    <a href={`/blog/${formatPost(story).slug}`} class="block">
+                      <div class="story-meta">
+                        <span class="category-tag-small">
+                          {formatPost(story).category?.toUpperCase()}
+                        </span>
+                        <time class="story-time">{formatPost(story).date}</time>
+                      </div>
+                      <h4 class="story-title group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
+                        {formatPost(story).title}
+                      </h4>
+                      <p class="story-excerpt">{formatPost(story).excerpt}</p>
+                      <div class="story-footer">
+                        <span class="story-author">
+                          By {formatPost(story).author}
+                        </span>
+                        <span class="story-read-time">
+                          {formatPost(story).readTime}
+                        </span>
+                      </div>
+                    </a>
+                  </article>
+                ))
+              }
+            </div>
+
+            <div class="sidebar-cta">
+              <a href="/blog" class="view-all-link group/link">
+                View All Articles
+                <i
+                  class="fas fa-arrow-right ml-2 group-hover/link:translate-x-1 transition-transform duration-200"
+                ></i>
+              </a>
+            </div>
+          </aside>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <!-- Content Pillars -->
+    <section class="pillars-section">
+      {
+        contentPillars.map(
+          (pillar) =>
+            pillar.articles.length > 0 && <PillarSection pillar={pillar} />
+        )
+      }
+    </section>
+
+    <!-- Newsletter CTA -->
+    <NewsletterCTA
+      variant="magazine"
+      title="Join 1,200+ Builders"
+      description="Get weekly insights on building meaningful tech products. No hype, just substance."
+    />
+  </main>
 </Layout>
 
 <style>
-  @keyframes slideUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  @keyframes blob {
-    0% {
-      transform: translate(0px, 0px) scale(1);
-    }
-    33% {
-      transform: translate(30px, -50px) scale(1.1);
-    }
-    66% {
-      transform: translate(-20px, 20px) scale(0.9);
-    }
-    100% {
-      transform: translate(0px, 0px) scale(1);
-    }
-  }
-  .animate-blob {
-    animation: blob 7s infinite;
-  }
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .fade-in {
-    opacity: 0;
-    transform: translateY(20px);
-    transition:
-      opacity 0.6s ease,
-      transform 0.6s ease;
-  }
-  .featured-shadow {
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-  }
-  .card-hover {
-    transition: all 0.3s ease;
-  }
-  .card-hover:hover {
-    transform: translateY(-5px);
-    box-shadow:
-      0 10px 25px -5px rgba(0, 0, 0, 0.1),
-      0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  }
-  .theme-transition-all {
-    transition:
-      background-color 0.3s ease,
-      color 0.3s ease,
-      border-color 0.3s ease;
-  }
-  .theme-transition-bg {
+  /* Consistent Design System Styles */
+  .magazine-layout {
+    background: white;
+    min-height: 100vh;
     transition: background-color 0.3s ease;
   }
-  .theme-transition-color {
+
+  :global(.dark) .magazine-layout {
+    background: rgb(17, 24, 39);
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 4rem;
+    align-items: flex-start;
+  }
+
+  .hero-main {
+    position: relative;
+  }
+
+  .hero-image {
+    position: relative;
+    aspect-ratio: 16/9;
+    margin-bottom: 2rem;
+    border-radius: var(--tinkbyte-radius-card, 4px); /* rounded-sm */
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .hero-image:hover {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  :global(.dark) .hero-image {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  :global(.dark) .hero-image:hover {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .hero-overlay {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .category-tag {
+    padding: 0.5rem 1rem;
+    border-radius: var(--tinkbyte-radius, 2px); /* rounded-sm */
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .category-tag {
+    background: rgba(147, 197, 253, 0.9);
+    color: rgb(17, 24, 39);
+  }
+
+  .hero-content {
+    max-width: 100%;
+  }
+
+  .hero-headline {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(1.875rem, 4vw, 2.75rem);
+    font-weight: 700;
+    line-height: 1.2;
+    color: rgb(17, 24, 39);
+    margin-bottom: 1rem;
     transition: color 0.3s ease;
   }
 
-  #newsletter {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0.05) 100%
-    );
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+  :global(.dark) .hero-headline {
+    color: rgb(243, 244, 246);
   }
 
-  .dark #newsletter {
-    background: linear-gradient(
-      135deg,
-      rgba(0, 0, 0, 0.2) 0%,
-      rgba(0, 0, 0, 0.1) 100%
-    );
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  .hero-subtitle {
+    font-size: 1.125rem;
+    line-height: 1.5;
+    color: rgb(59, 130, 246);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
   }
 
-  .trending-badge {
-    animation: pulse 2s infinite;
+  :global(.dark) .hero-subtitle {
+    color: rgb(147, 197, 253);
   }
 
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
+  .hero-excerpt {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: #374151;
+    margin-bottom: 1.5rem;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .hero-excerpt {
+    color: rgb(209, 213, 219);
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .hero-meta {
+    color: rgb(156, 163, 175);
+  }
+
+  .separator {
+    opacity: 0.5;
+  }
+
+  .hero-sidebar {
+    background: white;
+    border: 1px solid #e5e7eb;
+    padding: 2rem;
+    border-radius: var(--tinkbyte-radius-card, 4px); /* rounded-sm */
+    height: fit-content;
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .hero-sidebar {
+    background: rgb(31, 41, 55);
+    border-color: rgb(55, 65, 81);
+  }
+
+  .sidebar-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  :global(.dark) .sidebar-header {
+    border-bottom-color: rgb(55, 65, 81);
+  }
+
+  .sidebar-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: rgb(17, 24, 39);
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .sidebar-title {
+    color: rgb(243, 244, 246);
+  }
+
+  .sidebar-subtitle {
+    font-size: 0.875rem;
+    color: #6b7280;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .sidebar-subtitle {
+    color: rgb(156, 163, 175);
+  }
+
+  .sidebar-stories {
+    margin-bottom: 1.5rem;
+  }
+
+  .sidebar-story {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+  }
+
+  .sidebar-story:hover {
+    transform: translateY(-1px);
+  }
+
+  :global(.dark) .sidebar-story {
+    border-bottom-color: rgb(55, 65, 81);
+  }
+
+  .sidebar-story:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .story-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .category-tag-small {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgb(59, 130, 246);
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .category-tag-small {
+    color: rgb(147, 197, 253);
+  }
+
+  .story-time {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .story-time {
+    color: rgb(107, 114, 128);
+  }
+
+  .story-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #111827;
+    margin-bottom: 0.75rem;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .story-title {
+    color: rgb(243, 244, 246);
+  }
+
+  .story-excerpt {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .story-excerpt {
+    color: rgb(156, 163, 175);
+  }
+
+  .story-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .story-footer {
+    color: rgb(107, 114, 128);
+  }
+
+  .sidebar-cta {
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  :global(.dark) .sidebar-cta {
+    border-top-color: rgb(55, 65, 81);
+  }
+
+  .view-all-link {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgb(59, 130, 246);
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .view-all-link:hover {
+    color: rgb(37, 99, 235);
+  }
+
+  :global(.dark) .view-all-link {
+    color: rgb(147, 197, 253);
+  }
+
+  :global(.dark) .view-all-link:hover {
+    color: rgb(191, 219, 254);
+  }
+
+  .pillars-section {
+    padding: 2rem 0;
+  }
+
+  /* Gradient text animation */
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
     }
     50% {
-      opacity: 0.5;
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
     }
   }
 
-  .image-container {
-    overflow: hidden;
-    border-radius: 0.5rem;
+  .bg-gradient-to-r.bg-clip-text {
+    background-size: 200% 200%;
+    animation: gradient 3s ease-in-out infinite;
   }
 
-  .image-container img {
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Mobile Responsiveness */
+  @media (max-width: 768px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .hero-sidebar {
+      order: 2;
+      padding: 1.5rem;
+    }
+
+    .hero-main {
+      order: 1;
+    }
+
+    .hero-headline {
+      font-size: 1.75rem;
+    }
   }
 
-  .image-container:hover img {
-    transform: scale(1.05);
-  }
+  @media (max-width: 480px) {
+    .hero-image {
+      margin-bottom: 1.5rem;
+    }
 
-  .will-change-transform {
-    will-change: transform;
-  }
-
-  .gpu-accelerated {
-    transform: translateZ(0);
-  }
-
-  /* TinaCMS specific styles */
-  .tina-prose {
-    max-width: none;
-  }
-
-  /* Performance optimizations for TinaCMS */
-  .tina-content img {
-    transition: transform 0.3s ease;
-  }
-
-  .tina-content img:hover {
-    transform: scale(1.02);
+    .hero-sidebar {
+      padding: 1rem;
+    }
   }
 </style>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // Hero text animation
-    const heroTextItems = document.querySelectorAll(".hero-text span");
-    heroTextItems.forEach((item, index) => {
-      setTimeout(
-        () => {
-          (item as HTMLElement).style.opacity = "1";
-          (item as HTMLElement).style.transform = "translateY(0)";
-        },
-        300 * (index + 1)
-      );
-    });
+    // Theme initialization
+    const initTheme = () => {
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
 
-    // Enhanced Intersection Observer for fade-in animations
-    const fadeElements = document.querySelectorAll(".fade-in");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            (entry.target as HTMLElement).style.opacity = "1";
-            (entry.target as HTMLElement).style.transform = "translateY(0)";
-          }
-        });
-      },
-      {
-        threshold: 0.1,
-        rootMargin: "0px 0px -50px 0px",
+      if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add("dark");
       }
-    );
-
-    fadeElements.forEach((element) => {
-      observer.observe(element);
-    });
-
-    // Newsletter form submission with enhanced UX
-    const subscribeForm = document.getElementById("subscribe-form");
-    if (subscribeForm) {
-      subscribeForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const submitButton = subscribeForm.querySelector(
-          'button[type="submit"]'
-        ) as HTMLButtonElement;
-        const emailInput = subscribeForm.querySelector(
-          'input[type="email"]'
-        ) as HTMLInputElement;
-
-        if (!submitButton || !emailInput) return;
-
-        const originalButtonText = submitButton.textContent;
-
-        // Show loading state
-        submitButton.textContent = "Subscribing...";
-        submitButton.disabled = true;
-
-        try {
-          // Simulate API call (replace with actual endpoint)
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          // Success state
-          submitButton.textContent = "Subscribed!";
-          submitButton.className = submitButton.className.replace(
-            'variant="primary"',
-            "bg-green-500 text-white"
-          );
-          emailInput.value = "";
-
-          // Show success message
-          const successMessage = document.createElement("div");
-          successMessage.className =
-            "text-sm text-green-600 dark:text-green-400 mt-2";
-          successMessage.textContent =
-            "Welcome to TinkStacks! Check your email for confirmation.";
-          subscribeForm.appendChild(successMessage);
-
-          // Reset after 3 seconds
-          setTimeout(() => {
-            if (originalButtonText) {
-              submitButton.textContent = originalButtonText;
-            }
-            submitButton.disabled = false;
-            submitButton.className = submitButton.className.replace(
-              "bg-green-500 text-white",
-              'variant="primary"'
-            );
-            if (successMessage.parentNode) {
-              successMessage.remove();
-            }
-          }, 3000);
-        } catch (error) {
-          // Error state
-          submitButton.textContent = "Try Again";
-          submitButton.disabled = false;
-          console.error("Subscription error:", error);
-        }
-      });
-    }
-
-    // TinaCMS integration helpers
-    if (typeof window !== "undefined") {
-      // Track TinaCMS edit mode
-      window.addEventListener("message", (event) => {
-        if (event.data.type === "tina:edit-mode") {
-          document.body.classList.toggle("tina-edit-mode", event.data.enabled);
-        }
-      });
-
-      // Performance monitoring for TinaCMS
-      if ("performance" in window) {
-        window.addEventListener("load", () => {
-          const perfData = performance.getEntriesByType(
-            "navigation"
-          )[0] as PerformanceNavigationTiming;
-          const loadTime = perfData.loadEventEnd - perfData.loadEventStart;
-
-          // Log performance metrics (useful for TinaCMS optimization)
-          console.log("Performance Metrics:", {
-            "Page Load Time": `${loadTime}ms`,
-            "DOM Content Loaded": `${perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart}ms`,
-            "TinaCMS Compatible": true,
-          });
-        });
-      }
-    }
-
-    // Lazy loading enhancement for images (TinaCMS friendly)
-    if ("IntersectionObserver" in window) {
-      const imageObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const img = entry.target as HTMLImageElement;
-            img.classList.add("gpu-accelerated");
-
-            // TinaCMS image optimization
-            if (img.dataset.tinaSrc) {
-              img.src = img.dataset.tinaSrc;
-            }
-
-            observer.unobserve(img);
-          }
-        });
-      });
-
-      document.querySelectorAll('img[loading="lazy"]').forEach((img) => {
-        imageObserver.observe(img);
-      });
-    }
-
-    // Analytics tracking (TinaCMS compatible)
-    const trackEvent = (
-      eventName: string,
-      properties: Record<string, any> = {}
-    ) => {
-      // This would integrate with your analytics service
-      console.log(`Event: ${eventName}`, properties);
-
-      // Example: Send to analytics service
-      // analytics.track(eventName, properties);
     };
 
-    // Trending articles interaction tracking
-    const trendingLinks = document.querySelectorAll(".trending-article");
-    trendingLinks.forEach((link, index) => {
-      link.addEventListener("click", () => {
-        trackEvent("trending_article_clicked", {
-          position: index + 1,
-          title: link.querySelector("h3")?.textContent || "Unknown",
-        });
-      });
-    });
+    initTheme();
 
-    // Editor's pick interaction tracking
-    const editorsPickLinks = document.querySelectorAll(".editors-pick");
-    editorsPickLinks.forEach((link) => {
-      link.addEventListener("click", () => {
-        trackEvent("editors_pick_clicked", {
-          title: link.querySelector("h3")?.textContent || "Unknown",
-        });
+    // Listen for theme changes
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        if (!localStorage.getItem("theme")) {
+          if (e.matches) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        }
       });
-    });
 
-    // Newsletter signup tracking
-    const newsletterForm = document.getElementById("subscribe-form");
-    if (newsletterForm) {
-      newsletterForm.addEventListener("submit", () => {
-        trackEvent("newsletter_signup_attempted");
-      });
-    }
-
-    // Category exploration tracking
-    const categoryLinks = document.querySelectorAll(
-      'a[href*="/blog/categories/"]'
-    );
-    categoryLinks.forEach((link) => {
-      link.addEventListener("click", () => {
-        const categoryName =
-          link.querySelector("div")?.textContent || "Unknown";
-        trackEvent("category_explored", {
-          category: categoryName,
-        });
-      });
-    });
-
-    // Smooth scroll for anchor links (TinaCMS preview friendly)
+    // Smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
       anchor.addEventListener("click", function (e) {
         e.preventDefault();
-        const target = document.querySelector(this.getAttribute("href") || "");
+        const target = document.querySelector(this.getAttribute("href"));
         if (target) {
           target.scrollIntoView({
             behavior: "smooth",
@@ -1056,57 +669,5 @@ const formatPost = (post) => {
         }
       });
     });
-
-    // TinaCMS live preview support
-    if (window.location.search.includes("tina-preview")) {
-      document.body.classList.add("tina-preview-mode");
-
-      // Disable certain interactions in preview mode
-      document.querySelectorAll("form").forEach((form) => {
-        form.addEventListener("submit", (e) => {
-          e.preventDefault();
-          console.log("Form submission disabled in TinaCMS preview mode");
-        });
-      });
-    }
-
-    // Dark mode detection for TinaCMS
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleThemeChange = (e: MediaQueryListEvent) => {
-      document.documentElement.classList.toggle("dark", e.matches);
-    };
-
-    mediaQuery.addListener(handleThemeChange);
-    handleThemeChange(mediaQuery as any);
   });
-
-  // TinaCMS global utilities
-  if (typeof window !== "undefined") {
-    (window as any).TinkByteUtils = {
-      // Utility for TinaCMS to refresh content
-      refreshContent: () => {
-        window.location.reload();
-      },
-
-      // Utility for TinaCMS to track changes
-      trackContentChange: (field: string, value: any) => {
-        console.log(`Content changed: ${field}`, value);
-      },
-
-      // Utility for TinaCMS to validate content
-      validateContent: (content: any) => {
-        const errors = [];
-
-        if (!content.title || content.title.length < 10) {
-          errors.push("Title must be at least 10 characters");
-        }
-
-        if (!content.excerpt || content.excerpt.length < 50) {
-          errors.push("Excerpt must be at least 50 characters");
-        }
-
-        return errors;
-      },
-    };
-  }
 </script>

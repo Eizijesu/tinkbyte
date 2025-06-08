@@ -1,9 +1,44 @@
 {
-  "files.associations": {
-    "*.astro": "astro"
-  },
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false,
+  "postcss.validate": false,
+  
   "tailwindCSS.includeLanguages": {
+    "astro": "html",
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
+  },
+  
+  "tailwindCSS.experimental.classRegex": [
+    ["class:list=\\{([^}]*)\\}", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+    ["classList=\\{([^}]*)\\}", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+  
+  "files.associations": {
+    "*.astro": "astro",
+    "*.css": "tailwindcss"
+  },
+  
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  
+  "emmet.includeLanguages": {
     "astro": "html"
   },
-  "editor.formatOnSave": true
+  
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  
+  "css.customData": [".vscode/css_custom_data.json"],
+  
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.astro": true
+  }
 }

@@ -2,7 +2,6 @@
 import Layout from "../../layouts/Layout.astro";
 import AudioPlayer from "../../components/ui/AudioPlayer.astro";
 import ShareButtons from "../../components/ui/ShareButtons.astro";
-import RelatedPosts from "../../components/blog/RelatedPosts.astro";
 
 export async function getStaticPaths() {
   // In real implementation, this would fetch from your CMS
@@ -81,39 +80,53 @@ export async function getStaticPaths() {
 
 const { episode } = Astro.props;
 
+// Create a mock current post object for RelatedPosts component
+const currentPost = {
+  slug: episode.slug,
+  data: {
+    title: episode.title,
+    category: "Audio",
+    tags: episode.tags,
+    pubDate: new Date(episode.publishDate),
+  },
+};
+
+// Convert related episodes to blog post format for RelatedPosts component
 const relatedEpisodes = [
   {
-    title: "Building Products That Scale Globally",
-    excerpt: "Lessons from the trenches of global product development.",
-    date: "January 22, 2024",
-    readTime: "35 min listen",
     slug: "building-products-scale-globally",
-    image:
-      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop",
-    tags: ["product-strategy", "scaling"],
-    category: "Product Strategy",
-    author: {
-      name: "Alex Chen",
-      avatar:
+    data: {
+      title: "Building Products That Scale Globally",
+      excerpt: "Lessons from the trenches of global product development.",
+      pubDate: new Date("2024-01-22"),
+      category: "Product Strategy",
+      tags: ["product-strategy", "scaling"],
+      author: "Alex Chen",
+      authorAvatar:
         "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-      role: "Senior Product Manager",
+      authorRole: "Senior Product Manager",
+      image:
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop",
+      featured: false,
+      readTime: "35 min listen",
     },
   },
   {
-    title: "The Human Side of Tech Culture",
-    excerpt: "Building sustainable technology organizations.",
-    date: "January 20, 2024",
-    readTime: "22 min listen",
     slug: "human-side-tech-culture",
-    image:
-      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop",
-    tags: ["tech-culture", "team-building"],
-    category: "Tech Culture",
-    author: {
-      name: "Sarah Kim",
-      avatar:
+    data: {
+      title: "The Human Side of Tech Culture",
+      excerpt: "Building sustainable technology organizations.",
+      pubDate: new Date("2024-01-20"),
+      category: "Tech Culture",
+      tags: ["tech-culture", "team-building"],
+      author: "Sarah Kim",
+      authorAvatar:
         "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=100&h=100&fit=crop&crop=face",
-      role: "Culture Analyst",
+      authorRole: "Culture Analyst",
+      image:
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop",
+      featured: false,
+      readTime: "22 min listen",
     },
   },
 ];
@@ -141,7 +154,8 @@ const relatedEpisodes = [
             <a
               href="/audio"
               class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide"
-              >Audio</a>
+              >Audio</a
+            >
           </li>
           <li><i class="fas fa-chevron-right text-xs"></i></li>
           <li class="text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
@@ -193,7 +207,7 @@ const relatedEpisodes = [
       </div>
 
       <!-- Host & Guest Info -->
-      <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-6 mb-8">
+      <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-sm p-6 mb-8">
         <div class="grid md:grid-cols-2 gap-6">
           <!-- Host -->
           <div>
@@ -236,7 +250,7 @@ const relatedEpisodes = [
     </header>
 
     <!-- Episode Image -->
-    <div class="aspect-[16/9] overflow-hidden rounded-xl mb-8">
+    <div class="aspect-[16/9] overflow-hidden rounded-sm mb-8">
       <img
         src={episode.image}
         alt={episode.title}
@@ -248,7 +262,7 @@ const relatedEpisodes = [
     <!-- Audio Player -->
     <div class="mb-8">
       <AudioPlayer
-        src={episode.audioUrl}
+        audioUrl={episode.audioUrl}
         title={episode.title}
         duration={episode.duration}
         transcript={episode.transcript}
@@ -270,7 +284,7 @@ const relatedEpisodes = [
           <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wide">
             Show Notes
           </h2>
-          <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
+          <div class="bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 p-6">
             <div class="space-y-4">
               {episode.showNotes.map((note) => (
                 <div class="flex gap-4 group">
@@ -302,7 +316,7 @@ const relatedEpisodes = [
           <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wide">
             Transcript
           </h2>
-          <details class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+          <details class="bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800">
             <summary class="p-6 cursor-pointer font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
               <span class="uppercase tracking-wide">Show Full Transcript</span>
             </summary>
@@ -347,7 +361,7 @@ const relatedEpisodes = [
     </div>
 
     <!-- Guest Bio -->
-    <section class="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-6 mb-8">
+    <section class="bg-zinc-50 dark:bg-zinc-800/50 rounded-sm p-6 mb-8">
       <h2
         class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide"
       >
@@ -407,10 +421,83 @@ const relatedEpisodes = [
     </section>
   </article>
 
-  <!-- Related Episodes -->
-  <RelatedPosts
-    posts={relatedEpisodes}
-    title="Related Episodes"
-    description="More conversations you might enjoy"
-  />
+  <!-- Related Episodes Section -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+          Related Episodes
+        </h2>
+        <p class="text-xl text-zinc-600 dark:text-zinc-400">
+          More episodes you might like
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {
+          relatedEpisodes.map((relatedEpisode) => (
+            <article class="bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-lg transition-shadow">
+              <div class="aspect-[16/9] overflow-hidden">
+                <img
+                  src={relatedEpisode.data.image}
+                  alt={relatedEpisode.data.title}
+                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+              </div>
+              <div class="p-6">
+                <div class="flex items-center gap-2 mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+                  <time datetime={relatedEpisode.data.pubDate.toISOString()}>
+                    {relatedEpisode.data.pubDate.toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </time>
+                  <span class="w-1 h-1 bg-zinc-400 rounded-full" />
+                  <span>{relatedEpisode.data.readTime}</span>
+                </div>
+                <h3 class="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2 leading-tight">
+                  <a
+                    href={`/podcast/${relatedEpisode.slug}`}
+                    class="hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                  >
+                    {relatedEpisode.data.title}
+                  </a>
+                </h3>
+                <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2">
+                  {relatedEpisode.data.excerpt}
+                </p>
+                <div class="flex items-center gap-3">
+                  <img
+                    src={relatedEpisode.data.authorAvatar}
+                    alt={relatedEpisode.data.author}
+                    class="w-8 h-8 rounded-full"
+                    loading="lazy"
+                  />
+                  <div>
+                    <div class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      {relatedEpisode.data.author}
+                    </div>
+                    <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                      {relatedEpisode.data.authorRole}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
 </Layout>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

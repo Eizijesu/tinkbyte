@@ -1,273 +1,340 @@
 ---
 export interface Props {
-  src: string;
-  title?: string;
-  className?: string;
-  autoplay?: boolean;
-  showDownload?: boolean;
+  audioUrl: string;
+  title: string;
+  duration?: string;
+  transcript?: string;
+  downloadUrl?: string;
 }
 
-const {
-  src,
-  title = "Audio Player",
-  className = "",
-  autoplay = false,
-  showDownload = true,
-} = Astro.props;
+const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
 ---
 
-<div
-  class={`audio-player bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded p-4 ${className}`}
->
-  <!-- Audio Title -->
-  {
-    title && (
-      <div class="mb-4">
-        <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
-          {title}
-        </h3>
-      </div>
-    )
-  }
-
-  <!-- Audio Controls -->
-  <div class="flex items-center gap-4">
-    <!-- Play/Pause Button -->
-    <button
-      id="play-pause-btn"
-      class="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-full hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
-      aria-label="Play/Pause"
-    >
-      <!-- Play Icon -->
+<div class="audio-player" data-audio-url={audioUrl}>
+  <div class="audio-controls">
+    <button class="play-button" data-action="play">
       <svg
-        id="play-icon"
-        class="w-5 h-5 ml-0.5"
-        fill="currentColor"
+        class="play-icon"
+        fill="none"
+        stroke="currentColor"
         viewBox="0 0 24 24"
       >
-        <path d="M8 5v14l11-7z"></path>
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M14.828 14.828a4 4 0 01-5.656 0M9 9l3 3 3-3M9 15l3-3 3-3"></path>
       </svg>
-
-      <!-- Pause Icon -->
       <svg
-        id="pause-icon"
-        class="w-5 h-5 hidden"
-        fill="currentColor"
+        class="pause-icon hidden"
+        fill="none"
+        stroke="currentColor"
         viewBox="0 0 24 24"
       >
-        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 9v6m4-6v6"></path>
       </svg>
     </button>
 
-    <!-- Progress Container -->
-    <div class="flex-1">
-      <!-- Time Display -->
-      <div
-        class="flex justify-between text-xs text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wide"
-      >
-        <span id="current-time">00:00</span>
-        <span id="duration">00:00</span>
-      </div>
-
-      <!-- Progress Bar -->
-      <div class="relative">
-        <div
-          class="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full cursor-pointer"
-          id="progress-container"
-        >
-          <div
-            id="progress-bar"
-            class="h-full bg-zinc-900 dark:bg-zinc-100 rounded-full transition-all duration-150"
-            style="width: 0%"
-          >
-          </div>
-        </div>
+    <div class="audio-info">
+      <div class="audio-title">🎧 Listen to this article</div>
+      <div class="audio-meta">
+        <span class="audio-duration">{duration || "Unknown duration"}</span>
+        <span class="audio-status">Ready to play</span>
       </div>
     </div>
-
-    <!-- Volume Control -->
-    <div class="flex items-center gap-2">
-      <button
-        id="mute-btn"
-        class="text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-        aria-label="Mute/Unmute"
-      >
-        <!-- Volume Icon -->
-        <svg
-          id="volume-icon"
-          class="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-          ></path>
-        </svg>
-
-        <!-- Mute Icon -->
-        <svg
-          id="mute-icon"
-          class="w-5 h-5 hidden"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
-          ></path>
-        </svg>
-      </button>
-    </div>
-
-    <!-- Download Button -->
-    {
-      showDownload && (
-        <a
-          href={src}
-          download
-          class="flex-shrink-0 p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
-          aria-label="Download audio"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        </a>
-      )
-    }
   </div>
 
-  <!-- Hidden Audio Element -->
-  <audio
-    id="audio-element"
-    preload="metadata"
-    {autoplay ? { autoplay: true } : {}}
-  >
-    <source src={src} type="audio/mpeg" />
-    <source src={src} type="audio/mp4" />
-    <source src={src} type="audio/wav" />
-    Your browser does not support the audio element.
+  <div class="audio-progress">
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: 0%"></div>
+    </div>
+    <div class="time-display">
+      <span class="current-time">0:00</span>
+      <span class="total-time">{duration || "0:00"}</span>
+    </div>
+  </div>
+
+  <audio preload="metadata" class="audio-element">
+    <source src={audioUrl} type="audio/mpeg" />
+    Your browser does not support audio playback.
   </audio>
 </div>
 
+<style>
+  .audio-player {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: var(--tinkbyte-radius-card);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .audio-player {
+    background: rgb(17, 24, 39);
+    border-color: rgb(55, 65, 81);
+  }
+
+  .audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .play-button {
+    width: 3rem;
+    height: 3rem;
+    border: none;
+    border-radius: var(--tinkbyte-radius-card);
+    background: rgb(36, 55, 136);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .play-button:hover {
+    background: rgb(26, 43, 92);
+    transform: scale(1.05);
+  }
+
+  .play-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .play-button svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .audio-info {
+    flex: 1;
+  }
+
+  .audio-title {
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.25rem;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .audio-title {
+    color: rgb(243, 244, 246);
+  }
+
+  .audio-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .audio-meta {
+    color: rgb(156, 163, 175);
+  }
+
+  .audio-duration {
+    font-weight: 500;
+  }
+
+  .audio-status {
+    opacity: 0.8;
+  }
+
+  .audio-progress {
+    margin-top: 1rem;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    overflow: hidden;
+    transition: background-color 0.3s ease;
+  }
+
+  :global(.dark) .progress-bar {
+    background: rgb(55, 65, 81);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: rgb(36, 55, 136);
+    transition: width 0.1s ease;
+    border-radius: 3px;
+  }
+
+  .time-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #6b7280;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .time-display {
+    color: rgb(156, 163, 175);
+  }
+
+  .current-time {
+    font-weight: 500;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  /* Loading state */
+  .audio-player.loading .audio-status::after {
+    content: "...";
+    animation: dots 1.5s infinite;
+  }
+
+  @keyframes dots {
+    0%,
+    20% {
+      content: "";
+    }
+    40% {
+      content: ".";
+    }
+    60% {
+      content: "..";
+    }
+    80%,
+    100% {
+      content: "...";
+    }
+  }
+</style>
+
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const audio = document.getElementById("audio-element") as HTMLAudioElement;
-    const playPauseBtn = document.getElementById("play-pause-btn");
-    const playIcon = document.getElementById("play-icon");
-    const pauseIcon = document.getElementById("pause-icon");
-    const currentTimeEl = document.getElementById("current-time");
-    const durationEl = document.getElementById("duration");
-    const progressContainer = document.getElementById("progress-container");
-    const progressBar = document.getElementById("progress-bar");
-    const muteBtn = document.getElementById("mute-btn");
-    const volumeIcon = document.getElementById("volume-icon");
-    const muteIcon = document.getElementById("mute-icon");
+    const audioPlayers = document.querySelectorAll(".audio-player");
 
-    if (
-      !audio ||
-      !playPauseBtn ||
-      !playIcon ||
-      !pauseIcon ||
-      !currentTimeEl ||
-      !durationEl ||
-      !progressContainer ||
-      !progressBar ||
-      !muteBtn ||
-      !volumeIcon ||
-      !muteIcon
-    ) {
-      console.warn("Audio player elements not found");
-      return;
-    }
+    audioPlayers.forEach((player: Element) => {
+      const audioUrl = player.getAttribute("data-audio-url");
+      const playButton = player.querySelector(
+        ".play-button"
+      ) as HTMLButtonElement;
+      const playIcon = player.querySelector(".play-icon") as HTMLElement;
+      const pauseIcon = player.querySelector(".pause-icon") as HTMLElement;
+      const progressFill = player.querySelector(
+        ".progress-fill"
+      ) as HTMLElement;
+      const progressBar = player.querySelector(".progress-bar") as HTMLElement;
+      const currentTimeEl = player.querySelector(
+        ".current-time"
+      ) as HTMLElement;
+      const totalTimeEl = player.querySelector(".total-time") as HTMLElement;
+      const audioStatusEl = player.querySelector(
+        ".audio-status"
+      ) as HTMLElement;
+      const audioElement = player.querySelector(
+        ".audio-element"
+      ) as HTMLAudioElement;
 
-    // Format time
-    function formatTime(seconds: number): string {
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    }
+      if (!audioElement || !audioUrl) return;
 
-    // Update progress
-    function updateProgress() {
-      if (audio.duration) {
-        const progress = (audio.currentTime / audio.duration) * 100;
-        progressBar.style.width = `${progress}%`;
-        currentTimeEl.textContent = formatTime(audio.currentTime);
+      let isPlaying = false;
+      let duration = 0;
+
+      // Format time helper
+      const formatTime = (seconds: number): string => {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, "0")}`;
+      };
+
+      // Audio event listeners
+      audioElement.addEventListener("loadedmetadata", () => {
+        duration = audioElement.duration;
+        if (totalTimeEl) totalTimeEl.textContent = formatTime(duration);
+        if (audioStatusEl) audioStatusEl.textContent = "Ready to play";
+        (player as HTMLElement).classList.remove("loading");
+      });
+
+      audioElement.addEventListener("timeupdate", () => {
+        if (duration > 0) {
+          const progress = (audioElement.currentTime / duration) * 100;
+          if (progressFill) progressFill.style.width = `${progress}%`;
+          if (currentTimeEl)
+            currentTimeEl.textContent = formatTime(audioElement.currentTime);
+        }
+      });
+
+      audioElement.addEventListener("ended", () => {
+        isPlaying = false;
+        if (playIcon) playIcon.classList.remove("hidden");
+        if (pauseIcon) pauseIcon.classList.add("hidden");
+        if (audioStatusEl) audioStatusEl.textContent = "Finished";
+        if (progressFill) progressFill.style.width = "0%";
+        if (currentTimeEl) currentTimeEl.textContent = "0:00";
+      });
+
+      audioElement.addEventListener("error", (e: Event) => {
+        console.error("Audio loading error:", e);
+        if (audioStatusEl) audioStatusEl.textContent = "Error loading audio";
+        if (playButton) playButton.disabled = true;
+      });
+
+      // Play/pause functionality
+      if (playButton) {
+        playButton.addEventListener("click", async () => {
+          try {
+            if (isPlaying) {
+              audioElement.pause();
+              isPlaying = false;
+              if (playIcon) playIcon.classList.remove("hidden");
+              if (pauseIcon) pauseIcon.classList.add("hidden");
+              if (audioStatusEl) audioStatusEl.textContent = "Paused";
+            } else {
+              (player as HTMLElement).classList.add("loading");
+              if (audioStatusEl) audioStatusEl.textContent = "Loading";
+
+              await audioElement.play();
+              isPlaying = true;
+              if (playIcon) playIcon.classList.add("hidden");
+              if (pauseIcon) pauseIcon.classList.remove("hidden");
+              if (audioStatusEl) audioStatusEl.textContent = "Playing";
+              (player as HTMLElement).classList.remove("loading");
+            }
+          } catch (error) {
+            console.error("Audio playback error:", error);
+            if (audioStatusEl) audioStatusEl.textContent = "Playback error";
+            (player as HTMLElement).classList.remove("loading");
+          }
+        });
       }
-    }
 
-    // Play/Pause functionality
-    playPauseBtn.addEventListener("click", () => {
-      if (audio.paused) {
-        audio.play();
-      } else {
-        audio.pause();
+      // Progress bar click to seek
+      if (progressBar) {
+        progressBar.addEventListener("click", (e: MouseEvent) => {
+          if (duration > 0) {
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickPercent = clickX / rect.width;
+            const seekTime = clickPercent * duration;
+            audioElement.currentTime = seekTime;
+          }
+        });
       }
-    });
 
-    // Update play/pause button
-    audio.addEventListener("play", () => {
-      playIcon.classList.add("hidden");
-      pauseIcon.classList.remove("hidden");
-    });
-
-    audio.addEventListener("pause", () => {
-      playIcon.classList.remove("hidden");
-      pauseIcon.classList.add("hidden");
-    });
-
-    // Update duration when metadata loads
-    audio.addEventListener("loadedmetadata", () => {
-      durationEl.textContent = formatTime(audio.duration);
-    });
-
-    // Update progress
-    audio.addEventListener("timeupdate", updateProgress);
-
-    // Seek functionality
-    progressContainer.addEventListener("click", (e) => {
-      const rect = progressContainer.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const width = rect.width;
-      const seekTime = (clickX / width) * audio.duration;
-      audio.currentTime = seekTime;
-    });
-
-    // Mute functionality
-    muteBtn.addEventListener("click", () => {
-      audio.muted = !audio.muted;
-      if (audio.muted) {
-        volumeIcon.classList.add("hidden");
-        muteIcon.classList.remove("hidden");
-      } else {
-        volumeIcon.classList.remove("hidden");
-        muteIcon.classList.add("hidden");
-      }
-    });
-
-    // Reset when ended
-    audio.addEventListener("ended", () => {
-      progressBar.style.width = "0%";
-      currentTimeEl.textContent = "00:00";
-      playIcon.classList.remove("hidden");
-      pauseIcon.classList.add("hidden");
+      // Initialize loading state
+      (player as HTMLElement).classList.add("loading");
+      if (audioStatusEl) audioStatusEl.textContent = "Loading audio...";
     });
   });
 </script>

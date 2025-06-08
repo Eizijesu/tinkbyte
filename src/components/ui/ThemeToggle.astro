@@ -1,81 +1,128 @@
 ---
-export interface Props {
-  className?: string;
-}
-
-const { className = "" } = Astro.props;
+// src/components/ui/ThemeToggle.astro - Enhanced
 ---
 
 <button
-  id="theme-toggle"
-  class={`p-2 rounded-md text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 ${className}`}
-  aria-label="Toggle theme"
-  type="button"
+  data-theme-toggle
+  class="theme-toggle"
+  aria-label="Toggle dark mode"
+  title="Toggle dark mode"
 >
-  <!-- Sun icon (shows in dark mode) -->
-  <svg
-    id="sun-icon"
-    class="w-5 h-5 transition-transform duration-200 hidden dark:block"
-    fill="currentColor"
-    viewBox="0 0 20 20"
-  >
+  <svg class="sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path
-      fill-rule="evenodd"
-      d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-      clip-rule="evenodd"></path>
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+    ></path>
   </svg>
-
-  <!-- Moon icon (shows in light mode) -->
-  <svg
-    id="moon-icon"
-    class="w-5 h-5 transition-transform duration-200 block dark:hidden"
-    fill="currentColor"
-    viewBox="0 0 20 20"
-  >
-    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"
+  <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
     ></path>
   </svg>
 </button>
 
-<script>
-  function initThemeToggle() {
-    const themeToggle = document.getElementById("theme-toggle");
+<style>
+  .theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    color: #6b7280;
+    transition: all 0.2s ease;
+    position: relative;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-    if (!themeToggle) {
-      console.warn("Theme toggle button not found");
-      return;
+  :global(.dark) .theme-toggle {
+    color: rgb(156, 163, 175);
+  }
+
+  .theme-toggle:hover {
+    background: #f3f4f6;
+  }
+
+  :global(.dark) .theme-toggle:hover {
+    background: rgb(55, 65, 81);
+  }
+
+  .theme-toggle svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    position: absolute;
+    transition: all 0.3s ease;
+  }
+
+  .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+
+  .moon-icon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.8);
+  }
+
+  :global(.dark) .sun-icon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.8);
+  }
+
+  :global(.dark) .moon-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const themeToggle = document.querySelector("[data-theme-toggle]");
+
+    if (themeToggle) {
+      // Initialize theme
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+
+      if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Toggle theme
+      themeToggle.addEventListener("click", () => {
+        const isDark = document.documentElement.classList.contains("dark");
+
+        if (isDark) {
+          document.documentElement.classList.remove("dark");
+          localStorage.setItem("theme", "light");
+        } else {
+          document.documentElement.classList.add("dark");
+          localStorage.setItem("theme", "dark");
+        }
+      });
     }
 
-    // Apply theme and update icons
-    const applyTheme = (theme) => {
-      const html = document.documentElement;
-      const sunIcon = document.getElementById("sun-icon");
-      const moonIcon = document.getElementById("moon-icon");
-
-      if (theme === "dark") {
-        html.classList.add("dark");
-      } else {
-        html.classList.remove("dark");
-      }
-
-      // Store theme
-      if (typeof localStorage !== "undefined") {
-        localStorage.setItem("theme", theme);
-      }
-    };
-
-    // Toggle functionality
-    themeToggle.addEventListener("click", () => {
-      const isDarkMode = document.documentElement.classList.contains("dark");
-      const newTheme = isDarkMode ? "light" : "dark";
-      applyTheme(newTheme);
-    });
-  }
-
-  // Initialize when DOM is ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initThemeToggle);
-  } else {
-    initThemeToggle();
-  }
+    // Listen for system theme changes
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", (e) => {
+        if (!localStorage.getItem("theme")) {
+          if (e.matches) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        }
+      });
+  });
 </script>

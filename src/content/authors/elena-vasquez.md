@@ -12,3 +12,4 @@ featured: true
 ---
 
 Dr. Elena Vasquez is a leading AI researcher and product strategist with over 12 years of experience in machine learning and neural networks. She has led AI initiatives at Fortune 500 companies and startups alike.
+

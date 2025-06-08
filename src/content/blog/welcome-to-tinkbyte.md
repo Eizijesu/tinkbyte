@@ -12,7 +12,7 @@ authorSocial:
 image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop"
 imageAlt: "Visual programming interface with drag-and-drop components"
 tags: ["tech-culture", "getting-started", "developer-tools"]
-category: "tech-cultur"
+category: "tech-culture"
 featured: false
 readTime: "5 min read"
 ---

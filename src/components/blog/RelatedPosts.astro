@@ -80,7 +80,7 @@ const relatedPosts = allPosts
       <!-- Related Articles Grid -->
       <div class={`grid gap-8 ${relatedPosts.length === 1 ? 'max-w-md mx-auto' : relatedPosts.length === 2 ? 'md:grid-cols-2 max-w-4xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
         {relatedPosts.map((post) => (
-          <article class="group bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-lg transition-all duration-300">
+          <article class="group bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-lg transition-all duration-300">
             
             {post.image && (
               <div class="aspect-video overflow-hidden">
@@ -95,11 +95,11 @@ const relatedPosts = allPosts
             
             <div class="p-6">
               <div class="mb-3">
-                <span class="inline-block px-3 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold rounded-full uppercase tracking-wider">
+                <span class="inline-block px-3 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold rounded-sm uppercase tracking-wider">
                   {post.category}
                 </span>
                 {post.featured && (
-                  <span class="ml-2 inline-block px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-bold rounded uppercase tracking-wider">
+                  <span class="ml-2 inline-block px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-bold rounded-sm uppercase tracking-wider">
                     FEATURED
                   </span>
                 )}
@@ -118,7 +118,7 @@ const relatedPosts = allPosts
               {post.tags && post.tags.length > 0 && (
                 <div class="flex flex-wrap gap-2 mb-4">
                   {post.tags.slice(0, 2).map((tag) => (
-                    <span class="px-2 py-1 bg-zinc-50 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 text-xs rounded uppercase tracking-wide">
+                    <span class="px-2 py-1 bg-zinc-50 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400 text-xs rounded-sm uppercase tracking-wide">
                       #{tag}
                     </span>
                   ))}

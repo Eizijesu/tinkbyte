@@ -68,8 +68,56 @@
             },
             "github": {
               "type": "string"
+            },
+            "website": {
+              "type": "string"
             }
           },
+          "additionalProperties": false
+        },
+        "authorInfo": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "bio": {
+              "type": "string"
+            },
+            "avatar": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            },
+            "company": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "social": {
+              "type": "object",
+              "properties": {
+                "twitter": {
+                  "type": "string"
+                },
+                "linkedin": {
+                  "type": "string"
+                },
+                "github": {
+                  "type": "string"
+                },
+                "website": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "name"
+          ],
           "additionalProperties": false
         },
         "image": {
@@ -86,6 +134,9 @@
           "default": []
         },
         "category": {
+          "type": "string"
+        },
+        "storyType": {
           "type": "string"
         },
         "featured": {
@@ -112,6 +163,21 @@
         "audioTranscript": {
           "type": "string"
         },
+        "newsletterWorthy": {
+          "type": "boolean",
+          "default": false
+        },
+        "newsletterSummary": {
+          "type": "string"
+        },
+        "readingProgress": {
+          "type": "boolean",
+          "default": true
+        },
+        "tableOfContents": {
+          "type": "boolean",
+          "default": true
+        },
         "seo": {
           "type": "object",
           "properties": {
@@ -127,6 +193,15 @@
             "noindex": {
               "type": "boolean",
               "default": false
+            },
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Article",
+                "BlogPosting",
+                "TechArticle"
+              ],
+              "default": "Article"
             }
           },
           "additionalProperties": false
