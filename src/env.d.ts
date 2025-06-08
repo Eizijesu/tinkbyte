@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly TINA_CLIENT_ID: string;
   readonly TINA_TOKEN: string;
   readonly TINA_BRANCH: string;
+  readonly TINA_SEARCH_TOKEN: string;
   
   // ConvertKit
   readonly PUBLIC_CONVERTKIT_FORM_ID: string;

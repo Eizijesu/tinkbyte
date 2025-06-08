@@ -7,6 +7,7 @@ import ShareButtons from "../components/ui/ShareButtons.astro";
 import RelatedPosts from "../components/blog/RelatedPosts.astro";
 import AudioPlayer from "../components/ui/AudioPlayer.astro";
 import { SITE } from "../config/site";
+import CommentSection from "../components/blog/CommentSection.astro";
 import { getCollection } from "astro:content";
 
 export interface Props {
@@ -511,22 +512,7 @@ const formatCategory = (cat: string | undefined): string => {
     </div>
 
     <!-- Enhanced Comments Section -->
-    <div class="comments-section-enhanced">
-      <div class="max-w-4xl mx-auto px-4 py-12">
-        <div class="comments-header">
-          <h3 class="comments-title-enhanced">
-            <i class="fas fa-comments mr-3"></i>
-            Join the Discussion
-          </h3>
-          <p class="comments-subtitle">
-            Share your thoughts and connect with fellow builders
-          </p>
-        </div>
-        <div id="giscus-container" class="giscus-container-enhanced">
-          <!-- Giscus will be loaded here -->
-        </div>
-      </div>
-    </div>
+    <CommentSection postSlug={slug} postTitle={title} />
 
     <!-- Enhanced Related Posts -->
     <div class="related-section-enhanced">

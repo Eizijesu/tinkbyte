@@ -1,11 +1,16 @@
 ---
-// src/components/blog/CommentSection.astro - FIXED TypeScript assertions
+// src/components/blog/CommentSection.astro - Fixed TypeScript Props
 export interface Props {
-  postSlug: string;
-  postTitle: string;
+  postSlug?: string;
+  postTitle?: string;
 }
 
 const { postSlug, postTitle } = Astro.props;
+
+// Only proceed if we have the required data
+if (!postSlug || !postTitle) {
+  console.warn('CommentSection: Missing required props postSlug or postTitle');
+}
 
 // Giscus configuration from environment variables
 const giscusConfig = {
@@ -21,92 +26,175 @@ const giscusConfig = {
   theme: import.meta.env.PUBLIC_GISCUS_THEME || "preferred_color_scheme",
   lang: import.meta.env.PUBLIC_GISCUS_LANG || "en",
 };
+
+const isConfigured = giscusConfig.repo && giscusConfig.repoId && giscusConfig.categoryId;
+const hasRequiredProps = postSlug && postTitle;
+const shouldRenderComments = isConfigured && hasRequiredProps;
 ---
 
-{
-  giscusConfig.repo && giscusConfig.repoId && giscusConfig.categoryId && (
-    <section class="comments-section py-12 border-t border-zinc-200 dark:border-zinc-800">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6">
-        <div class="comments-header mb-8 text-center">
-          <h3 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2 font-space-grotesk uppercase tracking-wide">
-            Comments & Discussion
-          </h3>
-          <p class="text-zinc-600 dark:text-zinc-400">
-            Join the conversation about "{postTitle}"
-          </p>
-        </div>
-
-        <div class="comments-container bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800 p-6">
-          <div id="giscus-container" class="min-h-[200px]" />
+{shouldRenderComments ? (
+  <section class="comments-section-enhanced">
+    <div class="max-w-4xl mx-auto px-4 py-12">
+      <div class="comments-header">
+        <h3 class="comments-title-enhanced">
+          <i class="fas fa-comments mr-3"></i>
+          Join the Discussion
+        </h3>
+        <p class="comments-subtitle">
+          Share your thoughts about "{postTitle}"
+        </p>
+      </div>
+      
+      <div id="giscus-container" class="giscus-container-enhanced">
+        <div class="loading-placeholder">
+          <div class="animate-pulse flex space-x-4">
+            <div class="rounded-full bg-gray-300 dark:bg-gray-600 h-10 w-10"></div>
+            <div class="flex-1 space-y-2 py-1">
+              <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+              <div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+            </div>
+          </div>
         </div>
       </div>
-    </section>
-  )
-}
+    </div>
+  </section>
+) : (
+  <!-- Fallback section for debugging -->
+  <section class="comments-section-enhanced">
+    <div class="max-w-4xl mx-auto px-4 py-12">
+      <div class="giscus-container-enhanced">
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <i class="fas fa-exclamation-triangle text-2xl mb-4"></i>
+          <p class="text-lg font-medium">Comments Unavailable</p>
+          {!hasRequiredProps && (
+            <p class="text-sm mt-2">Missing post information (slug: {postSlug ? '✓' : '✗'}, title: {postTitle ? '✓' : '✗'})</p>
+          )}
+          {!isConfigured && (
+            <p class="text-sm mt-2">Giscus configuration incomplete</p>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+)}
 
-<script define:vars={{ giscusConfig }}>
+<script define:vars={{ giscusConfig, shouldRenderComments, postSlug }}>
   document.addEventListener("DOMContentLoaded", () => {
+    if (!shouldRenderComments) {
+      console.warn('CommentSection: Not rendering due to missing configuration or props');
+      return;
+    }
+
     const giscusContainer = document.getElementById("giscus-container");
+    const loadingPlaceholder = document.querySelector(".loading-placeholder");
 
-    if (!giscusContainer || !giscusConfig.repo) return;
+    if (!giscusContainer) {
+      console.error('CommentSection: giscus-container element not found');
+      return;
+    }
 
-    // Load Giscus script
-    const script = document.createElement("script");
-    script.src = "https://giscus.app/client.js";
-    script.async = true;
-    script.crossOrigin = "anonymous";
-
-    // Set Giscus attributes
-    script.setAttribute("data-repo", giscusConfig.repo);
-    script.setAttribute("data-repo-id", giscusConfig.repoId);
-    script.setAttribute("data-category", giscusConfig.category);
-    script.setAttribute("data-category-id", giscusConfig.categoryId);
-    script.setAttribute("data-mapping", giscusConfig.mapping);
-    script.setAttribute("data-strict", giscusConfig.strict);
-    script.setAttribute(
-      "data-reactions-enabled",
-      giscusConfig.reactionsEnabled
+    // Intersection Observer for lazy loading
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            loadGiscus();
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.1 }
     );
-    script.setAttribute("data-emit-metadata", giscusConfig.emitMetadata);
-    script.setAttribute("data-input-position", giscusConfig.inputPosition);
-    script.setAttribute("data-theme", giscusConfig.theme);
-    script.setAttribute("data-lang", giscusConfig.lang);
 
-    giscusContainer.appendChild(script);
+    observer.observe(giscusContainer);
+
+    function loadGiscus() {
+      const script = document.createElement("script");
+      script.src = "https://giscus.app/client.js";
+      script.async = true;
+      script.crossOrigin = "anonymous";
+
+      // Set Giscus attributes
+      script.setAttribute("data-repo", giscusConfig.repo);
+      script.setAttribute("data-repo-id", giscusConfig.repoId);
+      script.setAttribute("data-category", giscusConfig.category);
+      script.setAttribute("data-category-id", giscusConfig.categoryId);
+      script.setAttribute("data-mapping", giscusConfig.mapping);
+      script.setAttribute("data-strict", giscusConfig.strict);
+      script.setAttribute("data-reactions-enabled", giscusConfig.reactionsEnabled);
+      script.setAttribute("data-emit-metadata", giscusConfig.emitMetadata);
+      script.setAttribute("data-input-position", giscusConfig.inputPosition);
+      script.setAttribute("data-lang", giscusConfig.lang);
+      script.setAttribute("data-loading", "lazy");
+
+      // Set theme based on current mode
+      const currentTheme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+      script.setAttribute("data-theme", currentTheme);
+
+      // Error handling
+      script.onerror = () => {
+        console.error('Failed to load Giscus script');
+        if (loadingPlaceholder) {
+          loadingPlaceholder.innerHTML = `
+            <div class="text-center py-8 text-red-500 dark:text-red-400">
+              <i class="fas fa-exclamation-circle text-2xl mb-4"></i>
+              <p>Failed to load comments</p>
+              <button onclick="location.reload()" class="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                Retry
+              </button>
+            </div>
+          `;
+        }
+      };
+
+      // Success handling
+      script.onload = () => {
+        console.log('Giscus loaded successfully');
+        if (loadingPlaceholder) {
+          setTimeout(() => {
+            loadingPlaceholder.style.display = "none";
+          }, 1000);
+        }
+      };
+
+      giscusContainer.appendChild(script);
+    }
 
     // Theme change handler
     const handleThemeChange = () => {
-      // ✅ FIXED: Removed TypeScript assertion
       const giscusFrame = document.querySelector("iframe.giscus-frame");
-
       if (giscusFrame && giscusFrame.contentWindow) {
         const isDark = document.documentElement.classList.contains("dark");
         const theme = isDark ? "dark" : "light";
 
-        giscusFrame.contentWindow.postMessage(
-          {
-            giscus: {
-              setConfig: { theme: theme },
+        try {
+          giscusFrame.contentWindow.postMessage(
+            {
+              giscus: {
+                setConfig: { theme: theme },
+              },
             },
-          },
-          "https://giscus.app"
-        );
+            "https://giscus.app"
+          );
+        } catch (error) {
+          console.warn('Failed to update Giscus theme:', error);
+        }
       }
     };
 
     // Listen for theme changes
-    const observer = new MutationObserver((mutations) => {
+    const themeObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (
           mutation.type === "attributes" &&
           mutation.attributeName === "class"
         ) {
-          handleThemeChange();
+          setTimeout(handleThemeChange, 100);
         }
       });
     });
 
-    observer.observe(document.documentElement, {
+    themeObserver.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });
