@@ -1,151 +1,515 @@
 ---
+// src/pages/terms.astro
 import Layout from "../layouts/Layout.astro";
+import { getEntry } from "astro:content";
 
-const lastUpdated = "January 15, 2024";
+// Get terms content from TinaCMS
+const termsPage = await getEntry("pages", "terms-of-service");
+const lastUpdated = termsPage?.data.updatedDate 
+  ? new Date(termsPage.data.updatedDate).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long", 
+      day: "numeric",
+    })
+  : "January 15, 2024";
 ---
 
-<Layout
-  title="Terms of Service | TinkByte"
+<Layout 
+  title="Terms of Service | TinkByte" 
   description="TinkByte's terms of service. Read our terms and conditions for using our website and services."
 >
-  <div class="max-w-4xl mx-auto py-16 lg:py-20 px-4 sm:px-6">
-    <!-- Header -->
-    <div class="text-center mb-12">
-      <h1
-        class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-6"
-      >
-        Terms of Service
-      </h1>
-      <p class="text-xl text-zinc-600 dark:text-zinc-400">
-        Last updated: {lastUpdated}
-      </p>
-    </div>
+  <div class="legal-page-container">
+    <div class="max-w-4xl mx-auto py-12 lg:py-16 px-4 sm:px-6">
+      <!-- Enhanced Header -->
+      <header class="legal-page-header">
+        <div class="header-decoration">
+          <div class="decoration-circle"></div>
+          <div class="decoration-line"></div>
+        </div>
+        
+        <h1 class="legal-page-title">
+          <span class="title-icon">
+            <i class="fas fa-file-contract"></i>
+          </span>
+          Terms of Service
+        </h1>
+        
+        <div class="last-updated-badge">
+          <i class="fas fa-calendar-alt mr-2"></i>
+          Last updated: {lastUpdated}
+        </div>
+        
+        <p class="legal-page-subtitle">
+          Building together means agreeing on how we work together
+        </p>
+      </header>
 
-    <!-- Content -->
-    <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none">
-      <h2>Acceptance of Terms</h2>
-      <p>
-        By accessing and using TinkByte's website and services, you accept and
-        agree to be bound by the terms and provision of this agreement. If you
-        do not agree to abide by the above, please do not use this service.
-      </p>
+      <!-- Content -->
+      <div class="legal-content">
+        {termsPage ? (
+          <div class="prose-content" set:html={termsPage.body} />
+        ) : (
+          <!-- Fallback content -->
+          <div class="prose-content">
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">01</span>
+                Acceptance of Terms
+              </h2>
+              <p>
+                By accessing and using TinkByte's website and services, you accept and agree to be bound by these terms. If you don't agree, please don't use our service.
+              </p>
+            </section>
 
-      <h2>Use License</h2>
-      <p>
-        Permission is granted to temporarily download one copy of TinkByte's
-        materials for personal, non-commercial transitory viewing only. This is
-        the grant of a license, not a transfer of title, and under this license
-        you may not:
-      </p>
-      <ul>
-        <li>Modify or copy the materials</li>
-        <li>
-          Use the materials for any commercial purpose or for any public display
-        </li>
-        <li>
-          Attempt to reverse engineer any software contained on the website
-        </li>
-        <li>
-          Remove any copyright or other proprietary notations from the materials
-        </li>
-      </ul>
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">02</span>
+                Use License
+              </h2>
+              <p>
+                You're granted permission to use TinkByte's materials for personal, non-commercial purposes. Under this license, you may not:
+              </p>
+              <ul class="enhanced-list">
+                <li>Modify or copy the materials for commercial use</li>
+                <li>Use materials for public display without permission</li>
+                <li>Attempt to reverse engineer our software</li>
+                <li>Remove copyright or proprietary notices</li>
+              </ul>
+            </section>
 
-      <h2>Content and Intellectual Property</h2>
-      <p>
-        All content published on TinkByte, including articles, images, graphics,
-        and other materials, is protected by copyright and other intellectual
-        property laws. You may not reproduce, distribute, or create derivative
-        works without explicit permission.
-      </p>
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">03</span>
+                Content & Intellectual Property
+              </h2>
+              <p>
+                All TinkByte content is protected by copyright and intellectual property laws. You may not reproduce, distribute, or create derivative works without explicit permission.
+              </p>
+              
+              <div class="subsection">
+                <h3 class="subsection-title">User-Generated Content</h3>
+                <p>
+                  By submitting content (comments, feedback), you grant us a non-exclusive, royalty-free license to use and distribute such content.
+                </p>
+              </div>
+            </section>
 
-      <h3>User-Generated Content</h3>
-      <p>
-        By submitting content to TinkByte (comments, feedback, etc.), you grant
-        us a non-exclusive, royalty-free, perpetual license to use, modify, and
-        distribute such content.
-      </p>
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">04</span>
+                Newsletter & Communications
+              </h2>
+              <p>
+                By subscribing to our newsletter, you consent to receive regular communications from TinkByte. You may unsubscribe anytime using the link in our emails.
+              </p>
+            </section>
 
-      <h2>Newsletter and Communications</h2>
-      <p>
-        By subscribing to our newsletter, you consent to receive regular
-        communications from TinkByte. You may unsubscribe at any time using the
-        link provided in our emails.
-      </p>
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">05</span>
+                Prohibited Uses
+              </h2>
+              <p>You may not use our service:</p>
+              <ul class="enhanced-list">
+                <li>For unlawful purposes or to solicit unlawful acts</li>
+                <li>To violate any regulations, rules, or laws</li>
+                <li>To transmit unauthorized advertising or promotional material</li>
+                <li>To impersonate the company, employees, or other users</li>
+                <li>In any way that infringes upon others' rights</li>
+              </ul>
+            </section>
 
-      <h2>Prohibited Uses</h2>
-      <p>You may not use our service:</p>
-      <ul>
-        <li>For any unlawful purpose or to solicit others to unlawful acts</li>
-        <li>
-          To violate any international, federal, provincial, or state
-          regulations, rules, laws, or local ordinances
-        </li>
-        <li>
-          To transmit, or procure the sending of, any advertising or promotional
-          material without our prior written consent
-        </li>
-        <li>
-          To impersonate or attempt to impersonate the company, employees, or
-          other users
-        </li>
-        <li>In any way that infringes upon the rights of others</li>
-      </ul>
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">06</span>
+                Disclaimer & Limitations
+              </h2>
+              <p>
+                TinkByte's materials are provided "as is" without warranties. We disclaim all warranties and limit liability for damages arising from website use.
+              </p>
+            </section>
 
-      <h2>Disclaimer</h2>
-      <p>
-        The materials on TinkByte's website are provided on an 'as is' basis.
-        TinkByte makes no warranties, expressed or implied, and hereby disclaims
-        and negates all other warranties including without limitation, implied
-        warranties or conditions of merchantability, fitness for a particular
-        purpose, or non-infringement of intellectual property or other violation
-        of rights.
-      </p>
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">07</span>
+                Modifications & Governing Law
+              </h2>
+              <p>
+                We may revise these terms anytime. These terms are governed by California, United States law.
+              </p>
+            </section>
 
-      <h2>Limitations</h2>
-      <p>
-        In no event shall TinkByte or its suppliers be liable for any damages
-        (including, without limitation, damages for loss of data or profit, or
-        due to business interruption) arising out of the use or inability to use
-        the materials on TinkByte's website.
-      </p>
+            <section class="content-section contact-section">
+              <h2 class="section-title">
+                <span class="section-number">08</span>
+                Contact Information
+              </h2>
+              <p>Questions about these Terms of Service? Reach out to us:</p>
+              <div class="contact-info">
+                <div class="contact-item">
+                  <i class="fas fa-envelope"></i>
+                  <span>legal@tinkbyte.com</span>
+                </div>
+                <div class="contact-item">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <span>TinkByte, San Francisco, CA</span>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+      </div>
 
-      <h2>Accuracy of Materials</h2>
-      <p>
-        The materials appearing on TinkByte's website could include technical,
-        typographical, or photographic errors. TinkByte does not warrant that
-        any of the materials on its website are accurate, complete, or current.
-      </p>
-
-      <h2>Links</h2>
-      <p>
-        TinkByte has not reviewed all of the sites linked to our website and is
-        not responsible for the contents of any such linked site. The inclusion
-        of any link does not imply endorsement by TinkByte of the site.
-      </p>
-
-      <h2>Modifications</h2>
-      <p>
-        TinkByte may revise these terms of service at any time without notice.
-        By using this website, you are agreeing to be bound by the then current
-        version of these terms of service.
-      </p>
-
-      <h2>Governing Law</h2>
-      <p>
-        These terms and conditions are governed by and construed in accordance
-        with the laws of California, United States, and you irrevocably submit
-        to the exclusive jurisdiction of the courts in that state or location.
-      </p>
-
-      <h2>Contact Information</h2>
-      <p>
-        If you have any questions about these Terms of Service, please contact
-        us at:
-      </p>
-      <ul>
-        <li><strong>Email:</strong> legal@tinkbyte.com</li>
-        <li><strong>Address:</strong> TinkByte, San Francisco, CA</li>
-      </ul>
+      <!-- Back to Top -->
+      <div class="back-to-top">
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="back-to-top-btn">
+          <i class="fas fa-arrow-up"></i>
+          Back to Top
+        </button>
+      </div>
     </div>
   </div>
 </Layout>
+
+<style>
+  /* Enhanced Legal Page Styles */
+  .legal-page-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: 100vh;
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .legal-page-container {
+    background: linear-gradient(135deg, rgb(17, 24, 39) 0%, rgb(30, 41, 59) 100%);
+  }
+
+  /* Enhanced Header */
+  .legal-page-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    position: relative;
+  }
+
+  .header-decoration {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  .decoration-circle {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 50%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+  }
+
+  .decoration-line {
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+    margin: 1rem auto 0;
+  }
+
+  .legal-page-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    color: rgb(15, 23, 42);
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 58, 138) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  :global(.dark) .legal-page-title {
+    background: linear-gradient(135deg, rgb(248, 250, 252) 0%, rgb(147, 197, 253) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .title-icon {
+    font-size: 0.8em;
+    color: #3b82f6;
+  }
+
+  .last-updated-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 2px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .last-updated-badge {
+    background: rgb(30, 41, 59);
+    border-color: rgb(71, 85, 105);
+    color: rgb(148, 163, 184);
+  }
+
+  .legal-page-subtitle {
+    font-size: 1.25rem;
+    color: #64748b;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .legal-page-subtitle {
+    color: rgb(148, 163, 184);
+  }
+
+  /* Enhanced Content Styling */
+  .legal-content {
+    background: white;
+    border-radius: var(--tinkbyte-radius-card, 8px);
+    padding: 3rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .legal-content {
+    background: rgb(30, 41, 59);
+    border-color: rgb(71, 85, 105);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .prose-content {
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: #374151;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .prose-content {
+    color: rgb(209, 213, 219);
+  }
+
+  .content-section {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #f1f5f9;
+    position: relative;
+  }
+
+  .content-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  :global(.dark) .content-section {
+    border-bottom-color: rgb(51, 65, 85);
+  }
+
+  .section-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: rgb(30, 58, 138);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .section-title {
+    color: rgb(147, 197, 253);
+  }
+
+  .section-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.875rem;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .subsection {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: var(--tinkbyte-radius, 6px);
+    border-left: 4px solid #3b82f6;
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .subsection {
+    background: rgb(51, 65, 85);
+    border-left-color: rgb(147, 197, 253);
+  }
+
+  .subsection-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: rgb(51, 65, 85);
+    margin-bottom: 0.75rem;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .subsection-title {
+    color: rgb(203, 213, 225);
+  }
+
+  .enhanced-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+  }
+
+  .enhanced-list li {
+    position: relative;
+    padding: 0.75rem 0 0.75rem 2rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--tinkbyte-radius, 4px);
+    transition: all 0.3s ease;
+  }
+
+  .enhanced-list li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    top: 0.75rem;
+    color: #3b82f6;
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+
+  .enhanced-list li:hover {
+    background: rgba(59, 130, 246, 0.05);
+    transform: translateX(4px);
+  }
+
+  .contact-section {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: var(--tinkbyte-radius-card, 8px);
+    padding: 2rem;
+    border: 2px solid #0ea5e9;
+    margin-top: 2rem;
+  }
+
+  :global(.dark) .contact-section {
+    background: linear-gradient(135deg, rgb(12, 74, 110) 0%, rgb(15, 118, 110) 100%);
+    border-color: rgb(34, 197, 94);
+  }
+
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--tinkbyte-radius, 6px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .contact-item {
+    background: rgb(30, 41, 59);
+  }
+
+  .contact-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .contact-item i {
+    color: #3b82f6;
+    font-size: 1.2em;
+  }
+
+  /* Back to Top */
+  .back-to-top {
+    text-align: center;
+    margin-top: 3rem;
+  }
+
+  .back-to-top-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    border: none;
+    border-radius: 2px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  .back-to-top-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+  }
+
+  /* Mobile Responsiveness */
+  @media (max-width: 768px) {
+    .legal-content {
+      padding: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      flex-direction: column;
+      text-align: center;
+      gap: 0.5rem;
+    }
+
+    .contact-info {
+      gap: 0.75rem;
+    }
+
+    .contact-item {
+      flex-direction: column;
+      text-align: center;
+      gap: 0.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .legal-content {
+      padding: 1.5rem;
+    }
+
+    .prose-content {
+      font-size: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+    }
+  }
+</style>

@@ -47,13 +47,13 @@ const sortedAudioPosts = blogPosts.sort(
           </h2>
           <div class="space-y-6">
             {sortedPodcasts.map((episode) => (
-              <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+              <div class="bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 p-6">
                 <div class="flex items-start space-x-4">
                   {episode.data.image && (
                     <img
                       src={episode.data.image}
                       alt={episode.data.title}
-                      class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                      class="w-20 h-20 rounded-sm object-cover flex-shrink-0"
                     />
                   )}
                   <div class="flex-1">
@@ -94,13 +94,13 @@ const sortedAudioPosts = blogPosts.sort(
           </h2>
           <div class="space-y-6">
             {sortedAudioPosts.map((post) => (
-              <div class="bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 p-6">
+              <div class="bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 p-6">
                 <div class="flex items-start space-x-4">
                   {post.data.image && (
                     <img
                       src={post.data.image}
                       alt={post.data.imageAlt || post.data.title}
-                      class="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                      class="w-20 h-20 rounded-sm object-cover flex-shrink-0"
                     />
                   )}
                   <div class="flex-1">

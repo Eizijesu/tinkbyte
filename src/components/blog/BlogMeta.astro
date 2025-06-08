@@ -52,7 +52,7 @@ const formattedDate = new Date(date).toLocaleDateString("en-US", {
     <img
       src={author.avatar}
       alt={author.name}
-      class={`rounded-full border-2 border-zinc-200 dark:border-zinc-700 ${
+      class={`rounded-sm border-2 border-zinc-200 dark:border-zinc-700 ${
         layout === "compact" ? "w-8 h-8" : "w-12 h-12"
       }`}
     />
@@ -85,7 +85,7 @@ const formattedDate = new Date(date).toLocaleDateString("en-US", {
       {category}
     </span>
 
-    <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+    <span class="w-1 h-1 bg-zinc-400 rounded-sm"></span>
 
     <!-- Date -->
     <time
@@ -95,7 +95,7 @@ const formattedDate = new Date(date).toLocaleDateString("en-US", {
       {formattedDate}
     </time>
 
-    <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+    <span class="w-1 h-1 bg-zinc-400 rounded-sm"></span>
 
     <!-- Read Time -->
     <span class="flex items-center gap-1">
@@ -143,7 +143,7 @@ const formattedDate = new Date(date).toLocaleDateString("en-US", {
         {tags.slice(0, 3).map((tag) => (
           <a
             href={`/tags/${tag.toLowerCase().replace(/\s+/g, "-")}`}
-            class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs rounded-sm hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
           >
             #{tag}
           </a>
@@ -165,13 +165,13 @@ const formattedDate = new Date(date).toLocaleDateString("en-US", {
           Share:
         </span>
         <div class="flex items-center gap-2">
-          <button class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-500 hover:text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
+          <button class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-500 hover:text-white rounded-sm flex items-center justify-center transition-all duration-300 hover:scale-110">
             <i class="fab fa-twitter text-xs" />
           </button>
-          <button class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-600 hover:text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
+          <button class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-blue-600 hover:text-white rounded-sm flex items-center justify-center transition-all duration-300 hover:scale-110">
             <i class="fab fa-linkedin text-xs" />
           </button>
-          <button class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-green-600 hover:text-white rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110">
+          <button class="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-green-600 hover:text-white rounded-sm flex items-center justify-center transition-all duration-300 hover:scale-110">
             <i class="fas fa-link text-xs" />
           </button>
         </div>

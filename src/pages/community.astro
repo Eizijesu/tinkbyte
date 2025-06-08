@@ -1,182 +1,275 @@
 ---
+// src/pages/community.astro - Simplified with search-style design
 import Layout from "../layouts/Layout.astro";
 import Button from "../components/ui/Button.astro";
+import { getEntry } from "astro:content";
 
-const communityChannels = [
+// Get community settings from TinaCMS (if available)
+const communitySettings = await getEntry("settings", "community").catch(
+  () => null
+);
+
+// Fallback data
+const defaultStats = [
+  { number: "1,200+", label: "Active Members" },
+  { number: "45", label: "Countries" },
+  { number: "150+", label: "Projects Shared" },
+  { number: "24/7", label: "Support Available" },
+];
+
+const defaultPlatforms = [
   {
-    name: "Discord Community",
-    description:
-      "Real-time discussions, Q&A, and networking with fellow builders.",
-    icon: "fab fa-discord",
+    name: "Discord",
+    description: "Real-time discussions, tech support, and community hangouts",
+    icon: "discord",
     link: "https://discord.gg/tinkbyte",
+    members: "800+",
+    activity: "Very Active",
     color: "purple",
   },
   {
-    name: "GitHub Discussions",
-    description:
-      "Technical discussions, code reviews, and open source collaboration.",
-    icon: "fab fa-github",
-    link: "https://github.com/tinkbyte/community",
+    name: "GitHub",
+    description: "Open source projects, code reviews, and collaboration",
+    icon: "github",
+    link: "https://github.com/tinkbyte",
+    members: "300+",
+    activity: "Daily Commits",
     color: "gray",
   },
   {
-    name: "LinkedIn Group",
-    description: "Professional networking and industry insights sharing.",
-    icon: "fab fa-linkedin",
-    link: "https://linkedin.com/groups/tinkbyte",
+    name: "LinkedIn",
+    description: "Professional networking and career opportunities",
+    icon: "linkedin",
+    link: "https://linkedin.com/company/tinkbyte",
+    members: "500+",
+    activity: "Weekly Posts",
     color: "blue",
   },
   {
-    name: "Twitter Community",
-    description:
-      "Quick updates, tech news discussions, and community highlights.",
-    icon: "fab fa-twitter",
-    link: "https://twitter.com/tinkbytehq",
-    color: "sky",
+    name: "Twitter",
+    description: "Quick updates, tech news, and community highlights",
+    icon: "twitter",
+    link: "https://twitter.com/tinkbyte",
+    members: "2,100+",
+    activity: "Daily Updates",
+    color: "blue",
   },
 ];
 
-const guidelines = [
-  {
-    type: "do",
-    title: "Substance Over Hype",
-    description:
-      "Share practical insights, real experiences, and honest analysis.",
-  },
-  {
-    type: "do",
-    title: "Constructive Discussion",
-    description:
-      "Engage thoughtfully, ask good questions, and help others learn.",
-  },
-  {
-    type: "dont",
-    title: "No Self-Promotion",
-    description:
-      "Avoid excessive promotion. Share value first, promotion sparingly.",
-  },
-  {
-    type: "dont",
-    title: "No Low-Effort Posts",
-    description:
-      "Provide context and detailed information to help others help you.",
-  },
-];
+// Use TinaCMS data if available, otherwise use defaults
+const stats = communitySettings?.data.stats || defaultStats;
+const platforms = communitySettings?.data.platforms || defaultPlatforms;
 ---
 
 <Layout
-  title="Community | TinkByte"
-  description="Join the TinkByte community. Connect, learn, and grow with fellow technologists who value substance over hype."
+  title="Community | TinkByte - Join 1,200+ Builders"
+  description="Join our global community of builders, product managers, and innovators. Connect, learn, and grow together."
 >
-  <!-- Hero Section -->
-  <section class="py-16 lg:py-24 px-4 sm:px-6">
-    <div class="max-w-4xl mx-auto text-center">
-      <h1
-        class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 font-space-grotesk uppercase tracking-wide"
-      >
-        Join the Community
-      </h1>
-      <p
-        class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-400 leading-relaxed"
-      >
-        Connect with builders who value substance over hype. Share knowledge,
-        get feedback, and grow together.
-      </p>
+  <!-- Enhanced Hero Section -->
+  <section class="relative py-16 lg:py-24 overflow-hidden">
+    <div
+      class="absolute inset-0 bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 opacity-10"
+    >
     </div>
-  </section>
+    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5">
+    </div>
 
-  <!-- Community Channels -->
-  <section class="py-16 px-4 sm:px-6">
-    <div class="max-w-6xl mx-auto">
-      <div class="text-center mb-12">
-        <h2
-          class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 font-space-grotesk uppercase tracking-wide"
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-4xl mx-auto text-center">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm rounded-sm border border-zinc-200 dark:border-zinc-700 mb-6"
         >
-          Where We Connect
-        </h2>
-      </div>
+          <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+          <span
+            class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+          >
+            Join the Community
+          </span>
+        </div>
 
-      <div class="grid lg:grid-cols-2 gap-8">
-        {
-          communityChannels.map((channel) => (
-            <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-8 hover:shadow-lg transition-all duration-300 group">
-              <div class="flex items-start gap-4 mb-6">
-                <div
-                  class={`w-12 h-12 rounded-full flex items-center justify-center text-white ${
-                    channel.color === "purple"
-                      ? "bg-purple-500"
-                      : channel.color === "gray"
-                        ? "bg-gray-700"
-                        : channel.color === "blue"
-                          ? "bg-blue-600"
-                          : "bg-sky-500"
-                  }`}
-                >
-                  <i class={`${channel.icon} text-lg`} />
+        <h1
+          class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6"
+        >
+          Build
+          <span
+            class="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent"
+          >
+            Together
+          </span>
+        </h1>
+
+        <p
+          class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12"
+        >
+          Connect with 1,200+ builders, product managers, and innovators from 45
+          countries. Share knowledge, get feedback, and grow your network.
+        </p>
+
+        <div class="flex flex-wrap justify-center gap-4 mb-12">
+          <Button
+            href="https://discord.gg/tinkbyte"
+            variant="primary"
+            className="px-8 py-3 rounded-sm font-semibold bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 transition-all duration-200"
+          >
+            <i class="fab fa-discord mr-2"></i>
+            Join Discord
+          </Button>
+          <Button
+            href="https://github.com/tinkbyte"
+            variant="outline"
+            className="px-8 py-3 rounded-sm font-semibold border-2 hover:border-green-500 hover:text-green-600 dark:hover:text-green-400 transition-all duration-200"
+          >
+            <i class="fab fa-github mr-2"></i>
+            View Projects
+          </Button>
+        </div>
+
+        <!-- Community Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+          {
+            stats.map((stat) => (
+              <div class="text-center">
+                <div class="text-3xl font-bold text-zinc-900 dark:text-white mb-1">
+                  {stat.number}
                 </div>
-                <div class="flex-1">
-                  <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2 uppercase tracking-wide">
-                    {channel.name}
-                  </h3>
+                <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  {stat.label}
                 </div>
               </div>
-
-              <p class="text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
-                {channel.description}
-              </p>
-
-              <Button
-                variant="outline"
-                href={channel.link}
-                className="rounded uppercase tracking-wide"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Join Community
-              </Button>
-            </div>
-          ))
-        }
+            ))
+          }
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Community Guidelines -->
+  <!-- Community Platforms -->
   <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
-    <div class="max-w-4xl mx-auto">
-      <div class="text-center mb-12">
-        <h2
-          class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 font-space-grotesk uppercase tracking-wide"
-        >
-          Community Guidelines
-        </h2>
-      </div>
+    <div class="container mx-auto">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+            Where We
+            <span
+              class="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent"
+            >
+              Connect
+            </span>
+          </h2>
+          <p class="text-xl text-zinc-600 dark:text-zinc-400">
+            Choose your preferred platform to join the conversation
+          </p>
+        </div>
 
-      <div class="grid md:grid-cols-2 gap-8">
-        {
-          guidelines.map((guideline) => (
-            <div class="flex items-start gap-4">
-              <div
-                class={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  guideline.type === "do" ? "bg-green-500" : "bg-red-500"
-                }`}
-              >
-                <i
-                  class={`fas fa-${guideline.type === "do" ? "check" : "times"} text-white text-sm`}
-                />
+        <div class="grid md:grid-cols-2 gap-8">
+          {
+            platforms.map((platform) => (
+              <div class="group bg-white dark:bg-zinc-800 p-6 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-green-300 dark:hover:border-green-600 hover:shadow-lg transition-all duration-200">
+                <div class="flex items-start gap-4">
+                  <div
+                    class={`w-16 h-16 bg-${platform.color}-100 dark:bg-${platform.color}-900/30 rounded-sm flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}
+                  >
+                    <i
+                      class={`fab fa-${platform.icon} text-2xl text-${platform.color}-600 dark:text-${platform.color}-400`}
+                    />
+                  </div>
+
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-2">
+                      <h3 class="text-lg font-semibold text-zinc-900 dark:text-white uppercase tracking-wide group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-200">
+                        {platform.name}
+                      </h3>
+                      <span class="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded uppercase tracking-wide">
+                        {platform.activity}
+                      </span>
+                    </div>
+
+                    <p class="text-zinc-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                      {platform.description}
+                    </p>
+
+                    <div class="flex items-center justify-between">
+                      <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                        {platform.members} members
+                      </span>
+                      <Button
+                        href={platform.link}
+                        variant="outline"
+                        size="sm"
+                        className="hover:border-green-500 hover:text-green-600 dark:hover:text-green-400 transition-all duration-200"
+                      >
+                        Join Now
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 class="font-semibold text-zinc-900 dark:text-zinc-100 mb-2 uppercase tracking-wide">
-                  {guideline.title}
-                </h3>
-                <p class="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
-                  {guideline.description}
-                </p>
-              </div>
-            </div>
-          ))
-        }
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Join CTA -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="container mx-auto">
+      <div class="max-w-2xl mx-auto text-center">
+        <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+          Ready to
+          <span
+            class="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent"
+          >
+            Connect?
+          </span>
+        </h2>
+        <p class="text-xl text-zinc-600 dark:text-zinc-400 mb-8">
+          Join our community and start building meaningful connections with
+          fellow creators.
+        </p>
+
+        <div class="flex flex-wrap justify-center gap-4">
+          <Button
+            href="https://discord.gg/tinkbyte"
+            variant="primary"
+            className="px-8 py-3 rounded-sm font-semibold bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 transition-all duration-200"
+          >
+            <i class="fab fa-discord mr-2"></i>
+            Join Discord Community
+          </Button>
+          <Button
+            href="/newsletter"
+            variant="outline"
+            className="px-8 py-3 rounded-sm font-semibold border-2 hover:border-green-500 hover:text-green-600 dark:hover:text-green-400 transition-all duration-200"
+          >
+            Subscribe to Newsletter
+          </Button>
+        </div>
       </div>
     </div>
   </section>
 </Layout>
+
+<style>
+  /* Gradient text animation */
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .bg-gradient-to-r.bg-clip-text {
+    background-size: 200% 200%;
+    animation: gradient 3s ease-in-out infinite;
+  }
+
+  .group:hover .group-hover\:scale-110 {
+    transform: scale(1.1);
+  }
+</style>

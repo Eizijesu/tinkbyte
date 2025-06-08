@@ -1,4 +1,5 @@
 ---
+// src/components/ui/Footer.astro - Fixed TypeScript Errors
 import Logo from "./Logo.astro";
 import NewsletterForm from "../forms/NewsletterForm.astro";
 
@@ -19,10 +20,10 @@ const legalLinks = [
 ];
 
 const categoryLinks = [
-  { text: "AI EVOLUTION", href: "/category/ai-evolution" },
-  { text: "PRODUCT STRATEGY", href: "/category/product-strategy" },
-  { text: "TECH CULTURE", href: "/category/tech-culture" },
-  { text: "DEVELOPER TOOLS", href: "/category/developer-tools" },
+  { text: "AI EVOLUTION", href: "/blog/categories/ai-evolution" },
+  { text: "PRODUCT STRATEGY", href: "/blog/categories/product-strategy" },
+  { text: "TECH CULTURE", href: "/blog/categories/tech-culture" },
+  { text: "DEVELOPER TOOLS", href: "/blog/categories/developer-tools" },
 ];
 
 const resourceLinks = [
@@ -61,11 +62,7 @@ const contactInfo = {
 };
 ---
 
-<footer
-  class="bg-zinc-900 text-zinc-300"
-  style="font-family: 'Space Grotesk', sans-serif;"
->
-
+<footer class="bg-zinc-900 text-zinc-300 font-space-grotesk">
   <!-- Main Footer Content -->
   <div class="py-16 px-4 sm:px-6">
     <div class="max-w-7xl mx-auto">
@@ -93,26 +90,36 @@ const contactInfo = {
                 href={`mailto:${contactInfo.email}`}
                 class="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors group"
               >
-                <i class="fas fa-envelope w-4 text-blue-400"></i>
+                <i
+                  class="fas fa-envelope w-4 text-brand-secondary"
+                  style="font-family: 'Font Awesome 6 Free' !important; font-weight: 900 !important;"
+                ></i>
                 <span class="group-hover:underline">{contactInfo.email}</span>
               </a>
             </div>
           </div>
 
-          <!-- Social Links -->
+          <!-- Social Links - COMPLETELY FIXED ICONS -->
           <div class="flex space-x-4">
             {
               socialLinks.map((social) => (
                 <a
                   href={social.href}
-                  class="text-zinc-400 hover:text-white transition-all duration-200 transform hover:scale-110 p-2 rounded-lg hover:bg-zinc-800"
+                  class="text-zinc-400 hover:text-white transition-all duration-200 transform hover:scale-110 p-2 rounded-sm hover:bg-zinc-800"
                   aria-label={`Follow TinkByte on ${social.name}`}
                   target={social.name !== "RSS" ? "_blank" : undefined}
                   rel={
                     social.name !== "RSS" ? "noopener noreferrer" : undefined
                   }
                 >
-                  <i class={`${social.icon} text-lg`} />
+                  <i
+                    class={social.icon + " text-lg"}
+                    style={
+                      social.name === "RSS"
+                        ? "font-family: 'Font Awesome 6 Free' !important; font-weight: 900 !important;"
+                        : "font-family: 'Font Awesome 6 Brands' !important; font-weight: 400 !important;"
+                    }
+                  />
                 </a>
               ))
             }
@@ -136,7 +143,7 @@ const contactInfo = {
                   >
                     <span class="relative">
                       {link.text}
-                      <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-white transition-all duration-300 group-hover:w-full" />
+                      <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-brand-secondary transition-all duration-300 group-hover:w-full" />
                     </span>
                   </a>
                 </li>
@@ -166,7 +173,7 @@ const contactInfo = {
           </div>
         </div>
 
-        <!-- Resources (Community & Research) -->
+        <!-- Resources -->
         <div>
           <h3
             class="text-white font-semibold mb-6 text-sm uppercase tracking-wider"
@@ -226,7 +233,10 @@ const contactInfo = {
 
           <div class="flex items-center space-x-2 text-sm text-zinc-400">
             <span class="uppercase tracking-wider">Made with</span>
-            <i class="fas fa-heart text-red-500 mx-1"></i>
+            <i
+              class="fas fa-heart text-brand-primary mx-1"
+              style="font-family: 'Font Awesome 6 Free' !important; font-weight: 900 !important;"
+            ></i>
             <span class="uppercase tracking-wider">from TinkByte</span>
           </div>
         </div>
@@ -234,3 +244,37 @@ const contactInfo = {
     </div>
   </div>
 </footer>
+
+<!-- Additional FontAwesome Fix Script for Footer - FIXED TYPESCRIPT -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Specifically fix footer icons with proper TypeScript casting
+    const footerIcons = document.querySelectorAll(
+      "footer .fa, footer .fas, footer .far, footer .fab"
+    );
+
+    footerIcons.forEach(function (icon) {
+      // Cast to HTMLElement to access style property
+      const htmlIcon = icon as HTMLElement;
+
+      if (icon.classList.contains("fab")) {
+        htmlIcon.style.setProperty(
+          "font-family",
+          '"Font Awesome 6 Brands"',
+          "important"
+        );
+        htmlIcon.style.setProperty("font-weight", "400", "important");
+      } else if (
+        icon.classList.contains("fas") ||
+        icon.classList.contains("fa")
+      ) {
+        htmlIcon.style.setProperty(
+          "font-family",
+          '"Font Awesome 6 Free"',
+          "important"
+        );
+        htmlIcon.style.setProperty("font-weight", "900", "important");
+      }
+    });
+  });
+</script>

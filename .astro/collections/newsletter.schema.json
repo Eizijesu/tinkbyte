@@ -33,6 +33,83 @@
           "type": "boolean",
           "default": false
         },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "scheduled",
+            "sent"
+          ],
+          "default": "draft"
+        },
+        "subscriberCount": {
+          "type": "number"
+        },
+        "openRate": {
+          "type": "number"
+        },
+        "clickRate": {
+          "type": "number"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "article",
+                  "link",
+                  "announcement",
+                  "community"
+                ]
+              }
+            },
+            "required": [
+              "title",
+              "content",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "featuredArticles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cta": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "buttonText": {
+              "type": "string"
+            },
+            "buttonUrl": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "description",
+            "buttonText",
+            "buttonUrl"
+          ],
+          "additionalProperties": false
+        },
         "$schema": {
           "type": "string"
         }

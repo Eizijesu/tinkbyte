@@ -1,139 +1,27 @@
 ---
-// src/pages/blog/[slug].astro
-import { getCollection } from "astro:content";
-import Layout from "../../layouts/Layout.astro";
+// src/pages/blog/[slug].astro - COMPLETE REPLACEMENT
+import { type CollectionEntry, getCollection } from "astro:content";
 import BlogPost from "../../layouts/BlogPost.astro";
 
-// Generate static paths for all blog posts
 export async function getStaticPaths() {
-  // For now, we'll use static data. Later you can replace this with TinaCMS or Astro content collections
-  const blogPosts = [
-    {
-      slug: "ai-evolution-beyond-hype",
-      title: "AI Evolution: Beyond the Hype Cycle",
-      description:
-        "Real-world applications and practical insights into AI implementation. What actually works when you strip away the marketing buzz and focus on delivering value.",
-      date: "2024-01-25",
-      readTime: "8 min read",
-      tags: ["ai-evolution", "product-insights"],
-      author: {
-        name: "Dr. Elena Vasquez",
-        bio: "AI researcher turned product strategist with 12+ years in machine learning",
-        avatar:
-          "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=face",
-        role: "Chief AI Officer",
-      },
-      audioUrl: "/audio/ai-evolution-beyond-hype.mp3",
-      audioDuration: "15:30",
-      image:
-        "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=800&fit=crop&crop=edges",
-    },
-    {
-      slug: "building-products-scale-globally",
-      title: "Building Products That Scale Globally",
-      description:
-        "Lessons from the trenches of product development. How constraint-driven innovation creates solutions that work everywhere, from Silicon Valley to emerging markets.",
-      date: "2024-01-22",
-      readTime: "12 min read",
-      tags: ["product-strategy", "scaling", "global-markets"],
-      author: {
-        name: "Alex Chen",
-        bio: "Product strategist with 10+ years building scalable solutions",
-        avatar:
-          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-        role: "Senior Product Manager",
-      },
-      audioUrl: "/audio/building-products-scale.mp3",
-      audioDuration: "22:15",
-      image:
-        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=800&fit=crop&crop=edges",
-    },
-    {
-      slug: "human-side-tech-culture",
-      title: "The Human Side of Tech Culture",
-      description:
-        "Community stories and ethical design discussions. Why culture matters more than code in successful product development and sustainable tech teams.",
-      date: "2024-01-20",
-      readTime: "6 min read",
-      tags: ["culture", "ethics", "team-building"],
-      author: {
-        name: "Sarah Kim",
-        bio: "Tech culture researcher and community builder",
-        avatar:
-          "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=100&h=100&fit=crop&crop=face",
-        role: "Culture Analyst",
-      },
-      image:
-        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=800&fit=crop&crop=edges",
-    },
-    {
-      slug: "decentralized-future",
-      title: "The Decentralized Future is Here",
-      description:
-        "Breaking down complex distributed systems into accessible frameworks. Understanding blockchain, Web3, and decentralized technologies beyond the speculation.",
-      date: "2024-01-18",
-      readTime: "9 min read",
-      tags: ["blockchain", "web3", "distributed-systems"],
-      author: {
-        name: "Marcus Rodriguez",
-        bio: "Blockchain researcher and distributed systems expert",
-        avatar:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-        role: "Tech Lead",
-      },
-      image:
-        "https://images.unsplash.com/photo-1596524430615-b46475ddff4e?w=1200&h=800&fit=crop&crop=edges",
-    },
-    {
-      slug: "quantum-computing-reality-check",
-      title: "Quantum Computing: Reality Check",
-      description:
-        "A practical look at where quantum computing stands today, what problems it can actually solve, and why most quantum hype misses the mark.",
-      date: "2024-01-15",
-      readTime: "7 min read",
-      tags: ["quantum", "research", "future-tech"],
-      author: {
-        name: "Dr. James Liu",
-        bio: "Quantum physicist and technology researcher",
-        avatar:
-          "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face",
-        role: "Research Director",
-      },
-      image:
-        "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1200&h=800&fit=crop&crop=edges",
-    },
-    {
-      slug: "low-code-enterprise-revolution",
-      title: "Low-Code Enterprise Revolution",
-      description:
-        "How low-code platforms are evolving to solve real enterprise challenges without sacrificing quality, security, or developer happiness.",
-      date: "2024-01-12",
-      readTime: "5 min read",
-      tags: ["low-code", "enterprise", "development"],
-      author: {
-        name: "Rachel Torres",
-        bio: "Enterprise software architect and low-code evangelist",
-        avatar:
-          "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&crop=face",
-        role: "Solutions Architect",
-      },
-      image:
-        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=800&fit=crop&crop=edges",
-    },
-  ];
+  // Get all blog posts from content collection
+  const posts = await getCollection("blog", ({ data }) => {
+    return data.draft !== true;
+  });
 
-  return blogPosts.map((post) => ({
+  return posts.map((post) => ({
     params: { slug: post.slug },
-    props: { post },
+    props: post,
   }));
 }
 
-// Get the blog post data
-const { post } = Astro.props;
+type Props = CollectionEntry<"blog">;
+
+const post = Astro.props;
+const { Content } = await post.render();
 
 // Format date for display
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
+const formatDate = (date: Date): string => {
   return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -143,171 +31,22 @@ const formatDate = (dateString: string) => {
 ---
 
 <BlogPost
-  title={post.title}
-  description={post.description}
-  date={formatDate(post.date)}
-  readTime={post.readTime}
-  tags={post.tags}
-  author={post.author}
-  audioUrl={post.audioUrl}
-  audioDuration={post.audioDuration}
-  image={post.image}
+  title={post.data.title}
+  subtitle={post.data.subtitle}
+  description={post.data.excerpt || post.data.description}
+  date={formatDate(post.data.pubDate)}
+  readTime={post.data.readTime}
+  tags={post.data.tags}
+  category={post.data.category}
+  author={post.data.author}
+  authorBio={post.data.authorBio}
+  authorAvatar={post.data.authorAvatar}
+  authorRole={post.data.authorRole}
+  audioUrl={post.data.audioUrl}
+  audioDuration={post.data.audioDuration}
+  image={post.data.image}
+  slug={post.slug}
 >
-  <!-- Blog post content goes here -->
-  <!-- For now, we'll add placeholder content. Later this will come from your CMS -->
-
-  <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none">
-    <!-- Introduction -->
-    <p class="lead text-xl text-zinc-600 dark:text-zinc-400 mb-8">
-      {post.description}
-    </p>
-
-    <!-- Sample content based on the article -->
-    {
-      post.slug === "ai-evolution-beyond-hype" && (
-        <>
-          <h2>The Current State of AI Implementation</h2>
-          <p>
-            Artificial Intelligence has moved beyond the realm of science
-            fiction and into practical, everyday applications. However, the gap
-            between AI hype and AI reality remains significant. This article
-            explores what's actually working in AI implementation today.
-          </p>
-
-          <h3>Real-World AI Applications That Work</h3>
-          <ul>
-            <li>
-              <strong>Predictive Analytics:</strong> Companies are using AI to
-              forecast demand, optimize inventory, and predict customer behavior
-              with remarkable accuracy.
-            </li>
-            <li>
-              <strong>Natural Language Processing:</strong> From customer
-              service chatbots to content generation, NLP is delivering tangible
-              business value.
-            </li>
-            <li>
-              <strong>Computer Vision:</strong> Manufacturing quality control,
-              medical imaging, and autonomous systems are seeing practical AI
-              deployment.
-            </li>
-          </ul>
-
-          <h3>The Implementation Reality Check</h3>
-          <p>
-            While the potential is enormous, successful AI implementation
-            requires careful consideration of data quality, infrastructure
-            requirements, and realistic expectation setting. Organizations that
-            approach AI with a problem-first mindset, rather than a
-            technology-first approach, are seeing the best results.
-          </p>
-
-          <blockquote>
-            <p>
-              "The most successful AI implementations I've seen start with a
-              clear business problem and work backwards to the technology
-              solution."
-            </p>
-          </blockquote>
-
-          <h3>Moving Forward: Practical AI Strategy</h3>
-          <p>
-            The future of AI lies not in replacing human intelligence, but in
-            augmenting it. Organizations that focus on human-AI collaboration,
-            invest in proper data infrastructure, and maintain realistic
-            expectations are positioning themselves for long-term success.
-          </p>
-        </>
-      )
-    }
-
-    {
-      post.slug === "building-products-scale-globally" && (
-        <>
-          <h2>The Global Product Challenge</h2>
-          <p>
-            Building products that work across different markets, cultures, and
-            technical infrastructures is one of the most complex challenges in
-            modern product development. Success requires more than just
-            translation and localization.
-          </p>
-
-          <h3>Key Principles for Global Scale</h3>
-          <ul>
-            <li>
-              <strong>Design for Constraints:</strong> Build for the lowest
-              common denominator in terms of network speed, device capabilities,
-              and user digital literacy.
-            </li>
-            <li>
-              <strong>Cultural Sensitivity:</strong> Understand local customs,
-              preferences, and business practices before entering new markets.
-            </li>
-            <li>
-              <strong>Modular Architecture:</strong> Create flexible systems
-              that can adapt to local requirements without rebuilding core
-              functionality.
-            </li>
-          </ul>
-
-          <h3>Case Studies in Global Success</h3>
-          <p>
-            Companies like WhatsApp, TikTok, and Uber have demonstrated
-            different approaches to global scaling. Each has had to balance
-            global consistency with local adaptation, often making difficult
-            trade-offs between feature richness and accessibility.
-          </p>
-
-          <h3>The Constraint-Driven Innovation Advantage</h3>
-          <p>
-            Interestingly, products built with global constraints in mind often
-            end up being better products overall. Simplicity, efficiency, and
-            accessibility benefits all users, not just those in emerging
-            markets.
-          </p>
-        </>
-      )
-    }
-
-    {/* Add more content for other articles as needed */}
-    {
-      post.slug !== "ai-evolution-beyond-hype" &&
-        post.slug !== "building-products-scale-globally" && (
-          <>
-            <h2>Introduction</h2>
-            <p>
-              This is a sample article demonstrating the blog post layout and
-              structure. In a real implementation, this content would come from
-              your CMS or markdown files.
-            </p>
-
-            <h3>Key Points</h3>
-            <ul>
-              <li>Point one about the topic</li>
-              <li>Point two with additional context</li>
-              <li>Point three summarizing the main idea</li>
-            </ul>
-
-            <h3>Detailed Analysis</h3>
-            <p>
-              Here you would include the main body of your article with detailed
-              analysis, examples, and insights related to the topic.
-            </p>
-
-            <blockquote>
-              <p>
-                "A relevant quote or key insight that supports your main
-                argument."
-              </p>
-            </blockquote>
-
-            <h3>Conclusion</h3>
-            <p>
-              Wrap up the article with key takeaways and actionable insights
-              that readers can apply in their own work or thinking.
-            </p>
-          </>
-        )
-    }
-  </div>
+  <!-- This renders the actual markdown content from your .md files -->
+  <Content />
 </BlogPost>

@@ -1,9 +1,9 @@
 ---
 title: "AI Evolution: Beyond the Hype Cycle"
 excerpt: "Real-world applications and practical insights into AI implementation. What actually works when you strip away the marketing buzz."
-pubDate: 2024-01-25
-updatedDate: 2024-01-25
-author: "Dr. Elena Vasquez"
+pubDate: 2024-01-25T10:00:00.000Z
+updatedDate: 2024-01-25T10:00:00.000Z
+author: "TinkByte Team"
 authorBio: "AI researcher turned product strategist with 12+ years in machine learning"
 authorAvatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=face"
 authorRole: "Chief AI Officer"

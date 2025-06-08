@@ -1,1 +1,12 @@
-__generated__
+__generated__# Environment variables
+.env
+.env.local
+.env.production
+
+# TinaCMS
+.tina/__generated__
+admin/
+
+# Build outputs
+dist/
+.astro/

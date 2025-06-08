@@ -65,15 +65,19 @@ const { placeholder = "SEARCH...", className = "" } = Astro.props;
     const searchInput = document.getElementById(
       "search-input"
     ) as HTMLInputElement;
-    const clearButton = document.getElementById("clear-search");
-    const suggestionsContainer = document.getElementById("search-suggestions");
+    const clearButton = document.getElementById(
+      "clear-search"
+    ) as HTMLButtonElement;
+    const suggestionsContainer = document.getElementById(
+      "search-suggestions"
+    ) as HTMLElement;
 
     if (!searchInput || !clearButton || !suggestionsContainer) return;
 
-    let searchTimeout: NodeJS.Timeout;
+    let searchTimeout: number;
 
     // Sample search suggestions - replace with actual data
-    const sampleSuggestions = [
+    const sampleSuggestions: string[] = [
       "AI Evolution",
       "Product Insights",
       "Tech Culture",
@@ -83,7 +87,7 @@ const { placeholder = "SEARCH...", className = "" } = Astro.props;
       "Remote Work",
     ];
 
-    searchInput.addEventListener("input", (e) => {
+    searchInput.addEventListener("input", (e: Event) => {
       const target = e.target as HTMLInputElement;
       const query = target.value.toLowerCase().trim();
 
@@ -97,7 +101,7 @@ const { placeholder = "SEARCH...", className = "" } = Astro.props;
 
       // Debounce search
       clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
+      searchTimeout = window.setTimeout(() => {
         if (query.length > 1) {
           showSuggestions(query);
         } else {
@@ -113,15 +117,15 @@ const { placeholder = "SEARCH...", className = "" } = Astro.props;
       searchInput.focus();
     });
 
-    function showSuggestions(query: string) {
-      const filteredSuggestions = sampleSuggestions.filter((suggestion) =>
-        suggestion.toLowerCase().includes(query)
+    function showSuggestions(query: string): void {
+      const filteredSuggestions = sampleSuggestions.filter(
+        (suggestion: string) => suggestion.toLowerCase().includes(query)
       );
 
       if (filteredSuggestions.length > 0) {
         suggestionsContainer.innerHTML = filteredSuggestions
           .map(
-            (suggestion) => `
+            (suggestion: string) => `
             <div class="px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors">
               <span class="text-sm text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">${suggestion}</span>
             </div>
@@ -132,25 +136,28 @@ const { placeholder = "SEARCH...", className = "" } = Astro.props;
         suggestionsContainer.classList.remove("hidden");
 
         // Add click handlers to suggestions
-        suggestionsContainer.querySelectorAll("div").forEach((item) => {
-          item.addEventListener("click", () => {
-            const suggestion = item.textContent?.trim() || "";
-            searchInput.value = suggestion;
-            suggestionsContainer.classList.add("hidden");
-            // Trigger search
-            console.log("Searching for:", suggestion);
+        suggestionsContainer
+          .querySelectorAll("div")
+          .forEach((item: Element) => {
+            item.addEventListener("click", () => {
+              const suggestion = item.textContent?.trim() || "";
+              searchInput.value = suggestion;
+              suggestionsContainer.classList.add("hidden");
+              // Trigger search
+              console.log("Searching for:", suggestion);
+            });
           });
-        });
       } else {
         suggestionsContainer.classList.add("hidden");
       }
     }
 
     // Hide suggestions when clicking outside
-    document.addEventListener("click", (e) => {
+    document.addEventListener("click", (e: Event) => {
+      const target = e.target as Node;
       if (
-        !searchInput.contains(e.target as Node) &&
-        !suggestionsContainer.contains(e.target as Node)
+        !searchInput.contains(target) &&
+        !suggestionsContainer.contains(target)
       ) {
         suggestionsContainer.classList.add("hidden");
       }

@@ -1,0 +1,190 @@
+---
+// src/components/magazine/HeroMagazine.astro
+export interface Props {
+  featuredArticle: any;
+  pillarStories: any[];
+}
+
+const { featuredArticle, pillarStories } = Astro.props;
+---
+
+<section class="magazine-hero">
+  <!-- Main feature story -->
+  <article class="hero-feature">
+    <div class="feature-image">
+      <img src={featuredArticle.image} alt={featuredArticle.imageAlt} />
+      <div class="pillar-overlay">
+        <span class="pillar-tag" data-pillar={featuredArticle.category}>
+          {featuredArticle.category}
+        </span>
+      </div>
+    </div>
+    <div class="feature-content">
+      <h1 class="feature-headline">{featuredArticle.title}</h1>
+      <p class="feature-excerpt">{featuredArticle.excerpt}</p>
+      <div class="feature-meta">
+        <span class="author">By {featuredArticle.author}</span>
+        <span class="read-time">{featuredArticle.readTime}</span>
+      </div>
+    </div>
+  </article>
+
+  <!-- Pillar stories sidebar -->
+  <aside class="hero-sidebar">
+    <h2 class="sidebar-title">Latest by Pillar</h2>
+    {
+      pillarStories.map((story) => (
+        <article class="sidebar-story">
+          <span class="story-pillar" data-pillar={story.category}>
+            {story.category}
+          </span>
+          <h3 class="story-title">
+            <a href={`/blog/${story.slug}`}>{story.title}</a>
+          </h3>
+          <p class="story-excerpt">{story.excerpt}</p>
+        </article>
+      ))
+    }
+  </aside>
+</section>
+
+<style>
+  .magazine-hero {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    margin-bottom: 4rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 2rem;
+  }
+
+  .hero-feature {
+    position: relative;
+  }
+
+  .feature-image {
+    position: relative;
+    aspect-ratio: 16/9;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .feature-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .pillar-overlay {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .pillar-tag {
+    background: rgba(36, 55, 136, 0.9); /* Your brand primary */
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .feature-headline {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    color: rgb(36, 55, 136); /* Your brand primary */
+  }
+
+  .feature-excerpt {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    color: #4a5568;
+  }
+
+  .feature-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #718096;
+  }
+
+  .hero-sidebar {
+    padding: 2rem;
+    background: rgb(248, 249, 250);
+    border-radius: 12px;
+    height: fit-content;
+  }
+
+  .sidebar-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: rgb(36, 55, 136);
+  }
+
+  .sidebar-story {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .sidebar-story:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .story-pillar {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgb(180, 188, 225); /* Your brand secondary */
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .story-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+
+  .story-title a {
+    color: #2d3748;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .story-title a:hover {
+    color: rgb(36, 55, 136);
+  }
+
+  .story-excerpt {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #718096;
+  }
+
+  @media (max-width: 768px) {
+    .magazine-hero {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .hero-sidebar {
+      order: -1;
+    }
+  }
+</style>

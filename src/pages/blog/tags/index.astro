@@ -1,0 +1,476 @@
+---
+// src/pages/blog/tags/index.astro - FIXED DUPLICATE METHOD
+import Layout from "../../../layouts/Layout.astro";
+import ArticleCard from "../../../components/blog/ArticleCard.astro";
+import { getAllTags, searchPosts } from "../../../utils/content";
+import type { BlogPost } from "../../../utils/content";
+
+// Get all available tags for the filter interface
+const allTags = await getAllTags();
+const recentPosts = await searchPosts({ limit: 12 });
+
+// Get popular tags (top 20)
+const popularTags = allTags.slice(0, 20);
+
+// Format post data to match ArticleCard props
+const formatPost = (post: BlogPost) => {
+  return {
+    title: post.data.title,
+    excerpt: post.data.excerpt,
+    date: post.data.pubDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }),
+    readTime: post.data.readTime || "5 min read",
+    slug: post.slug,
+    image: post.data.image,
+    tags: post.data.tags,
+    category: post.data.category,
+    author: {
+      name: post.data.author,
+      avatar: post.data.authorAvatar || "/images/default-avatar.jpg",
+      role: post.data.authorRole || "Author",
+      bio: post.data.authorBio || "Content creator",
+    },
+    featured: post.data.featured,
+  };
+};
+---
+
+<Layout
+  title="Explore by Tags | TinkByte"
+  description="Discover articles by topics. Use our advanced tag filtering to find exactly what you're looking for."
+>
+  <!-- Hero Section -->
+  <section
+    class="py-16 lg:py-20 px-4 sm:px-6 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-zinc-900 dark:to-zinc-800"
+  >
+    <div class="max-w-4xl mx-auto text-center">
+      <h1
+        class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-6"
+      >
+        Explore by Tags
+      </h1>
+      <p class="text-xl text-zinc-600 dark:text-zinc-400 mb-8">
+        Find articles on specific topics using our tag-based filtering system
+      </p>
+
+      <!-- Search and Filter Interface -->
+      <div
+        class="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-lg border border-zinc-200 dark:border-zinc-800"
+      >
+        <div class="space-y-4">
+          <!-- Search Input -->
+          <div class="relative">
+            <input
+              type="text"
+              id="tag-search"
+              placeholder="Search tags or articles..."
+              class="w-full px-4 py-3 pl-12 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-zinc-800 dark:text-zinc-100"
+            />
+            <i
+              class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-400"
+            ></i>
+          </div>
+
+          <!-- Filter Mode Toggle -->
+          <div class="flex items-center justify-center gap-4">
+            <span class="text-sm text-zinc-600 dark:text-zinc-400"
+              >Filter mode:</span
+            >
+            <div class="flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
+              <button
+                id="filter-or"
+                class="px-4 py-2 text-sm font-medium rounded-md transition-colors filter-mode-btn active"
+                data-mode="OR"
+              >
+                Any Tag (OR)
+              </button>
+              <button
+                id="filter-and"
+                class="px-4 py-2 text-sm font-medium rounded-md transition-colors filter-mode-btn"
+                data-mode="AND"
+              >
+                All Tags (AND)
+              </button>
+            </div>
+          </div>
+
+          <!-- Selected Tags Display -->
+          <div id="selected-tags" class="hidden">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                >Selected tags:</span
+              >
+              <button
+                id="clear-all-tags"
+                class="text-sm text-red-600 hover:text-red-700 dark:text-red-400"
+              >
+                Clear all
+              </button>
+            </div>
+            <div id="selected-tags-list" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Popular Tags -->
+  <section class="py-12 px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6">
+        Popular Tags
+      </h2>
+      <div id="popular-tags" class="flex flex-wrap gap-3">
+        {
+          popularTags.map((tag) => (
+            <button
+              class="tag-filter-btn px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-full hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors"
+              data-tag={tag.slug}
+            >
+              #{tag.name} ({tag.count})
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Results Section -->
+  <section class="py-12 px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto">
+      <!-- Results Header -->
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h2
+            id="results-title"
+            class="text-3xl font-bold text-zinc-900 dark:text-zinc-100"
+          >
+            Recent Articles
+          </h2>
+          <p id="results-count" class="text-zinc-600 dark:text-zinc-400 mt-1">
+            {recentPosts.length} articles found
+          </p>
+        </div>
+
+        <!-- Sort Options -->
+        <select
+          id="sort-select"
+          class="px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg dark:bg-zinc-800 dark:text-zinc-100"
+        >
+          <option value="date-desc">Newest First</option>
+          <option value="date-asc">Oldest First</option>
+          <option value="title-asc">Title A-Z</option>
+          <option value="title-desc">Title Z-A</option>
+        </select>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loading" class="hidden text-center py-12">
+        <div
+          class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+        >
+        </div>
+        <p class="mt-2 text-zinc-600 dark:text-zinc-400">
+          Filtering articles...
+        </p>
+      </div>
+
+      <!-- Results Grid -->
+      <div id="results-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {recentPosts.map((post) => <ArticleCard {...formatPost(post)} />)}
+      </div>
+
+      <!-- No Results -->
+      <div id="no-results" class="hidden text-center py-12">
+        <i class="fas fa-search text-4xl text-zinc-400 mb-4"></i>
+        <h3 class="text-xl font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+          No articles found
+        </h3>
+        <p class="text-zinc-600 dark:text-zinc-400">
+          Try adjusting your filters or search terms
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tag Cloud -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="max-w-7xl mx-auto">
+      <h2
+        class="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 text-center"
+      >
+        All Tags
+      </h2>
+      <div class="flex flex-wrap justify-center gap-3">
+        {
+          allTags.map((tag) => (
+            <button
+              class="tag-filter-btn px-3 py-1 text-sm bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors"
+              data-tag={tag.slug}
+              style={`font-size: ${Math.min(1.2, 0.8 + tag.count / 10)}rem;`}
+            >
+              #{tag.name}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  // Multi-tag filtering functionality
+  class TagFilter {
+    private selectedTags: Set<string> = new Set();
+    private filterMode: "AND" | "OR" = "OR";
+    private allPosts: any[] = [];
+
+    constructor() {
+      this.initializeEventListeners();
+      this.loadInitialData();
+    }
+
+    private async loadInitialData() {
+      // Store the initial posts data for filtering
+      const postsGrid = document.getElementById("results-grid");
+      if (postsGrid) {
+        this.allPosts = Array.from(postsGrid.children).map((el, index) => ({
+          element: el,
+          index: index,
+          // You could store more data attributes here if needed
+        }));
+      }
+    }
+
+    private initializeEventListeners() {
+      // Filter mode toggle
+      document.querySelectorAll(".filter-mode-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const target = e.target as HTMLElement;
+          this.setFilterMode(target.dataset.mode as "AND" | "OR");
+        });
+      });
+
+      // Tag selection
+      document.querySelectorAll(".tag-filter-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const target = e.target as HTMLElement;
+          const tag = target.dataset.tag;
+          if (tag) {
+            this.toggleTag(tag);
+          }
+        });
+      });
+
+      // Search input
+      const searchInput = document.getElementById(
+        "tag-search"
+      ) as HTMLInputElement;
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+          const target = e.target as HTMLInputElement;
+          this.handleSearch(target.value);
+        });
+      }
+
+      // Clear all tags
+      document
+        .getElementById("clear-all-tags")
+        ?.addEventListener("click", () => {
+          this.clearAllTags();
+        });
+
+      // Sort select
+      document
+        .getElementById("sort-select")
+        ?.addEventListener("change", (e) => {
+          const target = e.target as HTMLSelectElement;
+          this.handleSort(target.value);
+        });
+    }
+
+    private setFilterMode(mode: "AND" | "OR") {
+      this.filterMode = mode;
+
+      // Update UI
+      document.querySelectorAll(".filter-mode-btn").forEach((btn) => {
+        btn.classList.remove("active");
+      });
+
+      const activeBtn = document.querySelector(`[data-mode="${mode}"]`);
+      activeBtn?.classList.add("active");
+
+      // Re-filter if we have selected tags
+      if (this.selectedTags.size > 0) {
+        this.filterPosts();
+      }
+    }
+
+    private toggleTag(tag: string) {
+      const btn = document.querySelector(`[data-tag="${tag}"]`);
+
+      if (this.selectedTags.has(tag)) {
+        this.selectedTags.delete(tag);
+        btn?.classList.remove("selected");
+      } else {
+        this.selectedTags.add(tag);
+        btn?.classList.add("selected");
+      }
+
+      this.updateSelectedTagsUI();
+      this.filterPosts();
+    }
+
+    private clearAllTags() {
+      this.selectedTags.clear();
+      document.querySelectorAll(".tag-filter-btn").forEach((btn) => {
+        btn.classList.remove("selected");
+      });
+      this.updateSelectedTagsUI();
+      this.showAllPosts();
+    }
+
+    private updateSelectedTagsUI() {
+      const container = document.getElementById("selected-tags");
+      const list = document.getElementById("selected-tags-list");
+
+      if (!container || !list) return;
+
+      if (this.selectedTags.size === 0) {
+        container.classList.add("hidden");
+        return;
+      }
+
+      container.classList.remove("hidden");
+      list.innerHTML = "";
+
+      this.selectedTags.forEach((tag) => {
+        const tagEl = document.createElement("span");
+        tagEl.className =
+          "inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm";
+        tagEl.innerHTML = `
+          #${tag.replace(/-/g, " ")}
+          <button class="ml-1 hover:text-red-600" onclick="window.tagFilterInstance?.handleTagRemoval('${tag}')">
+            <i class="fas fa-times text-xs"></i>
+          </button>
+        `;
+        list.appendChild(tagEl);
+      });
+    }
+
+    private async filterPosts() {
+      if (this.selectedTags.size === 0) {
+        this.showAllPosts();
+        return;
+      }
+
+      this.showLoading();
+
+      try {
+        // Simulate API call delay for better UX
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        // In a real implementation, you would make an API call here
+        // For now, we'll just simulate filtering
+        const filteredCount = Math.floor(Math.random() * this.allPosts.length);
+
+        this.displayResults(filteredCount);
+      } catch (error) {
+        console.error("Error filtering posts:", error);
+        this.hideLoading();
+      }
+    }
+
+    private handleSearch(query: string) {
+      // Implement search functionality
+      console.log("Searching for:", query);
+      // You could filter tags based on the search query here
+    }
+
+    private handleSort(sortBy: string) {
+      // Implement sorting functionality
+      console.log("Sorting by:", sortBy);
+    }
+
+    private showLoading() {
+      document.getElementById("loading")?.classList.remove("hidden");
+      document.getElementById("results-grid")?.classList.add("hidden");
+      document.getElementById("no-results")?.classList.add("hidden");
+    }
+
+    private hideLoading() {
+      document.getElementById("loading")?.classList.add("hidden");
+    }
+
+    private showAllPosts() {
+      this.hideLoading();
+      document.getElementById("results-grid")?.classList.remove("hidden");
+      document.getElementById("no-results")?.classList.add("hidden");
+
+      // Update results count
+      const countEl = document.getElementById("results-count");
+      if (countEl) {
+        countEl.textContent = `${this.allPosts.length} articles found`;
+      }
+
+      const titleEl = document.getElementById("results-title");
+      if (titleEl) {
+        titleEl.textContent = "Recent Articles";
+      }
+    }
+
+    private displayResults(count: number) {
+      this.hideLoading();
+
+      if (count === 0) {
+        document.getElementById("results-grid")?.classList.add("hidden");
+        document.getElementById("no-results")?.classList.remove("hidden");
+      } else {
+        document.getElementById("results-grid")?.classList.remove("hidden");
+        document.getElementById("no-results")?.classList.add("hidden");
+
+        // Update results count
+        const countEl = document.getElementById("results-count");
+        if (countEl) {
+          countEl.textContent = `${count} articles found`;
+        }
+
+        const titleEl = document.getElementById("results-title");
+        if (titleEl) {
+          const tagsList = Array.from(this.selectedTags).join(", ");
+          titleEl.textContent = `Articles tagged: ${tagsList}`;
+        }
+      }
+    }
+
+    // ✅ FIXED: Renamed public method to avoid conflict
+    public handleTagRemoval(tag: string) {
+      this.toggleTag(tag);
+    }
+  }
+
+  // Initialize the tag filter when the page loads
+  let tagFilterInstance: TagFilter;
+  document.addEventListener("DOMContentLoaded", () => {
+    tagFilterInstance = new TagFilter();
+    // Make it globally accessible for the remove buttons
+    (window as any).tagFilterInstance = tagFilterInstance;
+  });
+</script>
+
+<style>
+  .filter-mode-btn.active {
+    @apply bg-blue-600 text-white;
+  }
+
+  .tag-filter-btn:hover {
+    @apply scale-105 shadow-md;
+  }
+
+  .tag-filter-btn.selected {
+    @apply bg-blue-600 text-white border-blue-600;
+  }
+</style>

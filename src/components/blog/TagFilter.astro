@@ -1,0 +1,282 @@
+---
+// src/components/blog/TagFilter.astro
+export interface Props {
+  availableTags: Array<{
+    name: string;
+    slug: string;
+    count: number;
+  }>;
+  selectedTags?: string[];
+  mode?: 'simple' | 'advanced';
+  showCount?: boolean;
+  limit?: number;
+}
+
+const {
+  availableTags,
+  selectedTags = [],
+  mode = 'simple',
+  showCount = true,
+  limit
+} = Astro.props;
+
+const displayTags = limit ? availableTags.slice(0, limit) : availableTags;
+---
+
+<div class="tag-filter-component" data-mode={mode}>
+  {mode === 'advanced' && (
+    <div class="mb-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">
+          Filter Options
+        </h3>
+        <button
+          id="clear-filters"
+          class="text-sm text-red-600 hover:text-red-700 dark:text-red-400"
+        >
+          Clear All
+        </button>
+      </div>
+      
+      <!-- Filter Mode Toggle -->
+      <div class="flex items-center gap-4 mb-4">
+        <span class="text-sm text-zinc-600 dark:text-zinc-400">Mode:</span>
+        <div class="flex bg-white dark:bg-zinc-700 rounded-lg p-1">
+          <button
+            class="filter-mode-btn px-3 py-1 text-sm rounded-md transition-colors active"
+            data-mode="OR"
+          >
+            Any Tag
+          </button>
+          <button
+            class="filter-mode-btn px-3 py-1 text-sm rounded-md transition-colors"
+            data-mode="AND"
+          >
+            All Tags
+          </button>
+        </div>
+      </div>
+
+      <!-- Selected Tags Display -->
+      <div id="selected-tags-display" class="hidden">
+        <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Selected:</p>
+        <div id="selected-tags-list" class="flex flex-wrap gap-2"></div>
+      </div>
+    </div>
+  )}
+
+  <!-- Tags Grid -->
+  <div class="flex flex-wrap gap-2">
+    {displayTags.map((tag) => (
+      <button
+        class="tag-btn px-3 py-1 text-sm bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-all duration-200 hover:scale-105"
+        data-tag={tag.slug}
+        data-selected={selectedTags.includes(tag.slug)}
+      >
+        #{tag.name}
+        {showCount && (
+          <span class="ml-1 text-xs opacity-70">({tag.count})</span>
+        )}
+      </button>
+    ))}
+  </div>
+
+  {limit && availableTags.length > limit && (
+    <div class="mt-4 text-center">
+      <button
+        id="show-more-tags"
+        class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+      >
+        Show {availableTags.length - limit} more tags...
+      </button>
+    </div>
+  )}
+</div>
+
+<script>
+  class TagFilterComponent {
+    private container: HTMLElement;
+    private selectedTags: Set<string> = new Set();
+    private mode: 'simple' | 'advanced';
+    private filterMode: 'AND' | 'OR' = 'OR';
+
+    constructor(container: HTMLElement) {
+      this.container = container;
+      this.mode = container.dataset.mode as 'simple' | 'advanced';
+      this.initializeEventListeners();
+      this.loadInitialState();
+    }
+
+    private loadInitialState() {
+      // Load any pre-selected tags
+      this.container.querySelectorAll('[data-selected="true"]').forEach(btn => {
+        const tag = (btn as HTMLElement).dataset.tag;
+        if (tag) {
+          this.selectedTags.add(tag);
+          btn.classList.add('selected');
+        }
+      });
+      
+      this.updateSelectedDisplay();
+    }
+
+    private initializeEventListeners() {
+      // Tag selection
+      this.container.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement;
+          const tag = target.dataset.tag;
+          if (tag) {
+            this.toggleTag(tag);
+          }
+        });
+      });
+
+      // Filter mode toggle (advanced mode only)
+      if (this.mode === 'advanced') {
+        this.container.querySelectorAll('.filter-mode-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement;
+            this.setFilterMode(target.dataset.mode as 'AND' | 'OR');
+          });
+        });
+
+        // Clear all button
+        this.container.querySelector('#clear-filters')?.addEventListener('click', () => {
+          this.clearAll();
+        });
+      }
+
+      // Show more tags
+      this.container.querySelector('#show-more-tags')?.addEventListener('click', () => {
+        this.showMoreTags();
+      });
+    }
+
+    private toggleTag(tag: string) {
+      const btn = this.container.querySelector(`[data-tag="${tag}"]`);
+      
+      if (this.selectedTags.has(tag)) {
+        this.selectedTags.delete(tag);
+        btn?.classList.remove('selected');
+      } else {
+        this.selectedTags.add(tag);
+        btn?.classList.add('selected');
+      }
+      
+      this.updateSelectedDisplay();
+      this.emitFilterChange();
+    }
+
+    private setFilterMode(mode: 'AND' | 'OR') {
+      this.filterMode = mode;
+      
+      // Update UI
+      this.container.querySelectorAll('.filter-mode-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      const activeBtn = this.container.querySelector(`[data-mode="${mode}"]`);
+      activeBtn?.classList.add('active');
+      
+      this.emitFilterChange();
+    }
+
+    private clearAll() {
+      this.selectedTags.clear();
+      this.container.querySelectorAll('.tag-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      this.updateSelectedDisplay();
+      this.emitFilterChange();
+    }
+
+    private updateSelectedDisplay() {
+      if (this.mode !== 'advanced') return;
+      
+      const display = this.container.querySelector('#selected-tags-display');
+      const list = this.container.querySelector('#selected-tags-list');
+      
+      if (!display || !list) return;
+      
+      if (this.selectedTags.size === 0) {
+        display.classList.add('hidden');
+        return;
+      }
+      
+      display.classList.remove('hidden');
+      list.innerHTML = '';
+      
+      this.selectedTags.forEach(tag => {
+        const tagEl = document.createElement('span');
+        tagEl.className = 'inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs';
+        tagEl.innerHTML = `
+          #${tag.replace(/-/g, ' ')}
+          <button class="hover:text-red-600" data-remove-tag="${tag}">
+            <i class="fas fa-times text-xs"></i>
+          </button>
+        `;
+        
+        // Add remove functionality
+        tagEl.querySelector(`[data-remove-tag="${tag}"]`)?.addEventListener('click', () => {
+          this.toggleTag(tag);
+        });
+        
+        list.appendChild(tagEl);
+      });
+    }
+
+    private showMoreTags() {
+      // Implementation for showing more tags
+      // This would typically load more tags or expand the view
+      console.log('Show more tags functionality');
+    }
+
+    private emitFilterChange() {
+      // Emit custom event with current filter state
+      const event = new CustomEvent('tagFilterChange', {
+        detail: {
+          selectedTags: Array.from(this.selectedTags),
+          filterMode: this.filterMode
+        }
+      });
+      
+      this.container.dispatchEvent(event);
+    }
+
+    // Public methods
+    public getSelectedTags(): string[] {
+      return Array.from(this.selectedTags);
+    }
+
+    public getFilterMode(): 'AND' | 'OR' {
+      return this.filterMode;
+    }
+
+    public setSelectedTags(tags: string[]) {
+      this.clearAll();
+      tags.forEach(tag => this.toggleTag(tag));
+    }
+  }
+
+  // Initialize all tag filter components
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.tag-filter-component').forEach(container => {
+      new TagFilterComponent(container as HTMLElement);
+    });
+  });
+</script>
+
+<style>
+  .filter-mode-btn.active {
+    @apply bg-blue-600 text-white;
+  }
+  
+  .tag-btn.selected {
+    @apply bg-blue-600 text-white border-blue-600;
+  }
+  
+  .tag-btn:hover {
+    @apply shadow-md;
+  }
+</style>

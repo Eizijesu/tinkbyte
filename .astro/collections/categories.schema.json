@@ -10,23 +10,11 @@
         "description": {
           "type": "string"
         },
-        "color": {
-          "type": "string",
-          "enum": [
-            "blue",
-            "purple",
-            "green",
-            "orange",
-            "red",
-            "cyan",
-            "pink",
-            "yellow"
-          ],
-          "default": "blue"
-        },
         "icon": {
-          "type": "string",
-          "default": "tag"
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
         },
         "featured": {
           "type": "boolean",
@@ -50,7 +38,9 @@
       },
       "required": [
         "name",
-        "description"
+        "description",
+        "icon",
+        "color"
       ],
       "additionalProperties": false
     }

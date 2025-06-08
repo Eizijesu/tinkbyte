@@ -1,0 +1,290 @@
+fragment BlogParts on Blog {
+  __typename
+  title
+  excerpt
+  pubDate
+  updatedDate
+  authorInfo {
+    __typename
+    name
+    bio
+    avatar
+    role
+    company
+    email
+    social {
+      __typename
+      twitter
+      linkedin
+      github
+      website
+    }
+  }
+  image
+  imageAlt
+  category
+  storyType
+  tags
+  featured
+  trending
+  draft
+  readTime
+  audioUrl
+  audioDuration
+  audioTranscript
+  seo {
+    __typename
+    title
+    description
+    canonical
+    noindex
+  }
+  body
+}
+
+fragment CategoriesParts on Categories {
+  __typename
+  name
+  description
+  icon
+  color
+  featured
+  seo {
+    __typename
+    title
+    description
+  }
+  body
+}
+
+fragment AuthorsParts on Authors {
+  __typename
+  name
+  bio
+  avatar
+  role
+  company
+  email
+  social {
+    __typename
+    twitter
+    linkedin
+    github
+    website
+  }
+  featured
+  body
+}
+
+fragment PodcastParts on Podcast {
+  __typename
+  title
+  description
+  pubDate
+  duration
+  audioUrl
+  image
+  guests
+  transcript
+  season
+  episode
+  featured
+  seo {
+    __typename
+    title
+    description
+    canonical
+  }
+  body
+}
+
+fragment NewsletterParts on Newsletter {
+  __typename
+  title
+  excerpt
+  pubDate
+  issue
+  featured
+  body
+}
+
+fragment PagesParts on Pages {
+  __typename
+  title
+  description
+  pubDate
+  updatedDate
+  layout
+  seo {
+    __typename
+    title
+    description
+    canonical
+    noindex
+  }
+  body
+}
+
+fragment LegalPagesParts on LegalPages {
+  __typename
+  title
+  description
+  pubDate
+  updatedDate
+  pageType
+  effectiveDate
+  contact {
+    __typename
+    email
+    address
+    phone
+  }
+  seo {
+    __typename
+    title
+    description
+    noindex
+  }
+  body
+}
+
+fragment SettingsParts on Settings {
+  __typename
+  title
+  description
+  site {
+    __typename
+    name
+    description
+    url
+    logo
+    giscus {
+      __typename
+      repo
+      repoId
+      category
+      categoryId
+      mapping
+      reactionsEnabled
+      emitMetadata
+      inputPosition
+      lang
+      loading
+    }
+  }
+  categories {
+    __typename
+    defaultColor
+    categoryMappings {
+      __typename
+      name
+      slug
+      color
+      description
+    }
+  }
+  uiText {
+    __typename
+    audioAvailableLabel
+    audioTitle
+    audioSubtitle
+    noAudioText
+    byAuthorPrefix
+    aboutAuthorTitle
+    shareLabel
+    shareArticleTitle
+    continueReadingTitle
+    continueReadingSubtitle
+    previousArticleLabel
+    nextArticleLabel
+    reachedBeginningText
+    readAllText
+    browseAllArticlesText
+    tocTitle
+    topicsTitle
+    readingProgressTitle
+    imageCreditText
+    readingTimePrefix
+    defaultCategoryLabel
+    discussionTitle
+    discussionSubtitle
+    relatedTitle
+    relatedSubtitle
+  }
+  community {
+    __typename
+    stats {
+      __typename
+      number
+      label
+      icon
+    }
+    platforms {
+      __typename
+      name
+      description
+      icon
+      link
+      members
+      activity
+      color
+    }
+  }
+  research {
+    __typename
+    stats {
+      __typename
+      number
+      label
+      icon
+    }
+    reports {
+      __typename
+      title
+      description
+      date
+      type
+      pages
+      downloads
+      downloadUrl
+      coverImage
+      featured
+      tags
+    }
+  }
+  newsletter {
+    __typename
+    title
+    subtitle
+    frequency
+    subscriberCount
+    signupFormId
+    confirmationMessage
+  }
+  social {
+    __typename
+    platforms {
+      __typename
+      name
+      url
+      username
+      showInFooter
+      enableSharing
+    }
+    defaultShareText
+  }
+  analytics {
+    __typename
+    googleAnalyticsId
+    googleTagManagerId
+    enableCookieConsent
+    cookieConsentMessage
+  }
+  performance {
+    __typename
+    enableImageOptimization
+    enableLazyLoading
+    enableServiceWorker
+    cacheMaxAge
+  }
+}

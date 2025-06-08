@@ -1,0 +1,187 @@
+---
+// src/pages/archive.astro - Enhanced with search-style design
+import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+// Get all posts from TinaCMS
+const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+
+// Sort by date
+const sortedPosts = allPosts.sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+);
+
+// Group by year
+const postsByYear = sortedPosts.reduce(
+  (acc, post) => {
+    const year = post.data.pubDate.getFullYear();
+    if (!acc[year]) {
+      acc[year] = [];
+    }
+    acc[year].push(post);
+    return acc;
+  },
+  {} as Record<number, typeof sortedPosts>
+);
+
+const years = Object.keys(postsByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
+---
+
+<Layout
+  title="Archive | TinkByte - Complete Article Collection"
+  description="Browse all articles by year and category. Explore our complete collection of tech insights and product development guides."
+>
+  <!-- Enhanced Archive Header -->
+  <section class="relative py-16 lg:py-24 overflow-hidden">
+    <div
+      class="absolute inset-0 bg-gradient-to-r from-zinc-600 via-gray-600 to-slate-600 opacity-10"
+    >
+    </div>
+    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5">
+    </div>
+
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-4xl mx-auto text-center">
+        <h1
+          class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6"
+        >
+          Article
+          <span
+            class="bg-gradient-to-r from-zinc-600 to-gray-600 bg-clip-text text-transparent"
+          >
+            Archive
+          </span>
+        </h1>
+
+        <p
+          class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12"
+        >
+          Browse our complete collection of {allPosts.length} articles organized
+          by publication year. Every piece of content we've published since we started.
+        </p>
+
+        <div class="grid grid-cols-2 gap-8 max-w-lg mx-auto">
+          <div class="text-center">
+            <div class="text-3xl font-bold text-zinc-900 dark:text-white mb-1">
+              {allPosts.length}
+            </div>
+            <div
+              class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
+            >
+              Total Articles
+            </div>
+          </div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-zinc-900 dark:text-white mb-1">
+              {years.length}
+            </div>
+            <div
+              class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
+            >
+              Years
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Archive by Year -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="container mx-auto">
+      <div class="max-w-4xl mx-auto">
+        {
+          years.map((year) => (
+            <div class="mb-12">
+              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-8 border-b-2 border-zinc-200 dark:border-zinc-700 pb-4">
+                {year}
+                <span class="text-lg font-normal text-zinc-500 dark:text-zinc-400 ml-2">
+                  ({postsByYear[year].length} articles)
+                </span>
+              </h2>
+
+              <div class="space-y-6">
+                {postsByYear[year].map((post) => (
+                  <article class="group p-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-lg transition-all duration-200">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-3">
+                          <span class="text-xs font-semibold px-3 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded uppercase tracking-wide">
+                            {post.data.category}
+                          </span>
+                          <time class="text-sm text-zinc-500 dark:text-zinc-400">
+                            {post.data.pubDate.toLocaleDateString("en-US", {
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </time>
+                          {post.data.featured && (
+                            <span class="text-xs font-semibold px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded uppercase tracking-wide">
+                              Featured
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors mb-2">
+                          <a
+                            href={`/blog/${post.slug}`}
+                            class="hover:underline"
+                          >
+                            {post.data.title}
+                          </a>
+                        </h3>
+
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                          {post.data.excerpt}
+                        </p>
+                      </div>
+
+                      <div class="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400">
+                        <span>By {post.data.author}</span>
+                        <span>{post.data.readTime || "5 min read"}</span>
+                        {post.data.audioUrl && (
+                          <span class="flex items-center gap-1">
+                            <i class="fas fa-headphones" />
+                            Audio
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .bg-gradient-to-r.bg-clip-text {
+    background-size: 200% 200%;
+    animation: gradient 3s ease-in-out infinite;
+  }
+</style>
