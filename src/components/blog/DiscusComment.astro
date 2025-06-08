@@ -1,0 +1,79 @@
+---
+// src/components/blog/DisqusComments.astro
+export interface Props {
+  postSlug?: string;
+  postTitle?: string;
+  postUrl?: string;
+}
+
+const { postSlug, postTitle, postUrl } = Astro.props;
+const disqusShortname = import.meta.env.PUBLIC_DISQUS_SHORTNAME;
+---
+
+{
+  disqusShortname && postSlug ? (
+    <section class="comments-section-enhanced">
+      <div class="max-w-4xl mx-auto px-4 py-12">
+        <div class="comments-header">
+          <h3 class="comments-title-enhanced">
+            <i class="fas fa-comments mr-3" />
+            Join the Discussion
+          </h3>
+          <p class="comments-subtitle">
+            Share your thoughts about "{postTitle}"
+          </p>
+        </div>
+
+        <div id="disqus_thread" class="disqus-container" />
+      </div>
+    </section>
+  ) : (
+    <section class="comments-section-enhanced">
+      <div class="max-w-4xl mx-auto px-4 py-12">
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+          <i class="fas fa-exclamation-triangle text-2xl mb-4" />
+          <p>Comments are currently unavailable.</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .disqus-container {
+    background: white;
+    border-radius: var(--tinkbyte-radius-card, 4px);
+    padding: 2rem;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  :global(.dark) .disqus-container {
+    background: rgb(30, 41, 59);
+    border-color: rgb(71, 85, 105);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Override Disqus styles to match your theme */
+  :global(.dark) #disqus_thread {
+    color-scheme: dark;
+  }
+</style>
+
+<script define:vars={{ disqusShortname, postSlug, postTitle, postUrl }}>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!disqusShortname) return;
+
+    window.disqus_config = function () {
+      this.page.url = postUrl || window.location.href;
+      this.page.identifier = postSlug;
+      this.page.title = postTitle;
+    };
+
+    const script = document.createElement("script");
+    script.src = `https://${disqusShortname}.disqus.com/embed.js`;
+    script.setAttribute("data-timestamp", Date.now().toString());
+    document.head.appendChild(script);
+  });
+</script>
