@@ -1,0 +1,485 @@
+---
+export interface Props {
+  postSlug: string;
+  postTitle: string;
+}
+
+const { postSlug, postTitle } = Astro.props;
+---
+
+<!-- Floating Reaction Bar -->
+<div class="floating-reaction-bar" data-post-slug={postSlug}>
+  <div class="reaction-container">
+    <!-- Like Button -->
+    <button
+      class="reaction-btn like-btn"
+      data-reaction="like"
+      title="Like this article"
+    >
+      <i class="far fa-heart"></i>
+      <span class="reaction-count">0</span>
+    </button>
+
+    <!-- Save Button -->
+    <button
+      class="reaction-btn save-btn"
+      data-reaction="save"
+      title="Save for later"
+    >
+      <i class="far fa-bookmark"></i>
+    </button>
+
+    <!-- Share Button -->
+    <button
+      class="reaction-btn share-btn"
+      data-reaction="share"
+      title="Share article"
+    >
+      <i class="fas fa-share-alt"></i>
+    </button>
+
+    <!-- Comment Button -->
+    <button
+      class="reaction-btn comment-btn"
+      data-reaction="comment"
+      title="Jump to comments"
+    >
+      <i class="far fa-comment"></i>
+    </button>
+  </div>
+</div>
+
+<style>
+  .floating-reaction-bar {
+    position: fixed;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .floating-reaction-bar.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .reaction-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 12px 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  :global(.dark) .reaction-container {
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgb(55, 65, 81);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .reaction-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #6b7280;
+    position: relative;
+  }
+
+  :global(.dark) .reaction-btn {
+    color: rgb(156, 163, 175);
+  }
+
+  .reaction-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    transform: scale(1.05);
+  }
+
+  .reaction-btn.active {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+  }
+
+  .reaction-btn i {
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+
+  .reaction-count {
+    font-size: 10px;
+    font-weight: 600;
+    color: #9ca3af;
+    line-height: 1;
+  }
+
+  .like-btn.active {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .like-btn.active i {
+    color: #ef4444;
+  }
+
+  .save-btn.active {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+  }
+
+  /* Mobile positioning - Fixed */
+  @media (max-width: 768px) {
+    .floating-reaction-bar {
+      left: auto;
+      right: 16px;
+      top: auto;
+      bottom: 80px; /* Above mobile browser UI */
+      transform: none;
+      z-index: 1001; /* Higher z-index for mobile */
+    }
+
+    .reaction-container {
+      flex-direction: row;
+      padding: 8px 12px;
+      gap: 12px;
+      border-radius: 24px; /* More rounded on mobile */
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .reaction-btn {
+      width: 40px;
+      height: 40px;
+    }
+
+    .reaction-btn i {
+      font-size: 14px;
+    }
+
+    .reaction-count {
+      font-size: 9px;
+    }
+  }
+
+  /* Tablet adjustments */
+  @media (max-width: 1024px) and (min-width: 769px) {
+    .floating-reaction-bar {
+      left: 16px;
+    }
+
+    .reaction-btn {
+      width: 42px;
+      height: 42px;
+    }
+  }
+
+  /* Very small screens - keep visible but smaller */
+  @media (max-width: 480px) {
+    .floating-reaction-bar {
+      right: 12px;
+      bottom: 70px;
+    }
+
+    .reaction-container {
+      padding: 6px 10px;
+      gap: 8px;
+    }
+
+    .reaction-btn {
+      width: 36px;
+      height: 36px;
+    }
+
+    .reaction-btn i {
+      font-size: 13px;
+    }
+
+    .reaction-count {
+      font-size: 8px;
+    }
+  }
+
+  /* Landscape mobile */
+  @media (max-width: 768px) and (orientation: landscape) {
+    .floating-reaction-bar {
+      bottom: 20px;
+      right: 20px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const reactionBar = document.querySelector(
+      ".floating-reaction-bar"
+    ) as HTMLElement;
+    if (!reactionBar) return;
+
+    const postSlug = reactionBar.getAttribute("data-post-slug");
+    if (!postSlug) return;
+
+    // Enhanced show/hide logic for mobile
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const showReactionBar = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          const windowHeight = window.innerHeight;
+          const documentHeight = document.documentElement.scrollHeight;
+
+          // Different thresholds for mobile vs desktop
+          const isMobile = window.innerWidth <= 768;
+          const showThreshold = isMobile ? 150 : 200;
+          const hideThreshold = isMobile ? 150 : 200;
+
+          // Show after scrolling threshold and hide when near bottom
+          if (
+            scrollY > showThreshold &&
+            scrollY < documentHeight - windowHeight - hideThreshold
+          ) {
+            reactionBar.classList.add("visible");
+          } else {
+            reactionBar.classList.remove("visible");
+          }
+
+          lastScrollY = scrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    // Throttled scroll listener
+    window.addEventListener("scroll", showReactionBar, { passive: true });
+
+    // Show immediately on mobile if already scrolled
+    if (window.innerWidth <= 768 && window.scrollY > 150) {
+      reactionBar.classList.add("visible");
+    }
+
+    // Handle orientation change
+    window.addEventListener("orientationchange", () => {
+      setTimeout(() => {
+        showReactionBar();
+      }, 100);
+    });
+
+    // Load saved reactions from localStorage
+    const savedReactions = JSON.parse(
+      localStorage.getItem("tinkbyte-reactions") || "{}"
+    );
+    const postReactions = savedReactions[postSlug] || {};
+
+    // Initialize UI based on saved state
+    Object.keys(postReactions).forEach((reaction) => {
+      if (postReactions[reaction]) {
+        const btn = reactionBar.querySelector(`[data-reaction="${reaction}"]`);
+        if (btn) {
+          btn.classList.add("active");
+          if (reaction === "like") {
+            const icon = btn.querySelector("i");
+            if (icon) icon.className = "fas fa-heart";
+          } else if (reaction === "save") {
+            const icon = btn.querySelector("i");
+            if (icon) icon.className = "fas fa-bookmark";
+          }
+        }
+      }
+    });
+
+    // Handle reaction clicks
+    reactionBar.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      if (!target) return;
+
+      const btn = target.closest(".reaction-btn") as HTMLButtonElement;
+      if (!btn) return;
+
+      const reaction = btn.getAttribute("data-reaction");
+      if (!reaction) return;
+
+      const isActive = btn.classList.contains("active");
+
+      // Handle different reaction types
+      switch (reaction) {
+        case "like":
+          toggleLike(btn, isActive);
+          break;
+        case "save":
+          toggleSave(btn, isActive);
+          break;
+        case "share":
+          handleShare();
+          break;
+        case "comment":
+          scrollToComments();
+          break;
+      }
+
+      // Save state (except for share and comment)
+      if (!["share", "comment"].includes(reaction)) {
+        saveReactionState(reaction, !isActive);
+      }
+    });
+
+    function toggleLike(btn: HTMLButtonElement, isActive: boolean) {
+      const icon = btn.querySelector("i");
+      const countEl = btn.querySelector(".reaction-count");
+      if (!icon || !countEl) return;
+
+      let count = parseInt(countEl.textContent || "0") || 0;
+
+      if (isActive) {
+        btn.classList.remove("active");
+        icon.className = "far fa-heart";
+        count = Math.max(0, count - 1);
+      } else {
+        btn.classList.add("active");
+        icon.className = "fas fa-heart";
+        count += 1;
+
+        // Add animation
+        btn.style.animation = "heartBeat 0.6s ease-in-out";
+        setTimeout(() => (btn.style.animation = ""), 600);
+      }
+
+      countEl.textContent = count.toString();
+    }
+
+    function toggleSave(btn: HTMLButtonElement, isActive: boolean) {
+      const icon = btn.querySelector("i");
+      if (!icon) return;
+
+      if (isActive) {
+        btn.classList.remove("active");
+        icon.className = "far fa-bookmark";
+      } else {
+        btn.classList.add("active");
+        icon.className = "fas fa-bookmark";
+      }
+    }
+
+    function handleShare() {
+      if (navigator.share) {
+        navigator
+          .share({
+            title: document.title,
+            url: window.location.href,
+          })
+          .catch(() => copyToClipboard());
+      } else {
+        copyToClipboard();
+      }
+    }
+
+    function copyToClipboard() {
+      navigator.clipboard
+        ?.writeText(window.location.href)
+        .then(() => {
+          showToast("Link copied to clipboard!");
+        })
+        .catch(() => {
+          // Fallback
+          const textArea = document.createElement("textarea");
+          textArea.value = window.location.href;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textArea);
+          showToast("Link copied!");
+        });
+    }
+
+    function showToast(message: string) {
+      const toast = document.createElement("div");
+      toast.textContent = message;
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #10b981;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        z-index: 1002;
+        animation: slideInRight 0.3s ease;
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    function scrollToComments() {
+      const commentsSection =
+        document.querySelector("#giscus-container") ||
+        document.querySelector(".comments-section-enhanced");
+      if (commentsSection) {
+        commentsSection.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+
+    function saveReactionState(reaction: string, isActive: boolean) {
+      if (!postSlug) return;
+
+      const savedReactions = JSON.parse(
+        localStorage.getItem("tinkbyte-reactions") || "{}"
+      );
+      if (!savedReactions[postSlug]) {
+        savedReactions[postSlug] = {};
+      }
+      savedReactions[postSlug][reaction] = isActive;
+      localStorage.setItem(
+        "tinkbyte-reactions",
+        JSON.stringify(savedReactions)
+      );
+    }
+  });
+</script>
+
+<style>
+  @keyframes heartBeat {
+    0% {
+      transform: scale(1);
+    }
+    25% {
+      transform: scale(1.2);
+    }
+    50% {
+      transform: scale(1);
+    }
+    75% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+</style>

@@ -1,5 +1,5 @@
 ---
-// src/pages/index.astro - 
+// src/pages/index.astro -
 import Layout from "../layouts/Layout.astro";
 import PillarSection from "../components/magazine/PillarSection.astro";
 import NewsletterCTA from "../components/magazine/NewsletterCTA.astro";
@@ -125,9 +125,24 @@ const contentPillars = [
     articles: getPostsByCategory("community-innovation", 4),
     color: "#10B981",
   },
+  // ADD NEW PILLARS AS NEEDED:
+  {
+    name: "Developer Tools",
+    description: "Tools and technologies that make developers more productive",
+    slug: "developer-tools",
+    articles: getPostsByCategory("developer-tools", 4),
+    color: "#06B6D4",
+  },
+  {
+    name: "AI Evolution",
+    description: "Practical AI insights beyond the hype",
+    slug: "ai-evolution",
+    articles: getPostsByCategory("ai-evolution", 4),
+    color: "#8B5CF6",
+  },
 ];
 
-// Helper function to format posts
+// FIXED: Robust formatPost function respecting optional fields
 const formatPost = (post: any) => {
   if (realContent && post && typeof post === "object" && "data" in post) {
     return {
@@ -145,7 +160,14 @@ const formatPost = (post: any) => {
         post.data.image ||
         "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=600&fit=crop",
       category: post.data.category,
-      author: post.data.author || "TinkByte Team",
+      // FIXED: Only show name (required), other fields are optional
+      author: post.data.authorInfo?.name || post.data.author || "TinkByte Team",
+      // Optional: Include full author data for components that need it
+      authorData:
+        post.data.authorInfo ||
+        (post.data.author
+          ? { name: post.data.author }
+          : { name: "TinkByte Team" }),
     };
   }
   return post;

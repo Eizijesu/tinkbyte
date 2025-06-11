@@ -1,5 +1,5 @@
 ---
-// src/layouts/Layout.astro - Fixed FontAwesome Version
+// src/layouts/Layout.astro - Enhanced Theme-Aware Layout
 import { SITE } from "../config/site";
 import Header from "../components/ui/Header.astro";
 import Footer from "../components/ui/Footer.astro";
@@ -150,9 +150,8 @@ const structuredData = getStructuredData();
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <!-- FontAwesome Icons - COMPLETELY FIXED VERSION -->
+    <!-- FontAwesome Icons -->
     <script is:inline>
-      // Load FontAwesome immediately to prevent FOUC
       (function () {
         const link = document.createElement("link");
         link.rel = "stylesheet";
@@ -165,6 +164,183 @@ const structuredData = getStructuredData();
         document.head.appendChild(link);
       })();
     </script>
+
+    <!-- Enhanced Theme CSS Variables -->
+    <style is:inline>
+      :root {
+        /* Light theme colors */
+        --color-bg-primary: #ffffff;
+        --color-bg-secondary: #f8fafc;
+        --color-bg-tertiary: #f1f5f9;
+        --color-text-primary: #0f172a;
+        --color-text-secondary: #475569;
+        --color-text-muted: #64748b;
+        --color-border: #e2e8f0;
+        --color-border-light: #f1f5f9;
+        --color-accent: #243788;
+        --color-accent-hover: #1e3a8a;
+        --color-success: #059669;
+        --color-warning: #d97706;
+        --color-error: #dc2626;
+        --color-info: #0284c7;
+        
+        /* Featured post specific */
+        --featured-bg: #ffffff;
+        --featured-border: #e2e8f0;
+        --featured-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --featured-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        --featured-text: #0f172a;
+        --featured-text-muted: #64748b;
+        --featured-overlay: rgba(0, 0, 0, 0.4);
+        
+        /* Card backgrounds */
+        --card-bg: #ffffff;
+        --card-border: #e2e8f0;
+        --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        --card-hover-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      }
+
+      .dark {
+        /* Dark theme colors */
+        --color-bg-primary: #0f172a;
+        --color-bg-secondary: #1e293b;
+        --color-bg-tertiary: #334155;
+        --color-text-primary: #f8fafc;
+        --color-text-secondary: #cbd5e1;
+        --color-text-muted: #94a3b8;
+        --color-border: #374151;
+        --color-border-light: #4b5563;
+        --color-accent: #3b82f6;
+        --color-accent-hover: #2563eb;
+        --color-success: #10b981;
+        --color-warning: #f59e0b;
+        --color-error: #ef4444;
+        --color-info: #06b6d4;
+        
+        /* Featured post specific - Dark theme */
+        --featured-bg: #1e293b;
+        --featured-border: #374151;
+        --featured-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+        --featured-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4);
+        --featured-text: #f8fafc;
+        --featured-text-muted: #94a3b8;
+        --featured-overlay: rgba(0, 0, 0, 0.6);
+        
+        /* Card backgrounds - Dark theme */
+        --card-bg: #1e293b;
+        --card-border: #374151;
+        --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+        --card-hover-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+      }
+
+      /* Ensure all elements inherit theme properly */
+      * {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+      }
+
+      /* Featured post styling */
+      .featured-post {
+        background: var(--featured-bg) !important;
+        border-color: var(--featured-border) !important;
+        box-shadow: var(--featured-shadow) !important;
+        color: var(--featured-text) !important;
+      }
+
+      .featured-post:hover {
+        box-shadow: var(--featured-hover-shadow) !important;
+      }
+
+      .featured-post .text-gray-600 {
+        color: var(--featured-text-muted) !important;
+      }
+
+      .featured-post .text-gray-500 {
+        color: var(--featured-text-muted) !important;
+      }
+
+      .featured-post .bg-white {
+        background: var(--featured-bg) !important;
+      }
+
+      .featured-post .border-gray-200 {
+        border-color: var(--featured-border) !important;
+      }
+
+      /* Card styling */
+      .theme-card {
+        background: var(--card-bg) !important;
+        border-color: var(--card-border) !important;
+        box-shadow: var(--card-shadow) !important;
+        color: var(--color-text-primary) !important;
+      }
+
+      .theme-card:hover {
+        box-shadow: var(--card-hover-shadow) !important;
+      }
+
+      /* Text color overrides */
+      .theme-text-primary {
+        color: var(--color-text-primary) !important;
+      }
+
+      .theme-text-secondary {
+        color: var(--color-text-secondary) !important;
+      }
+
+      .theme-text-muted {
+        color: var(--color-text-muted) !important;
+      }
+
+      /* Background overrides */
+      .theme-bg-primary {
+        background-color: var(--color-bg-primary) !important;
+      }
+
+      .theme-bg-secondary {
+        background-color: var(--color-bg-secondary) !important;
+      }
+
+      /* Border overrides */
+      .theme-border {
+        border-color: var(--color-border) !important;
+      }
+
+      /* Force theme consistency for specific elements */
+      .bg-white {
+        background-color: var(--color-bg-primary) !important;
+      }
+
+      .dark .bg-white {
+        background-color: var(--color-bg-primary) !important;
+      }
+
+      .text-gray-900 {
+        color: var(--color-text-primary) !important;
+      }
+
+      .text-gray-600 {
+        color: var(--color-text-secondary) !important;
+      }
+
+      .text-gray-500 {
+        color: var(--color-text-muted) !important;
+      }
+
+      .border-gray-200 {
+        border-color: var(--color-border) !important;
+      }
+
+      .border-gray-300 {
+        border-color: var(--color-border) !important;
+      }
+
+      /* Ensure proper theme inheritance */
+      [data-theme-aware="true"] {
+        background-color: var(--color-bg-primary) !important;
+        color: var(--color-text-primary) !important;
+        border-color: var(--color-border) !important;
+      }
+    </style>
 
     <!-- Primary Meta Tags -->
     <title>{title}</title>
@@ -240,7 +416,7 @@ const structuredData = getStructuredData();
       set:html={JSON.stringify(structuredData)}
     />
 
-    <!-- Theme Detection Script (Prevent FOUC) -->
+    <!-- Enhanced Theme Detection Script -->
     <script is:inline>
       (function () {
         const getTheme = () => {
@@ -261,13 +437,26 @@ const structuredData = getStructuredData();
           return "light";
         };
 
-        const theme = getTheme();
+        const applyTheme = (theme) => {
+          if (theme === "dark") {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
 
-        if (theme === "dark") {
-          document.documentElement.classList.add("dark");
-        } else {
-          document.documentElement.classList.remove("dark");
-        }
+          // Force update all theme-aware elements
+          setTimeout(() => {
+            const themeAwareElements = document.querySelectorAll(
+              '.featured-post, .theme-card, [data-theme-aware="true"]'
+            );
+            themeAwareElements.forEach((el) => {
+              el.style.transition = "all 0.3s ease";
+            });
+          }, 0);
+        };
+
+        const theme = getTheme();
+        applyTheme(theme);
 
         // Store the theme
         if (typeof localStorage !== "undefined") {
@@ -279,6 +468,7 @@ const structuredData = getStructuredData();
 
   <body
     class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 font-space-grotesk antialiased"
+    style="background-color: var(--color-bg-primary); color: var(--color-text-primary);"
   >
     <!-- Skip Navigation Link -->
     <a
@@ -298,9 +488,32 @@ const structuredData = getStructuredData();
       <Footer />
     </div>
 
-    <!-- FontAwesome Fix Script -->
+    <!-- Enhanced Theme and Functionality Script -->
     <script is:inline>
       document.addEventListener("DOMContentLoaded", function () {
+        // Enhanced theme application
+        const applyThemeToAllElements = () => {
+          // Apply theme to featured posts
+          const featuredPosts = document.querySelectorAll('.featured-post');
+          featuredPosts.forEach(post => {
+            post.setAttribute('data-theme-aware', 'true');
+          });
+
+          // Apply theme to cards
+          const cards = document.querySelectorAll('.theme-card, .bg-white, .border-gray-200');
+          cards.forEach(card => {
+            card.setAttribute('data-theme-aware', 'true');
+          });
+
+          // Force repaint
+          document.body.style.display = 'none';
+          document.body.offsetHeight; // Trigger reflow
+          document.body.style.display = '';
+        };
+
+        // Apply theme immediately
+        applyThemeToAllElements();
+
         // Ensure FontAwesome icons are properly loaded
         const icons = document.querySelectorAll(
           '.fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"]'
@@ -312,6 +525,32 @@ const structuredData = getStructuredData();
             icon.style.fontFamily = '"Font Awesome 6 Free" !important';
           }
         });
+
+        // Enhanced theme toggle functionality
+        const themeToggle = document.querySelector("#theme-toggle");
+        if (themeToggle) {
+          themeToggle.addEventListener("click", () => {
+            const isDark = document.documentElement.classList.contains("dark");
+            const newTheme = isDark ? "light" : "dark";
+
+            document.documentElement.classList.toggle("dark", !isDark);
+            localStorage.setItem("theme", newTheme);
+
+            // Force update all elements
+            setTimeout(() => {
+              applyThemeToAllElements();
+            }, 50);
+
+            // Update theme toggle icons if they exist
+            const sunIcon = themeToggle.querySelector(".sun-icon");
+            const moonIcon = themeToggle.querySelector(".moon-icon");
+
+            if (sunIcon && moonIcon) {
+              sunIcon.style.display = isDark ? "block" : "none";
+              moonIcon.style.display = isDark ? "none" : "block";
+            }
+          });
+        }
 
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
@@ -370,27 +609,6 @@ const structuredData = getStructuredData();
           });
         }
 
-        // Theme toggle functionality
-        const themeToggle = document.querySelector("#theme-toggle");
-        if (themeToggle) {
-          themeToggle.addEventListener("click", () => {
-            const isDark = document.documentElement.classList.contains("dark");
-            const newTheme = isDark ? "light" : "dark";
-
-            document.documentElement.classList.toggle("dark", !isDark);
-            localStorage.setItem("theme", newTheme);
-
-            // Update theme toggle icons if they exist
-            const sunIcon = themeToggle.querySelector(".sun-icon");
-            const moonIcon = themeToggle.querySelector(".moon-icon");
-
-            if (sunIcon && moonIcon) {
-              sunIcon.style.display = isDark ? "block" : "none";
-              moonIcon.style.display = isDark ? "none" : "block";
-            }
-          });
-        }
-
         // Mobile menu toggle
         const mobileMenuToggle = document.querySelector("#mobile-menu-toggle");
         const mobileMenu = document.querySelector("#mobile-menu");
@@ -421,6 +639,31 @@ const structuredData = getStructuredData();
             }
           });
         }
+
+        // Watch for dynamic content and apply theme
+        const mutationObserver = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'childList') {
+              mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) { // Element node
+                  const element = node;
+                  if (element.classList && (
+                    element.classList.contains('featured-post') ||
+                    element.classList.contains('bg-white') ||
+                    element.classList.contains('border-gray-200')
+                  )) {
+                    element.setAttribute('data-theme-aware', 'true');
+                  }
+                }
+              });
+            }
+          });
+        });
+
+        mutationObserver.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
       });
     </script>
   </body>

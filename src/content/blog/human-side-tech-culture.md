@@ -1,29 +1,46 @@
 ---
-title: "The Human Side of Tech Culture"
-excerpt: "Community stories and ethical design discussions. Why culture matters more than code in successful product development and sustainable tech teams."
-pubDate: 2024-01-20
-updatedDate: 2024-01-20
-author: "Sarah Kim"
-authorBio: "Tech culture researcher and community builder with 8+ years studying organizational dynamics in technology companies."
-authorAvatar: "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=100&h=100&fit=crop&crop=face"
-authorRole: "Culture Analyst"
-authorSocial:
-  twitter: "sarahkim_tech"
-  linkedin: "sarahkim-culture"
-  website: "https://sarahkim.tech"
-image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=630&fit=crop&crop=edges"
-imageAlt: "Team collaboration in a modern tech office showing diverse professionals working together"
-tags: ["tech-culture", "team-dynamics", "ethics", "remote-work"]
-category: "Tech Culture"
+title: The Human Side of Tech Culture
+excerpt: >-
+  Community stories and ethical design discussions. Why culture matters more
+  than code in successful product development and sustainable tech teams.
+pubDate: 2024-01-20T00:00:00.000Z
+updatedDate: 2024-01-20T00:00:00.000Z
+authorInfo:
+  name: TinkByte Team
+  bio: >-
+    Enterprise software architect and low-code evangelist with 8+ years building
+    scalable business applications
+  avatar: >-
+    https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&crop=face
+  role: Solutions Architect
+  social:
+    twitter: 'https://twitter.com/racheltorresdev'
+    linkedin: 'https://linkedin.com/in/racheltorres'
+image: >-
+  https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=630&fit=crop&crop=edges
+imageAlt: >-
+  Team collaboration in a modern tech office showing diverse professionals
+  working together
+category: build-thinking
+storyType: feature
+tags:
+  - no-code
+  - tech-culture
+  - team-dynamics
+  - ethics
+  - remote-work
 featured: true
+trending: true
 draft: false
-readTime: "6 min read"
-audioUrl: "/audio/human-side-tech-culture.mp3"
-audioDuration: "8:45"
+readTime: 6 min read
+audioUrl: ''
+audioDuration: '8:45'
 seo:
-  title: "The Human Side of Tech Culture - Building Sustainable Teams | TinkByte"
-  description: "Explore how culture shapes successful tech teams and why human-centered approaches matter more than code quality in building innovative products."
-  canonical: "https://tinkbyte.com/blog/human-side-tech-culture"
+  title: The Human Side of Tech Culture - Building Sustainable Teams | TinkByte
+  description: >-
+    Explore how culture shapes successful tech teams and why human-centered
+    approaches matter more than code quality in building innovative products.
+  canonical: 'https://tinkbyte.com/blog/human-side-tech-culture'
 ---
 
 Technology is built by humans, but we often forget this fundamental truth when we get caught up in frameworks, algorithms, and deployment pipelines. After studying tech culture across 50+ organizations and interviewing hundreds of technologists, I've learned that the most innovative companies aren't distinguished by their tech stack—they're distinguished by how they treat people.

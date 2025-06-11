@@ -5,9 +5,7 @@ import Button from "../components/ui/Button.astro";
 import { getCollection } from "astro:content";
 
 // Properly import environment variables
-const CONVERTKIT_FORM_ID =
-  import.meta.env.CONVERTKIT_FORM_ID ||
-  import.meta.env.PUBLIC_CONVERTKIT_FORM_ID;
+const CONVERTKIT_FORM_ID = import.meta.env.PUBLIC_CONVERTKIT_FORM_ID;
 
 // Validate environment variable
 if (!CONVERTKIT_FORM_ID) {

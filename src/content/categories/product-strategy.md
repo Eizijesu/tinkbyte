@@ -3,7 +3,7 @@
 name: "Product Strategy"
 description: "Product management insights, user experience design, and growth strategies that work in real markets."
 color: "green"
-icon: "📈"
+icon: "lightbulb"
 featured: true
 seo:
   title: "Product Strategy Articles | TinkByte"

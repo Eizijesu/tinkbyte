@@ -1,0 +1,11 @@
+---
+export interface Props {
+  content: string;
+}
+
+const { content } = Astro.props;
+---
+
+<div class="prose max-w-none my-8">
+  <Fragment set:html={content} />
+</div>

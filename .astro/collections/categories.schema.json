@@ -11,10 +11,34 @@
           "type": "string"
         },
         "icon": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "hammer",
+            "users",
+            "book",
+            "bullseye",
+            "chart-line",
+            "globe",
+            "brain",
+            "lightbulb",
+            "rocket",
+            "tools",
+            "cog"
+          ]
         },
         "color": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "purple",
+            "green",
+            "blue",
+            "cyan",
+            "orange",
+            "red",
+            "pink",
+            "gray",
+            "yellow"
+          ]
         },
         "featured": {
           "type": "boolean",
