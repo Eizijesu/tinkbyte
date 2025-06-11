@@ -4,7 +4,7 @@ import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
-import compress from 'astro-compress';
+//import compress from 'astro-compress';
 import robotsTxt from 'astro-robots-txt';
 
 // Import rehype and remark plugins for enhanced markdown processing
@@ -83,22 +83,22 @@ export default defineConfig({
       ],
     }),
     
-    // Compression for better performance (should be last)
-    compress({
-      CSS: true,
-      HTML: {
-        'html-minifier-terser': {
-          removeAttributeQuotes: false,
-          collapseWhitespace: true,
-          removeComments: true,
-          sortClassName: true,
-          sortAttributes: true,
-        },
-      },
-      Image: false, // Handle images separately for better control
-      JavaScript: true,
-      SVG: true,
-    }),
+    // Compression for better performance (should be last) - COMMENTED OUT
+    // compress({
+    //   CSS: true,
+    //   HTML: {
+    //     'html-minifier-terser': {
+    //       removeAttributeQuotes: false,
+    //       collapseWhitespace: true,
+    //       removeComments: true,
+    //       sortClassName: true,
+    //       sortAttributes: true,
+    //     },
+    //   },
+    //   Image: false, // Handle images separately for better control
+    //   JavaScript: true,
+    //   SVG: true,
+    // }),
   ],
 
   // Markdown configuration

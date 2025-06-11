@@ -1,28 +1,17 @@
-// src/content/config.ts - Complete backward compatible version
+// src/content/config.ts - Clean and simplified version
 import { defineCollection, z } from "astro:content";
 
-// Blog collection schema - Backward compatible with optional authorInfo
+// Blog collection schema - Single source of truth for authors
 const blogCollection = defineCollection({
   type: 'content',
   schema: z.object({
+    // Basic post information
     title: z.string().max(100),
     excerpt: z.string().max(160),
     pubDate: z.date(),
     updatedDate: z.date().optional(),
     
-    // Keep old author structure as primary (for existing posts)
-    author: z.string().default("TinkByte Team"),
-    authorBio: z.string().optional(),
-    authorAvatar: z.string().optional(),
-    authorRole: z.string().optional(),
-    authorSocial: z.object({
-      twitter: z.string().optional(),
-      linkedin: z.string().optional(),
-      github: z.string().optional(),
-      website: z.string().optional(),
-    }).optional(),
-    
-    // New authorInfo structure (optional for backward compatibility)
+    // Author information - REQUIRED and single source of truth
     authorInfo: z.object({
       name: z.string(),
       bio: z.string().optional(),
@@ -36,47 +25,68 @@ const blogCollection = defineCollection({
         github: z.string().optional(),
         website: z.string().optional(),
       }).optional(),
-    }).optional(),
+    }),
     
+    // Media
     image: z.string().optional(),
     imageAlt: z.string().optional(),
+    
+    // Content categorization
     tags: z.array(z.string()).default([]),
-    category: z.string(),
-    storyType: z.string().optional(),
+    category: z.enum([
+      'product-strategy',
+      'ai-evolution',
+      'developer-tools',
+      'tech-culture',
+      'startup-insights',
+      'build-thinking',
+      'learning-by-doing', 
+      'community-innovation',
+      'global-perspective',
+      'no-fluff-coverage',
+      'research-backed'
+    ]),
+    storyType: z.enum([
+      'feature',
+      'deep-dive',
+      'quick-read',
+      'data-story',
+      'build-guide',
+      'failure-story',
+      'global-spotlight'
+    ]).optional(),
+    
+    // Publishing options
     featured: z.boolean().default(false),
     trending: z.boolean().default(false),
     draft: z.boolean().default(false),
+    
+    // Reading experience
     readTime: z.string().optional(),
+    
+    // Audio content
     audioUrl: z.string().optional(),
     audioDuration: z.string().optional(),
     audioTranscript: z.string().optional(),
     
-    // Newsletter integration fields
-    newsletterWorthy: z.boolean().default(false),
-    newsletterSummary: z.string().optional(),
-    
-    // Reading experience fields
-    readingProgress: z.boolean().default(true),
-    tableOfContents: z.boolean().default(true),
-    
+    // SEO settings
     seo: z.object({
       title: z.string().optional(),
       description: z.string().optional(),
       canonical: z.string().optional(),
       noindex: z.boolean().default(false),
-      schema: z.enum(['Article', 'BlogPosting', 'TechArticle']).default('Article'),
     }).optional(),
   }),
 });
 
-// Authors collection schema
+// Authors collection schema - For dedicated author pages
 const authorsCollection = defineCollection({
   type: 'content',
   schema: z.object({
     name: z.string(),
-    bio: z.string(),
-    avatar: z.string(),
-    role: z.string(),
+    bio: z.string().optional(),
+    avatar: z.string().optional(),
+    role: z.string().optional(),
     company: z.string().optional(),
     email: z.string().optional(),
     social: z.object({
@@ -95,8 +105,30 @@ const categoriesCollection = defineCollection({
   schema: z.object({
     name: z.string(),
     description: z.string(),
-    icon: z.string(),
-    color: z.string(),
+    icon: z.enum([
+      'hammer',
+      'users', 
+      'book',
+      'bullseye',
+      'chart-line',
+      'globe',
+      'brain',
+      'lightbulb',
+      'rocket',
+      'tools',
+      'cog'
+    ]),
+    color: z.enum([
+      'purple',
+      'green',
+      'blue', 
+      'cyan',
+      'orange',
+      'red',
+      'pink',
+      'gray',
+      'yellow'
+    ]),
     featured: z.boolean().default(false),
     seo: z.object({
       title: z.string().optional(),
@@ -128,6 +160,18 @@ const podcastCollection = defineCollection({
   }),
 });
 
+// Newsletter collection schema
+const newsletterCollection = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    excerpt: z.string(),
+    pubDate: z.date(),
+    issue: z.number(),
+    featured: z.boolean().default(false),
+  }),
+});
+
 // Pages collection schema
 const pagesCollection = defineCollection({
   type: 'content',
@@ -136,7 +180,7 @@ const pagesCollection = defineCollection({
     description: z.string(),
     pubDate: z.date().optional(),
     updatedDate: z.date().optional(),
-    layout: z.string().optional(),
+    layout: z.enum(['default', 'full-width', 'minimal']).optional(),
     seo: z.object({
       title: z.string().optional(),
       description: z.string().optional(),
@@ -169,51 +213,18 @@ const legalCollection = defineCollection({
   }),
 });
 
-// Newsletter collection schema
-const newsletterCollection = defineCollection({
-  type: 'content',
-  schema: z.object({
-    title: z.string(),
-    excerpt: z.string(),
-    pubDate: z.date(),
-    issue: z.number(),
-    featured: z.boolean().default(false),
-    
-    // Newsletter-specific fields
-    status: z.enum(['draft', 'scheduled', 'sent']).default('draft'),
-    subscriberCount: z.number().optional(),
-    openRate: z.number().optional(),
-    clickRate: z.number().optional(),
-    
-    // Structured content sections
-    sections: z.array(z.object({
-      title: z.string(),
-      content: z.string(),
-      type: z.enum(['article', 'link', 'announcement', 'community']),
-    })).optional(),
-    
-    // Featured articles from blog
-    featuredArticles: z.array(z.string()).optional(),
-    
-    // CTA section
-    cta: z.object({
-      title: z.string(),
-      description: z.string(),
-      buttonText: z.string(),
-      buttonUrl: z.string(),
-    }).optional(),
-  }),
-});
-
-// Settings collection for dynamic content
+// Settings collection for dynamic site configuration
 const settingsCollection = defineCollection({
   type: 'data',
   schema: z.object({
+    title: z.string().default('Site Settings'),
+    description: z.string().optional(),
+    
     // Site configuration
     site: z.object({
       name: z.string().default('TinkByte'),
-      description: z.string().optional(),
-      url: z.string().url().optional(),
+      description: z.string().default('Building meaningful, data-driven products that solve real problems'),
+      url: z.string().url().default('https://tinkbyte.com'),
       logo: z.string().optional(),
       favicon: z.string().optional(),
       
@@ -232,7 +243,7 @@ const settingsCollection = defineCollection({
       }).optional(),
     }).optional(),
     
-    // Categories configuration
+    // Category settings
     categories: z.object({
       defaultColor: z.string().default('#6366f1'),
       categoryMappings: z.array(z.object({
@@ -286,7 +297,7 @@ const settingsCollection = defineCollection({
         link: z.string(),
         members: z.string().optional(),
         activity: z.string().optional(),
-        color: z.string().optional(),
+        color: z.enum(['purple', 'blue', 'green', 'gray', 'red', 'yellow']).optional(),
       })).optional(),
     }).optional(),
     
@@ -301,7 +312,14 @@ const settingsCollection = defineCollection({
         title: z.string(),
         description: z.string(),
         date: z.date(),
-        type: z.enum(['industry-analysis', 'technical-deep-dive', 'market-research', 'user-study', 'trend-report', 'case-study']),
+        type: z.enum([
+          'industry-analysis',
+          'technical-deep-dive', 
+          'market-research',
+          'user-study',
+          'trend-report',
+          'case-study'
+        ]),
         pages: z.number().optional(),
         downloads: z.string().optional(),
         downloadUrl: z.string().optional(),

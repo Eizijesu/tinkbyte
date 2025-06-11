@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/[slug].astro - COMPLETE REPLACEMENT
+// src/pages/blog/[slug].astro - Enhanced with TinaCMS contextual editing
 import { type CollectionEntry, getCollection } from "astro:content";
 import BlogPost from "../../layouts/BlogPost.astro";
 
@@ -20,6 +20,10 @@ type Props = CollectionEntry<"blog">;
 const post = Astro.props;
 const { Content } = await post.render();
 
+// Check for TinaCMS edit mode
+const isEditMode = Astro.url.searchParams.has('tina-admin') || 
+                   Astro.url.searchParams.has('edit');
+
 // Format date for display
 const formatDate = (date: Date): string => {
   return date.toLocaleDateString("en-US", {
@@ -30,23 +34,136 @@ const formatDate = (date: Date): string => {
 };
 ---
 
-<BlogPost
-  title={post.data.title}
-  subtitle={post.data.subtitle}
-  description={post.data.excerpt || post.data.description}
-  date={formatDate(post.data.pubDate)}
-  readTime={post.data.readTime}
-  tags={post.data.tags}
-  category={post.data.category}
-  author={post.data.author}
-  authorBio={post.data.authorBio}
-  authorAvatar={post.data.authorAvatar}
-  authorRole={post.data.authorRole}
-  audioUrl={post.data.audioUrl}
-  audioDuration={post.data.audioDuration}
-  image={post.data.image}
-  slug={post.slug}
->
-  <!-- This renders the actual markdown content from your .md files -->
-  <Content />
-</BlogPost>
+<!-- Add TinaCMS styles when in edit mode -->
+{isEditMode && (
+  <link rel="stylesheet" href="https://unpkg.com/tinacms@latest/dist/index.css" />
+)}
+
+<!-- Wrap in TinaCMS container when editing -->
+{isEditMode ? (
+  <div data-tina-enabled="true" id="__tina" data-tina-collection="blog" data-tina-document={post.slug}>
+    <BlogPost
+      title={post.data.title}
+      subtitle={post.data.subtitle}
+      description={post.data.excerpt || post.data.description}
+      date={formatDate(post.data.pubDate)}
+      readTime={post.data.readTime}
+      tags={post.data.tags}
+      category={post.data.category}
+      author={post.data.author}
+      authorBio={post.data.authorBio}
+      authorAvatar={post.data.authorAvatar}
+      authorRole={post.data.authorRole}
+      audioUrl={post.data.audioUrl}
+      audioDuration={post.data.audioDuration}
+      image={post.data.image}
+      slug={post.slug}
+    >
+      <!-- This renders the actual markdown content from your .md files -->
+      <Content />
+    </BlogPost>
+  </div>
+) : (
+  <BlogPost
+    title={post.data.title}
+    subtitle={post.data.subtitle}
+    description={post.data.description || post.data.excerpt}
+    excerpt={post.data.excerpt}
+    date={post.data.pubDate.toISOString()}
+    readTime={post.data.readTime}
+    tags={post.data.tags || []}
+    category={post.data.category}
+    authorInfo={post.data.authorInfo}  
+    author={post.data.author}          
+    image={post.data.image}
+    imageAlt={post.data.imageAlt}
+    audioUrl={post.data.audioUrl}
+    audioDuration={post.data.audioDuration}
+    slug={post.slug}
+  >
+    <!-- This renders the actual markdown content from your .md files -->
+    <Content />
+  </BlogPost>
+)}
+
+<!-- TinaCMS Script for contextual editing -->
+{isEditMode && (
+  <script type="module">
+    // Import TinaCMS
+    import { TinaCMS } from 'https://unpkg.com/tinacms@latest/dist/index.esm.js';
+    
+    // Initialize TinaCMS
+    const cms = new TinaCMS({
+      enabled: true,
+      sidebar: {
+        position: 'overlay',
+        placeholder: () => 'Loading editor...',
+      },
+      toolbar: {
+        enabled: true,
+      },
+      media: {
+        accept: 'image/*',
+        directory: 'public/images',
+      }
+    });
+
+    // Configure API endpoint
+    cms.registerApi('tina-graphql', {
+      query: async (request, variables) => {
+        try {
+          const response = await fetch('/api/tina/gql', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: request, variables })
+          });
+          return response.json();
+        } catch (error) {
+          console.error('TinaCMS API Error:', error);
+          return { errors: [{ message: 'Failed to connect to TinaCMS API' }] };
+        }
+      }
+    });
+
+    // Add visual editing indicators
+    document.body.classList.add('tina-editing');
+    
+    // Show editing notification
+    const notification = document.createElement('div');
+    notification.innerHTML = `
+      <div style="
+        position: fixed; 
+        top: 20px; 
+        right: 20px; 
+        background: #3b82f6; 
+        color: white; 
+        padding: 12px 20px; 
+        border-radius: 8px; 
+        z-index: 10000;
+        font-family: system-ui;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      ">
+        ✏️ Editing Mode Active
+      </div>
+    `;
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  </script>
+)}
+
+<style>
+  /* TinaCMS editing styles */
+  .tina-editing {
+    position: relative;
+  }
+  
+  /* Ensure TinaCMS sidebar doesn't interfere */
+  [data-tina-enabled="true"] {
+    min-height: 100vh;
+  }
+</style>

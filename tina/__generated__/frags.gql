@@ -10,8 +10,6 @@ fragment BlogParts on Blog {
     bio
     avatar
     role
-    company
-    email
     social {
       __typename
       twitter

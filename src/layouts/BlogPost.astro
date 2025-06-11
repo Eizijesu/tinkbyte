@@ -1,11 +1,13 @@
 ---
-// src/layouts/BlogPost.astro - Complete Optimized Version
+// src/layouts/BlogPost.astro - Fixed with proper error handling
 import Layout from "./Layout.astro";
 import { Image } from "astro:assets";
 import ReadingProgress from "../components/ui/ReadingProgress.astro";
 import ShareButtons from "../components/ui/ShareButtons.astro";
 import RelatedPosts from "../components/blog/RelatedPosts.astro";
 import AudioPlayer from "../components/ui/AudioPlayer.astro";
+import AuthorBio from "../components/blog/AuthorBio.astro";
+import ReactionBar from "../components/blog/ReactionBar.astro";
 import { SITE } from "../config/site";
 import CommentSection from "../components/blog/CommentSection.astro";
 import { getCollection } from "astro:content";
@@ -19,17 +21,19 @@ export interface Props {
   readTime?: string;
   tags: string[];
   category?: string;
-  author:
-    | string
-    | {
-        name: string;
-        bio?: string;
-        avatar?: string;
-        role?: string;
-      };
-  authorBio?: string;
-  authorAvatar?: string;
-  authorRole?: string;
+  authorInfo?: {
+    name: string; // Required
+    bio?: string; // Optional
+    avatar?: string; // Optional
+    role?: string; // Optional
+    social?: {
+      twitter?: string;
+      linkedin?: string;
+      github?: string;
+      website?: string;
+    };
+  };
+  author?: string; // Legacy support
   image?: string;
   imageAlt?: string;
   audioUrl?: string;
@@ -46,10 +50,8 @@ const {
   readTime,
   tags = [],
   category,
+  authorInfo,
   author,
-  authorBio,
-  authorAvatar,
-  authorRole,
   image,
   imageAlt,
   audioUrl,
@@ -57,45 +59,48 @@ const {
   slug,
 } = Astro.props;
 
-// Enhanced helper functions with better null checking
-const getAuthorName = (authorData: typeof author): string => {
-  if (typeof authorData === "string") return authorData;
-  if (typeof authorData === "object" && authorData?.name)
-    return authorData.name;
-  return "TinkByte Team";
+// FIXED: Robust author data handling with proper fallbacks
+const getAuthorData = () => {
+  // First, try to use authorInfo if it exists and has a name
+  if (authorInfo && authorInfo.name) {
+    return {
+      name: authorInfo.name,
+      bio: authorInfo.bio || null,
+      avatar: authorInfo.avatar || null,
+      role: authorInfo.role || null,
+      social: authorInfo.social || null,
+    };
+  }
+
+  // Fallback to legacy author field
+  if (author) {
+    return {
+      name: author,
+      bio: null,
+      avatar: null,
+      role: null,
+      social: null,
+    };
+  }
+
+  // Final fallback
+  return {
+    name: "TinkByte Team",
+    bio: null,
+    avatar: null,
+    role: null,
+    social: null,
+  };
 };
 
-const getAuthorBio = (
-  authorData: typeof author,
-  fallbackBio?: string
-): string | undefined => {
-  if (typeof authorData === "object" && authorData?.bio) return authorData.bio;
-  return fallbackBio;
-};
+const authorData = getAuthorData();
 
-const getAuthorAvatar = (
-  authorData: typeof author,
-  fallbackAvatar?: string
-): string | undefined => {
-  if (typeof authorData === "object" && authorData?.avatar)
-    return authorData.avatar;
-  return fallbackAvatar;
-};
-
-const getAuthorRole = (
-  authorData: typeof author,
-  fallbackRole?: string
-): string | undefined => {
-  if (typeof authorData === "object" && authorData?.role)
-    return authorData.role;
-  return fallbackRole;
-};
-
-// Extract author information
-const authorName = getAuthorName(author);
-const authorBioText = getAuthorBio(author, authorBio);
-const authorAvatarUrl = getAuthorAvatar(author, authorAvatar);
-const authorRoleText = getAuthorRole(author, authorRole);
+// TEMPORARY DEBUG - Add this to see what's being passed
+console.log("=== AUTHOR DEBUG ===");
+console.log("Raw authorInfo:", authorInfo);
+console.log("Raw author:", author);
+console.log("Final authorData:", authorData);
+console.log("===================");
 
 const postDescription = description || excerpt || "";
 const publishedTime = new Date(date).toISOString();
@@ -105,32 +110,31 @@ const formattedDate = new Date(date).toLocaleDateString("en-US", {
   day: "numeric",
 });
 
-// Get all posts for navigation from content collections
+// Get all posts for navigation
 const allPosts = await getCollection("blog", ({ data }) => !data.draft);
 const sortedPosts = allPosts.sort(
   (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
 );
 
-// Find current post index and navigation
 const currentIndex = sortedPosts.findIndex((post) => post.slug === slug);
 const previousPost =
   currentIndex < sortedPosts.length - 1 ? sortedPosts[currentIndex + 1] : null;
 const nextPost = currentIndex > 0 ? sortedPosts[currentIndex - 1] : null;
 
-// Enhanced category color mapping matching your brand colors
+// Category color mapping
 const getCategoryColor = (cat: string | undefined): string => {
   if (!cat) return "#6b7280";
-
   const colors: Record<string, string> = {
     "build-thinking": "#1A73E8",
     "learning-by-doing": "#EA4335",
     "community-innovation": "#10B981",
     "global-perspective": "#9C27B0",
-    "developer-tools": "#FF9800",
-    "ai-evolution": "#8B5CF6",
-    "tech-culture": "#06B6D4",
-    "product-strategy": "#10B981",
+    "no-fluff-coverage": "#FF9800",
     "research-backed": "#FBBC04",
+    "ai-evolution": "#8B5CF6",
+    "product-strategy": "#F59E0B",
+    "developer-tools": "#06B6D4",
+    "tech-culture": "#8B5CF6",
   };
   return colors[cat?.toLowerCase().replace(/\s+/g, "-")] || "#6b7280";
 };
@@ -140,6 +144,22 @@ const formatCategory = (cat: string | undefined): string => {
   if (!cat) return "ARTICLE";
   return cat.replace(/-/g, " ").toUpperCase();
 };
+
+// FIXED: Helper function for navigation with better error handling
+const getAuthorName = (postData: any): string => {
+  try {
+    if (postData?.data?.authorInfo?.name) {
+      return postData.data.authorInfo.name;
+    }
+    if (postData?.data?.author) {
+      return postData.data.author;
+    }
+    return "TinkByte Team";
+  } catch (error) {
+    console.warn("Error getting author name:", error);
+    return "TinkByte Team";
+  }
+};
 ---
 
 <Layout
@@ -147,15 +167,15 @@ const formatCategory = (cat: string | undefined): string => {
   description={postDescription}
   type="article"
   publishedTime={publishedTime}
-  author={authorName}
+  author={authorData.name}
   tags={tags}
   image={image}
 >
   <ReadingProgress />
 
   <!-- Magazine-Style Article Layout -->
-  <article class="magazine-article">
-    <!-- Enhanced Article Header with Magazine Styling -->
+  <article class="magazine-article theme-bg-primary">
+    <!-- Enhanced Article Header -->
     <header class="article-header">
       <div
         class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-5"
@@ -165,7 +185,7 @@ const formatCategory = (cat: string | undefined): string => {
       </div>
 
       <div class="max-w-5xl mx-auto px-4 py-8 relative z-10">
-        <!-- Category and Meta with Magazine Style -->
+        <!-- Category and Meta -->
         <div class="article-meta-top">
           <div class="flex items-center gap-4">
             <span
@@ -203,28 +223,32 @@ const formatCategory = (cat: string | undefined): string => {
         <!-- Enhanced Author and Reading Time -->
         <div class="article-byline-enhanced">
           <div class="author-info-enhanced">
+            <!-- Only show avatar if it exists -->
             {
-              authorAvatarUrl && (
+              authorData.avatar && (
                 <Image
-                  src={authorAvatarUrl}
-                  alt={`${authorName} profile picture`}
-                  width={56}
-                  height={56}
+                  src={authorData.avatar}
+                  alt={`${authorData.name} profile picture`}
+                  width={20}
+                  height={20}
                   class="author-avatar-enhanced"
                   format="webp"
                   loading="eager"
                 />
               )
             }
+
             <div class="author-details-enhanced">
-              <span class="author-name-enhanced">By {authorName}</span>
+              <span class="author-name-enhanced">By {authorData.name}</span>
+              <!-- Only show role if it exists -->
               {
-                authorRoleText && (
-                  <span class="author-role-enhanced">{authorRoleText}</span>
+                authorData.role && (
+                  <span class="author-role-enhanced">{authorData.role}</span>
                 )
               }
             </div>
           </div>
+
           <div class="reading-meta">
             {readTime && <span class="read-time-enhanced">{readTime}</span>}
             <div class="share-preview">
@@ -240,7 +264,7 @@ const formatCategory = (cat: string | undefined): string => {
       </div>
     </header>
 
-    <!-- Optimized Featured Image with Proper Constraints -->
+    <!-- Featured Image -->
     {
       image && (
         <div class="article-image-container-optimized">
@@ -265,7 +289,7 @@ const formatCategory = (cat: string | undefined): string => {
       )
     }
 
-    <!-- Enhanced Audio Player Section -->
+    <!-- Audio Player Section -->
     {
       audioUrl ? (
         <div class="audio-section-enhanced">
@@ -321,11 +345,11 @@ const formatCategory = (cat: string | undefined): string => {
       )
     }
 
-    <!-- Enhanced Article Content Grid -->
+    <!-- Article Content Grid -->
     <div class="article-content-wrapper-enhanced">
       <div class="max-w-6xl mx-auto px-4">
         <div class="content-grid-enhanced">
-          <!-- Main Content with Enhanced Styling -->
+          <!-- Main Content -->
           <div class="content-main-enhanced">
             <slot />
           </div>
@@ -347,7 +371,7 @@ const formatCategory = (cat: string | undefined): string => {
               </div>
             </div>
 
-            <!-- Enhanced Share buttons -->
+            <!-- Share buttons -->
             <div class="sidebar-section-enhanced">
               <h4 class="sidebar-title-enhanced">
                 <i class="fas fa-share-alt mr-2"></i>
@@ -356,41 +380,20 @@ const formatCategory = (cat: string | undefined): string => {
               <ShareButtons title={title} url={`${SITE.url}/blog/${slug}`} />
             </div>
 
-            <!-- Conditional Author bio -->
+            <!-- Author Bio Section - Only show if authorData exists and has content -->
             {
-              (authorBioText || authorRoleText || authorAvatarUrl) && (
+              authorData && authorData.name && (
                 <div class="sidebar-section-enhanced">
                   <h4 class="sidebar-title-enhanced">
                     <i class="fas fa-user mr-2" />
                     About the Author
                   </h4>
-                  <div class="author-bio-enhanced">
-                    {authorAvatarUrl && (
-                      <Image
-                        src={authorAvatarUrl}
-                        alt={`${authorName} profile picture`}
-                        width={64}
-                        height={64}
-                        class="bio-avatar-enhanced"
-                        format="webp"
-                        loading="lazy"
-                      />
-                    )}
-                    <div class="bio-content">
-                      <div class="bio-name-enhanced">{authorName}</div>
-                      {authorRoleText && (
-                        <div class="bio-role-enhanced">{authorRoleText}</div>
-                      )}
-                      {authorBioText && (
-                        <p class="bio-text-enhanced">{authorBioText}</p>
-                      )}
-                    </div>
-                  </div>
+                  <AuthorBio author={authorData} />
                 </div>
               )
             }
 
-            <!-- Enhanced Tags -->
+            <!-- Tags -->
             {
               tags && tags.length > 0 && (
                 <div class="sidebar-section-enhanced">
@@ -441,7 +444,13 @@ const formatCategory = (cat: string | undefined): string => {
       </div>
     </div>
 
-    <!-- Enhanced Previous/Next Navigation -->
+    <!-- Floating Reaction Bar - Add this near the top, after ReadingProgress -->
+    <ReactionBar
+      postSlug={slug || title.toLowerCase().replace(/\s+/g, "-")}
+      postTitle={title}
+    />
+
+    <!-- Navigation -->
     <div class="post-navigation-enhanced">
       <div class="max-w-6xl mx-auto px-4 py-12">
         <div class="nav-header">
@@ -464,7 +473,7 @@ const formatCategory = (cat: string | undefined): string => {
                 </div>
                 <div class="nav-title-enhanced">{previousPost.data.title}</div>
                 <div class="nav-meta-enhanced">
-                  By {getAuthorName(previousPost.data.author)}
+                  By {getAuthorName(previousPost)}
                 </div>
               </a>
             ) : (
@@ -492,7 +501,7 @@ const formatCategory = (cat: string | undefined): string => {
                 </div>
                 <div class="nav-title-enhanced">{nextPost.data.title}</div>
                 <div class="nav-meta-enhanced">
-                  By {getAuthorName(nextPost.data.author)}
+                  By {getAuthorName(nextPost)}
                 </div>
               </a>
             ) : (
@@ -511,10 +520,10 @@ const formatCategory = (cat: string | undefined): string => {
       </div>
     </div>
 
-    <!-- Enhanced Comments Section -->
+    <!-- Comments Section -->
     <CommentSection postSlug={slug} postTitle={title} />
 
-    <!-- Enhanced Related Posts -->
+    <!-- Related Posts -->
     <div class="related-section-enhanced">
       <div class="max-w-6xl mx-auto px-4 py-12">
         <div class="related-header">
@@ -536,11 +545,37 @@ const formatCategory = (cat: string | undefined): string => {
     min-height: 100vh;
     transition: background-color 0.3s ease;
   }
+  .theme-bg-primary {
+    background-color: var(--color-bg-primary) !important;
+  }
+
+  .theme-text-primary {
+    color: var(--color-text-primary) !important;
+  }
+
+  .theme-text-secondary {
+    color: var(--color-text-secondary) !important;
+  }
+
+  .theme-text-muted {
+    color: var(--color-text-muted) !important;
+  }
 
   :global(.dark) .magazine-article {
     background: rgb(17, 24, 39);
   }
 
+  /* Reaction Bar Container */
+  .reaction-bar-container {
+    margin: 3rem 0;
+    padding: 2rem 0;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  :global(.dark) .reaction-bar-container {
+    border-color: rgb(55, 65, 81);
+  }
   /* Optimized Article Header */
   .article-header {
     position: relative;
@@ -627,7 +662,7 @@ const formatCategory = (cat: string | undefined): string => {
     font-family: "Space Grotesk", sans-serif;
     font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 800;
-    line-height: 1.1;
+    line-height: 1.2;
     color: rgb(15, 23, 42);
     margin-bottom: 1.5rem;
     max-width: 100%;
@@ -705,7 +740,7 @@ const formatCategory = (cat: string | undefined): string => {
   .author-avatar-enhanced {
     width: 56px;
     height: 56px;
-    border-radius: var(--tinkbyte-radius-card, 4px);
+    border-radius: var(--tinkbyte-radius-card, 1px);
     object-fit: cover;
     border: 3px solid #e2e8f0;
     transition: all 0.3s ease;
@@ -944,7 +979,7 @@ const formatCategory = (cat: string | undefined): string => {
   .content-grid-enhanced {
     display: grid;
     grid-template-columns: 1fr 350px;
-    gap: 4rem;
+    gap: 2rem;
     align-items: start;
   }
 
@@ -995,7 +1030,7 @@ const formatCategory = (cat: string | undefined): string => {
     font-weight: 700;
     color: rgb(30, 58, 138);
     margin: 2.5rem 0 1.5rem;
-    line-height: 1.3;
+    line-height: 1.2;
     transition: color 0.3s ease;
     position: relative;
     padding-left: 1rem;
@@ -1156,26 +1191,7 @@ const formatCategory = (cat: string | undefined): string => {
     font-weight: 600;
   }
 
-  /* FIXED: Enhanced Code Block Theming */
-  .content-main-enhanced :global(code) {
-    background: #f1f5f9;
-    color: #e11d48;
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--tinkbyte-radius, 2px);
-    font-size: 0.875em;
-    font-family:
-      "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
-    font-weight: 500;
-    border: 1px solid #e2e8f0;
-    transition: all 0.3s ease;
-  }
-
-  :global(.dark) .content-main-enhanced :global(code) {
-    background: rgb(51, 65, 85);
-    color: rgb(248, 113, 113);
-    border-color: rgb(71, 85, 105);
-  }
-
+  /* ENHANCED: Better Code Block Dark Theme Support */
   .content-main-enhanced :global(pre) {
     background: #0f172a;
     color: #e2e8f0;
@@ -1197,6 +1213,7 @@ const formatCategory = (cat: string | undefined): string => {
     background: rgb(15, 23, 42);
     border-color: rgb(30, 41, 59);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    color: rgb(226, 232, 240);
   }
 
   .content-main-enhanced :global(pre code) {
@@ -1208,40 +1225,40 @@ const formatCategory = (cat: string | undefined): string => {
     border-radius: 0;
   }
 
-  /* Enhanced syntax highlighting for code blocks */
+  /* Light theme syntax highlighting */
   .content-main-enhanced :global(pre .token.comment) {
-    color: #64748b;
+    color: #6b7280;
     font-style: italic;
   }
 
   .content-main-enhanced :global(pre .token.keyword) {
-    color: #8b5cf6;
+    color: #7c3aed;
     font-weight: 600;
   }
 
   .content-main-enhanced :global(pre .token.string) {
-    color: #10b981;
+    color: #059669;
   }
 
   .content-main-enhanced :global(pre .token.number) {
-    color: #f59e0b;
+    color: #d97706;
   }
 
   .content-main-enhanced :global(pre .token.function) {
-    color: #3b82f6;
+    color: #2563eb;
   }
 
   .content-main-enhanced :global(pre .token.operator) {
-    color: #ef4444;
+    color: #dc2626;
   }
 
   .content-main-enhanced :global(pre .token.punctuation) {
-    color: #94a3b8;
+    color: #6b7280;
   }
 
-  /* Dark mode syntax highlighting */
+  /* Dark theme syntax highlighting - ENHANCED */
   :global(.dark) .content-main-enhanced :global(pre .token.comment) {
-    color: rgb(100, 116, 139);
+    color: rgb(156, 163, 175);
   }
 
   :global(.dark) .content-main-enhanced :global(pre .token.keyword) {
@@ -1268,76 +1285,119 @@ const formatCategory = (cat: string | undefined): string => {
     color: rgb(148, 163, 184);
   }
 
-  .content-main-enhanced :global(img) {
-    max-width: 100%;
-    height: auto;
-    border-radius: var(--tinkbyte-radius-card, 4px);
-    margin: 2.5rem 0;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+  /* Force dark theme ONLY for code blocks with better contrast */
+  .content-main-enhanced :global(.astro-code) {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #1e293b !important;
   }
 
-  .content-main-enhanced :global(img:hover) {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  :global(.dark) .content-main-enhanced :global(.astro-code) {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #334155 !important;
   }
 
-  :global(.dark) .content-main-enhanced :global(img) {
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  /* Override Shiki inline styles specifically */
+  .content-main-enhanced :global(.astro-code[style*="background-color"]) {
+    background-color: #0f172a !important;
   }
 
-  :global(.dark) .content-main-enhanced :global(img:hover) {
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  .content-main-enhanced :global(.astro-code[style*="color"]) {
+    color: #e2e8f0 !important;
   }
 
-  .content-main-enhanced :global(table) {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 2rem 0;
-    background: white;
-    border-radius: var(--tinkbyte-radius-card, 4px);
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+  /* Enhanced syntax highlighting with better contrast */
+  .content-main-enhanced :global(.astro-code .line span[style*="color"]) {
+    /* Override all inline color styles for better contrast */
   }
 
-  :global(.dark) .content-main-enhanced :global(table) {
-    background: rgb(30, 41, 59);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  /* Specific token overrides for better readability */
+  .content-main-enhanced :global(.astro-code span[style*="#6A737D"]) {
+    color: #94a3b8 !important; /* Comments - lighter gray */
   }
 
-  .content-main-enhanced :global(th) {
-    background: #f8fafc;
-    color: #374151;
-    font-weight: 600;
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 2px solid #e2e8f0;
-    transition: all 0.3s ease;
+  .content-main-enhanced :global(.astro-code span[style*="#D73A49"]) {
+    color: #f87171 !important; /* Keywords - bright red */
   }
 
-  :global(.dark) .content-main-enhanced :global(th) {
-    background: rgb(51, 65, 85);
-    color: rgb(248, 250, 252);
-    border-bottom-color: rgb(71, 85, 105);
+  .content-main-enhanced :global(.astro-code span[style*="#6F42C1"]) {
+    color: #a78bfa !important; /* Functions - bright purple */
   }
 
-  .content-main-enhanced :global(td) {
-    padding: 1rem;
-    border-bottom: 1px solid #f1f5f9;
-    transition: all 0.3s ease;
+  .content-main-enhanced :global(.astro-code span[style*="#032F62"]) {
+    color: #60d9fa !important; /* Strings - bright cyan */
   }
 
-  :global(.dark) .content-main-enhanced :global(td) {
-    border-bottom-color: rgb(51, 65, 85);
+  .content-main-enhanced :global(.astro-code span[style*="#005CC5"]) {
+    color: #3b82f6 !important; /* Keywords/this - bright blue */
   }
 
-  .content-main-enhanced :global(tr:hover) {
-    background: #f8fafc;
+  .content-main-enhanced :global(.astro-code span[style*="#E36209"]) {
+    color: #fbbf24 !important; /* Parameters - bright yellow */
   }
 
-  :global(.dark) .content-main-enhanced :global(tr:hover) {
-    background: rgb(51, 65, 85);
+  .content-main-enhanced :global(.astro-code span[style*="#24292E"]) {
+    color: #e2e8f0 !important; /* Default text - light gray */
+  }
+
+  /* Dark mode specific overrides */
+  :global(.dark)
+    .content-main-enhanced
+    :global(.astro-code span[style*="#6A737D"]) {
+    color: #94a3b8 !important; /* Comments */
+  }
+
+  :global(.dark)
+    .content-main-enhanced
+    :global(.astro-code span[style*="#F97583"]) {
+    color: #f87171 !important; /* Keywords */
+  }
+
+  :global(.dark)
+    .content-main-enhanced
+    :global(.astro-code span[style*="#B392F0"]) {
+    color: #c084fc !important; /* Functions */
+  }
+
+  :global(.dark)
+    .content-main-enhanced
+    :global(.astro-code span[style*="#9ECBFF"]) {
+    color: #67e8f9 !important; /* Strings */
+  }
+
+  :global(.dark)
+    .content-main-enhanced
+    :global(.astro-code span[style*="#79B8FF"]) {
+    color: #60a5fa !important; /* Keywords/this */
+  }
+
+  :global(.dark)
+    .content-main-enhanced
+    :global(.astro-code span[style*="#FFAB70"]) {
+    color: #fcd34d !important; /* Parameters */
+  }
+
+  :global(.dark)
+    .content-main-enhanced
+    :global(.astro-code span[style*="#E1E4E8"]) {
+    color: #f1f5f9 !important; /* Default text */
+  }
+
+  /* Ensure pre tag styling is consistent */
+  .content-main-enhanced :global(pre.astro-code) {
+    background-color: #0f172a !important;
+    color: #e2e8f0 !important;
+    padding: 2rem !important;
+    border-radius: 8px !important;
+    overflow-x: auto !important;
+    border: 1px solid #1e293b !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  :global(.dark) .content-main-enhanced :global(pre.astro-code) {
+    border-color: #334155 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
   }
 
   /* Enhanced Sidebar */
@@ -1486,12 +1546,12 @@ const formatCategory = (cat: string | undefined): string => {
   }
 
   .bio-avatar-enhanced {
-    width: 64px;
-    height: 64px;
-    border-radius: var(--tinkbyte-radius-card, 4px);
+    width: 54px;
+    height: 54px;
+    border-radius: var(--tinkbyte-radius-card, 1px);
     object-fit: cover;
     flex-shrink: 0;
-    border: 3px solid #e2e8f0;
+    border: 1px solid #e2e8f0;
     transition: all 0.3s ease;
   }
 
@@ -2167,6 +2227,42 @@ const formatCategory = (cat: string | undefined): string => {
   :global(.dark) .nav-link-enhanced:focus,
   :global(.dark) .toc-container-enhanced a:focus {
     outline-color: rgb(147, 197, 253);
+  }
+
+  /* Enhanced Author Bio Styles - ADD AT END OF STYLE SECTION */
+  .bio-social {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .bio-social a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #f1f5f9;
+    color: #64748b;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .bio-social a:hover {
+    background: rgb(59, 130, 246);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  :global(.dark) .bio-social a {
+    background: rgb(51, 65, 85);
+    color: rgb(148, 163, 184);
+  }
+
+  :global(.dark) .bio-social a:hover {
+    background: rgb(147, 197, 253);
+    color: rgb(15, 23, 42);
   }
 </style>
 

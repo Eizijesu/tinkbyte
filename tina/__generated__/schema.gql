@@ -120,8 +120,6 @@ type BlogAuthorInfo {
   bio: String
   avatar: String
   role: String
-  company: String
-  email: String
   social: BlogAuthorInfoSocial
 }
 
@@ -191,8 +189,6 @@ input BlogAuthorInfoFilter {
   bio: StringFilter
   avatar: ImageFilter
   role: StringFilter
-  company: StringFilter
-  email: StringFilter
   social: BlogAuthorInfoSocialFilter
 }
 
@@ -220,6 +216,26 @@ input BlogBodyCalloutFilter {
   content: RichTextFilter
 }
 
+input BlogBodyImageBlockFilter {
+  src: ImageFilter
+  alt: StringFilter
+  caption: StringFilter
+  size: StringFilter
+  alignment: StringFilter
+}
+
+input BlogBodyImageGalleryImagesFilter {
+  src: ImageFilter
+  alt: StringFilter
+  caption: StringFilter
+}
+
+input BlogBodyImageGalleryFilter {
+  caption: StringFilter
+  layout: StringFilter
+  images: BlogBodyImageGalleryImagesFilter
+}
+
 input BlogBodyCodeBlockFilter {
   language: StringFilter
   filename: StringFilter
@@ -237,11 +253,26 @@ input BlogBodyNewsletterFilter {
   description: StringFilter
 }
 
+input BlogBodyTwoColumnLayoutFilter {
+  leftContent: RichTextFilter
+  rightContent: RichTextFilter
+}
+
+input BlogBodyVideoEmbedFilter {
+  url: StringFilter
+  title: StringFilter
+  description: StringFilter
+}
+
 input BlogBodyFilter {
   callout: BlogBodyCalloutFilter
+  ImageBlock: BlogBodyImageBlockFilter
+  ImageGallery: BlogBodyImageGalleryFilter
   codeBlock: BlogBodyCodeBlockFilter
   quote: BlogBodyQuoteFilter
   newsletter: BlogBodyNewsletterFilter
+  TwoColumnLayout: BlogBodyTwoColumnLayoutFilter
+  VideoEmbed: BlogBodyVideoEmbedFilter
 }
 
 input BlogFilter {
@@ -330,9 +361,9 @@ type AuthorsSocial {
 
 type Authors implements Node & Document {
   name: String!
-  bio: String!
-  avatar: String!
-  role: String!
+  bio: String
+  avatar: String
+  role: String
   company: String
   email: String
   social: AuthorsSocial
@@ -500,6 +531,62 @@ input PagesSeoFilter {
   noindex: BooleanFilter
 }
 
+input PagesBodyHeroCtaFilter {
+  text: StringFilter
+  url: StringFilter
+}
+
+input PagesBodyHeroFilter {
+  title: StringFilter
+  subtitle: StringFilter
+  backgroundImage: ImageFilter
+  cta: PagesBodyHeroCtaFilter
+}
+
+input PagesBodyContentBlockFilter {
+  content: RichTextFilter
+}
+
+input PagesBodyImageBlockFilter {
+  src: ImageFilter
+  alt: StringFilter
+  caption: StringFilter
+  layout: StringFilter
+}
+
+input PagesBodyCalloutBoxFilter {
+  type: StringFilter
+  title: StringFilter
+  content: RichTextFilter
+}
+
+input PagesBodyCodeBlockFilter {
+  language: StringFilter
+  filename: StringFilter
+  code: StringFilter
+}
+
+input PagesBodyQuoteFilter {
+  quote: StringFilter
+  author: StringFilter
+  role: StringFilter
+}
+
+input PagesBodyNewsletterFilter {
+  title: StringFilter
+  description: StringFilter
+}
+
+input PagesBodyFilter {
+  Hero: PagesBodyHeroFilter
+  ContentBlock: PagesBodyContentBlockFilter
+  ImageBlock: PagesBodyImageBlockFilter
+  CalloutBox: PagesBodyCalloutBoxFilter
+  codeBlock: PagesBodyCodeBlockFilter
+  quote: PagesBodyQuoteFilter
+  newsletter: PagesBodyNewsletterFilter
+}
+
 input PagesFilter {
   title: StringFilter
   description: StringFilter
@@ -507,7 +594,7 @@ input PagesFilter {
   updatedDate: DatetimeFilter
   layout: StringFilter
   seo: PagesSeoFilter
-  body: RichTextFilter
+  body: PagesBodyFilter
 }
 
 type PagesConnectionEdges {
@@ -1005,8 +1092,6 @@ input BlogAuthorInfoMutation {
   bio: String
   avatar: String
   role: String
-  company: String
-  email: String
   social: BlogAuthorInfoSocialMutation
 }
 

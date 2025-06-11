@@ -44,12 +44,13 @@ const categoriesWithCounts = allCategories.map(category => ({
 
 // Calculate stats
 const totalPosts = allPosts.length;
+// FIXED: Author count calculation
 const totalAuthors = [...new Set(allPosts.map(post => 
-  typeof post.data.author === 'string' ? post.data.author : post.data.author?.name
+  post.data.authorInfo?.name || post.data.author || 'TinkByte Team'
 ).filter(Boolean))].length;
 const totalCategories = allCategories.length;
 
-// Transform posts for ArticleCard component - FIXED: Proper typing
+// FIXED: Consistent author handling respecting optional fields
 const transformPost = (post: any) => ({
   title: post.data.title,
   excerpt: post.data.excerpt,
@@ -63,11 +64,13 @@ const transformPost = (post: any) => ({
   image: post.data.image || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop",
   tags: post.data.tags || [],
   category: post.data.category,
+  // FIXED: Create author object with only available data
   author: {
-    name: typeof post.data.author === 'string' ? post.data.author : post.data.author?.name || 'TinkByte Team',
-    avatar: post.data.authorAvatar || "/images/default-avatar.jpg",
-    role: post.data.authorRole || "Author",
-    bio: post.data.authorBio || "Content creator and writer"
+    name: post.data.authorInfo?.name || post.data.author || 'TinkByte Team',
+    // Only include these if they exist
+    avatar: post.data.authorInfo?.avatar || null,
+    role: post.data.authorInfo?.role || null,
+    bio: post.data.authorInfo?.bio || null
   },
   audioUrl: post.data.audioUrl,
   featured: post.data.featured,

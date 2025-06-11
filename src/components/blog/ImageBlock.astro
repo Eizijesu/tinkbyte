@@ -1,0 +1,62 @@
+---
+export interface Props {
+  src: string;
+  alt: string;
+  caption?: string;
+  size?: "small" | "medium" | "large" | "full";
+  alignment?: "left" | "center" | "right";
+}
+
+const { src, alt, caption, size = "large", alignment = "center" } = Astro.props;
+
+const sizeClasses = {
+  small: "max-w-md",
+  medium: "max-w-2xl",
+  large: "max-w-4xl",
+  full: "max-w-full",
+};
+
+const alignmentClasses = {
+  left: "mr-auto",
+  center: "mx-auto",
+  right: "ml-auto",
+};
+---
+
+<figure
+  class={`image-block ${sizeClasses[size]} ${alignmentClasses[alignment]} my-8`}
+>
+  <div class="relative overflow-hidden rounded-sm shadow-lg">
+    <img
+      src={src}
+      alt={alt}
+      class="w-full h-auto object-cover"
+      loading="lazy"
+    />
+  </div>
+  {
+    caption && (
+      <figcaption class="text-sm text-gray-600 dark:text-gray-400 mt-3 text-center italic">
+        {caption}
+      </figcaption>
+    )
+  }
+</figure>
+
+<style>
+  .image-block {
+    transition: all 0.3s ease;
+  }
+
+  .image-block:hover {
+    transform: translateY(-2px);
+  }
+
+  .image-block img {
+    transition: transform 0.3s ease;
+  }
+
+  .image-block:hover img {
+    transform: scale(1.02);
+  }
+</style>

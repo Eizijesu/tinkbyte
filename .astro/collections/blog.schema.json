@@ -44,37 +44,6 @@
             }
           ]
         },
-        "author": {
-          "type": "string",
-          "default": "TinkByte Team"
-        },
-        "authorBio": {
-          "type": "string"
-        },
-        "authorAvatar": {
-          "type": "string"
-        },
-        "authorRole": {
-          "type": "string"
-        },
-        "authorSocial": {
-          "type": "object",
-          "properties": {
-            "twitter": {
-              "type": "string"
-            },
-            "linkedin": {
-              "type": "string"
-            },
-            "github": {
-              "type": "string"
-            },
-            "website": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false
-        },
         "authorInfo": {
           "type": "object",
           "properties": {
@@ -134,10 +103,32 @@
           "default": []
         },
         "category": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "product-strategy",
+            "ai-evolution",
+            "developer-tools",
+            "tech-culture",
+            "startup-insights",
+            "build-thinking",
+            "learning-by-doing",
+            "community-innovation",
+            "global-perspective",
+            "no-fluff-coverage",
+            "research-backed"
+          ]
         },
         "storyType": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "feature",
+            "deep-dive",
+            "quick-read",
+            "data-story",
+            "build-guide",
+            "failure-story",
+            "global-spotlight"
+          ]
         },
         "featured": {
           "type": "boolean",
@@ -163,21 +154,6 @@
         "audioTranscript": {
           "type": "string"
         },
-        "newsletterWorthy": {
-          "type": "boolean",
-          "default": false
-        },
-        "newsletterSummary": {
-          "type": "string"
-        },
-        "readingProgress": {
-          "type": "boolean",
-          "default": true
-        },
-        "tableOfContents": {
-          "type": "boolean",
-          "default": true
-        },
         "seo": {
           "type": "object",
           "properties": {
@@ -193,15 +169,6 @@
             "noindex": {
               "type": "boolean",
               "default": false
-            },
-            "schema": {
-              "type": "string",
-              "enum": [
-                "Article",
-                "BlogPosting",
-                "TechArticle"
-              ],
-              "default": "Article"
             }
           },
           "additionalProperties": false
@@ -214,6 +181,7 @@
         "title",
         "excerpt",
         "pubDate",
+        "authorInfo",
         "category"
       ],
       "additionalProperties": false

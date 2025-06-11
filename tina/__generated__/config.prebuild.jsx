@@ -12,10 +12,15 @@ var config_default = defineConfig({
   media: {
     tina: {
       mediaRoot: "images",
-      publicFolder: "public"
+      publicFolder: "public",
+      static: false
     }
   },
-  // Add search configuration
+  admin: {
+    auth: {
+      useLocalAuth: true
+    }
+  },
   search: {
     tina: {
       indexerToken: process.env.TINA_SEARCH_TOKEN,
@@ -33,6 +38,9 @@ var config_default = defineConfig({
         path: "src/content/blog",
         format: "md",
         ui: {
+          router: ({ document }) => {
+            return `/blog/${document._sys.filename}?tina-admin=true`;
+          },
           filename: {
             readonly: false,
             slugify: (values) => {
@@ -101,18 +109,19 @@ var config_default = defineConfig({
             label: "Last Updated",
             description: "Optional: When the post was last significantly updated"
           },
-          // NEW - Consolidated author information object
+          // FIXED: authorInfo with all optional fields except name
           {
             type: "object",
             name: "authorInfo",
             label: "Author Information",
-            description: "Comprehensive author details (only name is required)",
+            description: "Author details (only name is required)",
             fields: [
               {
                 type: "string",
                 name: "name",
                 label: "Author Name",
                 required: true,
+                // Only name is required
                 options: [
                   { label: "TinkByte Team", value: "TinkByte Team" },
                   { label: "Eiza", value: "Eiza" },
@@ -129,7 +138,9 @@ var config_default = defineConfig({
                 type: "string",
                 name: "bio",
                 label: "Author Bio",
-                description: "Optional: Brief author description for enhanced reader engagement",
+                required: false,
+                // Optional
+                description: "Optional: Brief author description",
                 ui: {
                   component: "textarea"
                 }
@@ -138,61 +149,59 @@ var config_default = defineConfig({
                 type: "image",
                 name: "avatar",
                 label: "Author Avatar",
-                description: "Optional: Author profile image (recommended: 200x200px for optimal display)"
+                required: false,
+                // Optional
+                description: "Optional: Author profile image"
               },
               {
                 type: "string",
                 name: "role",
                 label: "Author Role",
-                description: "Optional: Professional title (e.g., 'Chief AI Officer', 'Senior Product Manager')"
-              },
-              {
-                type: "string",
-                name: "company",
-                label: "Company",
-                description: "Optional: Company affiliation or organization"
-              },
-              {
-                type: "string",
-                name: "email",
-                label: "Contact Email",
-                description: "Optional: Professional contact email for author inquiries"
+                required: false,
+                // Optional
+                description: "Optional: Professional title"
               },
               {
                 type: "object",
                 name: "social",
                 label: "Social Media Links",
-                description: "Optional: Author's social media presence",
+                required: false,
+                // Optional
+                description: "Optional: Author's social media",
                 fields: [
                   {
                     type: "string",
                     name: "twitter",
-                    label: "Twitter Handle",
-                    description: "Without @ symbol (e.g., 'username')"
+                    label: "Twitter URL",
+                    required: false,
+                    description: "Optional: Full Twitter URL"
                   },
                   {
                     type: "string",
                     name: "linkedin",
-                    label: "LinkedIn Profile",
-                    description: "Full LinkedIn URL or username"
+                    label: "LinkedIn URL",
+                    required: false,
+                    description: "Optional: Full LinkedIn URL"
                   },
                   {
                     type: "string",
                     name: "github",
-                    label: "GitHub Username",
-                    description: "GitHub profile username"
+                    label: "GitHub URL",
+                    required: false,
+                    description: "Optional: Full GitHub URL"
                   },
                   {
                     type: "string",
                     name: "website",
                     label: "Personal Website",
-                    description: "Full URL including https://"
+                    required: false,
+                    description: "Optional: Full website URL"
                   }
                 ]
               }
             ]
           },
-          // NEW - Enhanced optional image handling
+          // Enhanced optional image handling
           {
             type: "image",
             name: "image",
@@ -219,12 +228,22 @@ var config_default = defineConfig({
             label: "Content Pillar",
             required: true,
             options: [
+              { label: "\u{1F680} Product Strategy", value: "product-strategy" },
+              { label: "\u{1F916} AI Evolution", value: "ai-evolution" },
+              { label: "\u{1F6E0}\uFE0F Developer Tools", value: "developer-tools" },
+              { label: "\u{1F465} Tech Culture", value: "tech-culture" },
+              { label: "\u{1F3AF} Startup Insights", value: "startup-insights" },
               { label: "\u{1F528} Build Thinking", value: "build-thinking" },
               { label: "\u{1F91D} Community Innovation", value: "community-innovation" },
               { label: "\u{1F4DA} Learning by Doing", value: "learning-by-doing" },
               { label: "\u{1F3AF} No-Fluff Tech Coverage", value: "no-fluff-coverage" },
               { label: "\u{1F4CA} Research-Backed", value: "research-backed" },
-              { label: "\u{1F30D} Global Perspective", value: "global-perspective" }
+              { label: "\u{1F30D} Global Perspective", value: "global-perspective" },
+              { label: "\u{1F512} Privacy & Security", value: "privacy-security" },
+              { label: "\u{1F4F1} Mobile Development", value: "mobile-development" },
+              { label: "\u2601\uFE0F Cloud Technologies", value: "cloud-technologies" },
+              { label: "\u{1F4CA} Data Science", value: "data-science" },
+              { label: "\u{1F527} Other", value: "other" }
             ],
             description: "Select the main content pillar for this post"
           },
@@ -344,6 +363,9 @@ var config_default = defineConfig({
             name: "body",
             label: "Article Content",
             isBody: true,
+            ui: {
+              component: "rich-text"
+            },
             templates: [
               {
                 name: "callout",
@@ -370,6 +392,126 @@ var config_default = defineConfig({
                     type: "rich-text",
                     name: "content",
                     label: "Content"
+                  }
+                ]
+              },
+              {
+                name: "ImageBlock",
+                label: "Image",
+                ui: {
+                  defaultItem: {
+                    src: "",
+                    alt: "",
+                    caption: "",
+                    size: "large",
+                    alignment: "center"
+                  }
+                },
+                fields: [
+                  {
+                    type: "image",
+                    name: "src",
+                    label: "Image",
+                    required: true,
+                    description: "Upload or select an image"
+                  },
+                  {
+                    type: "string",
+                    name: "alt",
+                    label: "Alt Text",
+                    required: true,
+                    description: "Describe the image for accessibility and SEO"
+                  },
+                  {
+                    type: "string",
+                    name: "caption",
+                    label: "Caption",
+                    description: "Optional image caption or description"
+                  },
+                  {
+                    type: "string",
+                    name: "size",
+                    label: "Image Size",
+                    options: [
+                      { label: "Small (400px)", value: "small" },
+                      { label: "Medium (600px)", value: "medium" },
+                      { label: "Large (800px)", value: "large" },
+                      { label: "Full Width", value: "full" }
+                    ],
+                    description: "Choose the display size for this image"
+                  },
+                  {
+                    type: "string",
+                    name: "alignment",
+                    label: "Image Alignment",
+                    options: [
+                      { label: "Left", value: "left" },
+                      { label: "Center", value: "center" },
+                      { label: "Right", value: "right" }
+                    ],
+                    description: "How to align the image"
+                  }
+                ]
+              },
+              {
+                name: "ImageGallery",
+                label: "Image Gallery",
+                ui: {
+                  defaultItem: {
+                    images: [],
+                    layout: "grid-2",
+                    caption: ""
+                  }
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "caption",
+                    label: "Gallery Caption",
+                    description: "Optional caption for the entire gallery"
+                  },
+                  {
+                    type: "string",
+                    name: "layout",
+                    label: "Gallery Layout",
+                    options: [
+                      { label: "2 Column Grid", value: "grid-2" },
+                      { label: "3 Column Grid", value: "grid-3" },
+                      { label: "4 Column Grid", value: "grid-4" },
+                      { label: "Masonry", value: "masonry" },
+                      { label: "Carousel", value: "carousel" }
+                    ]
+                  },
+                  {
+                    type: "object",
+                    name: "images",
+                    label: "Images",
+                    list: true,
+                    ui: {
+                      itemProps: (item) => {
+                        return { label: item?.alt || "Gallery Image" };
+                      }
+                    },
+                    fields: [
+                      {
+                        type: "image",
+                        name: "src",
+                        label: "Image",
+                        required: true
+                      },
+                      {
+                        type: "string",
+                        name: "alt",
+                        label: "Alt Text",
+                        required: true
+                      },
+                      {
+                        type: "string",
+                        name: "caption",
+                        label: "Image Caption",
+                        description: "Optional caption for this specific image"
+                      }
+                    ]
                   }
                 ]
               },
@@ -454,6 +596,53 @@ var config_default = defineConfig({
                     }
                   }
                 ]
+              },
+              {
+                name: "TwoColumnLayout",
+                label: "Two Column Layout",
+                ui: {
+                  defaultItem: {
+                    leftContent: "Left column content...",
+                    rightContent: "Right column content..."
+                  }
+                },
+                fields: [
+                  {
+                    type: "rich-text",
+                    name: "leftContent",
+                    label: "Left Column"
+                  },
+                  {
+                    type: "rich-text",
+                    name: "rightContent",
+                    label: "Right Column"
+                  }
+                ]
+              },
+              {
+                name: "VideoEmbed",
+                label: "Video Embed",
+                fields: [
+                  {
+                    type: "string",
+                    name: "url",
+                    label: "Video URL",
+                    description: "YouTube, Vimeo, or direct video URL"
+                  },
+                  {
+                    type: "string",
+                    name: "title",
+                    label: "Video Title"
+                  },
+                  {
+                    type: "string",
+                    name: "description",
+                    label: "Description",
+                    ui: {
+                      component: "textarea"
+                    }
+                  }
+                ]
               }
             ]
           }
@@ -517,7 +706,17 @@ var config_default = defineConfig({
               { label: "Brain (AI)", value: "brain" },
               { label: "Lightbulb (Ideas)", value: "lightbulb" },
               { label: "Rocket (Startup)", value: "rocket" },
-              { label: "Tools (Developer)", value: "tools" }
+              { label: "Tools (Developer)", value: "tools" },
+              { label: "Code (Programming)", value: "code" },
+              { label: "Cog (Other/Misc)", value: "cog" },
+              { label: "Star (Featured)", value: "star" },
+              { label: "Fire (Trending)", value: "fire" },
+              { label: "Shield (Security)", value: "shield-alt" },
+              { label: "Database (Data)", value: "database" },
+              { label: "Mobile (Mobile Dev)", value: "mobile-alt" },
+              { label: "Cloud (Cloud Tech)", value: "cloud" },
+              { label: "Lock (Privacy)", value: "lock" },
+              { label: "Microchip (Hardware)", value: "microchip" }
             ]
           },
           {
@@ -533,7 +732,8 @@ var config_default = defineConfig({
               { label: "Orange", value: "orange" },
               { label: "Red", value: "red" },
               { label: "Pink", value: "pink" },
-              { label: "Yellow", value: "yellow" }
+              { label: "Yellow", value: "yellow" },
+              { label: "Gray", value: "gray" }
             ]
           },
           {
@@ -573,7 +773,7 @@ var config_default = defineConfig({
           }
         ]
       },
-      // Authors Collection
+      // Authors Collection - FIXED to make fields optional
       {
         name: "authors",
         label: "Authors",
@@ -594,12 +794,14 @@ var config_default = defineConfig({
             label: "Full Name",
             isTitle: true,
             required: true
+            // Only name is required
           },
           {
             type: "string",
             name: "bio",
             label: "Biography",
-            required: true,
+            required: false,
+            // FIXED: Make optional
             ui: {
               component: "textarea"
             }
@@ -608,52 +810,64 @@ var config_default = defineConfig({
             type: "image",
             name: "avatar",
             label: "Profile Picture",
-            required: true
+            required: false
+            // FIXED: Make optional
           },
           {
             type: "string",
             name: "role",
             label: "Role/Title",
-            required: true
+            required: false
+            // FIXED: Make optional
           },
           {
             type: "string",
             name: "company",
             label: "Company",
+            required: false,
+            // Already optional
             description: "Optional company affiliation"
           },
           {
             type: "string",
             name: "email",
             label: "Email Address",
+            required: false,
+            // Already optional
             description: "Optional contact email"
           },
           {
             type: "object",
             name: "social",
             label: "Social Media",
+            required: false,
+            // FIXED: Make optional
             fields: [
               {
                 type: "string",
                 name: "twitter",
                 label: "Twitter Handle",
+                required: false,
                 description: "Without @ symbol"
               },
               {
                 type: "string",
                 name: "linkedin",
                 label: "LinkedIn Profile",
+                required: false,
                 description: "Full LinkedIn URL"
               },
               {
                 type: "string",
                 name: "github",
-                label: "GitHub Username"
+                label: "GitHub Username",
+                required: false
               },
               {
                 type: "string",
                 name: "website",
                 label: "Personal Website",
+                required: false,
                 description: "Full URL including https://"
               }
             ]
@@ -669,6 +883,8 @@ var config_default = defineConfig({
             name: "body",
             label: "Extended Bio",
             isBody: true,
+            required: false,
+            // FIXED: Make optional
             description: "Detailed author information for author page"
           }
         ]
@@ -964,16 +1180,239 @@ var config_default = defineConfig({
             type: "rich-text",
             name: "body",
             label: "Page Content",
-            isBody: true
+            isBody: true,
+            templates: [
+              {
+                name: "Hero",
+                label: "Hero Section",
+                ui: {
+                  defaultItem: {
+                    title: "Welcome to TinkByte",
+                    subtitle: "Building meaningful, data-driven products",
+                    backgroundImage: ""
+                  }
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "title",
+                    label: "Hero Title"
+                  },
+                  {
+                    type: "string",
+                    name: "subtitle",
+                    label: "Hero Subtitle",
+                    ui: {
+                      component: "textarea"
+                    }
+                  },
+                  {
+                    type: "image",
+                    name: "backgroundImage",
+                    label: "Background Image"
+                  },
+                  {
+                    type: "object",
+                    name: "cta",
+                    label: "Call to Action",
+                    fields: [
+                      {
+                        type: "string",
+                        name: "text",
+                        label: "Button Text"
+                      },
+                      {
+                        type: "string",
+                        name: "url",
+                        label: "Button URL"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                name: "ContentBlock",
+                label: "Content Block",
+                ui: {
+                  defaultItem: {
+                    content: "Start writing your content here..."
+                  }
+                },
+                fields: [
+                  {
+                    type: "rich-text",
+                    name: "content",
+                    label: "Content",
+                    ui: {
+                      component: "rich-text"
+                    }
+                  }
+                ]
+              },
+              {
+                name: "ImageBlock",
+                label: "Image Block",
+                ui: {
+                  defaultItem: {
+                    caption: "Image caption",
+                    layout: "full-width"
+                  }
+                },
+                fields: [
+                  {
+                    type: "image",
+                    name: "src",
+                    label: "Image"
+                  },
+                  {
+                    type: "string",
+                    name: "alt",
+                    label: "Alt Text"
+                  },
+                  {
+                    type: "string",
+                    name: "caption",
+                    label: "Caption"
+                  },
+                  {
+                    type: "string",
+                    name: "layout",
+                    label: "Layout",
+                    options: [
+                      { label: "Full Width", value: "full-width" },
+                      { label: "Centered", value: "centered" },
+                      { label: "Float Left", value: "float-left" },
+                      { label: "Float Right", value: "float-right" }
+                    ]
+                  }
+                ]
+              },
+              {
+                name: "CalloutBox",
+                label: "Callout Box",
+                ui: {
+                  defaultItem: {
+                    type: "info",
+                    title: "Important Note",
+                    content: "Add your callout content here..."
+                  }
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "type",
+                    label: "Callout Type",
+                    options: [
+                      { label: "\u{1F4A1} Info", value: "info" },
+                      { label: "\u26A0\uFE0F Warning", value: "warning" },
+                      { label: "\u2705 Success", value: "success" },
+                      { label: "\u274C Error", value: "error" },
+                      { label: "\u{1F4A1} Tip", value: "tip" }
+                    ]
+                  },
+                  {
+                    type: "string",
+                    name: "title",
+                    label: "Title"
+                  },
+                  {
+                    type: "rich-text",
+                    name: "content",
+                    label: "Content"
+                  }
+                ]
+              },
+              {
+                name: "codeBlock",
+                label: "Code Block",
+                fields: [
+                  {
+                    type: "string",
+                    name: "language",
+                    label: "Programming Language",
+                    options: [
+                      { label: "JavaScript", value: "javascript" },
+                      { label: "TypeScript", value: "typescript" },
+                      { label: "Python", value: "python" },
+                      { label: "Bash/Shell", value: "bash" },
+                      { label: "CSS", value: "css" },
+                      { label: "HTML", value: "html" },
+                      { label: "JSON", value: "json" },
+                      { label: "Astro", value: "astro" },
+                      { label: "React/JSX", value: "jsx" },
+                      { label: "Vue", value: "vue" },
+                      { label: "Markdown", value: "markdown" }
+                    ]
+                  },
+                  {
+                    type: "string",
+                    name: "filename",
+                    label: "Filename (optional)",
+                    description: "e.g., 'src/components/Header.astro'"
+                  },
+                  {
+                    type: "string",
+                    name: "code",
+                    label: "Code",
+                    ui: {
+                      component: "textarea"
+                    }
+                  }
+                ]
+              },
+              {
+                name: "quote",
+                label: "Quote",
+                fields: [
+                  {
+                    type: "string",
+                    name: "quote",
+                    label: "Quote Text",
+                    ui: {
+                      component: "textarea"
+                    }
+                  },
+                  {
+                    type: "string",
+                    name: "author",
+                    label: "Quote Author"
+                  },
+                  {
+                    type: "string",
+                    name: "role",
+                    label: "Author Role/Title"
+                  }
+                ]
+              },
+              {
+                name: "newsletter",
+                label: "Newsletter Signup",
+                fields: [
+                  {
+                    type: "string",
+                    name: "title",
+                    label: "CTA Title",
+                    description: "e.g., 'Want more insights like this?'"
+                  },
+                  {
+                    type: "string",
+                    name: "description",
+                    label: "Description",
+                    ui: {
+                      component: "textarea"
+                    }
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
-      // ADD THE LEGAL PAGES COLLECTION HERE
+      // Legal Pages Collection
       {
         name: "legalPages",
         label: "Legal Pages",
         path: "src/content/legal",
-        // Different path to separate from regular pages
         format: "md",
         ui: {
           filename: {
@@ -1240,14 +1679,13 @@ var config_default = defineConfig({
           }
         ]
       },
-      // Settings Collection - NEW ADDITION
+      // Settings Collection
       {
         name: "settings",
         label: "Site Settings",
         path: "src/content/settings",
         format: "md",
         ui: {
-          // Make it a global singleton
           global: true,
           allowedActions: {
             create: false,
@@ -1493,7 +1931,6 @@ var config_default = defineConfig({
             label: "UI Text Configuration",
             description: "Customize all text labels throughout the site",
             fields: [
-              // Audio-related text
               {
                 type: "string",
                 name: "audioAvailableLabel",
@@ -1518,7 +1955,6 @@ var config_default = defineConfig({
                 label: "No Audio Text",
                 description: "Text shown when no audio is available"
               },
-              // Author-related text
               {
                 type: "string",
                 name: "byAuthorPrefix",
@@ -1531,7 +1967,6 @@ var config_default = defineConfig({
                 label: "About Author Section Title",
                 description: "Title for the author bio section"
               },
-              // Navigation text
               {
                 type: "string",
                 name: "shareLabel",
@@ -1586,7 +2021,6 @@ var config_default = defineConfig({
                 label: "Browse All Articles Text",
                 description: "Text for browse all articles link"
               },
-              // Content organization text
               {
                 type: "string",
                 name: "tocTitle",
@@ -1605,7 +2039,6 @@ var config_default = defineConfig({
                 label: "Reading Progress Title",
                 description: "Title for the reading progress section"
               },
-              // General text
               {
                 type: "string",
                 name: "imageCreditText",
@@ -1624,7 +2057,6 @@ var config_default = defineConfig({
                 label: "Default Category Label",
                 description: "Fallback category label when none is specified"
               },
-              // Comments and discussion
               {
                 type: "string",
                 name: "discussionTitle",
@@ -1637,7 +2069,6 @@ var config_default = defineConfig({
                 label: "Discussion Section Subtitle",
                 description: "Subtitle for the comments/discussion section"
               },
-              // Related content
               {
                 type: "string",
                 name: "relatedTitle",
@@ -1814,7 +2245,25 @@ var config_default = defineConfig({
                       { label: "Database", value: "database" },
                       { label: "Microscope", value: "microscope" },
                       { label: "Brain", value: "brain" },
-                      { label: "Lightbulb", value: "lightbulb" }
+                      { label: "Lightbulb", value: "lightbulb" },
+                      { label: "Hammer (Build)", value: "hammer" },
+                      { label: "Users (Community)", value: "users" },
+                      { label: "Book (Learning)", value: "book" },
+                      { label: "Target (No-Fluff)", value: "bullseye" },
+                      { label: "Chart (Research)", value: "chart-line" },
+                      { label: "Globe (Global)", value: "globe" },
+                      { label: "Rocket (Startup)", value: "rocket" },
+                      { label: "Tools (Developer)", value: "tools" },
+                      { label: "Code (Programming)", value: "code" },
+                      { label: "Cog (Other/Misc)", value: "cog" },
+                      { label: "Star (Featured)", value: "star" },
+                      { label: "Fire (Trending)", value: "fire" },
+                      { label: "Shield (Security)", value: "shield-alt" },
+                      { label: "Database (Data)", value: "database" },
+                      { label: "Mobile (Mobile Dev)", value: "mobile-alt" },
+                      { label: "Cloud (Cloud Tech)", value: "cloud" },
+                      { label: "Lock (Privacy)", value: "lock" },
+                      { label: "Microchip (Hardware)", value: "microchip" }
                     ]
                   }
                 ]
@@ -1826,7 +2275,7 @@ var config_default = defineConfig({
                 list: true,
                 ui: {
                   itemProps: (item) => {
-                    return { label: item?.label || "New Stat" };
+                    return { label: item?.title || "New Report" };
                   }
                 },
                 fields: [

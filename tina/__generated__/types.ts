@@ -305,8 +305,6 @@ export type BlogAuthorInfo = {
   bio?: Maybe<Scalars['String']['output']>;
   avatar?: Maybe<Scalars['String']['output']>;
   role?: Maybe<Scalars['String']['output']>;
-  company?: Maybe<Scalars['String']['output']>;
-  email?: Maybe<Scalars['String']['output']>;
   social?: Maybe<BlogAuthorInfoSocial>;
 };
 
@@ -378,8 +376,6 @@ export type BlogAuthorInfoFilter = {
   bio?: InputMaybe<StringFilter>;
   avatar?: InputMaybe<ImageFilter>;
   role?: InputMaybe<StringFilter>;
-  company?: InputMaybe<StringFilter>;
-  email?: InputMaybe<StringFilter>;
   social?: InputMaybe<BlogAuthorInfoSocialFilter>;
 };
 
@@ -407,6 +403,26 @@ export type BlogBodyCalloutFilter = {
   content?: InputMaybe<RichTextFilter>;
 };
 
+export type BlogBodyImageBlockFilter = {
+  src?: InputMaybe<ImageFilter>;
+  alt?: InputMaybe<StringFilter>;
+  caption?: InputMaybe<StringFilter>;
+  size?: InputMaybe<StringFilter>;
+  alignment?: InputMaybe<StringFilter>;
+};
+
+export type BlogBodyImageGalleryImagesFilter = {
+  src?: InputMaybe<ImageFilter>;
+  alt?: InputMaybe<StringFilter>;
+  caption?: InputMaybe<StringFilter>;
+};
+
+export type BlogBodyImageGalleryFilter = {
+  caption?: InputMaybe<StringFilter>;
+  layout?: InputMaybe<StringFilter>;
+  images?: InputMaybe<BlogBodyImageGalleryImagesFilter>;
+};
+
 export type BlogBodyCodeBlockFilter = {
   language?: InputMaybe<StringFilter>;
   filename?: InputMaybe<StringFilter>;
@@ -424,11 +440,26 @@ export type BlogBodyNewsletterFilter = {
   description?: InputMaybe<StringFilter>;
 };
 
+export type BlogBodyTwoColumnLayoutFilter = {
+  leftContent?: InputMaybe<RichTextFilter>;
+  rightContent?: InputMaybe<RichTextFilter>;
+};
+
+export type BlogBodyVideoEmbedFilter = {
+  url?: InputMaybe<StringFilter>;
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+};
+
 export type BlogBodyFilter = {
   callout?: InputMaybe<BlogBodyCalloutFilter>;
+  ImageBlock?: InputMaybe<BlogBodyImageBlockFilter>;
+  ImageGallery?: InputMaybe<BlogBodyImageGalleryFilter>;
   codeBlock?: InputMaybe<BlogBodyCodeBlockFilter>;
   quote?: InputMaybe<BlogBodyQuoteFilter>;
   newsletter?: InputMaybe<BlogBodyNewsletterFilter>;
+  TwoColumnLayout?: InputMaybe<BlogBodyTwoColumnLayoutFilter>;
+  VideoEmbed?: InputMaybe<BlogBodyVideoEmbedFilter>;
 };
 
 export type BlogFilter = {
@@ -525,9 +556,9 @@ export type AuthorsSocial = {
 export type Authors = Node & Document & {
   __typename?: 'Authors';
   name: Scalars['String']['output'];
-  bio: Scalars['String']['output'];
-  avatar: Scalars['String']['output'];
-  role: Scalars['String']['output'];
+  bio?: Maybe<Scalars['String']['output']>;
+  avatar?: Maybe<Scalars['String']['output']>;
+  role?: Maybe<Scalars['String']['output']>;
   company?: Maybe<Scalars['String']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   social?: Maybe<AuthorsSocial>;
@@ -706,6 +737,62 @@ export type PagesSeoFilter = {
   noindex?: InputMaybe<BooleanFilter>;
 };
 
+export type PagesBodyHeroCtaFilter = {
+  text?: InputMaybe<StringFilter>;
+  url?: InputMaybe<StringFilter>;
+};
+
+export type PagesBodyHeroFilter = {
+  title?: InputMaybe<StringFilter>;
+  subtitle?: InputMaybe<StringFilter>;
+  backgroundImage?: InputMaybe<ImageFilter>;
+  cta?: InputMaybe<PagesBodyHeroCtaFilter>;
+};
+
+export type PagesBodyContentBlockFilter = {
+  content?: InputMaybe<RichTextFilter>;
+};
+
+export type PagesBodyImageBlockFilter = {
+  src?: InputMaybe<ImageFilter>;
+  alt?: InputMaybe<StringFilter>;
+  caption?: InputMaybe<StringFilter>;
+  layout?: InputMaybe<StringFilter>;
+};
+
+export type PagesBodyCalloutBoxFilter = {
+  type?: InputMaybe<StringFilter>;
+  title?: InputMaybe<StringFilter>;
+  content?: InputMaybe<RichTextFilter>;
+};
+
+export type PagesBodyCodeBlockFilter = {
+  language?: InputMaybe<StringFilter>;
+  filename?: InputMaybe<StringFilter>;
+  code?: InputMaybe<StringFilter>;
+};
+
+export type PagesBodyQuoteFilter = {
+  quote?: InputMaybe<StringFilter>;
+  author?: InputMaybe<StringFilter>;
+  role?: InputMaybe<StringFilter>;
+};
+
+export type PagesBodyNewsletterFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+};
+
+export type PagesBodyFilter = {
+  Hero?: InputMaybe<PagesBodyHeroFilter>;
+  ContentBlock?: InputMaybe<PagesBodyContentBlockFilter>;
+  ImageBlock?: InputMaybe<PagesBodyImageBlockFilter>;
+  CalloutBox?: InputMaybe<PagesBodyCalloutBoxFilter>;
+  codeBlock?: InputMaybe<PagesBodyCodeBlockFilter>;
+  quote?: InputMaybe<PagesBodyQuoteFilter>;
+  newsletter?: InputMaybe<PagesBodyNewsletterFilter>;
+};
+
 export type PagesFilter = {
   title?: InputMaybe<StringFilter>;
   description?: InputMaybe<StringFilter>;
@@ -713,7 +800,7 @@ export type PagesFilter = {
   updatedDate?: InputMaybe<DatetimeFilter>;
   layout?: InputMaybe<StringFilter>;
   seo?: InputMaybe<PagesSeoFilter>;
-  body?: InputMaybe<RichTextFilter>;
+  body?: InputMaybe<PagesBodyFilter>;
 };
 
 export type PagesConnectionEdges = {
@@ -1367,8 +1454,6 @@ export type BlogAuthorInfoMutation = {
   bio?: InputMaybe<Scalars['String']['input']>;
   avatar?: InputMaybe<Scalars['String']['input']>;
   role?: InputMaybe<Scalars['String']['input']>;
-  company?: InputMaybe<Scalars['String']['input']>;
-  email?: InputMaybe<Scalars['String']['input']>;
   social?: InputMaybe<BlogAuthorInfoSocialMutation>;
 };
 
@@ -1663,11 +1748,11 @@ export type SettingsMutation = {
   performance?: InputMaybe<SettingsPerformanceMutation>;
 };
 
-export type BlogPartsFragment = { __typename: 'Blog', title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, company?: string | null, email?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, seo?: { __typename: 'BlogSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null };
+export type BlogPartsFragment = { __typename: 'Blog', title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, seo?: { __typename: 'BlogSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null };
 
 export type CategoriesPartsFragment = { __typename: 'Categories', name: string, description: string, icon: string, color: string, featured?: boolean | null, body?: any | null, seo?: { __typename: 'CategoriesSeo', title?: string | null, description?: string | null } | null };
 
-export type AuthorsPartsFragment = { __typename: 'Authors', name: string, bio: string, avatar: string, role: string, company?: string | null, email?: string | null, featured?: boolean | null, body?: any | null, social?: { __typename: 'AuthorsSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null };
+export type AuthorsPartsFragment = { __typename: 'Authors', name: string, bio?: string | null, avatar?: string | null, role?: string | null, company?: string | null, email?: string | null, featured?: boolean | null, body?: any | null, social?: { __typename: 'AuthorsSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null };
 
 export type PodcastPartsFragment = { __typename: 'Podcast', title: string, description: string, pubDate: string, duration: string, audioUrl: string, image?: string | null, guests?: Array<string | null> | null, transcript?: string | null, season?: number | null, episode: number, featured?: boolean | null, body?: any | null, seo?: { __typename: 'PodcastSeo', title?: string | null, description?: string | null, canonical?: string | null } | null };
 
@@ -1684,7 +1769,7 @@ export type BlogQueryVariables = Exact<{
 }>;
 
 
-export type BlogQuery = { __typename?: 'Query', blog: { __typename: 'Blog', id: string, title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, company?: string | null, email?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, seo?: { __typename: 'BlogSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } };
+export type BlogQuery = { __typename?: 'Query', blog: { __typename: 'Blog', id: string, title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, seo?: { __typename: 'BlogSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } };
 
 export type BlogConnectionQueryVariables = Exact<{
   before?: InputMaybe<Scalars['String']['input']>;
@@ -1696,7 +1781,7 @@ export type BlogConnectionQueryVariables = Exact<{
 }>;
 
 
-export type BlogConnectionQuery = { __typename?: 'Query', blogConnection: { __typename?: 'BlogConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'BlogConnectionEdges', cursor: string, node?: { __typename: 'Blog', id: string, title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, company?: string | null, email?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, seo?: { __typename: 'BlogSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } | null } | null> | null } };
+export type BlogConnectionQuery = { __typename?: 'Query', blogConnection: { __typename?: 'BlogConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'BlogConnectionEdges', cursor: string, node?: { __typename: 'Blog', id: string, title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, seo?: { __typename: 'BlogSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } | null } | null> | null } };
 
 export type CategoriesQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
@@ -1722,7 +1807,7 @@ export type AuthorsQueryVariables = Exact<{
 }>;
 
 
-export type AuthorsQuery = { __typename?: 'Query', authors: { __typename: 'Authors', id: string, name: string, bio: string, avatar: string, role: string, company?: string | null, email?: string | null, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, social?: { __typename: 'AuthorsSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } };
+export type AuthorsQuery = { __typename?: 'Query', authors: { __typename: 'Authors', id: string, name: string, bio?: string | null, avatar?: string | null, role?: string | null, company?: string | null, email?: string | null, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, social?: { __typename: 'AuthorsSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } };
 
 export type AuthorsConnectionQueryVariables = Exact<{
   before?: InputMaybe<Scalars['String']['input']>;
@@ -1734,7 +1819,7 @@ export type AuthorsConnectionQueryVariables = Exact<{
 }>;
 
 
-export type AuthorsConnectionQuery = { __typename?: 'Query', authorsConnection: { __typename?: 'AuthorsConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'AuthorsConnectionEdges', cursor: string, node?: { __typename: 'Authors', id: string, name: string, bio: string, avatar: string, role: string, company?: string | null, email?: string | null, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, social?: { __typename: 'AuthorsSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null } | null> | null } };
+export type AuthorsConnectionQuery = { __typename?: 'Query', authorsConnection: { __typename?: 'AuthorsConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'AuthorsConnectionEdges', cursor: string, node?: { __typename: 'Authors', id: string, name: string, bio?: string | null, avatar?: string | null, role?: string | null, company?: string | null, email?: string | null, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, social?: { __typename: 'AuthorsSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null } | null> | null } };
 
 export type PodcastQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
@@ -1844,8 +1929,6 @@ export const BlogPartsFragmentDoc = gql`
     bio
     avatar
     role
-    company
-    email
     social {
       __typename
       twitter

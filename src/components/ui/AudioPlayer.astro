@@ -12,33 +12,29 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
 
 <div class="audio-player" data-audio-url={audioUrl}>
   <div class="audio-controls">
+    <!-- Play/Pause Button -->
     <button class="play-button" data-action="play">
       <svg
         class="play-icon"
-        fill="none"
-        stroke="currentColor"
+        fill="currentColor"
         viewBox="0 0 24 24"
+        width="20"
+        height="20"
       >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M14.828 14.828a4 4 0 01-5.656 0M9 9l3 3 3-3M9 15l3-3 3-3"></path>
+        <path d="M8 5v14l11-7z"></path>
       </svg>
       <svg
         class="pause-icon hidden"
-        fill="none"
-        stroke="currentColor"
+        fill="currentColor"
         viewBox="0 0 24 24"
+        width="20"
+        height="20"
       >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M10 9v6m4-6v6"></path>
+        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
       </svg>
     </button>
 
+    <!-- Audio Info -->
     <div class="audio-info">
       <div class="audio-title">🎧 Listen to this article</div>
       <div class="audio-meta">
@@ -46,17 +42,160 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
         <span class="audio-status">Ready to play</span>
       </div>
     </div>
+
+    <!-- Volume Control -->
+    <div class="volume-control">
+      <button class="volume-button">
+        <svg
+          class="volume-icon volume-up"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+        >
+          <path
+            d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"
+          ></path>
+        </svg>
+        <svg
+          class="volume-icon volume-muted hidden"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+        >
+          <path
+            d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"
+          ></path>
+        </svg>
+      </button>
+      <div class="volume-slider-container">
+        <input
+          type="range"
+          class="volume-slider"
+          min="0"
+          max="100"
+          value="75"
+        />
+      </div>
+    </div>
+
+    <!-- Settings Button -->
+    <div class="settings-control">
+      <button class="settings-button">
+        <svg fill="currentColor" viewBox="0 0 24 24" width="18" height="18">
+          <path
+            d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"
+          ></path>
+        </svg>
+      </button>
+
+      <!-- Settings Dropdown -->
+      <div class="settings-dropdown hidden">
+        <div class="settings-option">
+          <label class="settings-label">Playback Speed</label>
+          <select class="speed-selector">
+            <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+          </select>
+        </div>
+
+        <div class="settings-option">
+          <label class="settings-label">Skip Controls</label>
+          <div class="skip-controls">
+            <button class="skip-button" data-skip="-15">
+              <svg
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+              >
+                <path
+                  d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+                ></path>
+              </svg>
+              -15s
+            </button>
+            <button class="skip-button" data-skip="30">
+              +30s
+              <svg
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+              >
+                <path
+                  d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {
+          transcript && (
+            <div class="settings-option">
+              <button class="transcript-toggle">
+                <svg
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                >
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                </svg>
+                Show Transcript
+              </button>
+            </div>
+          )
+        }
+
+        {
+          downloadUrl && (
+            <div class="settings-option">
+              <a href={downloadUrl} download class="download-button">
+                <svg
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                >
+                  <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                </svg>
+                Download Audio
+              </a>
+            </div>
+          )
+        }
+      </div>
+    </div>
   </div>
 
+  <!-- Progress Bar -->
   <div class="audio-progress">
     <div class="progress-bar">
       <div class="progress-fill" style="width: 0%"></div>
+      <div class="progress-handle" style="left: 0%"></div>
     </div>
     <div class="time-display">
       <span class="current-time">0:00</span>
       <span class="total-time">{duration || "0:00"}</span>
     </div>
   </div>
+
+  <!-- Transcript Section (Hidden by default) -->
+  {
+    transcript && (
+      <div class="transcript-section hidden">
+        <h4 class="transcript-title">Audio Transcript</h4>
+        <div class="transcript-content">{transcript}</div>
+      </div>
+    )
+  }
 
   <audio preload="metadata" class="audio-element">
     <source src={audioUrl} type="audio/mpeg" />
@@ -71,6 +210,7 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
     border-radius: var(--tinkbyte-radius-card);
     padding: 1.5rem;
     transition: all 0.3s ease;
+    position: relative;
   }
 
   :global(.dark) .audio-player {
@@ -150,6 +290,248 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
     opacity: 0.8;
   }
 
+  /* Volume Control */
+  .volume-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+  }
+
+  .volume-button {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .volume-button:hover {
+    color: rgb(36, 55, 136);
+    background: rgba(36, 55, 136, 0.1);
+  }
+
+  :global(.dark) .volume-button {
+    color: rgb(156, 163, 175);
+  }
+
+  :global(.dark) .volume-button:hover {
+    color: rgb(147, 197, 253);
+    background: rgba(147, 197, 253, 0.1);
+  }
+
+  .volume-slider-container {
+    width: 80px;
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: all 0.3s ease;
+  }
+
+  .volume-control:hover .volume-slider-container {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  .volume-slider {
+    width: 100%;
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  :global(.dark) .volume-slider {
+    background: rgb(75, 85, 99);
+  }
+
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: rgb(36, 55, 136);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .volume-slider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    background: rgb(36, 55, 136);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Settings Control */
+  .settings-control {
+    position: relative;
+  }
+
+  .settings-button {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .settings-button:hover {
+    color: rgb(36, 55, 136);
+    background: rgba(36, 55, 136, 0.1);
+  }
+
+  :global(.dark) .settings-button {
+    color: rgb(156, 163, 175);
+  }
+
+  :global(.dark) .settings-button:hover {
+    color: rgb(147, 197, 253);
+    background: rgba(147, 197, 253, 0.1);
+  }
+
+  .settings-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    min-width: 200px;
+    z-index: 10;
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .settings-dropdown {
+    background: rgb(31, 41, 55);
+    border-color: rgb(75, 85, 99);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  .settings-option {
+    margin-bottom: 1rem;
+  }
+
+  .settings-option:last-child {
+    margin-bottom: 0;
+  }
+
+  .settings-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+  }
+
+  :global(.dark) .settings-label {
+    color: rgb(209, 213, 219);
+  }
+
+  .speed-selector {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+  }
+
+  :global(.dark) .speed-selector {
+    background: rgb(55, 65, 81);
+    border-color: rgb(107, 114, 128);
+    color: rgb(243, 244, 246);
+  }
+
+  .skip-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .skip-button {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+  }
+
+  .skip-button:hover {
+    background: rgb(36, 55, 136);
+    color: white;
+    border-color: rgb(36, 55, 136);
+  }
+
+  :global(.dark) .skip-button {
+    background: rgb(55, 65, 81);
+    border-color: rgb(107, 114, 128);
+    color: rgb(243, 244, 246);
+  }
+
+  :global(.dark) .skip-button:hover {
+    background: rgb(147, 197, 253);
+    color: rgb(17, 24, 39);
+    border-color: rgb(147, 197, 253);
+  }
+
+  .transcript-toggle,
+  .download-button {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    font-size: 0.875rem;
+  }
+
+  .transcript-toggle:hover,
+  .download-button:hover {
+    background: rgb(36, 55, 136);
+    color: white;
+    border-color: rgb(36, 55, 136);
+  }
+
+  :global(.dark) .transcript-toggle,
+  :global(.dark) .download-button {
+    background: rgb(55, 65, 81);
+    border-color: rgb(107, 114, 128);
+    color: rgb(243, 244, 246);
+  }
+
+  :global(.dark) .transcript-toggle:hover,
+  :global(.dark) .download-button:hover {
+    background: rgb(147, 197, 253);
+    color: rgb(17, 24, 39);
+    border-color: rgb(147, 197, 253);
+  }
+
+  /* Enhanced Progress Bar */
   .audio-progress {
     margin-top: 1rem;
   }
@@ -161,8 +543,13 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
     border-radius: 3px;
     margin-bottom: 0.5rem;
     cursor: pointer;
-    overflow: hidden;
-    transition: background-color 0.3s ease;
+    overflow: visible;
+    position: relative;
+    transition: height 0.2s ease;
+  }
+
+  .progress-bar:hover {
+    height: 8px;
   }
 
   :global(.dark) .progress-bar {
@@ -174,6 +561,25 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
     background: rgb(36, 55, 136);
     transition: width 0.1s ease;
     border-radius: 3px;
+    position: relative;
+  }
+
+  .progress-handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    background: rgb(36, 55, 136);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    box-shadow: 0 2px 8px rgba(36, 55, 136, 0.4);
+    cursor: pointer;
+  }
+
+  .progress-bar:hover .progress-handle {
+    opacity: 1;
   }
 
   .time-display {
@@ -192,11 +598,54 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
     font-weight: 500;
   }
 
+  /* Transcript Section */
+  .transcript-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  :global(.dark) .transcript-section {
+    border-top-color: rgb(75, 85, 99);
+  }
+
+  .transcript-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+  }
+
+  :global(.dark) .transcript-title {
+    color: rgb(209, 213, 219);
+  }
+
+  .transcript-content {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: #6b7280;
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  :global(.dark) .transcript-content {
+    color: rgb(156, 163, 175);
+    background: rgb(55, 65, 81);
+  }
+
   .hidden {
     display: none;
   }
 
-  /* Loading state */
+  /* Loading states */
+  .audio-player.loading .play-button {
+    opacity: 0.7;
+    cursor: wait;
+  }
+
   .audio-player.loading .audio-status::after {
     content: "...";
     animation: dots 1.5s infinite;
@@ -218,6 +667,31 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
       content: "...";
     }
   }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .audio-controls {
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .volume-control {
+      order: 3;
+      flex-basis: 100%;
+    }
+
+    .volume-slider-container {
+      opacity: 1;
+      transform: scaleX(1);
+      width: 100%;
+    }
+
+    .settings-dropdown {
+      right: auto;
+      left: 0;
+      min-width: 100%;
+    }
+  }
 </style>
 
 <script>
@@ -235,6 +709,9 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
         ".progress-fill"
       ) as HTMLElement;
       const progressBar = player.querySelector(".progress-bar") as HTMLElement;
+      const progressHandle = player.querySelector(
+        ".progress-handle"
+      ) as HTMLElement;
       const currentTimeEl = player.querySelector(
         ".current-time"
       ) as HTMLElement;
@@ -246,47 +723,143 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
         ".audio-element"
       ) as HTMLAudioElement;
 
+      // Volume controls
+      const volumeButton = player.querySelector(
+        ".volume-button"
+      ) as HTMLButtonElement;
+      const volumeSlider = player.querySelector(
+        ".volume-slider"
+      ) as HTMLInputElement;
+      const volumeUpIcon = player.querySelector(".volume-up") as HTMLElement;
+      const volumeMutedIcon = player.querySelector(
+        ".volume-muted"
+      ) as HTMLElement;
+
+      // Settings controls
+      const settingsButton = player.querySelector(
+        ".settings-button"
+      ) as HTMLButtonElement;
+      const settingsDropdown = player.querySelector(
+        ".settings-dropdown"
+      ) as HTMLElement;
+      const speedSelector = player.querySelector(
+        ".speed-selector"
+      ) as HTMLSelectElement;
+      const skipButtons = player.querySelectorAll(
+        ".skip-button"
+      ) as NodeListOf<HTMLButtonElement>;
+      const transcriptToggle = player.querySelector(
+        ".transcript-toggle"
+      ) as HTMLButtonElement;
+      const transcriptSection = player.querySelector(
+        ".transcript-section"
+      ) as HTMLElement;
+
       if (!audioElement || !audioUrl) return;
 
       let isPlaying = false;
       let duration = 0;
+      let previousVolume = 0.75;
+      let isDragging = false;
 
       // Format time helper
       const formatTime = (seconds: number): string => {
+        if (isNaN(seconds) || seconds < 0) return "0:00";
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, "0")}`;
       };
 
+      // Update progress bar helper - FIXED
+      const updateProgressBar = (
+        currentTime: number,
+        totalDuration: number
+      ) => {
+        console.log("Updating progress:", currentTime, "/", totalDuration); // Debug log
+
+        if (totalDuration > 0 && !isNaN(currentTime) && !isNaN(totalDuration)) {
+          const progress = Math.max(
+            0,
+            Math.min(100, (currentTime / totalDuration) * 100)
+          );
+
+          console.log("Progress percentage:", progress); // Debug log
+
+          if (progressFill) {
+            progressFill.style.width = `${progress}%`;
+            console.log("Set progress fill width to:", `${progress}%`); // Debug log
+          }
+          if (progressHandle) {
+            progressHandle.style.left = `${progress}%`;
+          }
+          if (currentTimeEl) {
+            currentTimeEl.textContent = formatTime(currentTime);
+          }
+        }
+      };
+
+      // Update status with speed info
+      const updateStatus = (baseStatus: string, playbackRate: number = 1) => {
+        if (audioStatusEl) {
+          if (playbackRate !== 1) {
+            audioStatusEl.textContent = `${baseStatus} (${playbackRate}x)`;
+          } else {
+            audioStatusEl.textContent = baseStatus;
+          }
+        }
+      };
+
+      // Initialize volume
+      audioElement.volume = 0.75;
+      if (volumeSlider) volumeSlider.value = "75";
+
+      // Set audio source
+      audioElement.src = audioUrl;
+
       // Audio event listeners
       audioElement.addEventListener("loadedmetadata", () => {
         duration = audioElement.duration;
+        console.log("Audio loaded, duration:", duration); // Debug log
         if (totalTimeEl) totalTimeEl.textContent = formatTime(duration);
-        if (audioStatusEl) audioStatusEl.textContent = "Ready to play";
+        updateStatus("Ready to play", audioElement.playbackRate);
         (player as HTMLElement).classList.remove("loading");
       });
 
+      audioElement.addEventListener("loadeddata", () => {
+        console.log("Audio data loaded"); // Debug log
+        duration = audioElement.duration;
+        if (totalTimeEl) totalTimeEl.textContent = formatTime(duration);
+      });
+
+      audioElement.addEventListener("canplay", () => {
+        console.log("Audio can play"); // Debug log
+        duration = audioElement.duration;
+      });
+
+      // FIXED: More frequent progress updates
       audioElement.addEventListener("timeupdate", () => {
-        if (duration > 0) {
-          const progress = (audioElement.currentTime / duration) * 100;
-          if (progressFill) progressFill.style.width = `${progress}%`;
-          if (currentTimeEl)
-            currentTimeEl.textContent = formatTime(audioElement.currentTime);
+        if (!isDragging && duration > 0) {
+          console.log("Time update:", audioElement.currentTime, "/", duration); // Debug log
+          updateProgressBar(audioElement.currentTime, duration);
         }
+      });
+
+      // Additional progress tracking
+      audioElement.addEventListener("progress", () => {
+        console.log("Audio progress event"); // Debug log
       });
 
       audioElement.addEventListener("ended", () => {
         isPlaying = false;
         if (playIcon) playIcon.classList.remove("hidden");
         if (pauseIcon) pauseIcon.classList.add("hidden");
-        if (audioStatusEl) audioStatusEl.textContent = "Finished";
-        if (progressFill) progressFill.style.width = "0%";
-        if (currentTimeEl) currentTimeEl.textContent = "0:00";
+        updateStatus("Finished", audioElement.playbackRate);
+        updateProgressBar(0, duration);
       });
 
       audioElement.addEventListener("error", (e: Event) => {
         console.error("Audio loading error:", e);
-        if (audioStatusEl) audioStatusEl.textContent = "Error loading audio";
+        updateStatus("Error loading audio");
         if (playButton) playButton.disabled = true;
       });
 
@@ -299,42 +872,383 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
               isPlaying = false;
               if (playIcon) playIcon.classList.remove("hidden");
               if (pauseIcon) pauseIcon.classList.add("hidden");
-              if (audioStatusEl) audioStatusEl.textContent = "Paused";
+              updateStatus("Paused", audioElement.playbackRate);
             } else {
               (player as HTMLElement).classList.add("loading");
-              if (audioStatusEl) audioStatusEl.textContent = "Loading";
+              updateStatus("Loading", audioElement.playbackRate);
 
               await audioElement.play();
               isPlaying = true;
               if (playIcon) playIcon.classList.add("hidden");
               if (pauseIcon) pauseIcon.classList.remove("hidden");
-              if (audioStatusEl) audioStatusEl.textContent = "Playing";
+              updateStatus("Playing", audioElement.playbackRate);
               (player as HTMLElement).classList.remove("loading");
             }
           } catch (error) {
             console.error("Audio playback error:", error);
-            if (audioStatusEl) audioStatusEl.textContent = "Playback error";
+            updateStatus("Playback error");
             (player as HTMLElement).classList.remove("loading");
           }
         });
       }
 
-      // Progress bar click to seek
+      // Progress bar interaction - FIXED
       if (progressBar) {
-        progressBar.addEventListener("click", (e: MouseEvent) => {
+        const handleProgressInteraction = (e: MouseEvent | TouchEvent) => {
           if (duration > 0) {
             const rect = progressBar.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const clickPercent = clickX / rect.width;
+            let clientX: number;
+
+            if (e instanceof MouseEvent) {
+              clientX = e.clientX;
+            } else {
+              clientX = e.touches[0].clientX;
+            }
+
+            const clickX = clientX - rect.left;
+            const clickPercent = Math.max(0, Math.min(1, clickX / rect.width));
             const seekTime = clickPercent * duration;
+
+            console.log("Seeking to:", seekTime, "seconds"); // Debug log
+
             audioElement.currentTime = seekTime;
+            updateProgressBar(seekTime, duration);
           }
+        };
+
+        // Mouse events
+        progressBar.addEventListener("click", (e) => {
+          console.log("Progress bar clicked"); // Debug log
+          handleProgressInteraction(e);
+        });
+
+        let isMouseDown = false;
+
+        progressBar.addEventListener("mousedown", (e) => {
+          isMouseDown = true;
+          isDragging = true;
+          handleProgressInteraction(e);
+          e.preventDefault();
+        });
+
+        document.addEventListener("mousemove", (e) => {
+          if (isMouseDown && isDragging) {
+            handleProgressInteraction(e);
+          }
+        });
+
+        document.addEventListener("mouseup", () => {
+          isMouseDown = false;
+          isDragging = false;
+        });
+
+        // Touch events for mobile
+        progressBar.addEventListener("touchstart", (e) => {
+          isDragging = true;
+          handleProgressInteraction(e);
+          e.preventDefault();
+        });
+
+        progressBar.addEventListener("touchmove", (e) => {
+          if (isDragging) {
+            handleProgressInteraction(e);
+            e.preventDefault();
+          }
+        });
+
+        progressBar.addEventListener("touchend", () => {
+          isDragging = false;
+        });
+      }
+
+      // Volume controls
+      if (volumeButton) {
+        volumeButton.addEventListener("click", () => {
+          if (audioElement.volume > 0) {
+            previousVolume = audioElement.volume;
+            audioElement.volume = 0;
+            if (volumeSlider) volumeSlider.value = "0";
+            if (volumeUpIcon) volumeUpIcon.classList.add("hidden");
+            if (volumeMutedIcon) volumeMutedIcon.classList.remove("hidden");
+          } else {
+            audioElement.volume = previousVolume;
+            if (volumeSlider)
+              volumeSlider.value = (previousVolume * 100).toString();
+            if (volumeUpIcon) volumeUpIcon.classList.remove("hidden");
+            if (volumeMutedIcon) volumeMutedIcon.classList.add("hidden");
+          }
+        });
+      }
+
+      if (volumeSlider) {
+        volumeSlider.addEventListener("input", (e: Event) => {
+          const target = e.target as HTMLInputElement;
+          const volume = parseInt(target.value) / 100;
+          audioElement.volume = volume;
+
+          if (volume === 0) {
+            if (volumeUpIcon) volumeUpIcon.classList.add("hidden");
+            if (volumeMutedIcon) volumeMutedIcon.classList.remove("hidden");
+          } else {
+            if (volumeUpIcon) volumeUpIcon.classList.remove("hidden");
+            if (volumeMutedIcon) volumeMutedIcon.classList.add("hidden");
+            previousVolume = volume;
+          }
+        });
+      }
+
+      // Settings dropdown - FIXED: Removed auto-close for speed selector
+      if (settingsButton && settingsDropdown) {
+        settingsButton.addEventListener("click", (e) => {
+          e.stopPropagation();
+          settingsDropdown.classList.toggle("hidden");
+        });
+
+        // Close dropdown when clicking outside ONLY
+        document.addEventListener("click", (e) => {
+          if (
+            !settingsDropdown.contains(e.target as Node) &&
+            !settingsButton.contains(e.target as Node)
+          ) {
+            settingsDropdown.classList.add("hidden");
+          }
+        });
+
+        // REMOVED: Auto-close behavior for speed selector and other controls
+        // Only close for specific actions that should close the dropdown
+        settingsDropdown.addEventListener("click", (e) => {
+          const target = e.target as HTMLElement;
+          // Only close for transcript toggle and download button
+          if (
+            target.classList.contains("transcript-toggle") ||
+            target.classList.contains("download-button")
+          ) {
+            setTimeout(() => {
+              settingsDropdown.classList.add("hidden");
+            }, 100);
+          }
+        });
+      }
+
+      // Playback speed control - FIXED: No auto-close
+      if (speedSelector) {
+        speedSelector.addEventListener("change", (e: Event) => {
+          const target = e.target as HTMLSelectElement;
+          const speed = parseFloat(target.value);
+          audioElement.playbackRate = speed;
+
+          console.log("Playback speed changed to:", speed); // Debug log
+
+          // Update status immediately
+          const currentStatus = isPlaying
+            ? "Playing"
+            : audioElement.ended
+              ? "Finished"
+              : "Paused";
+          updateStatus(currentStatus, speed);
+
+          // DO NOT auto-close dropdown - let user keep it open
+        });
+      }
+
+      // Skip controls - FIXED: Better seeking
+      skipButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const skipAmount = parseInt(button.getAttribute("data-skip") || "0");
+          const newTime = Math.max(
+            0,
+            Math.min(duration, audioElement.currentTime + skipAmount)
+          );
+
+          console.log("Skipping from", audioElement.currentTime, "to", newTime); // Debug log
+
+          audioElement.currentTime = newTime;
+          updateProgressBar(newTime, duration);
+
+          // Close dropdown after skip action
+          setTimeout(() => {
+            if (settingsDropdown) settingsDropdown.classList.add("hidden");
+          }, 100);
+        });
+      });
+
+      // Transcript toggle
+      if (transcriptToggle && transcriptSection) {
+        transcriptToggle.addEventListener("click", () => {
+          transcriptSection.classList.toggle("hidden");
+          const isHidden = transcriptSection.classList.contains("hidden");
+          transcriptToggle.innerHTML = isHidden
+            ? `<svg fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+               </svg>Show Transcript`
+            : `<svg fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+               </svg>Hide Transcript`;
+
+          // Close dropdown after action
+          setTimeout(() => {
+            if (settingsDropdown) settingsDropdown.classList.add("hidden");
+          }, 100);
+        });
+      }
+
+      // Keyboard shortcuts - FIXED: Better seeking
+      const handleKeydown = (e: KeyboardEvent) => {
+        if (
+          document.activeElement?.tagName === "INPUT" ||
+          document.activeElement?.tagName === "TEXTAREA" ||
+          document.activeElement?.tagName === "SELECT"
+        ) {
+          return;
+        }
+
+        const rect = (player as HTMLElement).getBoundingClientRect();
+        const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+
+        if (!isVisible) return;
+
+        switch (e.key) {
+          case " ":
+          case "k":
+            e.preventDefault();
+            playButton?.click();
+            break;
+          case "ArrowLeft":
+          case "j":
+            e.preventDefault();
+            const backTime = Math.max(0, audioElement.currentTime - 10);
+            console.log("Keyboard: seeking back to", backTime); // Debug log
+            audioElement.currentTime = backTime;
+            updateProgressBar(backTime, duration);
+            break;
+          case "ArrowRight":
+          case "l":
+            e.preventDefault();
+            const forwardTime = Math.min(
+              duration,
+              audioElement.currentTime + 10
+            );
+            console.log("Keyboard: seeking forward to", forwardTime); // Debug log
+            audioElement.currentTime = forwardTime;
+            updateProgressBar(forwardTime, duration);
+            break;
+          case "ArrowUp":
+            e.preventDefault();
+            const newVolumeUp = Math.min(1, audioElement.volume + 0.1);
+            audioElement.volume = newVolumeUp;
+            if (volumeSlider)
+              volumeSlider.value = (newVolumeUp * 100).toString();
+            updateVolumeIcons(newVolumeUp);
+            break;
+          case "ArrowDown":
+            e.preventDefault();
+            const newVolumeDown = Math.max(0, audioElement.volume - 0.1);
+            audioElement.volume = newVolumeDown;
+            if (volumeSlider)
+              volumeSlider.value = (newVolumeDown * 100).toString();
+            updateVolumeIcons(newVolumeDown);
+            break;
+          case "m":
+            e.preventDefault();
+            volumeButton?.click();
+            break;
+          case "f":
+            e.preventDefault();
+            const fastTime = Math.min(duration, audioElement.currentTime + 30);
+            audioElement.currentTime = fastTime;
+            updateProgressBar(fastTime, duration);
+            break;
+          case "b":
+            e.preventDefault();
+            const rewindTime = Math.max(0, audioElement.currentTime - 15);
+            audioElement.currentTime = rewindTime;
+            updateProgressBar(rewindTime, duration);
+            break;
+          case "0":
+          case "Home":
+            e.preventDefault();
+            audioElement.currentTime = 0;
+            updateProgressBar(0, duration);
+            break;
+          case "End":
+            e.preventDefault();
+            const endTime = Math.max(0, duration - 1);
+            audioElement.currentTime = endTime;
+            updateProgressBar(endTime, duration);
+            break;
+        }
+      };
+
+      // Helper function to update volume icons
+      const updateVolumeIcons = (volume: number) => {
+        if (volume === 0) {
+          if (volumeUpIcon) volumeUpIcon.classList.add("hidden");
+          if (volumeMutedIcon) volumeMutedIcon.classList.remove("hidden");
+        } else {
+          if (volumeUpIcon) volumeUpIcon.classList.remove("hidden");
+          if (volumeMutedIcon) volumeMutedIcon.classList.add("hidden");
+          previousVolume = volume;
+        }
+      };
+
+      document.addEventListener("keydown", handleKeydown);
+
+      // Force initial progress update after a short delay
+      setTimeout(() => {
+        if (audioElement.currentTime > 0) {
+          console.log("Force updating progress on load"); // Debug log
+          updateProgressBar(
+            audioElement.currentTime,
+            duration || audioElement.duration
+          );
+        }
+      }, 500);
+
+      // Auto-save volume preference
+      const saveVolumePreference = (volume: number) => {
+        try {
+          localStorage.setItem("audioPlayerVolume", volume.toString());
+        } catch (e) {
+          // Ignore localStorage errors
+        }
+      };
+
+      const loadVolumePreference = (): number => {
+        try {
+          const saved = localStorage.getItem("audioPlayerVolume");
+          return saved ? parseFloat(saved) : 0.75;
+        } catch (e) {
+          return 0.75;
+        }
+      };
+
+      // Initialize with saved volume
+      const savedVolume = loadVolumePreference();
+      audioElement.volume = savedVolume;
+      if (volumeSlider) volumeSlider.value = (savedVolume * 100).toString();
+      updateVolumeIcons(savedVolume);
+
+      // Save volume changes
+      if (volumeSlider) {
+        volumeSlider.addEventListener("change", () => {
+          saveVolumePreference(audioElement.volume);
         });
       }
 
       // Initialize loading state
       (player as HTMLElement).classList.add("loading");
-      if (audioStatusEl) audioStatusEl.textContent = "Loading audio...";
+      updateStatus("Loading audio...");
+
+      // Cleanup function
+      const cleanup = () => {
+        document.removeEventListener("keydown", handleKeydown);
+        if (audioElement) {
+          audioElement.pause();
+          audioElement.currentTime = 0;
+        }
+      };
+
+      (player as any)._cleanup = cleanup;
     });
   });
 </script>

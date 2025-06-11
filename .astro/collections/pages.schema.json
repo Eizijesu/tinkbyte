@@ -43,7 +43,12 @@
           ]
         },
         "layout": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "default",
+            "full-width",
+            "minimal"
+          ]
         },
         "seo": {
           "type": "object",

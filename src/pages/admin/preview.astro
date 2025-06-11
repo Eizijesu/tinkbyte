@@ -1,0 +1,29 @@
+---
+// src/pages/admin/preview.astro
+export const prerender = false;
+
+const slug = Astro.url.searchParams.get("slug");
+if (!slug) {
+  return Astro.redirect("/admin");
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Preview - TinkByte CMS</title>
+  </head>
+  <body>
+    <script>
+      // Redirect to the blog post with edit mode enabled
+      const slug = new URLSearchParams(window.location.search).get("slug");
+      if (slug) {
+        window.location.href = `/blog/${slug}?tina-admin=true`;
+      } else {
+        window.location.href = "/admin";
+      }
+    </script>
+  </body>
+</html>

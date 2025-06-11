@@ -49,10 +49,7 @@
         }
       },
       "required": [
-        "name",
-        "bio",
-        "avatar",
-        "role"
+        "name"
       ],
       "additionalProperties": false
     }

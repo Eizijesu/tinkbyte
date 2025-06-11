@@ -2,7 +2,7 @@
 # src/content/categories/ai-evolution.md
 name: "AI Evolution"
 description: "Practical insights into artificial intelligence implementation, machine learning applications, and the real-world impact of AI technologies beyond the hype."
-icon: "🤖"
+icon: "brain"
 color: "purple"
 featured: true
 seo:
