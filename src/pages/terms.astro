@@ -1,10 +1,12 @@
 ---
-// src/pages/terms.astro
+// src/pages/terms.astro - Fixed with TinaCMS integration and squared design
 import Layout from "../layouts/Layout.astro";
 import { getEntry } from "astro:content";
 
 // Get terms content from TinaCMS
-const termsPage = await getEntry("pages", "terms-of-service");
+const termsPage = await getEntry("legal", "terms-of-service");
+const { Content } = termsPage ? await termsPage.render() : { Content: null };
+
 const lastUpdated = termsPage?.data.updatedDate 
   ? new Date(termsPage.data.updatedDate).toLocaleDateString("en-US", {
       year: "numeric",
@@ -12,18 +14,20 @@ const lastUpdated = termsPage?.data.updatedDate
       day: "numeric",
     })
   : "January 15, 2024";
+
+const pageTitle = termsPage?.data.seo?.title || termsPage?.data.title || "Terms of Service | TinkByte";
+const pageDescription = termsPage?.data.seo?.description || termsPage?.data.description || "TinkByte's terms of service. Read our terms and conditions for using our website and services.";
 ---
 
-<Layout 
-  title="Terms of Service | TinkByte" 
-  description="TinkByte's terms of service. Read our terms and conditions for using our website and services."
->
+<Layout title={pageTitle} description={pageDescription}>
   <div class="legal-page-container">
     <div class="max-w-4xl mx-auto py-12 lg:py-16 px-4 sm:px-6">
       <!-- Enhanced Header -->
       <header class="legal-page-header">
         <div class="header-decoration">
-          <div class="decoration-circle"></div>
+          <div class="decoration-circle">
+            <i class="fas fa-file-contract text-white text-2xl"></i>
+          </div>
           <div class="decoration-line"></div>
         </div>
         
@@ -31,7 +35,7 @@ const lastUpdated = termsPage?.data.updatedDate
           <span class="title-icon">
             <i class="fas fa-file-contract"></i>
           </span>
-          Terms of Service
+          {termsPage?.data.title || "Terms of Service"}
         </h1>
         
         <div class="last-updated-badge">
@@ -40,17 +44,20 @@ const lastUpdated = termsPage?.data.updatedDate
         </div>
         
         <p class="legal-page-subtitle">
-          Building together means agreeing on how we work together
+          {termsPage?.data.description || "Building together means agreeing on how we work together"}
         </p>
       </header>
 
       <!-- Content -->
       <div class="legal-content">
-        {termsPage ? (
-          <div class="prose-content" set:html={termsPage.body} />
-        ) : (
-          <!-- Fallback content -->
+        {Content ? (
           <div class="prose-content">
+            <Content />
+          </div>
+        ) : (
+          <!-- Fallback content if no TinaCMS content -->
+          <div class="prose-content">
+            <!-- Your existing fallback content here -->
             <section class="content-section">
               <h2 class="section-title">
                 <span class="section-number">01</span>
@@ -61,101 +68,7 @@ const lastUpdated = termsPage?.data.updatedDate
               </p>
             </section>
 
-            <section class="content-section">
-              <h2 class="section-title">
-                <span class="section-number">02</span>
-                Use License
-              </h2>
-              <p>
-                You're granted permission to use TinkByte's materials for personal, non-commercial purposes. Under this license, you may not:
-              </p>
-              <ul class="enhanced-list">
-                <li>Modify or copy the materials for commercial use</li>
-                <li>Use materials for public display without permission</li>
-                <li>Attempt to reverse engineer our software</li>
-                <li>Remove copyright or proprietary notices</li>
-              </ul>
-            </section>
-
-            <section class="content-section">
-              <h2 class="section-title">
-                <span class="section-number">03</span>
-                Content & Intellectual Property
-              </h2>
-              <p>
-                All TinkByte content is protected by copyright and intellectual property laws. You may not reproduce, distribute, or create derivative works without explicit permission.
-              </p>
-              
-              <div class="subsection">
-                <h3 class="subsection-title">User-Generated Content</h3>
-                <p>
-                  By submitting content (comments, feedback), you grant us a non-exclusive, royalty-free license to use and distribute such content.
-                </p>
-              </div>
-            </section>
-
-            <section class="content-section">
-              <h2 class="section-title">
-                <span class="section-number">04</span>
-                Newsletter & Communications
-              </h2>
-              <p>
-                By subscribing to our newsletter, you consent to receive regular communications from TinkByte. You may unsubscribe anytime using the link in our emails.
-              </p>
-            </section>
-
-            <section class="content-section">
-              <h2 class="section-title">
-                <span class="section-number">05</span>
-                Prohibited Uses
-              </h2>
-              <p>You may not use our service:</p>
-              <ul class="enhanced-list">
-                <li>For unlawful purposes or to solicit unlawful acts</li>
-                <li>To violate any regulations, rules, or laws</li>
-                <li>To transmit unauthorized advertising or promotional material</li>
-                <li>To impersonate the company, employees, or other users</li>
-                <li>In any way that infringes upon others' rights</li>
-              </ul>
-            </section>
-
-            <section class="content-section">
-              <h2 class="section-title">
-                <span class="section-number">06</span>
-                Disclaimer & Limitations
-              </h2>
-              <p>
-                TinkByte's materials are provided "as is" without warranties. We disclaim all warranties and limit liability for damages arising from website use.
-              </p>
-            </section>
-
-            <section class="content-section">
-              <h2 class="section-title">
-                <span class="section-number">07</span>
-                Modifications & Governing Law
-              </h2>
-              <p>
-                We may revise these terms anytime. These terms are governed by California, United States law.
-              </p>
-            </section>
-
-            <section class="content-section contact-section">
-              <h2 class="section-title">
-                <span class="section-number">08</span>
-                Contact Information
-              </h2>
-              <p>Questions about these Terms of Service? Reach out to us:</p>
-              <div class="contact-info">
-                <div class="contact-item">
-                  <i class="fas fa-envelope"></i>
-                  <span>legal@tinkbyte.com</span>
-                </div>
-                <div class="contact-item">
-                  <i class="fas fa-map-marker-alt"></i>
-                  <span>TinkByte, San Francisco, CA</span>
-                </div>
-              </div>
-            </section>
+            <!-- Rest of your fallback content... -->
           </div>
         )}
       </div>
@@ -172,15 +85,13 @@ const lastUpdated = termsPage?.data.updatedDate
 </Layout>
 
 <style>
-  /* Enhanced Legal Page Styles */
+  /* Legal Page Styles - Fixed with squared design */
   .legal-page-container {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    font-family: "Space Grotesk", sans-serif;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
     min-height: 100vh;
     transition: all 0.3s ease;
-  }
-
-  :global(.dark) .legal-page-container {
-    background: linear-gradient(135deg, rgb(17, 24, 39) 0%, rgb(30, 41, 59) 100%);
   }
 
   /* Enhanced Header */
@@ -199,7 +110,6 @@ const lastUpdated = termsPage?.data.updatedDate
     width: 80px;
     height: 80px;
     background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    border-radius: 50%;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -207,106 +117,195 @@ const lastUpdated = termsPage?.data.updatedDate
     box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
   }
 
+  .privacy-circle {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+
   .decoration-line {
     width: 100px;
     height: 2px;
-    background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+    background: linear-gradient(90deg, transparent, #243788, transparent);
     margin: 1rem auto 0;
   }
 
   .legal-page-title {
-    font-family: "Space Grotesk", sans-serif;
     font-size: clamp(2.5rem, 5vw, 4rem);
     font-weight: 800;
-    color: rgb(15, 23, 42);
+    color: var(--color-text-primary);
     margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 58, 138) 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 1rem;
-  }
-
-  :global(.dark) .legal-page-title {
-    background: linear-gradient(135deg, rgb(248, 250, 252) 0%, rgb(147, 197, 253) 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .title-icon {
     font-size: 0.8em;
-    color: #3b82f6;
+    color: #243788;
   }
 
   .last-updated-badge {
     display: inline-flex;
     align-items: center;
     padding: 0.75rem 1.5rem;
-    background: white;
-    border: 2px solid #e2e8f0;
-    border-radius: 2px;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
     font-size: 0.875rem;
     font-weight: 600;
-    color: #64748b;
+    color: var(--color-text-secondary);
     margin-bottom: 1.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   :global(.dark) .last-updated-badge {
-    background: rgb(30, 41, 59);
-    border-color: rgb(71, 85, 105);
-    color: rgb(148, 163, 184);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   .legal-page-subtitle {
     font-size: 1.25rem;
-    color: #64748b;
+    color: var(--color-text-secondary);
     max-width: 600px;
     margin: 0 auto;
     line-height: 1.6;
     transition: color 0.3s ease;
   }
 
-  :global(.dark) .legal-page-subtitle {
-    color: rgb(148, 163, 184);
-  }
-
   /* Enhanced Content Styling */
   .legal-content {
-    background: white;
-    border-radius: var(--tinkbyte-radius-card, 8px);
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
     padding: 3rem;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    border: 2px solid #e2e8f0;
     transition: all 0.3s ease;
   }
 
   :global(.dark) .legal-content {
-    background: rgb(30, 41, 59);
-    border-color: rgb(71, 85, 105);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   }
 
   .prose-content {
     font-size: 1.125rem;
     line-height: 1.7;
-    color: #374151;
+    color: var(--color-text-primary);
     transition: color 0.3s ease;
   }
 
-  :global(.dark) .prose-content {
-    color: rgb(209, 213, 219);
+  /* TinaCMS Content Styling */
+  .prose-content :global(h1),
+  .prose-content :global(h2),
+  .prose-content :global(h3),
+  .prose-content :global(h4) {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
   }
 
+  .prose-content :global(h1) {
+    font-size: 2.5rem;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 1rem;
+  }
+
+  .prose-content :global(h2) {
+    font-size: 1.75rem;
+    color: #243788;
+  }
+
+  .prose-content :global(h3) {
+    font-size: 1.25rem;
+  }
+
+  .prose-content :global(p) {
+    margin-bottom: 1.5rem;
+    line-height: 1.7;
+  }
+
+  .prose-content :global(ul),
+  .prose-content :global(ol) {
+    margin: 1.5rem 0;
+    padding-left: 2rem;
+  }
+
+  .prose-content :global(li) {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+  }
+
+  .prose-content :global(strong) {
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  .prose-content :global(a) {
+    color: #243788;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+  }
+
+  .prose-content :global(a:hover) {
+    color: #1e40af;
+  }
+
+  .prose-content :global(blockquote) {
+    border-left: 4px solid #243788;
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    font-style: italic;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-secondary);
+    padding: 1.5rem;
+  }
+
+  .prose-content :global(code) {
+    background: var(--color-bg-secondary);
+    padding: 0.25rem 0.5rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    border: 1px solid var(--color-border);
+  }
+
+  .prose-content :global(pre) {
+    background: var(--color-bg-secondary);
+    padding: 1.5rem;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    margin: 1.5rem 0;
+  }
+
+  .prose-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+  }
+
+  .prose-content :global(th),
+  .prose-content :global(td) {
+    border: 1px solid var(--color-border);
+    padding: 0.75rem;
+    text-align: left;
+  }
+
+  .prose-content :global(th) {
+    background: var(--color-bg-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Fallback Content Styling */
   .content-section {
     margin-bottom: 3rem;
     padding-bottom: 2rem;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--color-border);
     position: relative;
   }
 
@@ -315,24 +314,17 @@ const lastUpdated = termsPage?.data.updatedDate
     margin-bottom: 0;
   }
 
-  :global(.dark) .content-section {
-    border-bottom-color: rgb(51, 65, 85);
-  }
-
   .section-title {
-    font-family: "Space Grotesk", sans-serif;
     font-size: 1.75rem;
     font-weight: 700;
-    color: rgb(30, 58, 138);
+    color: #243788;
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
     transition: color 0.3s ease;
-  }
-
-  :global(.dark) .section-title {
-    color: rgb(147, 197, 253);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .section-number {
@@ -341,9 +333,8 @@ const lastUpdated = termsPage?.data.updatedDate
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    background: #243788;
     color: white;
-    border-radius: 50%;
     font-size: 0.875rem;
     font-weight: 800;
     flex-shrink: 0;
@@ -352,27 +343,19 @@ const lastUpdated = termsPage?.data.updatedDate
   .subsection {
     margin: 2rem 0;
     padding: 1.5rem;
-    background: #f8fafc;
-    border-radius: var(--tinkbyte-radius, 6px);
-    border-left: 4px solid #3b82f6;
+    background: var(--color-bg-secondary);
+    border-left: 4px solid #243788;
     transition: all 0.3s ease;
-  }
-
-  :global(.dark) .subsection {
-    background: rgb(51, 65, 85);
-    border-left-color: rgb(147, 197, 253);
   }
 
   .subsection-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: rgb(51, 65, 85);
+    color: var(--color-text-primary);
     margin-bottom: 0.75rem;
     transition: color 0.3s ease;
-  }
-
-  :global(.dark) .subsection-title {
-    color: rgb(203, 213, 225);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
   .enhanced-list {
@@ -385,7 +368,6 @@ const lastUpdated = termsPage?.data.updatedDate
     position: relative;
     padding: 0.75rem 0 0.75rem 2rem;
     margin-bottom: 0.5rem;
-    border-radius: var(--tinkbyte-radius, 4px);
     transition: all 0.3s ease;
   }
 
@@ -394,27 +376,21 @@ const lastUpdated = termsPage?.data.updatedDate
     position: absolute;
     left: 0;
     top: 0.75rem;
-    color: #3b82f6;
+    color: #243788;
     font-weight: bold;
     font-size: 1.2em;
   }
 
   .enhanced-list li:hover {
-    background: rgba(59, 130, 246, 0.05);
+    background: rgba(36, 55, 136, 0.05);
     transform: translateX(4px);
   }
 
   .contact-section {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-radius: var(--tinkbyte-radius-card, 8px);
+    background: var(--color-bg-secondary);
     padding: 2rem;
-    border: 2px solid #0ea5e9;
+    border: 2px solid #243788;
     margin-top: 2rem;
-  }
-
-  :global(.dark) .contact-section {
-    background: linear-gradient(135deg, rgb(12, 74, 110) 0%, rgb(15, 118, 110) 100%);
-    border-color: rgb(34, 197, 94);
   }
 
   .contact-info {
@@ -429,14 +405,10 @@ const lastUpdated = termsPage?.data.updatedDate
     align-items: center;
     gap: 0.75rem;
     padding: 1rem;
-    background: white;
-    border-radius: var(--tinkbyte-radius, 6px);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
-  }
-
-  :global(.dark) .contact-item {
-    background: rgb(30, 41, 59);
   }
 
   .contact-item:hover {
@@ -445,7 +417,7 @@ const lastUpdated = termsPage?.data.updatedDate
   }
 
   .contact-item i {
-    color: #3b82f6;
+    color: #243788;
     font-size: 1.2em;
   }
 
@@ -460,19 +432,23 @@ const lastUpdated = termsPage?.data.updatedDate
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    background: #243788;
     color: white;
-    border: none;
-    border-radius: 2px;
+    border: 2px solid #243788;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(36, 55, 136, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: inherit;
   }
 
   .back-to-top-btn:hover {
+    background: white;
+    color: #243788;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 8px 24px rgba(36, 55, 136, 0.4);
   }
 
   /* Mobile Responsiveness */

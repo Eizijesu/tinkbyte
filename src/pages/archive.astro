@@ -1,127 +1,159 @@
 ---
-// src/pages/archive.astro - Enhanced with proper author handling
+// src/pages/archive.astro - Complete content archive with all collections
 import Layout from "../layouts/Layout.astro";
 import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
 
-// Get all posts from TinaCMS
+// Get all content types
 const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+const allNewsletters = await getCollection("newsletter");
+const allPodcasts = await getCollection("podcast");
+
+// Combine all content with proper typing and date handling
+const allContent = [
+  ...allPosts.map((post) => ({
+    ...post,
+    contentType: "blog" as const,
+    displayDate: post.data.pubDate,
+    displayTitle: post.data.title,
+    displayExcerpt: post.data.excerpt || post.data.description || '',
+    displayAuthor: post.data.authorInfo?.name || post.data.author || "TinkByte Team",
+    displayCategory: post.data.category || "Article",
+    displayImage: post.data.heroImage?.uploadedImage || post.data.heroImage?.externalUrl || post.data.image,
+    displayReadTime: post.data.readTime || "5 min read",
+    url: `/blog/${post.slug}`,
+  })),
+  ...allNewsletters.map((newsletter) => ({
+    ...newsletter,
+    contentType: "newsletter" as const,
+    displayDate: newsletter.data.pubDate || newsletter.data.publishDate,
+    displayTitle: newsletter.data.title,
+    displayExcerpt: newsletter.data.excerpt || newsletter.data.description || '',
+    displayAuthor: "TinkByte Team",
+    displayCategory: `Issue #${newsletter.data.issueNumber || "TBD"}`,
+    displayImage: newsletter.data.coverImage,
+    displayReadTime: newsletter.data.readingTime ? `${newsletter.data.readingTime} min read` : "5 min read",
+    url: `/newsletter/${newsletter.slug}`,
+  })),
+  ...allPodcasts.map((podcast) => ({
+    ...podcast,
+    contentType: "podcast" as const,
+    displayDate: podcast.data.pubDate,
+    displayTitle: podcast.data.title,
+    displayExcerpt: podcast.data.description || '',
+    displayAuthor: podcast.data.host || podcast.data.guests?.[0]?.name || "TinkByte Team",
+    displayCategory: `Episode ${podcast.data.episodeNumber || "TBD"}`,
+    displayImage: podcast.data.image,
+    displayReadTime: podcast.data.duration || "30 min",
+    url: `/podcast/${podcast.slug}`,
+  })),
+];
 
 // Sort by date (newest first)
-const sortedPosts = allPosts.sort(
-  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+const sortedContent = allContent.sort(
+  (a, b) => new Date(b.displayDate).getTime() - new Date(a.displayDate).getTime()
 );
 
 // Group by year
-const postsByYear = sortedPosts.reduce(
-  (acc, post) => {
-    const year = post.data.pubDate.getFullYear();
+const contentByYear = sortedContent.reduce(
+  (acc, content) => {
+    const year = new Date(content.displayDate).getFullYear();
     if (!acc[year]) {
       acc[year] = [];
     }
-    acc[year].push(post);
+    acc[year].push(content);
     return acc;
   },
-  {} as Record<number, typeof sortedPosts>
+  {} as Record<number, typeof sortedContent>
 );
 
-const years = Object.keys(postsByYear)
+const years = Object.keys(contentByYear)
   .map(Number)
   .sort((a, b) => b - a);
 
-// Get categories for filtering
-const allCategories = [
-  ...new Set(allPosts.map((post) => post.data.category).filter(Boolean)),
-];
-
-// Helper function to format category display name
-const formatCategoryName = (category: string) => {
-  return category.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-};
-
-// Helper function to get author name with proper fallback
-const getAuthorName = (post: any) => {
-  return post.data.authorInfo?.name || post.data.author || "TinkByte Team";
-};
-
 // Statistics
-const totalPosts = allPosts.length;
-const totalAudioPosts = allPosts.filter((post) => post.data.audioUrl).length;
-const totalFeatured = allPosts.filter((post) => post.data.featured).length;
+const totalContent = allContent.length;
+const totalBlogs = allPosts.length;
+const totalNewsletters = allNewsletters.length;
+const totalPodcasts = allPodcasts.length;
+const totalAudioContent = allPosts.filter((post) => post.data.audioUrl).length + totalPodcasts;
+
+// Helper function to get content type icon and color
+const getContentTypeDisplay = (contentType: string) => {
+  switch (contentType) {
+    case "blog":
+      return { icon: "fas fa-file-alt", color: "blue", label: "Article" };
+    case "newsletter":
+      return { icon: "fas fa-newspaper", color: "purple", label: "Newsletter" };
+    case "podcast":
+      return { icon: "fas fa-podcast", color: "green", label: "Podcast" };
+    default:
+      return { icon: "fas fa-file", color: "gray", label: "Content" };
+  }
+};
 ---
 
 <Layout
-  title="Archive | TinkByte - Complete Article Collection"
-  description="Browse all articles by year and category. Explore our complete collection of tech insights and product development guides."
+  title="Complete Archive | TinkByte - All Content"
+  description={`Browse all ${totalContent} pieces of content including articles, newsletters, and podcasts. Complete archive organized by year.`}
 >
   <!-- Enhanced Archive Header -->
   <section class="relative py-16 lg:py-24 overflow-hidden">
-    <div
-      class="absolute inset-0 bg-gradient-to-r from-zinc-600 via-gray-600 to-slate-600 opacity-10"
-    >
-    </div>
-    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5">
-    </div>
-
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-10"></div>
+    
     <div class="container mx-auto px-4 relative z-10">
       <div class="max-w-4xl mx-auto text-center">
-        <h1
-          class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6"
-        >
-          Article
-          <span
-            class="bg-gradient-to-r from-zinc-600 to-gray-600 bg-clip-text text-transparent"
-          >
+        <h1 class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6">
+          Content
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Archive
           </span>
         </h1>
-
-        <p
-          class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12"
-        >
-          Browse our complete collection of {totalPosts} articles organized by publication
-          year. Every piece of content we've published since we started.
+        
+        <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12">
+          Browse our complete collection of {totalContent} pieces of content including articles, newsletters, and podcasts organized by publication year.
         </p>
 
         <!-- Enhanced Statistics Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-3xl mx-auto">
           <div class="text-center">
-            <div class="text-3xl font-bold text-zinc-900 dark:text-white mb-1">
-              {totalPosts}
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+              {totalContent}
             </div>
-            <div
-              class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
-            >
-              Total Articles
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              Total
             </div>
           </div>
           <div class="text-center">
-            <div class="text-3xl font-bold text-zinc-900 dark:text-white mb-1">
-              {years.length}
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+              {totalBlogs}
             </div>
-            <div
-              class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
-            >
-              Years
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              Articles
             </div>
           </div>
           <div class="text-center">
-            <div class="text-3xl font-bold text-zinc-900 dark:text-white mb-1">
-              {totalAudioPosts}
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+              {totalNewsletters}
             </div>
-            <div
-              class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
-            >
-              Audio Posts
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              Newsletters
             </div>
           </div>
           <div class="text-center">
-            <div class="text-3xl font-bold text-zinc-900 dark:text-white mb-1">
-              {totalFeatured}
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+              {totalPodcasts}
             </div>
-            <div
-              class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
-            >
-              Featured
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              Podcasts
+            </div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+              {totalAudioContent}
+            </div>
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              Audio
             </div>
           </div>
         </div>
@@ -129,45 +161,29 @@ const totalFeatured = allPosts.filter((post) => post.data.featured).length;
     </div>
   </section>
 
-  <!-- Filter Section -->
+  <!-- Content Filter Tabs -->
   <section class="py-8 px-4 border-b border-zinc-200 dark:border-zinc-700">
     <div class="container mx-auto">
       <div class="max-w-4xl mx-auto">
-        <div class="flex flex-wrap gap-2 justify-center">
-          <button
-            class="filter-btn active px-4 py-2 text-sm font-medium rounded-sm border border-zinc-300 dark:border-zinc-600 hover:border-blue-500 transition-colors"
-            data-filter="all"
-          >
-            All Articles ({totalPosts})
+        <div class="flex flex-wrap justify-center gap-4">
+          <button class="filter-tab active" data-filter="all">
+            All Content ({totalContent})
           </button>
-          {
-            allCategories.map((category) => {
-              const count = allPosts.filter(
-                (post) => post.data.category === category
-              ).length;
-              return (
-                <button
-                  class="filter-btn px-4 py-2 text-sm font-medium rounded-sm border border-zinc-300 dark:border-zinc-600 hover:border-blue-500 transition-colors"
-                  data-filter={category}
-                >
-                  {formatCategoryName(category)} ({count})
-                </button>
-              );
-            })
-          }
-          <button
-            class="filter-btn px-4 py-2 text-sm font-medium rounded-sm border border-zinc-300 dark:border-zinc-600 hover:border-blue-500 transition-colors"
-            data-filter="audio"
-          >
+          <button class="filter-tab" data-filter="blog">
+            <i class="fas fa-file-alt mr-1"></i>
+            Articles ({totalBlogs})
+          </button>
+          <button class="filter-tab" data-filter="newsletter">
+            <i class="fas fa-newspaper mr-1"></i>
+            Newsletters ({totalNewsletters})
+          </button>
+          <button class="filter-tab" data-filter="podcast">
+            <i class="fas fa-podcast mr-1"></i>
+            Podcasts ({totalPodcasts})
+          </button>
+          <button class="filter-tab" data-filter="audio">
             <i class="fas fa-headphones mr-1"></i>
-            Audio ({totalAudioPosts})
-          </button>
-          <button
-            class="filter-btn px-4 py-2 text-sm font-medium rounded-sm border border-zinc-300 dark:border-zinc-600 hover:border-blue-500 transition-colors"
-            data-filter="featured"
-          >
-            <i class="fas fa-star mr-1"></i>
-            Featured ({totalFeatured})
+            Audio ({totalAudioContent})
           </button>
         </div>
       </div>
@@ -175,179 +191,176 @@ const totalFeatured = allPosts.filter((post) => post.data.featured).length;
   </section>
 
   <!-- Archive by Year -->
-  <section class="py-16 px-4 sm:px-6">
+  <section class="py-16 px-4">
     <div class="container mx-auto">
-      <div class="max-w-4xl mx-auto">
-        {
-          years.map((year) => (
-            <div class="year-section mb-12" data-year={year}>
-              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-8 border-b-2 border-zinc-200 dark:border-zinc-700 pb-4">
+      <div class="max-w-6xl mx-auto">
+        {years.map(year => (
+          <div class="year-section mb-16" data-year={year}>
+            <div class="flex items-center gap-4 mb-8">
+              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white">
                 {year}
-                <span class="text-lg font-normal text-zinc-500 dark:text-zinc-400 ml-2">
-                  ({postsByYear[year].length} articles)
-                </span>
               </h2>
+              <div class="flex-1 h-px bg-zinc-200 dark:bg-zinc-700"></div>
+              <span class="text-sm text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full">
+                {contentByYear[year].length} items
+              </span>
+            </div>
 
-              <div class="space-y-6">
-                {postsByYear[year].map((post) => (
-                  <article
-                    class="post-item group p-6 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-lg transition-all duration-200"
-                    data-category={post.data.category}
-                    data-audio={post.data.audioUrl ? "true" : "false"}
-                    data-featured={post.data.featured ? "true" : "false"}
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {contentByYear[year].map(content => {
+                const typeDisplay = getContentTypeDisplay(content.contentType);
+                return (
+                  <article 
+                    class="content-card group bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-lg transition-all duration-300"
+                    data-content-type={content.contentType}
+                    data-has-audio={
+                      content.contentType === "podcast" || 
+                      (content.contentType === "blog" && (content as any).data.audioUrl) 
+                        ? "true" 
+                        : "false"
+                    }
                   >
-                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                      <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-3 flex-wrap">
-                          <span class="text-xs font-semibold px-3 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded uppercase tracking-wide">
-                            {formatCategoryName(post.data.category)}
-                          </span>
-                          <time class="text-sm text-zinc-500 dark:text-zinc-400">
-                            {post.data.pubDate.toLocaleDateString("en-US", {
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </time>
-                          {post.data.featured && (
-                            <span class="text-xs font-semibold px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded uppercase tracking-wide">
-                              <i class="fas fa-star mr-1" />
-                              Featured
-                            </span>
-                          )}
-                          {post.data.audioUrl && (
-                            <span class="text-xs font-semibold px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded uppercase tracking-wide">
-                              <i class="fas fa-headphones mr-1" />
-                              Audio
-                            </span>
-                          )}
-                          {post.data.trending && (
-                            <span class="text-xs font-semibold px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded uppercase tracking-wide">
-                              <i class="fas fa-fire mr-1" />
-                              Trending
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors mb-2">
-                          <a
-                            href={`/blog/${post.slug}`}
-                            class="hover:underline"
-                          >
-                            {post.data.title}
-                          </a>
-                        </h3>
-
-                        <p class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed mb-3">
-                          {post.data.excerpt}
-                        </p>
-
-                        <div class="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 flex-wrap">
-                          <span class="flex items-center gap-1">
-                            <i class="fas fa-user" />
-                            By {getAuthorName(post)}
-                          </span>
-                          <span class="flex items-center gap-1">
-                            <i class="fas fa-clock" />
-                            {post.data.readTime || "5 min read"}
-                          </span>
-                          {post.data.tags && post.data.tags.length > 0 && (
-                            <div class="flex items-center gap-1">
-                              <i class="fas fa-tags" />
-                              <span>
-                                {post.data.tags.slice(0, 2).join(", ")}
-                              </span>
-                              {post.data.tags.length > 2 && (
-                                <span class="text-zinc-400">
-                                  +{post.data.tags.length - 2} more
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                    {content.displayImage && (
+                      <div class="aspect-video overflow-hidden">
+                        <Image
+                          src={content.displayImage}
+                          alt={content.displayTitle}
+                          width={400}
+                          height={225}
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
                       </div>
+                    )}
+                    
+                    <div class="p-6">
+                      <div class="flex items-center gap-2 mb-3 flex-wrap">
+                        <span class={`content-type-badge ${content.contentType}`}>
+                          <i class={`${typeDisplay.icon} mr-1`}></i>
+                          {typeDisplay.label}
+                        </span>
+                        <span class="text-xs font-semibold px-2 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded uppercase tracking-wide">
+                          {content.displayCategory}
+                        </span>
+                        <time class="text-xs text-zinc-500 dark:text-zinc-400" datetime={new Date(content.displayDate).toISOString()}>
+                          {new Date(content.displayDate).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </time>
+                        {(content.contentType === "podcast" || 
+                          (content.contentType === "blog" && (content as any).data.audioUrl)) && (
+                          <span class="text-xs font-semibold px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded uppercase tracking-wide">
+                            <i class="fas fa-headphones mr-1"></i>
+                            Audio
+                          </span>
+                        )}
+                      </div>
+                      
+                      <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-2 leading-tight">
+                        <a href={content.url} class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                          {content.displayTitle}
+                        </a>
+                      </h3>
+                      
+                      <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-3">
+                        {content.displayExcerpt}
+                      </p>
 
-                      {post.data.image && (
-                        <div class="lg:w-32 lg:h-24 w-full h-32 flex-shrink-0">
-                          <img
-                            src={post.data.image}
-                            alt={post.data.imageAlt || post.data.title}
-                            class="w-full h-full object-cover rounded border border-zinc-200 dark:border-zinc-700"
-                            loading="lazy"
-                          />
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                          <span>{content.displayAuthor}</span>
+                          <span>•</span>
+                          <span>{content.displayReadTime}</span>
                         </div>
-                      )}
+                        
+                        <a 
+                          href={content.url}
+                          class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-semibold transition-colors inline-flex items-center gap-1"
+                        >
+                          {content.contentType === 'podcast' ? 'Listen' : 'Read'}
+                          <i class="fas fa-arrow-right text-xs"></i>
+                        </a>
+                      </div>
                     </div>
                   </article>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          ))
-        }
-
-        <!-- Empty State -->
-        {
-          allPosts.length === 0 && (
-            <div class="text-center py-16">
-              <div class="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-sm flex items-center justify-center mx-auto mb-8">
-                <i class="fas fa-archive text-3xl text-zinc-400" />
-              </div>
-              <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
-                No Articles Yet
-              </h2>
-              <p class="text-zinc-600 dark:text-zinc-400 mb-8">
-                We're working on bringing you great content. Check back soon!
-              </p>
-              <a
-                href="/"
-                class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-sm hover:bg-blue-700 transition-colors"
-              >
-                <i class="fas fa-home mr-2" />
-                Back to Home
-              </a>
-            </div>
-          )
-        }
+          </div>
+        ))}
       </div>
     </div>
   </section>
+
+  <!-- Empty State -->
+  {totalContent === 0 && (
+    <section class="py-32 px-4">
+      <div class="container mx-auto">
+        <div class="max-w-2xl mx-auto text-center">
+          <div class="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-sm flex items-center justify-center mx-auto mb-8">
+            <i class="fas fa-archive text-3xl text-zinc-400"></i>
+          </div>
+          
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
+            No Content Yet
+          </h2>
+          
+          <p class="text-zinc-600 dark:text-zinc-400 mb-8">
+            We're working on bringing you great content. Check back soon!
+          </p>
+          
+          <a 
+            href="/"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-sm font-semibold transition-all duration-200"
+          >
+            <i class="fas fa-home mr-2"></i>
+            Back to Home
+          </a>
+        </div>
+      </div>
+    </section>
+  )}
 </Layout>
 
 <style>
-  .line-clamp-2 {
+  /* ✅ FIXED: Removed 'group' from @apply directive */
+  .content-card {
+    /* group class is now applied directly in HTML */
+  }
+
+  .content-type-badge {
+    @apply px-2 py-1 rounded text-xs font-bold uppercase tracking-wide;
+  }
+
+  .content-type-badge.blog {
+    @apply bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300;
+  }
+
+  .content-type-badge.newsletter {
+    @apply bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300;
+  }
+
+  .content-type-badge.podcast {
+    @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300;
+  }
+
+  .filter-tab {
+    @apply px-4 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-200 text-sm font-medium;
+  }
+
+  .filter-tab.active {
+    @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700;
+  }
+
+  .line-clamp-3 {
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
-
-  .bg-gradient-to-r.bg-clip-text {
-    background-size: 200% 200%;
-    animation: gradient 3s ease-in-out infinite;
-  }
-
-  .filter-btn.active {
-    background-color: rgb(59 130 246);
-    color: white;
-    border-color: rgb(59 130 246);
-  }
-
-  .filter-btn:hover {
-    border-color: rgb(59 130 246);
-  }
-
-  .post-item.hidden {
+  .content-card.hidden {
     display: none;
   }
 
@@ -358,72 +371,52 @@ const totalFeatured = allPosts.filter((post) => post.data.featured).length;
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const filterButtons = document.querySelectorAll(".filter-btn");
-    const postItems = document.querySelectorAll(".post-item");
-    const yearSections = document.querySelectorAll(".year-section");
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const contentCards = document.querySelectorAll('.content-card');
+    const yearSections = document.querySelectorAll('.year-section');
 
-    filterButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const filter = button.getAttribute("data-filter");
-
-        // Update active button
-        filterButtons.forEach((btn) => btn.classList.remove("active"));
-        button.classList.add("active");
-
-        // Filter posts
-        postItems.forEach((post) => {
-          const category = post.getAttribute("data-category");
-          const hasAudio = post.getAttribute("data-audio") === "true";
-          const isFeatured = post.getAttribute("data-featured") === "true";
-
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const filter = tab.getAttribute('data-filter');
+        
+        // Update active tab
+        filterTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Filter content
+        contentCards.forEach(card => {
+          const contentType = card.getAttribute('data-content-type');
+          const hasAudio = card.getAttribute('data-has-audio') === 'true';
+          
           let shouldShow = false;
-
+          
           switch (filter) {
-            case "all":
+            case 'all':
               shouldShow = true;
               break;
-            case "audio":
+            case 'audio':
               shouldShow = hasAudio;
               break;
-            case "featured":
-              shouldShow = isFeatured;
-              break;
             default:
-              shouldShow = category === filter;
+              shouldShow = contentType === filter;
           }
-
+          
           if (shouldShow) {
-            post.classList.remove("hidden");
+            card.classList.remove('hidden');
           } else {
-            post.classList.add("hidden");
+            card.classList.add('hidden');
           }
         });
 
-        // Show/hide year sections based on visible posts
-        yearSections.forEach((yearSection) => {
-          const visiblePosts = yearSection.querySelectorAll(
-            ".post-item:not(.hidden)"
-          );
-          if (visiblePosts.length > 0) {
-            yearSection.classList.remove("hidden");
+        // Show/hide year sections based on visible content
+        yearSections.forEach(yearSection => {
+          const visibleItems = yearSection.querySelectorAll('.content-card:not(.hidden)');
+          if (visibleItems.length > 0) {
+            yearSection.classList.remove('hidden');
           } else {
-            yearSection.classList.add("hidden");
+            yearSection.classList.add('hidden');
           }
         });
-      });
-    });
-
-    // Smooth scroll for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-      anchor.addEventListener("click", function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute("href"));
-        if (target) {
-          target.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }
       });
     });
   });

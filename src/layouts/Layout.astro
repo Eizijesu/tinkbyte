@@ -464,6 +464,69 @@ const structuredData = getStructuredData();
         }
       })();
     </script>
+
+    <!-- Add this RIGHT AFTER the existing theme detection script (around line 289) -->
+<script is:inline>
+  // CRITICAL: Theme transition coordinator for synchronized transitions
+  function initializeThemeTransitions() {
+    const html = document.documentElement;
+    
+    // Create a centralized theme transition manager
+    window.themeTransitionManager = {
+      isTransitioning: false,
+      transitionDuration: 300,
+      
+      startTransition() {
+        if (this.isTransitioning) return;
+        
+        this.isTransitioning = true;
+        html.classList.add('theme-transitioning');
+        
+        // Force all elements to use synchronized transitions
+        const style = document.createElement('style');
+        style.id = 'theme-transition-override';
+        style.textContent = `
+          *, *::before, *::after {
+            transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                       color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                       border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                       stroke 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          }
+        `;
+        document.head.appendChild(style);
+        
+        setTimeout(() => {
+          this.endTransition();
+        }, this.transitionDuration);
+      },
+      
+      endTransition() {
+        this.isTransitioning = false;
+        html.classList.remove('theme-transitioning');
+        
+        const style = document.getElementById('theme-transition-override');
+        if (style) style.remove();
+      }
+    };
+    
+    // Override existing theme toggle to use transition manager
+    const originalToggle = window.toggleTheme;
+    window.toggleTheme = function() {
+      window.themeTransitionManager.startTransition();
+      
+      setTimeout(() => {
+        if (originalToggle) originalToggle();
+      }, 10);
+    };
+  }
+  
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeThemeTransitions);
+  } else {
+    initializeThemeTransitions();
+  }
+</script>
   </head>
 
   <body

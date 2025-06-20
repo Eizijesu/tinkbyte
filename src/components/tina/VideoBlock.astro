@@ -1,0 +1,146 @@
+---
+export interface Props {
+  platform?: "youtube" | "vimeo" | "direct";
+  url: string;
+  title?: string;
+  description?: string;
+  aspectRatio?: "16/9" | "4/3" | "1/1";
+}
+
+const {
+  platform = "youtube",
+  url,
+  title,
+  description,
+  aspectRatio = "16/9",
+} = Astro.props;
+
+const getEmbedUrl = (url: string, platform: string) => {
+  if (platform === "youtube") {
+    const videoId = url.match(
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+    );
+    return videoId
+      ? `https://www.youtube.com/embed/${videoId[1]}?rel=0&modestbranding=1`
+      : url;
+  }
+  if (platform === "vimeo") {
+    const videoId = url.match(/vimeo\.com\/(\d+)/);
+    return videoId
+      ? `https://player.vimeo.com/video/${videoId[1]}?byline=0&portrait=0`
+      : url;
+  }
+  return url;
+};
+
+const embedUrl = getEmbedUrl(url, platform);
+---
+
+<div class="tina-video-embed">
+  {title && <h3 class="video-title">{title}</h3>}
+
+  <div
+    class="video-container"
+    style={`aspect-ratio: ${aspectRatio.replace("/", " / ")}`}
+  >
+    {
+      platform === "direct" ? (
+        <video controls class="video-element">
+          <source src={url} type="video/mp4" />
+          <p>
+            Your browser doesn't support HTML video.{" "}
+            <a href={url}>Download the video</a> instead.
+          </p>
+        </video>
+      ) : (
+        <iframe
+          src={embedUrl}
+          title={title || "Embedded Video"}
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowfullscreen
+          class="video-iframe"
+          loading="lazy"
+        />
+      )
+    }
+  </div>
+
+  {description && <p class="video-description" set:html={description} />}
+</div>
+
+<style>
+  .tina-video-block {
+    margin: 2rem 0;
+  }
+
+  .video-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: rgb(15, 23, 42);
+    margin-bottom: 1rem;
+    text-align: center;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .video-title {
+    color: rgb(248, 250, 252);
+  }
+
+  .video-container {
+    position: relative;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    background: #000;
+    transition: all 0.3s ease;
+  }
+
+  .video-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  .video-iframe,
+  .video-element {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .video-description {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-align: center;
+    line-height: 1.6;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .video-description {
+    color: rgb(156, 163, 175);
+  }
+
+  :global(.dark) .video-container {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  :global(.dark) .video-container:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .video-title {
+      font-size: 1.125rem;
+    }
+
+    .video-description {
+      font-size: 0.8125rem;
+    }
+  }
+</style>

@@ -1,0 +1,615 @@
+---
+// src/pages/all-topics.astro - Fixed Version
+import Layout from "../layouts/Layout.astro";
+import { SITE } from "../config/site";
+import { getCollection } from "astro:content";
+
+// Try to get data from TinaCMS first
+let allTopicsData, pageData, heroData, topicsData;
+
+try {
+  allTopicsData = await getCollection("allTopics");
+  pageData = allTopicsData[0]?.data;
+  heroData = pageData?.hero;
+  topicsData = pageData?.topics;
+} catch (error) {
+  console.warn("Could not load allTopics from CMS, using fallback data");
+}
+
+// Your existing hardcoded topics as fallback
+const topics = [
+  {
+    name: "Build Thinking",
+    href: "/blog/categories/build-thinking",
+    description: "From concept to working product",
+    audience: "Product managers, indie hackers"
+  },
+  {
+    name: "Learning by Doing", 
+    href: "/blog/categories/learning-by-doing",
+    description: "Real-world lessons from action",
+    audience: "Builders who experiment"
+  },
+  {
+    name: "Product Lessons",
+    href: "/blog/categories/product-lessons", 
+    description: "Behind-the-scenes insights",
+    audience: "Product leads, founders"
+  },
+  {
+    name: "Startup Insight",
+    href: "/blog/categories/startup-insight",
+    description: "Early-stage execution signals",
+    audience: "Startup founders, operators"
+  },
+  {
+    name: "Product Strategy",
+    href: "/blog/categories/product-strategy",
+    description: "Roadmap decisions and prioritization",
+    audience: "Product strategists, growth leads"
+  },
+  {
+    name: "AI Evolution",
+    href: "/blog/categories/ai-evolution",
+    description: "Practical AI integration stories",
+    audience: "Technical founders, AI builders"
+  },
+  {
+    name: "Developer Tools",
+    href: "/blog/categories/developer-tools",
+    description: "Toolchains and infrastructure choices",
+    audience: "Developers, CTOs, tech leads"
+  },
+  {
+    name: "Research Bites",
+    href: "/blog/categories/research-bites",
+    description: "Data-driven insights made practical",
+    audience: "Product thinkers, researchers"
+  },
+  {
+    name: "Global Perspective",
+    href: "/blog/categories/global-perspective",
+    description: "Stories from emerging markets",
+    audience: "Global builders"
+  },
+  {
+    name: "Community Innovation",
+    href: "/blog/categories/community-innovation",
+    description: "How communities build and grow",
+    audience: "Community managers"
+  },
+  {
+    name: "Tech Culture",
+    href: "/blog/categories/tech-culture",
+    description: "Human and ethical layers of tech",
+    audience: "Designers, DEI leaders"
+  },
+  {
+    name: "System Thinking",
+    href: "/blog/categories/system-thinking",
+    description: "How complex systems connect",
+    audience: "System designers"
+  },
+  {
+    name: "The Interface",
+    href: "/blog/categories/the-interface",
+    description: "UX decisions that shape behavior",
+    audience: "Designers, product leads"
+  },
+  {
+    name: "Build Loop",
+    href: "/blog/categories/build-loop",
+    description: "Fail, iterate, ship stories",
+    audience: "Learning from failure"
+  }
+];
+
+// Use CMS data if available, otherwise use fallback
+const finalTopicsData = topicsData || topics;
+const finalHeroData = heroData || {
+  badgeText: "TINKBYTE CATEGORIES",
+  title: "Explore",
+  titleAccent: "TinkByte Topics", 
+  subtitle: "Future focused categories covering every aspect of building products that matter"
+};
+
+const pageTitle = pageData?.title || "All Topics - TinkByte";
+const pageDescription = pageData?.description || "Explore all 14 topic categories covering everything from build thinking to AI evolution. Find the right content for your builder journey.";
+---
+
+<Layout title={pageTitle} description={pageDescription}>
+  <!-- Enhanced Topics Hero Section -->
+  <section class="relative py-16 lg:py-24 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-10"></div>
+    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5"></div>
+
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 mb-6">
+          <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+          <span class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+            {finalHeroData.badgeText}
+          </span>
+        </div>
+
+        <h1 class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6">
+          {finalHeroData.title}
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            {finalHeroData.titleAccent}
+          </span>
+        </h1>
+
+        <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12">
+          {finalHeroData.subtitle}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <main class="topics-directory-clean">
+    <div class="max-w-6xl mx-auto px-4 py-12">
+      
+      <!-- Clean Topics Grid -->
+      <section class="topics-grid-clean">
+        {finalTopicsData.map((topic, index) => (
+          <article class="topic-card-clean">
+            <div class="topic-number">
+              {String(index + 1).padStart(2, '0')}
+            </div>
+            
+            <div class="topic-content-clean">
+              <header class="topic-header-clean">
+                <h2 class="topic-title-clean">
+                  <a href={topic.href}>
+                    {topic.name}
+                  </a>
+                </h2>
+              </header>
+              
+              <p class="topic-description-clean">{topic.description}</p>
+              
+              <div class="topic-meta-clean">
+                <span class="topic-audience-clean">For: {topic.audience}</span>
+              </div>
+            </div>
+            
+            <div class="topic-arrow">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M7 14L12 9L7 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <!-- Clean Stats -->
+      <section class="topics-stats-clean">
+        <div class="stats-container">
+          <div class="stat-item-clean">
+            <span class="stat-number-clean">14</span>
+            <span class="stat-label-clean">Topics</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item-clean">
+            <span class="stat-number-clean">100+</span>
+            <span class="stat-label-clean">Articles</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item-clean">
+            <span class="stat-number-clean">Real</span>
+            <span class="stat-label-clean">Stories</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Clean CTA -->
+      <section class="topics-cta-clean">
+        <div class="cta-content-clean">
+          <h2 class="cta-title-clean">Stay Updated</h2>
+          <p class="cta-description-clean">
+            Get practical insights delivered weekly. No fluff, just actionable content.
+          </p>
+          <div class="cta-buttons-clean">
+            <a href="/newsletter" class="cta-button-primary-clean">
+              Subscribe Newsletter
+            </a>
+            <a href="/community" class="cta-button-secondary-clean">
+              Join Community
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</Layout>
+
+<style>
+  /* Topics Directory - Theme Aware */
+  .topics-directory-clean {
+    font-family: "Space Grotesk", sans-serif;
+    min-height: 100vh;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+  }
+
+  /* Clean Grid - Responsive */
+  .topics-grid-clean {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
+
+  @media (min-width: 768px) {
+    .topics-grid-clean {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .topics-grid-clean {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  /* Clean Topic Cards */
+  .topic-card-clean {
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    cursor: pointer;
+    box-shadow: var(--card-shadow);
+  }
+
+  .topic-card-clean:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-hover-shadow);
+    border-color: #243788;
+  }
+
+  /* Topic Number */
+  .topic-number {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    width: 32px;
+    text-align: center;
+  }
+
+  .topic-card-clean:hover .topic-number {
+    color: #243788;
+  }
+
+  /* Topic Content */
+  .topic-content-clean {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .topic-header-clean {
+    margin: 0;
+  }
+
+  .topic-title-clean {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .topic-title-clean a {
+    text-decoration: none;
+    color: #243788;
+    transition: color 0.3s ease;
+  }
+
+  .topic-title-clean a:hover {
+    color: #1e40af;
+  }
+
+  .topic-description-clean {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .topic-meta-clean {
+    margin-top: 0.25rem;
+  }
+
+  .topic-audience-clean {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+
+  /* Topic Arrow */
+  .topic-arrow {
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+    transition: all 0.3s ease;
+  }
+
+  .topic-card-clean:hover .topic-arrow {
+    color: #243788;
+    transform: translateX(4px);
+  }
+
+  /* Clean Stats */
+  .topics-stats-clean {
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    box-shadow: var(--card-shadow);
+  }
+
+  .stats-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+  }
+
+  .stat-item-clean {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .stat-number-clean {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #243788;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stat-label-clean {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+
+  .stat-divider {
+    width: 2px;
+    height: 40px;
+    background: var(--color-border);
+  }
+
+  /* Clean CTA */
+  .topics-cta-clean {
+    background: #243788;
+    color: white;
+    padding: 2.5rem;
+    text-align: center;
+  }
+
+  .cta-content-clean {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .cta-title-clean {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .cta-description-clean {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+    line-height: 1.4;
+  }
+
+  .cta-buttons-clean {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .cta-button-primary-clean,
+  .cta-button-secondary-clean {
+    display: inline-block;
+    text-decoration: none;
+    padding: 0.875rem 1.5rem;
+    border: 2px solid white;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  .cta-button-primary-clean {
+    background: white;
+    color: #243788;
+  }
+
+  .cta-button-primary-clean:hover {
+    background: transparent;
+    color: white;
+  }
+
+  .cta-button-secondary-clean {
+    background: transparent;
+    color: white;
+  }
+
+  .cta-button-secondary-clean:hover {
+    background: white;
+    color: #243788;
+  }
+
+  /* Make entire card clickable */
+  .topic-card-clean {
+    position: relative;
+  }
+
+  .topic-card-clean::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+  }
+
+  .topic-title-clean a {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .topic-card-clean {
+      padding: 1.25rem;
+    }
+    
+    .topics-stats-clean {
+      padding: 1.5rem;
+    }
+    
+    .topics-cta-clean {
+      padding: 2rem 1rem;
+    }
+    
+    .cta-title-clean {
+      font-size: 1.5rem;
+    }
+    
+    .cta-buttons-clean {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .cta-button-primary-clean,
+    .cta-button-secondary-clean {
+      width: 100%;
+      max-width: 280px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .topic-card-clean {
+      padding: 1rem;
+      flex-direction: column;
+      text-align: center;
+      gap: 0.75rem;
+    }
+    
+    .topic-number {
+      width: auto;
+    }
+    
+    .topic-arrow {
+      transform: rotate(90deg);
+    }
+    
+    .topic-card-clean:hover .topic-arrow {
+      transform: rotate(90deg) translateY(4px);
+    }
+
+    .stats-container {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .stat-divider {
+      display: none;
+    }
+  }
+
+  /* Accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
+  /* Focus styles */
+  .topic-title-clean a:focus,
+  .cta-button-primary-clean:focus,
+  .cta-button-secondary-clean:focus {
+    outline: 3px solid #243788;
+    outline-offset: 2px;
+  }
+</style>
+
+<script>
+  // Make entire card clickable
+  document.addEventListener('DOMContentLoaded', () => {
+    const topicCards = document.querySelectorAll('.topic-card-clean');
+    
+    topicCards.forEach(card => {
+      card.addEventListener('click', (e) => {
+        const link = card.querySelector('.topic-title-clean a') as HTMLAnchorElement;
+        if (link && e.target !== link) {
+          window.location.href = link.href;
+        }
+      });
+      
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const link = card.querySelector('.topic-title-clean a') as HTMLAnchorElement;
+          if (link) {
+            window.location.href = link.href;
+          }
+        }
+      });
+      
+      card.setAttribute('tabindex', '0');
+      
+      const topicName = card.querySelector('.topic-title-clean a')?.textContent;
+      if (topicName) {
+        card.setAttribute('aria-label', `Navigate to ${topicName} category`);
+      }
+    });
+
+    // Add fade-in animation
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px',
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    topicCards.forEach((card, index) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+      observer.observe(card);
+    });
+  });
+</script>

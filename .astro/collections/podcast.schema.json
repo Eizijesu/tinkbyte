@@ -35,12 +35,105 @@
         "image": {
           "type": "string"
         },
+        "downloadable": {
+          "type": "boolean",
+          "default": false
+        },
         "guests": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "company": {
+                "type": "string"
+              },
+              "bio": {
+                "type": "string"
+              },
+              "photo": {
+                "type": "string"
+              },
+              "social": {
+                "type": "object",
+                "properties": {
+                  "twitter": {
+                    "type": "string"
+                  },
+                  "linkedin": {
+                    "type": "string"
+                  },
+                  "github": {
+                    "type": "string"
+                  },
+                  "instagram": {
+                    "type": "string"
+                  },
+                  "youtube": {
+                    "type": "string"
+                  },
+                  "discord": {
+                    "type": "string"
+                  },
+                  "substack": {
+                    "type": "string"
+                  },
+                  "medium": {
+                    "type": "string"
+                  },
+                  "devto": {
+                    "type": "string"
+                  },
+                  "hashnode": {
+                    "type": "string"
+                  },
+                  "reddit": {
+                    "type": "string"
+                  },
+                  "facebook": {
+                    "type": "string"
+                  },
+                  "tiktok": {
+                    "type": "string"
+                  },
+                  "threads": {
+                    "type": "string"
+                  },
+                  "mastodon": {
+                    "type": "string"
+                  },
+                  "website": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false
           },
           "default": []
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "recording",
+            "editing",
+            "ready",
+            "published"
+          ],
+          "default": "draft"
         },
         "transcript": {
           "type": "string"
@@ -54,6 +147,13 @@
         "featured": {
           "type": "boolean",
           "default": false
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         },
         "seo": {
           "type": "object",

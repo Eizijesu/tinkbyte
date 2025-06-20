@@ -97,7 +97,7 @@ export default defineConfig({
             ui: {
               component: "textarea",
               validate: (value) => {
-                if (value && value.length > 160) {
+                if (value && value.length > 300) {
                   return "Excerpt should be 160 characters or less for optimal SEO";
                 }
               },
@@ -499,8 +499,8 @@ export default defineConfig({
                 ],
               },
               {
-                name: "VideoEmbed",
-                label: "Video Embed",
+                name: "VideoBlock",
+                label: "Video Block",
                 fields: [
                   {
                     type: "string",

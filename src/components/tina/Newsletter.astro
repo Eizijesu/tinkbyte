@@ -1,0 +1,474 @@
+---
+// src/components/tina/Newsletter.astro - TinkByte Brand Style (Theme-Aware Fixed)
+export interface Props {
+  variant?: "inline" | "minimal" | "featured";
+  title?: string;
+  description?: string;
+  buttonText?: string;
+  showFeatures?: boolean;
+}
+
+const {
+  variant = "inline",
+  title = "Stay Updated with TinkByte",
+  description = "Get the latest insights delivered to your inbox.",
+  buttonText = "Subscribe",
+  showFeatures = false,
+} = Astro.props;
+
+const convertKitFormId = import.meta.env.PUBLIC_CONVERTKIT_FORM_ID;
+---
+
+<div class={`tinkbyte-newsletter newsletter-${variant}`}>
+  <div class="newsletter-content">
+    <div class="newsletter-text">
+      <h4 class="newsletter-title">{title}</h4>
+      <p class="newsletter-description">{description}</p>
+    </div>
+
+    <form
+      action={`https://app.convertkit.com/forms/${convertKitFormId}/subscriptions`}
+      method="post"
+      class="newsletter-form"
+      data-newsletter="true"
+    >
+      <div class="form-group">
+        <input
+          type="email"
+          name="email_address"
+          placeholder="Enter your email address"
+          required
+          class="newsletter-email-input"
+          aria-label="Email address"
+        />
+        <button type="submit" class="newsletter-submit-button">
+          <span class="button-text">{buttonText}</span>
+          <span class="button-icon">→</span>
+        </button>
+      </div>
+
+      <input type="hidden" name="utf8" value="✓" />
+
+      {
+        showFeatures && (
+          <div class="features-list">
+            <span>Weekly insights</span>
+            <span>No spam</span>
+            <span>Unsubscribe anytime</span>
+          </div>
+        )
+      }
+    </form>
+  </div>
+</div>
+
+<!-- Keep your existing script unchanged -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const forms = document.querySelectorAll(
+      '[data-newsletter="true"]'
+    ) as NodeListOf<HTMLFormElement>;
+
+    forms.forEach((form) => {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const email = formData.get("email_address");
+        const button = form.querySelector(
+          ".newsletter-submit-button"
+        ) as HTMLButtonElement;
+        const buttonText = button.querySelector(".button-text") as HTMLElement;
+
+        if (!email || !button || !buttonText) return;
+
+        const originalText = buttonText.textContent;
+        const originalClasses = button.className;
+
+        try {
+          // Loading state
+          button.className = originalClasses + " loading";
+          buttonText.textContent = "SUBSCRIBING...";
+          button.disabled = true;
+
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: formData,
+            headers: { Accept: "application/json" },
+          });
+
+          if (response.ok) {
+            // Success state
+            button.className = originalClasses + " success";
+            buttonText.textContent = "SUBSCRIBED!";
+            form.reset();
+
+            setTimeout(() => {
+              button.className = originalClasses;
+              if (originalText) buttonText.textContent = originalText;
+              button.disabled = false;
+            }, 3000);
+          } else {
+            throw new Error("Network response was not ok");
+          }
+        } catch (error) {
+          console.error("Newsletter signup failed:", error);
+
+          // Error state
+          button.className = originalClasses + " error";
+          buttonText.textContent = "TRY AGAIN";
+
+          setTimeout(() => {
+            button.className = originalClasses;
+            if (originalText) buttonText.textContent = originalText;
+            button.disabled = false;
+          }, 3000);
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  /* TinkByte Brand Newsletter Component - Theme Aware */
+  .tinkbyte-newsletter {
+    font-family: "Space Grotesk", sans-serif;
+    margin: 1.5rem 0;
+    border-radius: 0;
+    transition: all 0.3s ease;
+  }
+
+  /* LIGHT THEME - Default styles */
+  .newsletter-inline,
+  .newsletter-minimal {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    padding: 1.25rem;
+    border: 2px solid var(--color-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* FEATURED variant - Always branded blue */
+  .newsletter-featured {
+    background: linear-gradient(135deg, #243788 0%, #1e2f6b 100%);
+    color: white;
+    padding: 1.25rem;
+    border: 2px solid #243788;
+  }
+
+  /* DARK THEME - Enhanced contrast */
+  :global(.dark) .newsletter-inline,
+  :global(.dark) .newsletter-minimal {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .newsletter-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 100%;
+  }
+
+  .newsletter-text {
+    text-align: left;
+  }
+
+  /* Title - Theme aware */
+  .newsletter-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0 0 0.375rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-primary);
+  }
+
+  /* Featured variant title - always white */
+  .newsletter-featured .newsletter-title {
+    color: white;
+  }
+
+  /* Description - Theme aware */
+  .newsletter-description {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.75rem;
+    margin: 0;
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+  }
+
+  /* Featured variant description - always white */
+  .newsletter-featured .newsletter-description {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .newsletter-form {
+    width: 100%;
+  }
+
+  .form-group {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  /* Email Input - Theme aware */
+  .newsletter-email-input {
+    font-family: "Space Grotesk", sans-serif;
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-border);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    border-radius: 0;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .newsletter-email-input::placeholder {
+    color: var(--color-text-muted);
+    font-weight: 400;
+  }
+
+  .newsletter-email-input:focus {
+    outline: none;
+    border-color: #243788;
+    box-shadow: 0 0 0 3px rgba(36, 55, 136, 0.2);
+  }
+
+  /* Featured variant input - special styling */
+  .newsletter-featured .newsletter-email-input {
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    backdrop-filter: blur(10px);
+  }
+
+  .newsletter-featured .newsletter-email-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .newsletter-featured .newsletter-email-input:focus {
+    border-color: #b4bce1;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(180, 188, 225, 0.2);
+  }
+
+  /* Submit Button - Theme aware */
+  .newsletter-submit-button {
+    font-family: "Space Grotesk", sans-serif;
+    padding: 0.75rem 1.5rem;
+    background: #243788;
+    color: white;
+    border: 2px solid #243788;
+    border-radius: 0;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .newsletter-submit-button:hover {
+    background: white;
+    color: #243788;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(36, 55, 136, 0.3);
+  }
+
+  /* Featured variant button - different styling */
+  .newsletter-featured .newsletter-submit-button {
+    background: white;
+    color: #243788;
+    border-color: white;
+  }
+
+  .newsletter-featured .newsletter-submit-button:hover {
+    background: #f8fafc;
+    color: #1e2f6b;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+  }
+
+  /* Button hover effect */
+  .newsletter-submit-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  .newsletter-submit-button:hover::before {
+    left: 100%;
+  }
+
+  .newsletter-submit-button:hover .button-icon {
+    transform: translateX(2px);
+  }
+
+  /* Button states */
+  .newsletter-submit-button.loading {
+    background: #6b7280;
+    color: white;
+    border-color: #6b7280;
+    opacity: 0.9;
+  }
+
+  .newsletter-submit-button.success {
+    background: #059669;
+    color: white;
+    border-color: #059669;
+  }
+
+  .newsletter-submit-button.error {
+    background: #dc2626;
+    color: white;
+    border-color: #dc2626;
+  }
+
+  /* Button text and icon */
+  .button-text {
+    position: relative;
+    z-index: 2;
+  }
+
+  .button-icon {
+    position: relative;
+    z-index: 2;
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+  }
+
+  /* Features list - Theme aware */
+  .features-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-weight: 500;
+  }
+
+  /* Featured variant features - always white */
+  .newsletter-featured .features-list {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .features-list span::before {
+    content: "•";
+    margin-right: 0.375rem;
+    color: #243788;
+  }
+
+  .newsletter-featured .features-list span::before {
+    color: #b4bce1;
+  }
+
+  /* Dark theme features bullet */
+  :global(.dark) .features-list span::before {
+    color: #b4bce1;
+  }
+
+  /* Responsive design */
+  @media (max-width: 640px) {
+    .tinkbyte-newsletter {
+      margin: 1rem 0;
+    }
+
+    .newsletter-inline,
+    .newsletter-minimal,
+    .newsletter-featured {
+      padding: 1rem;
+    }
+
+    .form-group {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .newsletter-submit-button {
+      width: 100%;
+      padding: 1rem 1.5rem;
+    }
+
+    .newsletter-title {
+      font-size: 0.8125rem;
+    }
+
+    .newsletter-description {
+      font-size: 0.6875rem;
+    }
+
+    .features-list {
+      justify-content: center;
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 768px) and (min-width: 641px) {
+    .form-group {
+      gap: 0.375rem;
+    }
+
+    .newsletter-email-input {
+      font-size: 0.75rem;
+    }
+
+    .newsletter-submit-button {
+      font-size: 0.75rem;
+      padding: 0.75rem 1.25rem;
+    }
+  }
+
+  /* Accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .tinkbyte-newsletter,
+    .newsletter-email-input,
+    .newsletter-submit-button,
+    .newsletter-submit-button::before,
+    .button-icon {
+      transition: none;
+    }
+
+    .newsletter-submit-button:hover,
+    .newsletter-submit-button:hover .button-icon {
+      transform: none;
+    }
+  }
+
+  /* Focus styles */
+  .newsletter-email-input:focus,
+  .newsletter-submit-button:focus {
+    outline: 3px solid #243788;
+    outline-offset: 2px;
+  }
+
+  :global(.dark) .newsletter-email-input:focus,
+  :global(.dark) .newsletter-submit-button:focus {
+    outline-color: #b4bce1;
+  }
+</style>

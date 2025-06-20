@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/categories/[category].astro - COMPLETE FIXED VERSION
+// src/pages/blog/categories/[category].astro - Fixed Version with Shorter Hero
 import Layout from "../../../layouts/Layout.astro";
 import ArticleCard from "../../../components/blog/ArticleCard.astro";
 import Button from "../../../components/ui/Button.astro";
@@ -12,7 +12,6 @@ type BlogPost = CollectionEntry<"blog">;
 export async function getStaticPaths() {
   const allPosts = await getCollection("blog", ({ data }) => !data.draft);
 
-  // Get unique categories (use actual category names, not slugified)
   const categories: string[] = [
     ...new Set(allPosts.map((post: BlogPost) => post.data.category)),
   ].filter((cat): cat is string => Boolean(cat));
@@ -33,7 +32,6 @@ export async function getStaticPaths() {
   }));
 }
 
-// Properly type the props
 interface Props {
   categoryName: string;
   posts: BlogPost[];
@@ -41,7 +39,45 @@ interface Props {
 
 const { categoryName, posts }: Props = Astro.props;
 
-// Format post data for display with proper typing - FIXED to return 'date' instead of 'pubDate'
+// Enhanced category color and icon mapping (matching your blog index)
+const getCategoryColor = (categoryName: string): string => {
+  const colorMap: Record<string, string> = {
+    "build-thinking": "blue",
+    "community-innovation": "green", 
+    "learning-by-doing": "purple",
+    "no-fluff-coverage": "orange",
+    "research-backed": "red",
+    "global-perspective": "cyan",
+    "ai-evolution": "violet",
+    "product-strategy": "indigo",
+    "tech-culture": "pink",
+    "developer-tools": "emerald"
+  };
+  const slug = categoryName.toLowerCase().replace(/\s+/g, '-');
+  return colorMap[slug] || "blue";
+};
+
+const getCategoryIcon = (categoryName: string): string => {
+  const iconMap: Record<string, string> = {
+    "build-thinking": "fas fa-hammer",
+    "community-innovation": "fas fa-users", 
+    "learning-by-doing": "fas fa-book",
+    "no-fluff-coverage": "fas fa-bullseye",
+    "research-backed": "fas fa-chart-line",
+    "global-perspective": "fas fa-globe",
+    "ai-evolution": "fas fa-brain",
+    "product-strategy": "fas fa-target",
+    "tech-culture": "fas fa-users-cog",
+    "developer-tools": "fas fa-tools"
+  };
+  const slug = categoryName.toLowerCase().replace(/\s+/g, '-');
+  return iconMap[slug] || "fas fa-tag";
+};
+
+const categoryColor = getCategoryColor(categoryName);
+const categoryIcon = getCategoryIcon(categoryName);
+
+// Format post data with consistent author handling (matching your blog index)
 const formatPost = (post: BlogPost) => {
   let authorData: {
     name: string;
@@ -50,26 +86,30 @@ const formatPost = (post: BlogPost) => {
     role?: string;
   };
 
-  if (typeof post.data.author === "string") {
+  if (post.data.authorInfo && typeof post.data.authorInfo === "object") {
+    authorData = {
+      name: post.data.authorInfo.name || "TinkByte Team",
+      avatar: post.data.authorInfo.avatar,
+      bio: post.data.authorInfo.bio,
+      role: post.data.authorInfo.role,
+    };
+  } else if (typeof post.data.author === "string" && post.data.author.trim()) {
     authorData = {
       name: post.data.author,
       avatar: post.data.authorAvatar,
       bio: post.data.authorBio,
       role: post.data.authorRole,
     };
-  } else if (
-    typeof post.data.author === "object" &&
-    post.data.author !== null
-  ) {
+  } else if (typeof post.data.author === "object" && post.data.author !== null) {
     authorData = {
-      name: (post.data.author as any).name || "Unknown Author",
+      name: (post.data.author as any).name || "TinkByte Team",
       avatar: (post.data.author as any).avatar || post.data.authorAvatar,
       bio: (post.data.author as any).bio || post.data.authorBio,
       role: (post.data.author as any).role || post.data.authorRole,
     };
   } else {
     authorData = {
-      name: "Unknown Author",
+      name: "TinkByte Team",
       avatar: post.data.authorAvatar,
       bio: post.data.authorBio,
       role: post.data.authorRole,
@@ -80,14 +120,13 @@ const formatPost = (post: BlogPost) => {
     title: post.data.title,
     excerpt: post.data.excerpt,
     date: post.data.pubDate.toLocaleDateString("en-US", {
-      // ✅ FIXED: Using 'date' instead of 'pubDate'
       year: "numeric",
       month: "long",
       day: "numeric",
     }),
     readTime: post.data.readTime || "5 min read",
     slug: post.slug,
-    image: post.data.image,
+    image: post.data.image || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop",
     tags: post.data.tags || [],
     category: post.data.category,
     author: authorData,
@@ -97,89 +136,391 @@ const formatPost = (post: BlogPost) => {
   };
 };
 
-// Safely convert categoryName to lowercase
-const safeCategoryName =
-  typeof categoryName === "string" ? categoryName.toLowerCase() : "unknown";
+// Get category stats
+const featuredPosts = posts.filter(post => post.data.featured);
+const trendingPosts = posts.filter(post => post.data.trending);
+
+// Sort posts by date (newest first)
+const sortedPosts = posts.sort((a, b) => 
+  new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
+);
+
+const safeCategoryName = typeof categoryName === "string" ? categoryName.toLowerCase() : "unknown";
 ---
 
 <Layout
   title={`${categoryName} Articles | ${SITE.name}`}
   description={`Explore our ${safeCategoryName} articles. Deep insights and practical knowledge for builders and innovators.`}
 >
-  <!-- Category Header -->
-  <section
-    class="py-16 px-4 sm:px-6 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900 dark:to-zinc-800"
-  >
-    <div class="max-w-6xl mx-auto text-center">
-      <div
-        class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 mb-6"
-      >
-        <div
-          class="w-3 h-3 rounded-sm bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse"
-        >
-        </div>
-        <span
-          class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
-        >
-          CATEGORY
-        </span>
-      </div>
+  <!-- Compact Category Hero - Much Shorter -->
+  <section class="relative py-12 lg:py-16 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-5"></div>
+    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-0"></div>
 
-      <h1
-        class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 font-space-grotesk uppercase tracking-wide"
-      >
-        {categoryName}
-      </h1>
-
-      <p
-        class="text-xl text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-3xl mx-auto mb-8"
-      >
-        {posts.length}
-        {posts.length === 1 ? "article" : "articles"} in this category
-      </p>
-
-      <div class="flex justify-center">
-        <Button
-          variant="outline"
-          href="/blog"
-          className="uppercase tracking-wide"
-        >
-          ← Back to All Articles
-        </Button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Articles Grid -->
-  <section class="py-16 px-4 sm:px-6">
-    <div class="max-w-6xl mx-auto">
-      {
-        posts.length > 0 ? (
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map((post: BlogPost) => (
-              <ArticleCard {...formatPost(post)} />
-            ))}
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-4xl mx-auto">
+        <!-- Breadcrumb Navigation -->
+        <nav class="mb-6">
+          <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <a href="/blog" class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide font-semibold transition-colors">
+              Blog
+            </a>
+            <i class="fas fa-chevron-right text-xs mx-2"></i>
+            <a href="/blog/categories" class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide transition-colors">
+              Categories
+            </a>
+            <i class="fas fa-chevron-right text-xs mx-2"></i>
+            <span class="text-zinc-700 dark:text-zinc-300 uppercase tracking-wide font-semibold">
+              {categoryName}
+            </span>
           </div>
-        ) : (
-          <div class="text-center py-16">
-            <i class="fas fa-file-alt text-6xl text-zinc-300 dark:text-zinc-600 mb-4" />
-            <h3 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
-              No Articles Yet
-            </h3>
-            <p class="text-zinc-600 dark:text-zinc-400 mb-8">
-              We're working on creating amazing content for this category. Check
-              back soon!
-            </p>
+        </nav>
+
+        <div class="text-center">
+          <!-- Category Badge -->
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm rounded-sm border border-zinc-200 dark:border-zinc-700 mb-4">
+            <div class={`w-3 h-3 rounded-full ${
+              categoryColor === "purple" ? "bg-purple-500" :
+              categoryColor === "blue" ? "bg-blue-500" :
+              categoryColor === "green" ? "bg-green-500" :
+              categoryColor === "orange" ? "bg-orange-500" :
+              categoryColor === "red" ? "bg-red-500" :
+              categoryColor === "cyan" ? "bg-cyan-500" :
+              categoryColor === "pink" ? "bg-pink-500" :
+              categoryColor === "indigo" ? "bg-indigo-500" :
+              categoryColor === "violet" ? "bg-violet-500" :
+              categoryColor === "emerald" ? "bg-emerald-500" :
+              "bg-blue-500"
+            }`}></div>
+            <span class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+              CATEGORY
+            </span>
+          </div>
+
+          <!-- Compact Category Title with Icon -->
+          <div class="flex items-center justify-center gap-3 mb-4">
+            <i class={`${categoryIcon} text-2xl ${
+              categoryColor === "purple" ? "text-purple-600" :
+              categoryColor === "blue" ? "text-blue-600" :
+              categoryColor === "green" ? "text-green-600" :
+              categoryColor === "orange" ? "text-orange-600" :
+              categoryColor === "red" ? "text-red-600" :
+              categoryColor === "cyan" ? "text-cyan-600" :
+              categoryColor === "pink" ? "text-pink-600" :
+              categoryColor === "indigo" ? "text-indigo-600" :
+              categoryColor === "violet" ? "text-violet-600" :
+              categoryColor === "emerald" ? "text-emerald-600" :
+              "text-blue-600"
+            }`}></i>
+            <h1 class="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-white">
+              <span class={`bg-gradient-to-r ${
+                categoryColor === "purple" ? "from-purple-600 to-pink-600" :
+                categoryColor === "blue" ? "from-blue-600 to-indigo-600" :
+                categoryColor === "green" ? "from-green-600 to-emerald-600" :
+                categoryColor === "orange" ? "from-orange-600 to-red-600" :
+                categoryColor === "red" ? "from-red-600 to-pink-600" :
+                categoryColor === "cyan" ? "from-cyan-600 to-blue-600" :
+                categoryColor === "pink" ? "from-pink-600 to-rose-600" :
+                categoryColor === "indigo" ? "from-indigo-600 to-purple-600" :
+                categoryColor === "violet" ? "from-violet-600 to-purple-600" :
+                categoryColor === "emerald" ? "from-emerald-600 to-green-600" :
+                "from-blue-600 to-purple-600"
+              } bg-clip-text text-transparent`}>
+                {categoryName}
+              </span>
+            </h1>
+          </div>
+
+          <!-- Compact Stats -->
+          <div class="flex justify-center gap-6 mb-6">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-zinc-900 dark:text-white">{posts.length}</div>
+              <div class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">ARTICLES</div>
+            </div>
+            {featuredPosts.length > 0 && (
+              <div class="text-center">
+                <div class="text-2xl font-bold text-zinc-900 dark:text-white">{featuredPosts.length}</div>
+                <div class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">FEATURED</div>
+              </div>
+            )}
+            {trendingPosts.length > 0 && (
+              <div class="text-center">
+                <div class="text-2xl font-bold text-zinc-900 dark:text-white">{trendingPosts.length}</div>
+                <div class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">TRENDING</div>
+              </div>
+            )}
+          </div>
+
+          <!-- Compact Description -->
+          <p class="text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-2xl mx-auto mb-6">
+            {posts.length === 0 
+              ? `No articles in ${categoryName} yet. Check back soon for fresh insights!`
+              : `Discover ${posts.length} ${posts.length === 1 ? 'article' : 'articles'} covering ${safeCategoryName}. Deep insights and practical knowledge for builders and innovators.`
+            }
+          </p>
+
+          <!-- Compact Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
+              variant="outline"
               href="/blog"
-              variant="primary"
-              className="uppercase tracking-wide"
+              className="group compact-btn"
             >
-              Explore Other Articles
+              <span class="flex items-center gap-2">
+                <i class="fas fa-arrow-left text-sm transition-transform duration-300 group-hover:-translate-x-1"></i>
+                ALL ARTICLES
+              </span>
+            </Button>
+            <Button
+              variant="outline"
+              href="/blog/categories"
+              className="group compact-btn"
+            >
+              <span class="flex items-center gap-2">
+                <i class="fas fa-th-large text-sm"></i>
+                BROWSE CATEGORIES
+              </span>
             </Button>
           </div>
-        )
-      }
+        </div>
+      </div>
     </div>
   </section>
+
+  <!-- Articles Section -->
+  <main class="category-articles-page">
+    <div class="max-w-7xl mx-auto px-4 py-12">
+      
+      {posts.length > 0 ? (
+        <>
+          <!-- Featured Articles - Smaller Cards, Up to 3 -->
+          {featuredPosts.length > 0 && (
+            <section class="mb-12">
+              <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center">
+                <i class="fas fa-star mr-3 text-yellow-500"></i>
+                Featured Articles
+              </h2>
+              <div class="featured-articles-grid">
+                {featuredPosts.slice(0, 3).map((post: BlogPost) => (
+                  <div class="featured-article-wrapper">
+                    <ArticleCard {...formatPost(post)} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <!-- All Articles -->
+          <section>
+            <div class="flex items-center justify-between mb-8">
+              <h2 class="text-2xl font-bold text-zinc-900 dark:text-white flex items-center">
+                <i class={`${categoryIcon} mr-3 ${
+                  categoryColor === "purple" ? "text-purple-600" :
+                  categoryColor === "blue" ? "text-blue-600" :
+                  categoryColor === "green" ? "text-green-600" :
+                  categoryColor === "orange" ? "text-orange-600" :
+                  categoryColor === "red" ? "text-red-600" :
+                  categoryColor === "cyan" ? "text-cyan-600" :
+                  categoryColor === "pink" ? "text-pink-600" :
+                  categoryColor === "indigo" ? "text-indigo-600" :
+                  categoryColor === "violet" ? "text-violet-600" :
+                  categoryColor === "emerald" ? "text-emerald-600" :
+                  "text-blue-600"
+                }`}></i>
+                All {categoryName} Articles
+              </h2>
+              <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                {posts.length} {posts.length === 1 ? 'article' : 'articles'}
+              </span>
+            </div>
+
+            <div class="articles-grid">
+              {sortedPosts.map((post: BlogPost, index) => (
+                <div class="article-wrapper" style={`--animation-delay: ${index * 0.1}s`}>
+                  <ArticleCard {...formatPost(post)} />
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      ) : (
+        <!-- Compact Empty State -->
+        <section class="text-center py-16">
+          <div class="max-w-md mx-auto">
+            <div class="mb-6">
+              <i class={`${categoryIcon} text-4xl ${
+                categoryColor === "purple" ? "text-purple-300 dark:text-purple-600" :
+                categoryColor === "blue" ? "text-blue-300 dark:text-blue-600" :
+                categoryColor === "green" ? "text-green-300 dark:text-green-600" :
+                categoryColor === "orange" ? "text-orange-300 dark:text-orange-600" :
+                categoryColor === "red" ? "text-red-300 dark:text-red-600" :
+                categoryColor === "cyan" ? "text-cyan-300 dark:text-cyan-600" :
+                categoryColor === "pink" ? "text-pink-300 dark:text-pink-600" :
+                categoryColor === "indigo" ? "text-indigo-300 dark:text-indigo-600" :
+                categoryColor === "violet" ? "text-violet-300 dark:text-violet-600" :
+                categoryColor === "emerald" ? "text-emerald-300 dark:text-emerald-600" :
+                "text-blue-300 dark:text-blue-600"
+              }`}></i>
+            </div>
+            <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+              No {categoryName} Articles Yet
+            </h3>
+            <p class="text-zinc-600 dark:text-zinc-400 mb-6">
+              We're working on creating amazing content for this category. 
+              Check back soon or explore other categories!
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button href="/blog" variant="primary" className="compact-btn">
+                <i class="fas fa-newspaper mr-2"></i>
+                EXPLORE ALL ARTICLES
+              </Button>
+              <Button href="/blog/categories" variant="outline" className="compact-btn">
+                <i class="fas fa-th-large mr-2"></i>
+                BROWSE CATEGORIES
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
+  </main>
 </Layout>
+
+<style>
+  /* Compact styling for category page */
+  .category-articles-page {
+    font-family: "Space Grotesk", sans-serif;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+  }
+
+  /* Compact buttons */
+  .compact-btn {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    font-size: 0.875rem;
+    padding: 0.75rem 1.5rem;
+  }
+
+  /* Featured Articles Grid - Smaller, up to 3 cards */
+  .featured-articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+  }
+
+  .featured-article-wrapper {
+    position: relative;
+  }
+
+  .featured-article-wrapper::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #243788, #8B5CF6, #06B6D4);
+    border-radius: 4px;
+    z-index: -1;
+    opacity: 0.6;
+  }
+
+  /* Regular Articles Grid */
+  .articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+  }
+
+  .article-wrapper {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease forwards;
+    animation-delay: var(--animation-delay, 0s);
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .featured-articles-grid {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    
+    .articles-grid {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .featured-articles-grid,
+    .articles-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .compact-btn {
+      width: 100%;
+      max-width: 250px;
+    }
+  }
+
+  /* Gradient text animation */
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .bg-gradient-to-r.bg-clip-text {
+    background-size: 200% 200%;
+    animation: gradient 3s ease-in-out infinite;
+  }
+
+  /* Hover effects */
+  .article-wrapper {
+    transition: transform 0.3s ease;
+  }
+
+  .article-wrapper:hover {
+    transform: translateY(-4px);
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Staggered animation for articles
+    const articleWrappers = document.querySelectorAll('.article-wrapper');
+    
+    articleWrappers.forEach((wrapper, index) => {
+      wrapper.style.setProperty('--animation-delay', `${index * 0.1}s`);
+    });
+
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px',
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    articleWrappers.forEach((wrapper) => {
+      observer.observe(wrapper);
+    });
+  });
+</script>

@@ -4,27 +4,44 @@ export interface Props {
   title: string;
   description: string;
   duration: string;
-  publishDate: string;
+  date: string; // ✅ Changed from publishDate to date
   audioUrl: string;
   episode?: number;
   season?: number;
   image?: string;
-  guests?: string[];
+  guests?: any[]; // ✅ Changed to support object guests
   className?: string;
+  slug?: string; // ✅ Added slug for navigation
 }
 
 const {
   title,
   description,
   duration,
-  publishDate,
+  date, // ✅ Changed from publishDate to date
   audioUrl,
   episode,
   season,
   image,
   guests = [],
   className = "",
+  slug,
 } = Astro.props;
+
+// ✅ Helper to handle both string and object guests
+const getGuestNames = (guests: any[]) => {
+  if (!guests || guests.length === 0) return [];
+
+  // If guests are objects with name property
+  if (typeof guests[0] === "object" && guests[0].name) {
+    return guests.map((guest) => guest.name);
+  }
+
+  // If guests are strings
+  return guests;
+};
+
+const guestNames = getGuestNames(guests);
 ---
 
 <article
@@ -53,6 +70,13 @@ const {
           </span>
         )
       }
+      {
+        !season && episode && (
+          <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded text-xs font-bold uppercase tracking-wide">
+            EP {episode}
+          </span>
+        )
+      }
       <span
         class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded text-xs font-bold uppercase tracking-wide"
       >
@@ -67,7 +91,19 @@ const {
 
     <!-- Title -->
     <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-      {title}
+      {/* ✅ Added navigation link */}
+      {
+        slug ? (
+          <a
+            href={`/podcast/${slug}`}
+            class="hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+          >
+            {title}
+          </a>
+        ) : (
+          title
+        )
+      }
     </h3>
 
     <!-- Description -->
@@ -77,13 +113,13 @@ const {
 
     <!-- Guests -->
     {
-      guests.length > 0 && (
+      guestNames.length > 0 && (
         <div class="mb-4">
           <span class="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
             GUESTS:
           </span>
           <span class="text-sm text-zinc-700 dark:text-zinc-300 ml-2">
-            {guests.join(", ")}
+            {guestNames.join(", ")}
           </span>
         </div>
       )
@@ -102,7 +138,8 @@ const {
       <span
         class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide"
       >
-        {publishDate}
+        {date}
+        {/* ✅ Changed from publishDate to date */}
       </span>
     </div>
   </div>

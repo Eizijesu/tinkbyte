@@ -1,0 +1,51 @@
+---
+// src/components/tina/TwoColumnLayout.astro
+export interface Props {
+  leftContent: any; // TinaCMS rich text content
+  rightContent: any; // TinaCMS rich text content
+  variant?: "equal" | "left-larger" | "right-larger";
+  gap?: "small" | "medium" | "large";
+  verticalAlign?: "top" | "center" | "bottom";
+}
+
+const {
+  leftContent,
+  rightContent,
+  variant = "equal",
+  gap = "medium",
+  verticalAlign = "top",
+} = Astro.props;
+
+const variantClasses = {
+  equal: "grid-cols-1 lg:grid-cols-2",
+  "left-larger": "grid-cols-1 lg:grid-cols-3",
+  "right-larger": "grid-cols-1 lg:grid-cols-3",
+};
+
+const gapClasses = {
+  small: "gap-4",
+  medium: "gap-8",
+  large: "gap-12",
+};
+
+const alignClasses = {
+  top: "items-start",
+  center: "items-center",
+  bottom: "items-end",
+};
+
+const leftColSpan = variant === "left-larger" ? "lg:col-span-2" : "";
+const rightColSpan = variant === "right-larger" ? "lg:col-span-2" : "";
+---
+
+<div
+  class={`my-8 grid ${variantClasses[variant]} ${gapClasses[gap]} ${alignClasses[verticalAlign]}`}
+>
+  <div class={`prose prose-gray max-w-none ${leftColSpan}`}>
+    <Fragment set:html={leftContent} />
+  </div>
+
+  <div class={`prose prose-gray max-w-none ${rightColSpan}`}>
+    <Fragment set:html={rightContent} />
+  </div>
+</div>

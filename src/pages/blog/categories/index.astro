@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/categories/index.astro - Categories listing page
+// src/pages/blog/categories/index.astro - Enhanced with Newsletter-Style Design
 import Layout from "../../../layouts/Layout.astro";
 import Button from "../../../components/ui/Button.astro";
 import { getAllCategories, getAllPosts } from "../../../utils/content";
@@ -19,24 +19,22 @@ try {
   console.warn("Categories collection not found, using dynamic categories");
 }
 
-// Enhanced category data with TinaCMS integration
+// Enhanced category data with improved color mapping
 const enhancedCategories = categoriesWithStats.map((category) => {
-  // Find matching category data from TinaCMS
   const categoryData = categoriesData.find(
     cat => cat.data.name.toLowerCase() === category.name.toLowerCase()
   );
 
-  // Get posts for this category
   const categoryPosts = allPosts.filter(
     (post) => post.data.category?.toLowerCase() === category.name.toLowerCase()
   );
 
-  // Dynamic color assignment for categories without TinaCMS data
+  // Enhanced color system matching your newsletter design
   const getDynamicColor = (name: string): string => {
     const colorMap: Record<string, string> = {
       "AI Evolution": "purple",
-      "Product Strategy": "green", 
-      "Tech Culture": "blue",
+      "Product Strategy": "blue", 
+      "Tech Culture": "indigo",
       "Startup Lessons": "orange",
       "Developer Tools": "cyan",
       "Industry Analysis": "red",
@@ -52,7 +50,6 @@ const enhancedCategories = categoriesWithStats.map((category) => {
     return colorMap[name] || "blue";
   };
 
-  // Get latest post for this category
   const latestPost = categoryPosts
     .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime())[0];
 
@@ -72,270 +69,214 @@ const enhancedCategories = categoriesWithStats.map((category) => {
     lastUpdated: latestPost ? latestPost.data.pubDate : null
   };
 }).sort((a, b) => {
-  // Sort featured categories first, then by post count
   if (a.data.featured !== b.data.featured) {
     return b.data.featured ? 1 : -1;
   }
   return b.postCount - a.postCount;
 });
 
-// Calculate totals
 const totalArticles = allPosts.length;
 const totalCategories = enhancedCategories.length;
 const featuredCategories = enhancedCategories.filter(cat => cat.data.featured);
 
-// SEO and meta information
 const pageTitle = "Categories | TinkByte Blog";
 const pageDescription = `Explore ${totalCategories} categories with ${totalArticles} articles - from AI Evolution to Product Strategy, discover content that matches your interests.`;
 ---
 
-<Layout
-  title={pageTitle}
-  description={pageDescription}
->
-  <!-- Categories Hero -->
-  <section class="py-16 px-4 sm:px-6 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900 dark:to-zinc-800">
-    <div class="max-w-6xl mx-auto text-center">
-      <div class="inline-flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 mb-6">
-        <div class="w-3 h-3 rounded-sm bg-gradient-to-r from-purple-500 to-blue-500 animate-pulse"></div>
-        <span class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
-          EXPLORE BY TOPIC
-        </span>
-      </div>
+<Layout title={pageTitle} description={pageDescription}>
+  <!-- Enhanced Categories Hero - Newsletter Style -->
+  <section class="relative py-12 lg:py-16 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-10"></div>
+    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5"></div>
 
-      <h1 class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 font-space-grotesk uppercase tracking-wide">
-        CATEGORIES
-      </h1>
-
-      <p class="text-xl text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-3xl mx-auto mb-8">
-        Dive deep into the topics that matter most in tech. From cutting-edge AI developments to strategic product insights, 
-        find the content that fuels your curiosity and drives your success.
-      </p>
-
-      <div class="flex justify-center gap-8 text-center">
-        <div>
-          <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-            {totalCategories}
-          </div>
-          <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            CATEGORIES
-          </div>
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 mb-6">
+          <div class="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+          <span class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+            EXPLORE BY TOPIC
+          </span>
         </div>
-        <div>
-          <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-            {totalArticles}
+
+        <h1 class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6">
+          Browse
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Categories
+          </span>
+        </h1>
+
+        <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12">
+          Dive deep into the topics that matter most in tech. From cutting-edge AI developments to strategic product insights.
+        </p>
+
+        <div class="flex justify-center gap-8 text-center">
+          <div class="category-stat">
+            <div class="stat-number">{totalCategories}</div>
+            <div class="stat-label">CATEGORIES</div>
           </div>
-          <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-            TOTAL ARTICLES
+          <div class="category-stat">
+            <div class="stat-number">{totalArticles}</div>
+            <div class="stat-label">TOTAL ARTICLES</div>
           </div>
+          {featuredCategories.length > 0 && (
+            <div class="category-stat">
+              <div class="stat-number">{featuredCategories.length}</div>
+              <div class="stat-label">FEATURED</div>
+            </div>
+          )}
         </div>
-        {featuredCategories.length > 0 && (
-          <div>
-            <div class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-              {featuredCategories.length}
-            </div>
-            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              FEATURED
-            </div>
-          </div>
-        )}
       </div>
     </div>
   </section>
 
-  <!-- Featured Categories (if any) -->
-  {featuredCategories.length > 0 && (
-    <section class="py-12 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-800/30">
-      <div class="max-w-6xl mx-auto">
-        <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 font-space-grotesk uppercase tracking-wide text-center">
-          FEATURED CATEGORIES
-        </h2>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredCategories.slice(0, 3).map((category) => (
-            <div class="bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 p-6 hover:shadow-lg transition-all duration-300">
-              <div class="flex items-center gap-3 mb-3">
-                <div class={`w-3 h-3 rounded-sm ${
-                  category.data.color === "purple" ? "bg-purple-500" :
-                  category.data.color === "green" ? "bg-green-500" :
-                  category.data.color === "blue" ? "bg-blue-500" :
-                  category.data.color === "cyan" ? "bg-cyan-500" :
-                  category.data.color === "orange" ? "bg-orange-500" :
-                  category.data.color === "red" ? "bg-red-500" :
-                  category.data.color === "pink" ? "bg-pink-500" :
-                  category.data.color === "yellow" ? "bg-yellow-500" :
-                  category.data.color === "violet" ? "bg-violet-500" :
-                  "bg-zinc-500"
-                }`}></div>
-                <span class="text-xs font-bold uppercase tracking-wider text-yellow-600 dark:text-yellow-400">
-                  FEATURED
-                </span>
-              </div>
-              <h3 class="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2 uppercase tracking-wide">
-                <a href={`/blog/categories/${category.slug}`} class="hover:underline">
-                  {category.data.name}
-                </a>
-              </h3>
-              <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
-                {category.data.description.slice(0, 100)}...
-              </p>
-              <div class="flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                <span>{category.postCount} articles</span>
-                {category.lastUpdated && (
-                  <span>Updated {formatDate(category.lastUpdated, { month: 'short', day: 'numeric' })}</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )}
-
-  <!-- All Categories Grid -->
-  <section class="py-16 px-4 sm:px-6">
-    <div class="max-w-6xl mx-auto">
-      <div class="flex items-center justify-between mb-12">
-        <div>
-          <h2 class="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 font-space-grotesk uppercase tracking-wide">
-            ALL CATEGORIES
+  <main class="categories-page" data-theme-aware="true">
+    <div class="max-w-7xl mx-auto px-4 py-16">
+      
+      <!-- Featured Categories Section -->
+      {featuredCategories.length > 0 && (
+        <section class="featured-categories-section mb-16">
+          <h2 class="section-title">
+            <i class="fas fa-star mr-3 text-yellow-500"></i>
+            Featured Categories
           </h2>
-          <p class="text-lg text-zinc-600 dark:text-zinc-400">
-            Choose your area of interest and explore curated content
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          href="/blog"
-          className="group uppercase tracking-wide"
-        >
-          <span class="flex items-center gap-1">
-            ALL ARTICLES
-            <i class="fas fa-arrow-right text-sm transition-transform duration-300 group-hover:translate-x-1"></i>
-          </span>
-        </Button>
-      </div>
-
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {enhancedCategories.map((category) => (
-          <article class="group bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-300">
-            <div class="p-8">
-              <!-- Category Header -->
-              <div class="mb-6">
-                <div class="flex items-center gap-3 mb-4">
-                  <div class={`w-4 h-4 rounded-sm ${
-                    category.data.color === "purple" ? "bg-purple-500" :
-                    category.data.color === "green" ? "bg-green-500" :
-                    category.data.color === "blue" ? "bg-blue-500" :
-                    category.data.color === "cyan" ? "bg-cyan-500" :
-                    category.data.color === "orange" ? "bg-orange-500" :
-                    category.data.color === "red" ? "bg-red-500" :
-                    category.data.color === "pink" ? "bg-pink-500" :
-                    category.data.color === "yellow" ? "bg-yellow-500" :
-                    category.data.color === "violet" ? "bg-violet-500" :
-                    "bg-zinc-500"
-                  } animate-pulse`}></div>
-                  <span class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    CATEGORY
-                  </span>
-                  {category.data.featured && (
-                    <span class="text-xs font-bold uppercase tracking-wider text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded">
-                      FEATURED
-                    </span>
-                  )}
+          <div class="featured-categories-grid">
+            {featuredCategories.slice(0, 3).map((category) => (
+              <div class="featured-category-card theme-card">
+                <div class="card-header">
+                  <div class="category-indicator" data-color={category.data.color}></div>
+                  <span class="featured-badge">FEATURED</span>
                 </div>
-
-                <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-3 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors uppercase tracking-wide">
-                  <a href={`/blog/categories/${category.slug}`} class="hover:underline">
+                <h3 class="card-title">
+                  <a href={`/blog/categories/${category.slug}`}>
                     {category.data.name}
                   </a>
                 </h3>
-
-                <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
-                  {category.data.description}
-                </p>
-              </div>
-
-              <!-- Category Stats -->
-              <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="text-center p-3 bg-zinc-50 dark:bg-zinc-700/50 rounded-sm">
-                  <div class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                    {category.postCount}
-                  </div>
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    ARTICLES
-                  </div>
-                </div>
-                <div class="text-center p-3 bg-zinc-50 dark:bg-zinc-700/50 rounded-sm">
-                  <div class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                    {category.featuredCount}
-                  </div>
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    FEATURED
-                  </div>
+                <p class="card-description">{category.data.description.slice(0, 120)}...</p>
+                <div class="card-stats">
+                  <span class="stat-item">{category.postCount} articles</span>
+                  {category.lastUpdated && (
+                    <span class="stat-item">Updated {formatDate(category.lastUpdated, { month: 'short', day: 'numeric' })}</span>
+                  )}
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
+      )}
 
-              <!-- Latest Article -->
-              {category.latestPost && (
-                <div class="mb-6 p-3 bg-zinc-50 dark:bg-zinc-700/30 rounded-sm border border-zinc-100 dark:border-zinc-600">
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1">
-                    LATEST ARTICLE
-                  </div>
-                  <a 
-                    href={`/blog/${category.latestPost.slug}`}
-                    class="text-sm font-medium text-zinc-900 dark:text-zinc-100 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors line-clamp-2"
-                  >
-                    {category.latestPost.data.title}
-                  </a>
-                  <div class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                    {formatDate(category.latestPost.data.pubDate)}
-                  </div>
-                </div>
-              )}
-
-              <!-- Action Button -->
-              <Button
-                variant="outline"
-                href={`/blog/categories/${category.slug}`}
-                className="w-full group uppercase tracking-wide text-sm"
-              >
-                <span class="flex items-center justify-center gap-2">
-                  EXPLORE {category.data.name.toUpperCase()}
-                  <i class="fas fa-arrow-right text-xs transition-transform duration-300 group-hover:translate-x-1"></i>
-                </span>
-              </Button>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <!-- Empty State -->
-      {enhancedCategories.length === 0 && (
-        <div class="text-center py-16">
-          <i class="fas fa-tags text-6xl text-zinc-300 dark:text-zinc-600 mb-4"></i>
-          <h3 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
-            NO CATEGORIES YET
-          </h3>
-          <p class="text-zinc-600 dark:text-zinc-400 mb-8">
-            Categories will appear here once you start publishing content.
-          </p>
+      <!-- All Categories Section -->
+      <section class="all-categories-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">
+              <i class="fas fa-th-large mr-3 text-blue-600"></i>
+              All Categories
+            </h2>
+            <p class="section-subtitle">Choose your area of interest and explore curated content</p>
+          </div>
           <Button
+            variant="outline"
             href="/blog"
-            variant="primary"
-            className="uppercase tracking-wide"
+            className="group action-button"
           >
-            BROWSE ALL ARTICLES
+            <span class="flex items-center gap-2">
+              ALL ARTICLES
+              <i class="fas fa-arrow-right text-sm transition-transform duration-300 group-hover:translate-x-1"></i>
+            </span>
           </Button>
         </div>
-      )}
-    </div>
-  </section>
 
-  <!-- Call to Action -->
-  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-800/50">
+        <div class="categories-grid">
+          {enhancedCategories.map((category, index) => (
+            <article class="category-card theme-card" data-category={category.slug} style={`--animation-delay: ${index * 0.1}s`}>
+              <div class="card-content">
+                <!-- Category Header -->
+                <div class="category-header">
+                  <div class="category-meta">
+                    <div class="category-indicator" data-color={category.data.color}></div>
+                    <span class="category-type">CATEGORY</span>
+                    {category.data.featured && (
+                      <span class="featured-badge">FEATURED</span>
+                    )}
+                  </div>
+
+                  <h3 class="category-title">
+                    <a href={`/blog/categories/${category.slug}`}>
+                      {category.data.name}
+                    </a>
+                  </h3>
+
+                  <p class="category-description">{category.data.description}</p>
+                </div>
+
+                <!-- Category Stats -->
+                <div class="category-stats">
+                  <div class="stat-box">
+                    <div class="stat-number">{category.postCount}</div>
+                    <div class="stat-label">ARTICLES</div>
+                  </div>
+                  <div class="stat-box">
+                    <div class="stat-number">{category.featuredCount}</div>
+                    <div class="stat-label">FEATURED</div>
+                  </div>
+                </div>
+
+                <!-- Latest Article Preview -->
+                {category.latestPost && (
+                  <div class="latest-article">
+                    <div class="latest-label">LATEST ARTICLE</div>
+                    <a 
+                      href={`/blog/${category.latestPost.slug}`}
+                      class="latest-title"
+                    >
+                      {category.latestPost.data.title}
+                    </a>
+                    <div class="latest-date">
+                      {formatDate(category.latestPost.data.pubDate)}
+                    </div>
+                  </div>
+                )}
+
+                <!-- Action Button -->
+                <div class="card-action">
+                  <a href={`/blog/categories/${category.slug}`} class="explore-button">
+                    <span class="button-text">EXPLORE {category.data.name.toUpperCase()}</span>
+                    <i class="fas fa-arrow-right button-icon"></i>
+                  </a>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <!-- Empty State -->
+        {enhancedCategories.length === 0 && (
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="fas fa-tags"></i>
+            </div>
+            <h3 class="empty-title">NO CATEGORIES YET</h3>
+            <p class="empty-description">
+              Categories will appear here once you start publishing content.
+            </p>
+            <Button
+              href="/blog"
+              variant="primary"
+              className="empty-action"
+            >
+              BROWSE ALL ARTICLES
+            </Button>
+          </div>
+        )}
+      </section>
+    </div>
+  </main>
+
+  <!-- Newsletter CTA Section -->
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
     <div class="max-w-4xl mx-auto text-center">
-      <h2 class="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 font-space-grotesk uppercase tracking-wide">
-        STAY UPDATED
+      <h2 class="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+        Stay Updated
       </h2>
       <p class="text-lg text-zinc-600 dark:text-zinc-400 mb-8">
         Get the latest insights delivered directly to your inbox. Join our community of forward-thinking professionals.
@@ -344,14 +285,14 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
         <Button
           variant="primary"
           href="/newsletter"
-          className="uppercase tracking-wide"
+          className="cta-button"
         >
           SUBSCRIBE TO NEWSLETTER
         </Button>
         <Button
           variant="outline"
           href="/rss.xml"
-          className="uppercase tracking-wide"
+          className="cta-button"
         >
           RSS FEED
         </Button>
@@ -361,10 +302,468 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
 </Layout>
 
 <style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+  /* Categories Page - Enhanced with Newsletter Design Language */
+  .categories-page {
+    font-family: "Space Grotesk", sans-serif;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+  }
+
+  /* Hero Section Stats */
+  .category-stat {
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Theme Card Base */
+  .theme-card {
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    transition: all 0.3s ease;
+    position: relative;
     overflow: hidden;
   }
+
+  .theme-card:hover {
+    border-color: #243788;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  :global(.dark) .theme-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Section Styling */
+  .section-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+  }
+
+  .section-subtitle {
+    font-size: 1.125rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 2rem;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3rem;
+  }
+
+  /* Featured Categories */
+  .featured-categories-section {
+    margin-bottom: 4rem;
+  }
+
+  .featured-categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .featured-category-card {
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 2px solid #e2e8f0;
+  }
+
+  :global(.dark) .featured-category-card {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-color: #334155;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Category Indicators */
+  .category-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .category-indicator[data-color="purple"] { background: #8B5CF6; }
+  .category-indicator[data-color="blue"] { background: #243788; }
+  .category-indicator[data-color="green"] { background: #10B981; }
+  .category-indicator[data-color="orange"] { background: #F59E0B; }
+  .category-indicator[data-color="red"] { background: #EF4444; }
+  .category-indicator[data-color="cyan"] { background: #06B6D4; }
+  .category-indicator[data-color="pink"] { background: #EC4899; }
+  .category-indicator[data-color="indigo"] { background: #6366F1; }
+  .category-indicator[data-color="violet"] { background: #8B5CF6; }
+  .category-indicator[data-color="yellow"] { background: #F59E0B; }
+
+  /* Badges */
+  .featured-badge {
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.25rem 0.5rem;
+    background: #243788;
+    color: white;
+    border-radius: 2px;
+  }
+
+  .category-type {
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+  }
+
+  /* All Categories Grid */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+  }
+
+  .category-card {
+    padding: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease forwards;
+    animation-delay: var(--animation-delay, 0s);
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Category Card Content */
+  .category-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .category-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .category-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    line-height: 1.2;
+  }
+
+  .category-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .category-title a:hover {
+    color: #243788;
+  }
+
+  .category-description {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+  }
+
+  /* Category Stats */
+  .category-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-box {
+    text-align: center;
+    padding: 1rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  .stat-box .stat-number {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-box .stat-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Latest Article */
+  .latest-article {
+    padding: 1rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    margin-bottom: 1.5rem;
+  }
+
+  .latest-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+
+  .latest-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    text-decoration: none;
+    line-height: 1.3;
+    display: block;
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+  }
+
+  .latest-title:hover {
+    color: #243788;
+  }
+
+  .latest-date {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  /* Explore Button */
+  .explore-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem;
+    background: transparent;
+    color: #243788;
+    border: 2px solid #243788;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-family: inherit;
+  }
+
+  .explore-button:hover {
+    background: #243788;
+    color: white;
+  }
+
+  .button-icon {
+    transition: transform 0.3s ease;
+  }
+
+  .explore-button:hover .button-icon {
+    transform: translateX(4px);
+  }
+
+  /* Action Buttons */
+  .action-button {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+  }
+
+  .cta-button {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    color: var(--color-text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .empty-description {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .categories-grid {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .featured-categories-grid,
+    .categories-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .category-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+    }
+
+    .category-card {
+      padding: 1.5rem;
+    }
+  }
+
+  /* Gradient text animation */
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .bg-gradient-to-r.bg-clip-text {
+    background-size: 200% 200%;
+    animation: gradient 3s ease-in-out infinite;
+  }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Enhanced category card interactions
+    const categoryCards = document.querySelectorAll('.category-card');
+    
+    categoryCards.forEach((card, index) => {
+      // Add staggered animation
+      card.style.setProperty('--animation-delay', `${index * 0.1}s`);
+      
+      // Enhanced hover effects
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-8px) scale(1.02)';
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'translateY(0) scale(1)';
+      });
+    });
+
+    // Smooth scroll for category links
+    const categoryLinks = document.querySelectorAll('a[href^="/blog/categories/"]');
+    
+    categoryLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        // Add loading state
+        const card = link.closest('.category-card');
+        if (card) {
+          card.style.opacity = '0.7';
+          card.style.transform = 'scale(0.98)';
+        }
+      });
+    });
+
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px',
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    // Observe all category cards
+    categoryCards.forEach((card) => {
+      observer.observe(card);
+    });
+
+    // Analytics tracking
+    function trackCategoryInteraction(action, category) {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'category_interaction', {
+          action: action,
+          category: category,
+          timestamp: Date.now()
+        });
+      }
+    }
+
+    // Track category clicks
+    categoryLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        const categoryName = link.textContent.trim();
+        trackCategoryInteraction('click', categoryName);
+      });
+    });
+  });
+</script>

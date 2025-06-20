@@ -1,126 +1,244 @@
 ---
+// src/pages/about.astro - TinaCMS ready with improved text styling
 import Layout from "../layouts/Layout.astro";
-import NewsletterForm from "../components/forms/NewsletterForm.astro";
+import Button from "../components/ui/Button.astro";
+import { getEntry } from "astro:content";
+import { Image } from "astro:assets";
 
-// Simple team info that can be managed via TinaCMS later
-const values = [
+// Get about page content from TinaCMS
+const aboutPage = await getEntry("pages", "about").catch(() => null);
+
+// Fallback data
+const defaultValues = [
   {
-    icon: "search",
-    title: "Depth Over Hype",
-    description:
-      "We dig deep into topics, providing comprehensive analysis rather than surface-level coverage.",
+    title: "Practical Insights",
+    description: "We focus on actionable knowledge that builders can immediately apply to their projects and products",
+    icon: "lightbulb",
   },
   {
-    icon: "tools",
-    title: "Practical Focus",
-    description:
-      "Every insight is designed to be actionable, helping readers apply knowledge in their work.",
+    title: "No-hype Approach",
+    description: "we cut through marketing noise to deliver straightforward analysis and real-world experiences",
+    icon: "shield-check",
   },
   {
+    title: "Community-Driven",
+    description: "our content emerges from actual builder experiences and community feedback, not theoretical frameworks",
     icon: "users",
-    title: "Community First",
-    description:
-      "We're building a community of thoughtful builders who value quality over quantity.",
   },
 ];
+
+const defaultTeam = [
+  {
+    name: "Eizijesu",
+    role: "Founder & Head of products",
+    bio: "Solution architect and ai product manager with 7+ years building scalable saas platforms",
+    image: "/images/eiza-author.png",
+    social: {
+      linkedin: "https://linkedin.com/in/eizijesu",
+    },
+  },
+];
+
+// Use TinaCMS data if available, otherwise use defaults
+const mission = aboutPage?.data.mission || "We deliver practical tech insights and innovation analysis without the hype. our mission is to provide real knowledge for builders who value substance over speculation.";
+const values = aboutPage?.data.values || defaultValues;
+const team = aboutPage?.data.team || defaultTeam;
 ---
 
 <Layout
-  title="About | TinkByte"
-  description="Learn about TinkByte's mission to deliver practical tech insights without the hype."
+  title="About TinkByte | Practical Tech Insights for Builders"
+  description="Learn about TinkByte's mission to deliver practical tech insights without the hype. Real knowledge for builders who value substance over speculation."
 >
   <!-- Hero Section -->
-  <section class="py-16 lg:py-24 px-4 sm:px-6">
-    <div class="max-w-4xl mx-auto text-center">
-      <h1
-        class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 font-space-grotesk uppercase tracking-wide"
-      >
-        Tech Insights Without the Hype
-      </h1>
-      <p
-        class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-400 leading-relaxed"
-      >
-        TinkByte delivers practical analysis and real-world insights for
-        builders who value substance over speculation.
-      </p>
+  <section class="relative py-16 lg:py-24 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-10"></div>
+    
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-4xl mx-auto text-center">
+        <h1 class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6">
+          About
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            TinkByte
+          </span>
+        </h1>
+        
+        <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto">
+          {mission}
+        </p>
+      </div>
     </div>
   </section>
 
-  <!-- Mission Section -->
-  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
-    <div class="max-w-7xl mx-auto">
-      <div class="grid lg:grid-cols-2 gap-12 items-center">
-        <div>
-          <h2
-            class="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 font-space-grotesk uppercase tracking-wide"
-          >
-            Our Mission
-          </h2>
-          <div class="prose prose-lg prose-zinc dark:prose-invert">
-            <p>
-              In a world saturated with tech hype and surface-level analysis,
-              TinkByte cuts through the noise to deliver insights that actually
-              matter to builders, founders, and innovators.
-            </p>
-            <p>
-              We believe in practical knowledge over theoretical speculation,
-              real-world applications over buzzword-driven content, and
-              substance over style.
-            </p>
+  <!-- Mission & Vision Section -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="container mx-auto">
+      <div class="max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+          <!-- Text Content -->
+          <div class="space-y-8">
+            <div>
+              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-6">
+                Our
+                <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Approach
+                </span>
+              </h2>
+              
+              <div class="prose prose-lg dark:prose-invert max-w-none">
+                <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+                  We believe the tech industry has enough speculation and buzzword-heavy content. What's missing is practical, tested knowledge that builders can actually use.
+                </p>
+                
+                <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+                  Tinkbyte exists to fill that gap. We focus on real experiences, documented failures, measurable successes, and actionable insights from people actually building products.
+                </p>
+                
+                <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Every piece of content we publish has been tested in the real world. No theoretical frameworks, no untested advice, no hype-driven predictions.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4">
+              <Button
+                href="/blog"
+                variant="primary"
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                Read Our Articles
+              </Button>
+              <Button
+                href="/community"
+                variant="outline"
+                className="px-6 py-3 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
+              >
+                Join Community
+              </Button>
+            </div>
           </div>
-        </div>
-        <div class="aspect-[4/3] overflow-hidden rounded-2xl">
-          <img
-            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop"
-            alt="Team collaboration"
-            class="w-full h-full object-cover"
-          />
+
+          <!-- Image -->
+          <div class="relative">
+            <div class="aspect-square bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-sm border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+              <div class="text-center p-8">
+                <div class="w-24 h-24 bg-gradient-to-r from-blue-600 to-purple-600 rounded-sm flex items-center justify-center mx-auto mb-6">
+                  <i class="fas fa-code text-3xl text-white"></i>
+                </div>
+                <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+                  Built by Builders
+                </h3>
+                <p class="text-zinc-600 dark:text-zinc-400">
+                  For builders who value practical knowledge over theoretical concepts
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Values Section -->
-  <section class="py-16 px-4 sm:px-6">
-    <div class="max-w-7xl mx-auto">
-      <div class="text-center mb-16">
-        <h2
-          class="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 font-space-grotesk uppercase tracking-wide"
-        >
-          What We Stand For
-        </h2>
-      </div>
+  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="container mx-auto">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+            What We
+            <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Believe
+            </span>
+          </h2>
+          <p class="text-xl text-zinc-600 dark:text-zinc-400">
+            Our core principles guide everything we create
+          </p>
+        </div>
 
-      <div class="grid md:grid-cols-3 gap-8">
-        {
-          values.map((value) => (
-            <div class="text-center p-8">
-              <div class="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i
-                  class={`fas fa-${value.icon} text-2xl text-zinc-600 dark:text-zinc-400`}
-                />
+        <div class="grid md:grid-cols-3 gap-8">
+          {values.map((value) => (
+            <div class="bg-white dark:bg-zinc-800 p-6 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200">
+              <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-sm flex items-center justify-center mb-4">
+                <i class={`fas fa-${value.icon} text-xl text-blue-600 dark:text-blue-400`}></i>
               </div>
-              <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
+              
+              <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-3">
                 {value.title}
               </h3>
+              
               <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
                 {value.description}
               </p>
             </div>
-          ))
-        }
+          ))}
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Newsletter -->
-  <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
-    <div class="max-w-4xl mx-auto">
-      <NewsletterForm
-        variant="minimal"
-        title="Stay Updated"
-        description="Get weekly insights delivered to your inbox."
-      />
+  <!-- Team Section -->
+  <section class="py-16 px-4 sm:px-6">
+    <div class="container mx-auto">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+            Meet the
+            <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Team
+            </span>
+          </h2>
+          <p class="text-xl text-zinc-600 dark:text-zinc-400">
+            Builders and product experts sharing real experiences
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {team.map((member) => (
+            <div class="bg-white dark:bg-zinc-800 p-6 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:shadow-lg transition-all duration-200">
+              {member.image && (
+                <div class="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-sm flex items-center justify-center mb-4">
+                  <span class="text-2xl font-bold text-white">
+                    {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                  </span>
+                </div>
+              )}
+              
+              <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-1">
+                {member.name}
+              </h3>
+              
+              <p class="text-sm text-blue-600 dark:text-blue-400 font-semibold mb-3 uppercase tracking-wide">
+                {member.role}
+              </p>
+              
+              {member.bio && (
+                <p class="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed mb-4">
+                  {member.bio}
+                </p>
+              )}
+
+              {member.social && (
+                <div class="flex gap-3">
+                  {member.social.twitter && (
+                    <a href={member.social.twitter} class="text-zinc-400 hover:text-blue-500 transition-colors">
+                      <i class="fab fa-twitter"></i>
+                    </a>
+                  )}
+                  {member.social.linkedin && (
+                    <a href={member.social.linkedin} class="text-zinc-400 hover:text-blue-500 transition-colors">
+                      <i class="fab fa-linkedin"></i>
+                    </a>
+                  )}
+                  {member.social.github && (
+                    <a href={member.social.github} class="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors">
+                      <i class="fab fa-github"></i>
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   </section>
-</Layout>
+</Layout

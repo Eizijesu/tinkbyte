@@ -1,0 +1,63 @@
+---
+// src/components/tina/TableBlock.astro
+export interface Props {
+  caption?: string;
+  headers: string[];
+  rows: Array<{
+    cells: string[];
+  }>;
+  style?: "default" | "striped" | "bordered" | "compact";
+}
+
+const { caption, headers = [], rows = [], style = "default" } = Astro.props;
+
+const styleClasses = {
+  default: "border-collapse border border-gray-300",
+  striped: "border-collapse border border-gray-300",
+  bordered: "border-collapse border-2 border-gray-400",
+  compact: "border-collapse border border-gray-300 text-sm",
+};
+
+const rowClasses = {
+  default: "",
+  striped: "even:bg-gray-50",
+  bordered: "border-b-2 border-gray-300",
+  compact: "py-1",
+};
+---
+
+<div class="my-8 overflow-x-auto">
+  {caption && <h3 class="text-lg font-semibold mb-3 text-center">{caption}</h3>}
+
+  <table class={`w-full ${styleClasses[style]}`}>
+    {
+      headers.length > 0 && (
+        <thead>
+          <tr class="bg-gray-100">
+            {headers.map((header) => (
+              <th class="px-4 py-3 text-left font-semibold text-gray-900 border border-gray-300">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+      )
+    }
+
+    <tbody>
+      {
+        rows.map((row, rowIndex) => (
+          <tr class={rowClasses[style]}>
+            {row.cells.map((cell, cellIndex) => (
+              <td
+                class={`px-4 py-3 border border-gray-300 ${style === "compact" ? "py-2" : ""}`}
+              >
+                {cell}
+              </td>
+            ))}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

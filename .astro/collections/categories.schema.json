@@ -23,7 +23,16 @@
             "lightbulb",
             "rocket",
             "tools",
-            "cog"
+            "code",
+            "cog",
+            "star",
+            "fire",
+            "shield-alt",
+            "database",
+            "mobile-alt",
+            "cloud",
+            "lock",
+            "microchip"
           ]
         },
         "color": {
@@ -36,8 +45,8 @@
             "orange",
             "red",
             "pink",
-            "gray",
-            "yellow"
+            "yellow",
+            "gray"
           ]
         },
         "featured": {

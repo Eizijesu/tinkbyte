@@ -7,10 +7,13 @@
         "title": {
           "type": "string"
         },
+        "issueNumber": {
+          "type": "number"
+        },
         "excerpt": {
           "type": "string"
         },
-        "pubDate": {
+        "publishDate": {
           "anyOf": [
             {
               "type": "string",
@@ -26,12 +29,112 @@
             }
           ]
         },
-        "issue": {
+        "newsletterType": {
+          "type": "string",
+          "enum": [
+            "tinkbyte-weekly",
+            "build-sheet",
+            "stackdown",
+            "signal-drop",
+            "system-signal",
+            "the-real-build",
+            "the-loop",
+            "data-slice",
+            "the-mirror",
+            "community-code",
+            "future-tech"
+          ]
+        },
+        "subscriberOnly": {
+          "type": "boolean",
+          "default": true
+        },
+        "previewContent": {
+          "type": "string"
+        },
+        "readingTime": {
           "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "review",
+            "scheduled",
+            "published",
+            "archived"
+          ]
         },
         "featured": {
           "type": "boolean",
           "default": false
+        },
+        "trackStats": {
+          "type": "boolean",
+          "default": false
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "subscribers": {
+              "type": "number"
+            },
+            "openRate": {
+              "type": "number"
+            },
+            "clickRate": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "subscribers",
+            "openRate",
+            "clickRate"
+          ],
+          "additionalProperties": false
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "coverImage": {
+          "type": "string"
+        },
+        "highlights": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "link": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "seo": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         },
         "$schema": {
           "type": "string"
@@ -39,9 +142,11 @@
       },
       "required": [
         "title",
+        "issueNumber",
         "excerpt",
-        "pubDate",
-        "issue"
+        "publishDate",
+        "newsletterType",
+        "status"
       ],
       "additionalProperties": false
     }

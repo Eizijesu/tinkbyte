@@ -1,62 +1,504 @@
 ---
+// src/pages/blog/authors/[author].astro - Fixed Content rendering
+import Layout from "../../../layouts/Layout.astro";
+import ArticleCard from "../../../components/blog/ArticleCard.astro";
+import Button from "../../../components/ui/Button.astro";
 import { getCollection } from "astro:content";
-import BaseLayout from "../../../layouts/BaseLayout.astro";
-import AuthorBio from "../../../components/blog/AuthorBio.astro";
+import type { CollectionEntry } from "astro:content";
 
-interface Author {
-  slug: string;
-  name: string;
-  bio?: string;
-  avatar?: string;
-  role?: string;
-  social?: {
-    twitter?: string;
-    linkedin?: string;
-    website?: string;
-    github?: string;
-  };
-}
+type Author = CollectionEntry<'authors'>;
+type BlogPost = CollectionEntry<'blog'>;
 
 export async function getStaticPaths() {
   const authors = await getCollection("authors");
-  return authors.map((author) => ({
-    params: { author: author.slug },
-    props: { author: author.data },
-  }));
+  
+  return authors.map((author) => {
+    const authorSlug = author.data.name
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]+/g, '');
+    
+    return {
+      params: { author: authorSlug },
+      props: { author },
+    };
+  });
 }
 
-const { author } = Astro.props as { author: Author };
+interface Props {
+  author: Author;
+}
 
-const authorWithDefaults: Author = {
-  name: author.name,
-  bio: author.bio ?? "",
-  avatar: author.avatar ?? "/default-avatar.png",
-  role: author.role ?? "",
-  social: author.social ?? {},
-  slug: author.slug,
+const { author } = Astro.props;
+
+// Render the content component
+const { Content } = await author.render();
+
+// Get all blog posts by this author
+const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+const authorPosts = allPosts.filter(post => {
+  const postAuthor = post.data.authorInfo?.name || post.data.author || 'TinkByte Team';
+  return postAuthor.toLowerCase() === author.data.name.toLowerCase();
+}).sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
+
+// Format posts for ArticleCard
+const formatPost = (post: BlogPost) => {
+  let authorData = {
+    name: post.data.authorInfo?.name || post.data.author || 'TinkByte Team',
+    avatar: post.data.authorInfo?.avatar || post.data.authorAvatar || author.data.avatar,
+    role: post.data.authorInfo?.role || post.data.authorRole || author.data.role,
+    bio: post.data.authorInfo?.bio || post.data.authorBio || author.data.bio
+  };
+
+  return {
+    title: post.data.title,
+    excerpt: post.data.excerpt,
+    date: post.data.pubDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }),
+    readTime: post.data.readTime || "5 min read",
+    slug: post.slug,
+    image: post.data.image || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop",
+    tags: post.data.tags || [],
+    category: post.data.category,
+    author: authorData,
+    audioUrl: post.data.audioUrl,
+    featured: post.data.featured,
+    trending: post.data.trending,
+  };
 };
+
+const featuredPosts = authorPosts.filter(post => post.data.featured);
+const recentPosts = authorPosts.slice(0, 6);
+
+const pageTitle = `${author.data.name} | TinkByte Authors`;
+const pageDescription = author.data.bio || `Articles and insights by ${author.data.name}`;
 ---
 
-<BaseLayout title={`Author: ${authorWithDefaults.name}`}>
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16">
-    <AuthorBio author={authorWithDefaults} />
+<Layout title={pageTitle} description={pageDescription}>
+  <!-- Author Hero -->
+  <section class="relative py-12 lg:py-16 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-5"></div>
 
-    <h2 class="text-2xl font-bold mt-12 mb-8">Recent Articles</h2>
-    <div class="space-y-6">
-      {
-        (await getCollection("blog"))
-          .filter((post) => post.data.author === author.slug)
-          .map((post) => (
-            <a href={`/blog/${post.slug}`} class="block group">
-              <h3 class="text-lg font-semibold group-hover:text-primary transition">
-                {post.data.title}
-              </h3>
-              <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                {post.data.pubDate.toLocaleDateString()}
-              </p>
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-4xl mx-auto">
+        <!-- Breadcrumb -->
+        <nav class="mb-6">
+          <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <a href="/blog" class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide font-semibold transition-colors">
+              Blog
             </a>
-          ))
-      }
+            <i class="fas fa-chevron-right text-xs mx-2"></i>
+            <a href="/blog/authors" class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide transition-colors">
+              Authors
+            </a>
+            <i class="fas fa-chevron-right text-xs mx-2"></i>
+            <span class="text-zinc-700 dark:text-zinc-300 uppercase tracking-wide font-semibold">
+              {author.data.name}
+            </span>
+          </div>
+        </nav>
+
+        <!-- Author Profile -->
+        <div class="author-profile">
+          <div class="profile-content">
+            <!-- Author Avatar -->
+            <div class="profile-avatar">
+              {author.data.avatar ? (
+                <img
+                  src={author.data.avatar}
+                  alt={`${author.data.name} profile picture`}
+                  class="w-24 h-24 rounded-sm object-cover border-4 border-white dark:border-zinc-800 shadow-lg"
+                  loading="eager"
+                />
+              ) : (
+                <div class="w-24 h-24 rounded-sm bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center border-4 border-white dark:border-zinc-800 shadow-lg">
+                  <i class="fas fa-user text-3xl text-blue-600 dark:text-blue-400"></i>
+                </div>
+              )}
+              {author.data.featured && (
+                <div class="featured-badge">FEATURED AUTHOR</div>
+              )}
+            </div>
+
+            <!-- Author Info -->
+            <div class="profile-info">
+              <h1 class="profile-name">{author.data.name}</h1>
+              
+              {author.data.role && (
+                <p class="profile-role">{author.data.role}</p>
+              )}
+              
+              {author.data.company && (
+                <p class="profile-company">at {author.data.company}</p>
+              )}
+
+              {author.data.bio && (
+                <p class="profile-bio">{author.data.bio}</p>
+              )}
+
+              <!-- Author Stats -->
+              <div class="profile-stats">
+                <div class="stat-item">
+                  <span class="stat-number">{authorPosts.length}</span>
+                  <span class="stat-label">ARTICLES</span>
+                </div>
+                {featuredPosts.length > 0 && (
+                  <div class="stat-item">
+                    <span class="stat-number">{featuredPosts.length}</span>
+                    <span class="stat-label">FEATURED</span>
+                  </div>
+                )}
+              </div>
+
+              <!-- Social Links -->
+              {author.data.social && Object.values(author.data.social).some(link => link) && (
+                <div class="profile-social">
+                  {author.data.social.twitter && (
+                    <a href={author.data.social.twitter} target="_blank" rel="noopener noreferrer" class="social-link">
+                      <i class="fab fa-twitter"></i>
+                      <span>Twitter</span>
+                    </a>
+                  )}
+                  {author.data.social.linkedin && (
+                    <a href={author.data.social.linkedin} target="_blank" rel="noopener noreferrer" class="social-link">
+                      <i class="fab fa-linkedin"></i>
+                      <span>LinkedIn</span>
+                    </a>
+                  )}
+                  {author.data.social.github && (
+                    <a href={author.data.social.github} target="_blank" rel="noopener noreferrer" class="social-link">
+                      <i class="fab fa-github"></i>
+                      <span>GitHub</span>
+                    </a>
+                  )}
+                  {author.data.social.website && (
+                    <a href={author.data.social.website} target="_blank" rel="noopener noreferrer" class="social-link">
+                      <i class="fas fa-globe"></i>
+                      <span>Website</span>
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-</BaseLayout>
+  </section>
+
+  <!-- Author Articles -->
+  <main class="author-articles-page">
+    <div class="max-w-7xl mx-auto px-4 py-12">
+      
+      {authorPosts.length > 0 ? (
+        <>
+          <!-- Featured Articles -->
+          {featuredPosts.length > 0 && (
+            <section class="mb-12">
+              <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 flex items-center">
+                <i class="fas fa-star mr-3 text-yellow-500"></i>
+                Featured Articles
+              </h2>
+              <div class="articles-grid featured-grid">
+                {featuredPosts.slice(0, 3).map((post) => (
+                  <div class="article-wrapper featured-article">
+                    <ArticleCard {...formatPost(post)} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <!-- All Articles -->
+          <section>
+            <div class="flex items-center justify-between mb-8">
+              <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center">
+                <i class="fas fa-newspaper mr-3 text-blue-600"></i>
+                All Articles by {author.data.name}
+              </h2>
+              <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                {authorPosts.length} {authorPosts.length === 1 ? 'article' : 'articles'}
+              </span>
+            </div>
+
+            <div class="articles-grid">
+              {authorPosts.map((post, index) => (
+                <div class="article-wrapper" style={`--animation-delay: ${index * 0.1}s`}>
+                  <ArticleCard {...formatPost(post)} />
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      ) : (
+        <!-- No Articles State -->
+        <section class="text-center py-16">
+          <div class="max-w-md mx-auto">
+            <div class="mb-6">
+              <i class="fas fa-newspaper text-4xl text-zinc-300 dark:text-zinc-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+              No Articles Yet
+            </h3>
+            <p class="text-zinc-600 dark:text-zinc-400 mb-6">
+              {author.data.name} hasn't published any articles yet. Check back soon for fresh insights!
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button href="/blog" variant="primary" className="compact-btn">
+                <i class="fas fa-newspaper mr-2"></i>
+                BROWSE ALL ARTICLES
+              </Button>
+              <Button href="/blog/authors" variant="outline" className="compact-btn">
+                <i class="fas fa-users mr-2"></i>
+                OTHER AUTHORS
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
+  </main>
+
+  <!-- Author Content (if exists) - FIXED -->
+  {author.body && author.body.trim() && (
+    <section class="py-12 px-4 bg-zinc-50 dark:bg-zinc-900/50">
+      <div class="max-w-4xl mx-auto">
+        <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none">
+          <Content />
+        </div>
+      </div>
+    </section>
+  )}
+</Layout>
+
+<style>
+  /* Author Profile Styling */
+  .author-profile {
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .profile-content {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  .profile-avatar {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .featured-badge {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    background: #243788;
+    color: white;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.25rem 0.5rem;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .profile-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .profile-name {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .profile-role {
+    font-size: 1.125rem;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .profile-company {
+    font-size: 1rem;
+    color: var(--color-text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .profile-bio {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .profile-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .profile-social {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .social-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .social-link:hover {
+    background: #243788;
+    color: white;
+    border-color: #243788;
+  }
+
+  /* Articles Grid */
+  .articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+  }
+
+  .featured-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  .article-wrapper {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease forwards;
+    animation-delay: var(--animation-delay, 0s);
+  }
+
+  .featured-article {
+    position: relative;
+  }
+
+  .featured-article::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #243788, #8B5CF6, #06B6D4);
+    border-radius: 4px;
+    z-index: -1;
+    opacity: 0.6;
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .profile-content {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .profile-avatar {
+      align-self: center;
+    }
+
+    .profile-stats {
+      justify-content: center;
+    }
+
+    .profile-social {
+      justify-content: center;
+    }
+
+    .articles-grid,
+    .featured-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Compact buttons */
+  .compact-btn {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    font-size: 0.875rem;
+    padding: 0.75rem 1.5rem;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Staggered animation for article cards
+    const articleWrappers = document.querySelectorAll('.article-wrapper');
+    
+    articleWrappers.forEach((wrapper, index) => {
+      wrapper.style.setProperty('--animation-delay', `${index * 0.1}s`);
+    });
+
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px',
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    articleWrappers.forEach((wrapper) => {
+      observer.observe(wrapper);
+    });
+  });
+</script>

@@ -1,10 +1,9 @@
-// astro.config.mjs - Enhanced TinkByte Configuration (CORRECTED)
+// astro.config.mjs - Enhanced TinkByte Configuration (FIXED)
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
-//import compress from 'astro-compress';
 import robotsTxt from 'astro-robots-txt';
 
 // Import rehype and remark plugins for enhanced markdown processing
@@ -14,7 +13,7 @@ import remarkGfm from 'remark-gfm';
 
 export default defineConfig({
   // Site configuration
-  site: 'https://tinkbyte.com', // Replace with your actual domain
+  site: 'https://tinkbyte.com',
   
   // Integrations
   integrations: [
@@ -51,7 +50,7 @@ export default defineConfig({
     
     // Tailwind CSS with custom configuration
     tailwind({
-      applyBaseStyles: false, // We're using our custom global.css
+      applyBaseStyles: false,
       configFile: './tailwind.config.mjs',
     }),
     
@@ -65,7 +64,7 @@ export default defineConfig({
     
     // Robots.txt generation
     robotsTxt({
-      sitemap: 'https://tinkbyte.com/sitemap-index.xml', // Replace with your domain
+      sitemap: 'https://tinkbyte.com/sitemap-index.xml',
       policy: [
         {
           userAgent: '*',
@@ -82,24 +81,51 @@ export default defineConfig({
         },
       ],
     }),
-    
-    // Compression for better performance (should be last) - COMMENTED OUT
-    // compress({
-    //   CSS: true,
-    //   HTML: {
-    //     'html-minifier-terser': {
-    //       removeAttributeQuotes: false,
-    //       collapseWhitespace: true,
-    //       removeComments: true,
-    //       sortClassName: true,
-    //       sortAttributes: true,
-    //     },
-    //   },
-    //   Image: false, // Handle images separately for better control
-    //   JavaScript: true,
-    //   SVG: true,
-    // }),
-  ],
+  ], 
+
+  vite: {
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'date-fns', 'fuse.js'],
+      exclude: ['shiki'],
+    },
+    ssr: {
+      noExternal: ['shiki'],
+    },
+    css: {
+      devSourcemap: true,
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'date-vendor': ['date-fns'],
+            'search-vendor': ['fuse.js'],
+          },
+        },
+      },
+    },
+    server: {
+      fs: {
+        allow: ['..'],
+      },
+    },
+    // ADDED: Global component registration
+    define: {
+      'globalThis.astroMDXComponents': JSON.stringify({
+        ImageBlock: true,
+        VideoBlock: true,
+        Callout: true,
+        ButtonBlock: true,
+        CodeBlock: true,
+        Quote: true,
+        TableBlock: true,
+        ImageGallery: true,
+        Newsletter: true,
+        TwoColumnLayout: true,
+      }),
+    },
+  },
 
   // Markdown configuration
   markdown: {
@@ -126,16 +152,17 @@ export default defineConfig({
         },
       ],
     ],
+    extendMarkdownConfig: false,
   },
 
   // Vite configuration for enhanced development
   vite: {
     optimizeDeps: {
       include: ['react', 'react-dom', 'date-fns', 'fuse.js'],
-      exclude: ['shiki'] // ✅ ADDED: Exclude shiki from optimization
+      exclude: ['shiki'],
     },
     ssr: {
-      noExternal: ['shiki'] // ✅ FIXED: Moved inside vite config properly
+      noExternal: ['shiki'],
     },
     css: {
       devSourcemap: true,
@@ -187,7 +214,7 @@ export default defineConfig({
 
   // Image optimization
   image: {
-    domains: ['images.unsplash.com', 'cdn.tinkbyte.com'], // Add your image domains
+    domains: ['images.unsplash.com', 'cdn.tinkbyte.com'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -200,11 +227,4 @@ export default defineConfig({
   security: {
     checkOrigin: true,
   },
-
-  // Remove the experimental object entirely since it's empty
-  // If you need experimental features in the future, add them like this:
-  // experimental: {
-  //   contentCollectionCache: true,
-  //   optimizeHoistedScript: true,
-  // },
 });

@@ -1,11 +1,12 @@
 ---
-// src/components/blog/AuthorBio.astro - Handle empty names
+// src/components/blog/AuthorBio.astro - Enhanced version
 export interface Props {
   author: {
-    name: string; // Required
-    bio?: string | null; // Optional
-    avatar?: string | null; // Optional
-    role?: string | null; // Optional
+    name: string;
+    bio?: string | null;
+    avatar?: string | null;
+    role?: string | null;
+    company?: string | null;
     social?: {
       twitter?: string;
       linkedin?: string;
@@ -13,9 +14,10 @@ export interface Props {
       website?: string;
     } | null;
   };
+  showLink?: boolean;
 }
 
-const { author } = Astro.props;
+const { author, showLink = false } = Astro.props;
 
 // Don't render if no author or empty name
 if (!author || !author.name || author.name.trim() === "") {
@@ -28,157 +30,214 @@ const hasSocialLinks =
   Object.values(author.social).some((link) => link && link.trim() !== "");
 ---
 
-<div
-  class="author-bio theme-bg-secondary theme-card p-6 rounded-sm theme-border mb-6"
-  data-theme-aware="true"
->
-  <div class="flex items-start space-x-4">
-    {
-      author.avatar && author.avatar.trim() !== "" && (
+<div class="author-bio">
+  <div class="author-bio-content">
+    <!-- Author Avatar -->
+    <div class="author-avatar">
+      {author.avatar && author.avatar.trim() !== "" ? (
         <img
           src={author.avatar}
           alt={`${author.name} profile picture`}
-          class="w-12 h-12 rounded-sm object-cover flex-shrink-0 border-2 theme-border"
+          class="avatar-image"
           loading="lazy"
         />
-      )
-    }
+      ) : (
+        <div class="avatar-placeholder">
+          <i class="fas fa-user"></i>
+        </div>
+      )}
+    </div>
 
-    <div class="flex-1">
-      <h3 class="text-lg font-semibold theme-text-primary mb-1">
-        {author.name}
+    <!-- Author Info -->
+    <div class="author-info">
+      <h3 class="author-name">
+        {showLink ? (
+          <a href={`/blog/authors/${author.name.toLowerCase().replace(/\s+/g, '-')}`}>
+            {author.name}
+          </a>
+        ) : (
+          author.name
+        )}
       </h3>
 
-      {
-        author.role && author.role.trim() !== "" && (
-          <p class="text-sm theme-text-secondary mb-2">{author.role}</p>
-        )
-      }
+      {author.role && author.role.trim() !== "" && (
+        <p class="author-role">
+          {author.role}
+          {author.company && author.company.trim() !== "" && (
+            <span class="author-company"> at {author.company}</span>
+          )}
+        </p>
+      )}
 
-      {
-        author.bio && author.bio.trim() !== "" && (
-          <p class="theme-text-secondary text-sm leading-relaxed mb-3">
-            {author.bio}
-          </p>
-        )
-      }
+      {author.bio && author.bio.trim() !== "" && (
+        <p class="author-bio-text">{author.bio}</p>
+      )}
 
-      {
-        hasSocialLinks && (
-          <div class="flex items-center gap-3">
-            {author.social?.twitter && author.social.twitter.trim() !== "" && (
-              <a
-                href={author.social.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="theme-text-muted hover:text-blue-500 transition-colors"
-                aria-label={`${author.name} on Twitter`}
-              >
-                <i class="fab fa-twitter w-4 h-4" />
-              </a>
-            )}
+      {hasSocialLinks && (
+        <div class="author-social">
+          {author.social?.twitter && author.social.twitter.trim() !== "" && (
+            <a
+              href={author.social.twitter}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="social-link"
+              aria-label={`${author.name} on Twitter`}
+            >
+              <i class="fab fa-twitter"></i>
+            </a>
+          )}
 
-            {author.social?.linkedin &&
-              author.social.linkedin.trim() !== "" && (
-                <a
-                  href={author.social.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="theme-text-muted hover:text-blue-700 transition-colors"
-                  aria-label={`${author.name} on LinkedIn`}
-                >
-                  <i class="fab fa-linkedin w-4 h-4" />
-                </a>
-              )}
+          {author.social?.linkedin && author.social.linkedin.trim() !== "" && (
+            <a
+              href={author.social.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="social-link"
+              aria-label={`${author.name} on LinkedIn`}
+            >
+              <i class="fab fa-linkedin"></i>
+            </a>
+          )}
 
-            {author.social?.github && author.social.github.trim() !== "" && (
-              <a
-                href={author.social.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="theme-text-muted hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                aria-label={`${author.name} on GitHub`}
-              >
-                <i class="fab fa-github w-4 h-4" />
-              </a>
-            )}
+          {author.social?.github && author.social.github.trim() !== "" && (
+            <a
+              href={author.social.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="social-link"
+              aria-label={`${author.name} on GitHub`}
+            >
+              <i class="fab fa-github"></i>
+            </a>
+          )}
 
-            {author.social?.website && author.social.website.trim() !== "" && (
-              <a
-                href={author.social.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="theme-text-muted hover:text-green-600 transition-colors"
-                aria-label={`${author.name}'s website`}
-              >
-                <i class="fas fa-globe w-4 h-4" />
-              </a>
-            )}
-          </div>
-        )
-      }
+          {author.social?.website && author.social.website.trim() !== "" && (
+            <a
+              href={author.social.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="social-link"
+              aria-label={`${author.name}'s website`}
+            >
+              <i class="fas fa-globe"></i>
+            </a>
+          )}
+        </div>
+      )}
     </div>
   </div>
 </div>
 
 <style>
-  /* Theme-aware styles */
-  .theme-card {
-    background-color: var(--card-bg) !important;
-    border-color: var(--card-border) !important;
-  }
-
-  .theme-bg-secondary {
-    background-color: var(--color-bg-secondary) !important;
-  }
-
-  .theme-border {
-    border-color: var(--color-border) !important;
-  }
-
-  .theme-text-primary {
-    color: var(--color-text-primary) !important;
-  }
-
-  .theme-text-secondary {
-    color: var(--color-text-secondary) !important;
-  }
-
-  .theme-text-muted {
-    color: var(--color-text-muted) !important;
-  }
-
-  /* Ensure proper theme inheritance */
   .author-bio {
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-border);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
     transition: all 0.3s ease;
   }
 
-  .theme-card {
-    background-color: var(--card-bg) !important;
-    border-color: var(--card-border) !important;
+  .author-bio-content {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
   }
 
-  .theme-bg-secondary {
-    background-color: var(--color-bg-secondary) !important;
+  .author-avatar {
+    flex-shrink: 0;
   }
 
-  .theme-border {
-    border-color: var(--color-border) !important;
+  .avatar-image {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 2px;
+    object-fit: cover;
+    border: 2px solid var(--color-border);
   }
 
-  .theme-text-primary {
-    color: var(--color-text-primary) !important;
+  .avatar-placeholder {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 2px;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    font-size: 1.25rem;
   }
 
-  .theme-text-secondary {
-    color: var(--color-text-secondary) !important;
+  .author-info {
+    flex: 1;
+    min-width: 0;
   }
 
-  .theme-text-muted {
-    color: var(--color-text-muted) !important;
+  .author-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
-  .author-bio {
-    transition: all 0.3s ease;
+  .author-name a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .author-name a:hover {
+    color: #243788;
+  }
+
+  .author-role {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .author-company {
+    color: var(--color-text-muted);
+  }
+
+  .author-bio-text {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    margin-bottom: 0.75rem;
+  }
+
+  .author-social {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .social-link {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    transition: color 0.3s ease;
+  }
+
+  .social-link:hover {
+    color: #243788;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 640px) {
+    .author-bio-content {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .author-avatar {
+      align-self: center;
+    }
+
+    .author-social {
+      justify-content: center;
+    }
   }
 </style>

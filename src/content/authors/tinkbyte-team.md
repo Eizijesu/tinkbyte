@@ -8,7 +8,7 @@ avatar: /images/apple-touch-icon.png
 role: Editorial Team
 social:
   twitter: '@tinkbyte'
-  linkedin: 'https://linkedin.com/company/tinkbyte'
+  linkedin: 'https://linkedin.com/company/tinkbytehq'
 featured: true
 ---
 

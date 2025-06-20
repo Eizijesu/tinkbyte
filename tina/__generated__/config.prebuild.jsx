@@ -11,14 +11,9 @@ var config_default = defineConfig({
   },
   media: {
     tina: {
-      mediaRoot: "images",
+      mediaRoot: "",
       publicFolder: "public",
       static: false
-    }
-  },
-  admin: {
-    auth: {
-      useLocalAuth: true
     }
   },
   search: {
@@ -31,72 +26,144 @@ var config_default = defineConfig({
   },
   schema: {
     collections: [
-      // Blog Posts Collection
+      // ENHANCED BLOG COLLECTION (Fixed)
       {
         name: "blog",
-        label: "Blog Posts",
+        label: "\u{1F4DD} TinkByte Articles",
         path: "src/content/blog",
-        format: "md",
+        format: "mdx",
         ui: {
-          router: ({ document }) => {
-            return `/blog/${document._sys.filename}?tina-admin=true`;
-          },
+          router: ({ document }) => `/blog/${document._sys.filename}`,
           filename: {
             readonly: false,
             slugify: (values) => {
-              return `${values?.title?.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "")}`;
+              const title = values?.title;
+              if (typeof title === "string") {
+                return title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").slice(0, 50);
+              }
+              return "new-article";
             }
+          },
+          beforeSubmit: async ({ form, cms, values }) => {
+            if (!values.filename && values.title && typeof values.title === "string") {
+              values.filename = values.title.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+            }
+            if (!values.readTime && values.body) {
+              const wordCount = JSON.stringify(values.body).split(" ").length;
+              values.readTime = `${Math.ceil(wordCount / 200)} min read`;
+            }
+            if (!values.pubDate) {
+              values.pubDate = (/* @__PURE__ */ new Date()).toISOString();
+            }
+            return values;
           }
         },
-        defaultItem: () => {
-          return {
-            title: "New Blog Post",
-            excerpt: "Brief description of this post...",
-            pubDate: (/* @__PURE__ */ new Date()).toISOString(),
-            author: "TinkByte Team",
-            draft: true,
-            featured: false,
-            trending: false,
-            tags: [],
-            category: "build-thinking",
-            storyType: "feature"
-          };
-        },
+        defaultItem: () => ({
+          title: "New TinkByte Article",
+          excerpt: "Brief description that captures the essence of this article...",
+          pubDate: (/* @__PURE__ */ new Date()).toISOString(),
+          authorInfo: {
+            name: "Eiza",
+            role: "Solution Architect & AI Product Manager"
+          },
+          heroImage: {
+            imageType: "url",
+            alt: ""
+          },
+          draft: true,
+          featured: false,
+          trending: false,
+          tags: [],
+          category: "build-thinking",
+          storyType: "feature"
+        }),
         fields: [
+          // Editorial Workflow
+          {
+            type: "object",
+            name: "editorial",
+            label: "\u{1F4CB} Editorial Workflow",
+            description: "Track article progress and editorial notes",
+            ui: {
+              component: "group"
+            },
+            fields: [
+              {
+                type: "string",
+                name: "status",
+                label: "Article Status",
+                options: [
+                  { label: "\u{1F4DD} Draft", value: "draft" },
+                  { label: "\u270F\uFE0F In Review", value: "review" },
+                  { label: "\u2705 Ready to Publish", value: "approved" },
+                  { label: "\u{1F680} Published", value: "published" },
+                  { label: "\u{1F504} Needs Revision", value: "revision" }
+                ],
+                ui: {
+                  component: "radio-group"
+                }
+              },
+              {
+                type: "string",
+                name: "assignedEditor",
+                label: "Assigned Editor",
+                options: [
+                  { label: "Eiza", value: "Eiza" },
+                  { label: "TinkByte Team", value: "TinkByte Team" },
+                  { label: "Guest Editor", value: "Guest Editor" }
+                ]
+              },
+              {
+                type: "string",
+                name: "editorNotes",
+                label: "Editorial Notes",
+                description: "Internal notes for the editorial team",
+                ui: {
+                  component: "textarea"
+                }
+              }
+            ]
+          },
+          // Enhanced Title
           {
             type: "string",
             name: "title",
-            label: "Title",
+            label: "\u{1F4F0} Article Title",
             isTitle: true,
             required: true,
             description: "SEO-friendly title (max 100 characters)",
             ui: {
               validate: (value) => {
-                if (value && value.length > 100) {
-                  return "Title should be 100 characters or less";
-                }
-              }
+                if (!value) return "Title is required";
+                if (value.length > 100) return "Title should be 100 characters or less for optimal SEO";
+                if (value.length < 10) return "Title should be at least 10 characters for readability";
+              },
+              parse: (value) => value?.trim()
             }
           },
+          // Enhanced Excerpt
           {
             type: "string",
             name: "excerpt",
-            label: "Excerpt",
+            label: "\u{1F4C4} Article Excerpt",
             required: true,
-            description: "Brief summary for previews and SEO (max 160 characters)",
+            description: "Brief summary for previews and SEO (max 300 characters)",
             ui: {
               component: "textarea",
               validate: (value) => {
-                if (value && value.length > 160) {
-                  return "Excerpt should be 160 characters or less for optimal SEO";
+                if (!value) return "Excerpt is required";
+                if (value && value.length > 300) {
+                  return "Excerpt should be 300 characters or less for optimal SEO";
                 }
+                if (value.length < 20) return "Excerpt should be at least 20 characters";
               }
             }
           },
+          // Publishing dates
           {
             type: "datetime",
             name: "pubDate",
-            label: "Publication Date",
+            label: "\u{1F4C5} Publication Date",
             required: true,
             ui: {
               dateFormat: "YYYY-MM-DD",
@@ -109,11 +176,11 @@ var config_default = defineConfig({
             label: "Last Updated",
             description: "Optional: When the post was last significantly updated"
           },
-          // FIXED: authorInfo with all optional fields except name
+          // Enhanced Author Information
           {
             type: "object",
             name: "authorInfo",
-            label: "Author Information",
+            label: "\u{1F464} Author Information",
             description: "Author details (only name is required)",
             fields: [
               {
@@ -121,7 +188,6 @@ var config_default = defineConfig({
                 name: "name",
                 label: "Author Name",
                 required: true,
-                // Only name is required
                 options: [
                   { label: "TinkByte Team", value: "TinkByte Team" },
                   { label: "Eiza", value: "Eiza" },
@@ -132,14 +198,16 @@ var config_default = defineConfig({
                   { label: "Dr. James Liu", value: "Dr. James Liu" },
                   { label: "Rachel Torres", value: "Rachel Torres" },
                   { label: "Guest Author", value: "Guest Author" }
-                ]
+                ],
+                ui: {
+                  component: "select"
+                }
               },
               {
                 type: "string",
                 name: "bio",
                 label: "Author Bio",
                 required: false,
-                // Optional
                 description: "Optional: Brief author description",
                 ui: {
                   component: "textarea"
@@ -150,7 +218,6 @@ var config_default = defineConfig({
                 name: "avatar",
                 label: "Author Avatar",
                 required: false,
-                // Optional
                 description: "Optional: Author profile image"
               },
               {
@@ -158,7 +225,6 @@ var config_default = defineConfig({
                 name: "role",
                 label: "Author Role",
                 required: false,
-                // Optional
                 description: "Optional: Professional title"
               },
               {
@@ -166,7 +232,6 @@ var config_default = defineConfig({
                 name: "social",
                 label: "Social Media Links",
                 required: false,
-                // Optional
                 description: "Optional: Author's social media",
                 fields: [
                   {
@@ -201,31 +266,71 @@ var config_default = defineConfig({
               }
             ]
           },
-          // Enhanced optional image handling
+          // Enhanced Hero Image (Fixed - showing both options)
+          {
+            type: "object",
+            name: "heroImage",
+            label: "\u{1F5BC}\uFE0F Featured Image Options",
+            description: "Choose how to add your featured image",
+            fields: [
+              {
+                type: "string",
+                name: "imageType",
+                label: "Image Source Type",
+                required: true,
+                options: [
+                  { label: "\u{1F4C1} Upload Image File", value: "upload" },
+                  { label: "\u{1F517} Use External URL", value: "url" }
+                ],
+                ui: {
+                  component: "radio-group"
+                }
+              },
+              {
+                type: "image",
+                name: "uploadedImage",
+                label: "Upload Image File",
+                description: "Upload an image (recommended: 1200x630px) - Use this if you selected 'Upload'"
+              },
+              {
+                type: "string",
+                name: "externalUrl",
+                label: "External Image URL",
+                description: "Paste the full URL (e.g., https://images.unsplash.com/photo-123...) - Use this if you selected 'URL'"
+              },
+              {
+                type: "string",
+                name: "alt",
+                label: "Alt Text (Required)",
+                required: true,
+                description: "Describe the image for accessibility and SEO"
+              },
+              {
+                type: "string",
+                name: "caption",
+                label: "Image Caption",
+                description: "Optional caption displayed below the image"
+              }
+            ]
+          },
+          // Legacy image fields for backward compatibility
           {
             type: "image",
             name: "image",
-            label: "Featured Image",
-            description: "Optional: Main article image (recommended: 1200x630px for optimal performance)"
+            label: "Legacy Image (Backup)",
+            description: "Fallback image field for existing posts"
           },
           {
             type: "string",
             name: "imageAlt",
-            label: "Image Alt Text",
-            description: "Describe the image for accessibility and SEO (recommended when image is provided)",
-            ui: {
-              validate: (value, data) => {
-                if (data.image && !value) {
-                  return "Alt text is highly recommended when an image is provided for better accessibility";
-                }
-              }
-            }
+            label: "Legacy Alt Text",
+            description: "Alt text for legacy image field"
           },
-          // Categorization - TinkByte Content Pillars
+          // Enhanced Categorization
           {
             type: "string",
             name: "category",
-            label: "Content Pillar",
+            label: "\u{1F3F7}\uFE0F Content Pillar",
             required: true,
             options: [
               { label: "\u{1F680} Product Strategy", value: "product-strategy" },
@@ -247,14 +352,13 @@ var config_default = defineConfig({
             ],
             description: "Select the main content pillar for this post"
           },
-          // Story Layout Type
           {
             type: "string",
             name: "storyType",
             label: "Story Layout",
             options: [
               { label: "Feature Story", value: "feature" },
-              { label: "Deep Dive", value: "deep-dive" },
+              { label: "Technical Analysis", value: "technical-analysis" },
               { label: "Quick Read", value: "quick-read" },
               { label: "Data Story", value: "data-story" },
               { label: "Build Guide", value: "build-guide" },
@@ -270,7 +374,26 @@ var config_default = defineConfig({
             list: true,
             description: "Add relevant tags (lowercase, hyphen-separated)",
             ui: {
-              component: "tags"
+              component: "tags",
+              parse: (val) => {
+                if (Array.isArray(val)) {
+                  return val.map((tag) => {
+                    const tagString = String(tag);
+                    return tagString.toLowerCase().replace(/\s+/g, "-");
+                  });
+                }
+                if (val) {
+                  const valString = String(val);
+                  return [valString.toLowerCase().replace(/\s+/g, "-")];
+                }
+                return [];
+              },
+              validate: (values) => {
+                if (values && Array.isArray(values) && values.length > 8) {
+                  return "Maximum 8 tags recommended for optimal SEO";
+                }
+                return void 0;
+              }
             }
           },
           // Publishing Options
@@ -292,62 +415,85 @@ var config_default = defineConfig({
             label: "Draft",
             description: "Save as draft (won't be published)"
           },
-          // Reading Experience
           {
             type: "string",
             name: "readTime",
             label: "Reading Time",
             description: "e.g., '5 min read' (auto-calculated if left empty)"
           },
-          // Audio Content
+          // Audio Content (Fixed - all fields visible)
+          {
+            type: "boolean",
+            name: "hasAudio",
+            label: "\u{1F3A7} Has Audio Version",
+            description: "Check if this article has an audio version"
+          },
           {
             type: "string",
             name: "audioUrl",
             label: "Audio File URL",
-            description: "Link to MP3 or audio file (optional)"
+            description: "Link to MP3 or audio file (only fill if Has Audio is checked)"
           },
           {
             type: "string",
             name: "audioDuration",
             label: "Audio Duration",
-            description: "e.g., '12:30' (optional)"
+            description: "e.g., '12:30' (only fill if Has Audio is checked)"
           },
           {
             type: "string",
             name: "audioTranscript",
             label: "Audio Transcript",
-            description: "Full audio transcript for accessibility (optional)",
+            description: "Full audio transcript for accessibility (only fill if Has Audio is checked)",
             ui: {
               component: "textarea"
             }
           },
-          // SEO Settings
+          // Enhanced SEO Settings (Fixed - all fields visible)
           {
             type: "object",
             name: "seo",
-            label: "SEO Settings",
+            label: "\u{1F50D} SEO Settings",
             description: "Advanced SEO options (optional)",
             fields: [
+              {
+                type: "boolean",
+                name: "customSEO",
+                label: "Use Custom SEO",
+                description: "Override default SEO with custom values"
+              },
               {
                 type: "string",
                 name: "title",
                 label: "SEO Title",
-                description: "Custom title for search engines (max 60 chars)"
+                description: "Custom title for search engines (max 60 chars) - only use if Custom SEO is checked",
+                ui: {
+                  validate: (value) => {
+                    if (value && typeof value === "string" && value.length > 60) {
+                      return "SEO title should be 60 characters or less";
+                    }
+                  }
+                }
               },
               {
                 type: "string",
                 name: "description",
                 label: "Meta Description",
-                description: "Custom description for search engines (max 160 chars)",
+                description: "Custom description for search engines (max 300 chars) - only use if Custom SEO is checked",
                 ui: {
-                  component: "textarea"
+                  component: "textarea",
+                  validate: (value) => {
+                    if (value && typeof value === "string" && value.length > 300) {
+                      return "Meta description should be 300 characters or less";
+                    }
+                  }
                 }
               },
               {
                 type: "string",
                 name: "canonical",
                 label: "Canonical URL",
-                description: "If this content was published elsewhere first"
+                description: "If this content was published elsewhere first - only use if Custom SEO is checked"
               },
               {
                 type: "boolean",
@@ -357,31 +503,243 @@ var config_default = defineConfig({
               }
             ]
           },
-          // Content Body
+          // Enhanced Rich Text Content (Fixed templates)
           {
             type: "rich-text",
             name: "body",
-            label: "Article Content",
+            label: "\u{1F4DD} Article Content",
             isBody: true,
-            ui: {
-              component: "rich-text"
-            },
+            description: "Write your article content. Use the toolbar to add images, videos, and other media blocks.",
             templates: [
+              // Newsletter Template 
               {
-                name: "callout",
-                label: "Callout Box",
+                name: "Newsletter",
+                label: "\u{1F4E7} Newsletter Signup",
+                ui: {
+                  defaultItem: {
+                    variant: "inline",
+                    title: "Stay Updated with TinkByte",
+                    description: "Get the latest insights delivered to your inbox.",
+                    buttonText: "Subscribe",
+                    showFeatures: false
+                  }
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "variant",
+                    label: "Newsletter Style",
+                    options: [
+                      { label: "Inline", value: "inline" },
+                      { label: "Sidebar", value: "sidebar" },
+                      { label: "Hero", value: "hero" },
+                      { label: "Minimal", value: "minimal" },
+                      { label: "Footer", value: "footer" }
+                    ],
+                    description: "Choose the newsletter signup style"
+                  },
+                  {
+                    type: "string",
+                    name: "title",
+                    label: "Newsletter Title",
+                    description: "Main headline for the newsletter signup"
+                  },
+                  {
+                    type: "string",
+                    name: "description",
+                    label: "Description",
+                    ui: {
+                      component: "textarea"
+                    },
+                    description: "Brief description of what subscribers will get"
+                  },
+                  {
+                    type: "string",
+                    name: "buttonText",
+                    label: "Button Text",
+                    description: "Text for the subscribe button"
+                  },
+                  {
+                    type: "boolean",
+                    name: "showFeatures",
+                    label: "Show Features",
+                    description: "Display feature highlights below the form"
+                  },
+                  {
+                    type: "string",
+                    name: "features",
+                    label: "Newsletter Features",
+                    list: true,
+                    description: "Feature highlights (e.g., 'Weekly insights', 'No spam') - only fill if Show Features is checked"
+                  }
+                ]
+              },
+              // Enhanced Image Block (Fixed)
+              {
+                name: "ImageBlock",
+                label: "\u{1F4F7} Insert Image",
+                ui: {
+                  defaultItem: {
+                    sourceType: "url",
+                    alt: "",
+                    caption: "",
+                    size: "large"
+                  }
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "sourceType",
+                    label: "Image Source",
+                    options: [
+                      { label: "\u{1F517} External URL", value: "url" },
+                      { label: "\u{1F4C1} Upload File", value: "upload" }
+                    ],
+                    ui: {
+                      component: "radio-group"
+                    }
+                  },
+                  {
+                    type: "image",
+                    name: "uploadedImage",
+                    label: "Upload Image",
+                    description: "Use this if you selected 'Upload File' above"
+                  },
+                  {
+                    type: "string",
+                    name: "externalUrl",
+                    label: "Image URL",
+                    description: "Paste image URL (e.g., https://images.unsplash.com/...) - Use this if you selected 'External URL' above"
+                  },
+                  {
+                    type: "string",
+                    name: "alt",
+                    label: "Alt Text",
+                    required: true
+                  },
+                  {
+                    type: "string",
+                    name: "caption",
+                    label: "Caption",
+                    description: "Optional caption below image"
+                  },
+                  {
+                    type: "string",
+                    name: "size",
+                    label: "Size",
+                    options: [
+                      { label: "Small", value: "small" },
+                      { label: "Medium", value: "medium" },
+                      { label: "Large", value: "large" },
+                      { label: "Full Width", value: "full" }
+                    ]
+                  },
+                  {
+                    type: "boolean",
+                    name: "enableLightbox",
+                    label: "Enable Lightbox",
+                    description: "Allow image to be clicked for full-size view (recommended for medium/large/full images)"
+                  }
+                ]
+              },
+              // Enhanced Video Block (Fixed)
+              {
+                name: "VideoBlock",
+                label: "\u{1F4F9} Video",
+                ui: {
+                  defaultItem: {
+                    platform: "youtube",
+                    url: "",
+                    title: "Video Title",
+                    description: ""
+                  }
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "platform",
+                    label: "Video Platform",
+                    options: [
+                      { label: "\u{1F4FA} YouTube", value: "youtube" },
+                      { label: "\u{1F3A5} Vimeo", value: "vimeo" },
+                      { label: "\u{1F517} Direct URL", value: "direct" }
+                    ],
+                    ui: {
+                      component: "radio-group"
+                    }
+                  },
+                  {
+                    type: "string",
+                    name: "url",
+                    label: "Video URL",
+                    required: true,
+                    description: "Full URL to the video"
+                  },
+                  {
+                    type: "string",
+                    name: "title",
+                    label: "Video Title",
+                    description: "Title displayed above the video"
+                  },
+                  {
+                    type: "string",
+                    name: "description",
+                    label: "Video Description",
+                    description: "Optional description displayed below the video",
+                    ui: {
+                      component: "textarea"
+                    }
+                  },
+                  {
+                    type: "string",
+                    name: "aspectRatio",
+                    label: "Aspect Ratio",
+                    options: [
+                      { label: "16:9 (Widescreen)", value: "16/9" },
+                      { label: "4:3 (Standard)", value: "4/3" },
+                      { label: "1:1 (Square)", value: "1/1" }
+                    ],
+                    description: "Video container aspect ratio"
+                  },
+                  {
+                    type: "string",
+                    name: "startTime",
+                    label: "Start Time",
+                    description: "Start time in seconds (for YouTube/Vimeo only)"
+                  }
+                ]
+              },
+              // Enhanced Callout (Fixed)
+              {
+                name: "Callout",
+                label: "\u{1F4A1} Callout Box",
+                ui: {
+                  defaultItem: {
+                    type: "info",
+                    title: "Important Note",
+                    content: "Add your callout content here..."
+                  }
+                },
                 fields: [
                   {
                     type: "string",
                     name: "type",
                     label: "Callout Type",
                     options: [
-                      { label: "Info", value: "info" },
-                      { label: "Warning", value: "warning" },
-                      { label: "Success", value: "success" },
-                      { label: "Error", value: "error" },
-                      { label: "Tip", value: "tip" }
+                      { label: "\u{1F4A1} Info (Blue)", value: "info" },
+                      { label: "\u26A0\uFE0F Warning (Yellow)", value: "warning" },
+                      { label: "\u2705 Success (Green)", value: "success" },
+                      { label: "\u274C Error (Red)", value: "error" },
+                      { label: "\u{1F525} Tip (Purple)", value: "tip" },
+                      { label: "\u{1F4DD} Note (Gray)", value: "note" },
+                      { label: "\u{1F3AF} Custom", value: "custom" }
                     ]
+                  },
+                  {
+                    type: "string",
+                    name: "customColor",
+                    label: "Custom Color",
+                    description: "Hex color code for custom callout (only use if Custom type is selected)"
                   },
                   {
                     type: "string",
@@ -392,70 +750,380 @@ var config_default = defineConfig({
                     type: "rich-text",
                     name: "content",
                     label: "Content"
+                  },
+                  {
+                    type: "boolean",
+                    name: "dismissible",
+                    label: "Dismissible",
+                    description: "Allow users to close this callout (recommended for info/tip types)"
                   }
                 ]
               },
+              // Enhanced Code Block (Fixed)
               {
-                name: "ImageBlock",
-                label: "Image",
+                name: "CodeBlock",
+                label: "\u{1F4BB} Code Block",
                 ui: {
                   defaultItem: {
-                    src: "",
-                    alt: "",
-                    caption: "",
-                    size: "large",
-                    alignment: "center"
+                    language: "javascript",
+                    code: "// Your code here\nconsole.log('Hello, TinkByte!');"
                   }
                 },
                 fields: [
                   {
-                    type: "image",
-                    name: "src",
-                    label: "Image",
-                    required: true,
-                    description: "Upload or select an image"
+                    type: "string",
+                    name: "language",
+                    label: "Programming Language",
+                    options: [
+                      { label: "JavaScript", value: "javascript" },
+                      { label: "TypeScript", value: "typescript" },
+                      { label: "Python", value: "python" },
+                      { label: "Bash/Shell", value: "bash" },
+                      { label: "CSS", value: "css" },
+                      { label: "HTML", value: "html" },
+                      { label: "JSON", value: "json" },
+                      { label: "Astro", value: "astro" },
+                      { label: "React/JSX", value: "jsx" },
+                      { label: "Vue", value: "vue" },
+                      { label: "Markdown", value: "markdown" },
+                      { label: "SQL", value: "sql" },
+                      { label: "Go", value: "go" },
+                      { label: "Rust", value: "rust" },
+                      { label: "PHP", value: "php" },
+                      { label: "Java", value: "java" },
+                      { label: "Other", value: "other" }
+                    ]
                   },
                   {
                     type: "string",
-                    name: "alt",
-                    label: "Alt Text",
-                    required: true,
-                    description: "Describe the image for accessibility and SEO"
+                    name: "customLanguage",
+                    label: "Custom Language",
+                    description: "Specify custom language name (only use if 'Other' is selected above)"
                   },
                   {
                     type: "string",
-                    name: "caption",
-                    label: "Caption",
-                    description: "Optional image caption or description"
+                    name: "filename",
+                    label: "Filename (optional)",
+                    description: "e.g., 'src/components/Header.astro'"
+                  },
+                  {
+                    type: "string",
+                    name: "code",
+                    label: "Code",
+                    required: true,
+                    ui: {
+                      component: "textarea"
+                    }
+                  },
+                  {
+                    type: "boolean",
+                    name: "showLineNumbers",
+                    label: "Show Line Numbers",
+                    description: "Display line numbers in code block"
+                  },
+                  {
+                    type: "string",
+                    name: "highlightLines",
+                    label: "Highlight Lines",
+                    description: "Comma-separated line numbers to highlight (e.g., '1,3,5-7') - only use if line numbers are enabled"
+                  }
+                ]
+              },
+              // Enhanced Quote Template (Fixed)
+              {
+                name: "Quote",
+                label: "\u{1F4AC} Quote",
+                ui: {
+                  defaultItem: {
+                    quote: "The future belongs to those who build it.",
+                    author: "TinkByte Team",
+                    style: "default"
+                  }
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "quote",
+                    label: "Quote Text",
+                    required: true,
+                    ui: {
+                      component: "textarea"
+                    }
+                  },
+                  {
+                    type: "string",
+                    name: "author",
+                    label: "Quote Author"
+                  },
+                  {
+                    type: "string",
+                    name: "role",
+                    label: "Author Role/Title",
+                    description: "Only fill if author is provided"
+                  },
+                  {
+                    type: "string",
+                    name: "company",
+                    label: "Author Company",
+                    description: "Only fill if author is provided"
+                  },
+                  {
+                    type: "string",
+                    name: "avatar",
+                    label: "Author Avatar URL",
+                    description: "Optional: Link to author's photo (recommended for card/featured styles)"
+                  },
+                  {
+                    type: "string",
+                    name: "style",
+                    label: "Quote Style",
+                    options: [
+                      { label: "Default", value: "default" },
+                      { label: "Card", value: "card" },
+                      { label: "Minimal", value: "minimal" },
+                      { label: "Featured", value: "featured" },
+                      { label: "Pullquote", value: "pullquote" }
+                    ]
+                  },
+                  {
+                    type: "string",
+                    name: "citation",
+                    label: "Citation/Source",
+                    description: "Source of the quote (book, article, etc.) - recommended for featured/card styles"
+                  }
+                ]
+              },
+              // Enhanced Button Block (Fixed)
+              {
+                name: "ButtonBlock",
+                label: "\u{1F518} Button",
+                ui: {
+                  defaultItem: {
+                    text: "Click Here",
+                    url: "#",
+                    style: "primary",
+                    size: "medium",
+                    alignment: "left"
+                  }
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "text",
+                    label: "Button Text",
+                    required: true,
+                    description: "Text displayed on the button"
+                  },
+                  {
+                    type: "string",
+                    name: "url",
+                    label: "Button URL",
+                    required: true,
+                    description: "Where the button links to"
+                  },
+                  {
+                    type: "string",
+                    name: "style",
+                    label: "Button Style",
+                    options: [
+                      { label: "\u{1F535} Primary", value: "primary" },
+                      { label: "\u26AA Secondary", value: "secondary" },
+                      { label: "\u{1F7E2} Success", value: "success" },
+                      { label: "\u{1F7E1} Warning", value: "warning" },
+                      { label: "\u{1F534} Danger", value: "danger" },
+                      { label: "\u{1F517} Link", value: "link" },
+                      { label: "\u{1F3A8} Custom", value: "custom" }
+                    ]
+                  },
+                  {
+                    type: "string",
+                    name: "customColor",
+                    label: "Custom Button Color",
+                    description: "Hex color code for custom button (only use if Custom style is selected)"
                   },
                   {
                     type: "string",
                     name: "size",
-                    label: "Image Size",
+                    label: "Button Size",
                     options: [
-                      { label: "Small (400px)", value: "small" },
-                      { label: "Medium (600px)", value: "medium" },
-                      { label: "Large (800px)", value: "large" },
-                      { label: "Full Width", value: "full" }
-                    ],
-                    description: "Choose the display size for this image"
+                      { label: "Small", value: "small" },
+                      { label: "Medium", value: "medium" },
+                      { label: "Large", value: "large" }
+                    ]
                   },
                   {
                     type: "string",
                     name: "alignment",
-                    label: "Image Alignment",
+                    label: "Button Alignment",
                     options: [
                       { label: "Left", value: "left" },
                       { label: "Center", value: "center" },
                       { label: "Right", value: "right" }
+                    ]
+                  },
+                  {
+                    type: "boolean",
+                    name: "openInNewTab",
+                    label: "Open in New Tab",
+                    description: "Open the link in a new browser tab"
+                  },
+                  {
+                    type: "string",
+                    name: "icon",
+                    label: "Button Icon",
+                    description: "Optional emoji or icon (e.g., \u{1F680}, \u{1F4E7}, \u{1F4A1})"
+                  },
+                  {
+                    type: "string",
+                    name: "iconPosition",
+                    label: "Icon Position",
+                    options: [
+                      { label: "Left", value: "left" },
+                      { label: "Right", value: "right" }
                     ],
-                    description: "How to align the image"
+                    description: "Position of icon (only use if icon is provided)"
                   }
                 ]
               },
+              // Enhanced Table Block (Fixed)
+              {
+                name: "TableBlock",
+                label: "\u{1F4CA} Table",
+                ui: {
+                  defaultItem: {
+                    caption: "Data Table",
+                    headers: ["Column 1", "Column 2", "Column 3"],
+                    rows: [
+                      { cells: ["Row 1, Col 1", "Row 1, Col 2", "Row 1, Col 3"] },
+                      { cells: ["Row 2, Col 1", "Row 2, Col 2", "Row 2, Col 3"] }
+                    ],
+                    style: "default"
+                  }
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "caption",
+                    label: "Table Caption",
+                    description: "Optional caption displayed above the table"
+                  },
+                  {
+                    type: "boolean",
+                    name: "hasHeaders",
+                    label: "Has Header Row",
+                    description: "First row contains column headers"
+                  },
+                  {
+                    type: "string",
+                    name: "headers",
+                    label: "Table Headers",
+                    list: true,
+                    description: "Column headers for the table (only fill if Has Header Row is checked)"
+                  },
+                  {
+                    type: "object",
+                    name: "rows",
+                    label: "Table Rows",
+                    list: true,
+                    description: "Table data rows",
+                    ui: {
+                      itemProps: (item) => ({
+                        label: `Row ${item?.index + 1 || "New"}`
+                      })
+                    },
+                    fields: [
+                      {
+                        type: "string",
+                        name: "cells",
+                        label: "Row Data",
+                        list: true,
+                        description: "Data for each cell in this row"
+                      }
+                    ]
+                  },
+                  {
+                    type: "string",
+                    name: "style",
+                    label: "Table Style",
+                    options: [
+                      { label: "Default", value: "default" },
+                      { label: "Striped", value: "striped" },
+                      { label: "Bordered", value: "bordered" },
+                      { label: "Compact", value: "compact" },
+                      { label: "Responsive", value: "responsive" }
+                    ]
+                  },
+                  {
+                    type: "boolean",
+                    name: "sortable",
+                    label: "Sortable Columns",
+                    description: "Allow users to sort table columns (recommended when headers are enabled)"
+                  }
+                ]
+              },
+              // Enhanced Two Column Layout (Fixed)
+              {
+                name: "TwoColumnLayout",
+                label: "\u{1F4D1} Two Column Layout",
+                ui: {
+                  defaultItem: {
+                    leftContent: "Left column content...",
+                    rightContent: "Right column content...",
+                    variant: "equal"
+                  }
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "variant",
+                    label: "Column Layout",
+                    options: [
+                      { label: "Equal Width", value: "equal" },
+                      { label: "Left Larger (2/3 - 1/3)", value: "left-larger" },
+                      { label: "Right Larger (1/3 - 2/3)", value: "right-larger" },
+                      { label: "Custom Ratio", value: "custom" }
+                    ]
+                  },
+                  {
+                    type: "string",
+                    name: "customRatio",
+                    label: "Custom Ratio",
+                    description: "e.g., '60-40', '70-30' (only use if Custom Ratio is selected)"
+                  },
+                  {
+                    type: "rich-text",
+                    name: "leftContent",
+                    label: "Left Column",
+                    description: "Content for the left column"
+                  },
+                  {
+                    type: "rich-text",
+                    name: "rightContent",
+                    label: "Right Column",
+                    description: "Content for the right column"
+                  },
+                  {
+                    type: "string",
+                    name: "gap",
+                    label: "Column Gap",
+                    options: [
+                      { label: "Small", value: "small" },
+                      { label: "Medium", value: "medium" },
+                      { label: "Large", value: "large" }
+                    ]
+                  },
+                  {
+                    type: "boolean",
+                    name: "stackOnMobile",
+                    label: "Stack on Mobile",
+                    description: "Stack columns vertically on mobile devices"
+                  }
+                ]
+              },
+              // Enhanced Image Gallery (Fixed)
               {
                 name: "ImageGallery",
-                label: "Image Gallery",
+                label: "\u{1F5BC}\uFE0F Image Gallery",
                 ui: {
                   defaultItem: {
                     images: [],
@@ -479,8 +1147,21 @@ var config_default = defineConfig({
                       { label: "3 Column Grid", value: "grid-3" },
                       { label: "4 Column Grid", value: "grid-4" },
                       { label: "Masonry", value: "masonry" },
-                      { label: "Carousel", value: "carousel" }
+                      { label: "Carousel", value: "carousel" },
+                      { label: "Lightbox Grid", value: "lightbox" }
                     ]
+                  },
+                  {
+                    type: "boolean",
+                    name: "autoplay",
+                    label: "Auto-play Carousel",
+                    description: "Automatically advance carousel slides (only use if Carousel layout is selected)"
+                  },
+                  {
+                    type: "number",
+                    name: "autoplaySpeed",
+                    label: "Auto-play Speed (seconds)",
+                    description: "Time between automatic slide changes (only use if auto-play is enabled)"
                   },
                   {
                     type: "object",
@@ -514,53 +1195,285 @@ var config_default = defineConfig({
                     ]
                   }
                 ]
+              }
+            ]
+          }
+        ]
+      },
+      // NEWSLETTER COLLECTION 
+      {
+        name: "newsletter",
+        label: "\u{1F4E7} Newsletter Issues",
+        path: "src/content/newsletter",
+        format: "mdx",
+        ui: {
+          router: ({ document }) => `/newsletter/${document._sys.filename}`,
+          filename: {
+            readonly: false,
+            slugify: (values) => {
+              const issueNumber = values?.issueNumber;
+              if (issueNumber) {
+                return `issue-${issueNumber}`;
+              }
+              const title = values?.title;
+              if (typeof title === "string") {
+                return title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-");
+              }
+              return "new-issue";
+            }
+          }
+        },
+        defaultItem: () => ({
+          title: "TinkStacks Weekly - Issue #1",
+          issueNumber: 1,
+          publishDate: (/* @__PURE__ */ new Date()).toISOString(),
+          status: "draft",
+          featured: false,
+          trackStats: false
+        }),
+        fields: [
+          {
+            type: "string",
+            name: "title",
+            label: "Issue Title",
+            isTitle: true,
+            required: true,
+            description: "e.g., 'TinkStacks Weekly - Issue #25'"
+          },
+          {
+            type: "number",
+            name: "issueNumber",
+            label: "Issue Number",
+            required: true,
+            description: "Sequential issue number"
+          },
+          {
+            type: "string",
+            name: "newsletterType",
+            label: "Newsletter Type",
+            required: true,
+            options: [
+              { label: "Tinkbyte Weekly", value: "tinkbyte-weekly" },
+              { label: "Build Sheet", value: "build-sheet" },
+              { label: "Stackdown", value: "stackdown" },
+              { label: "Signal Drop", value: "signal-drop" },
+              { label: "System Signal", value: "system-signal" },
+              { label: "The Real Build", value: "the-real-build" },
+              { label: "The Loop", value: "the-loop" },
+              { label: "Data Slice", value: "data-slice" },
+              { label: "The Mirror", value: "the-mirror" },
+              { label: "Community Code", value: "community-code" },
+              { label: "Start Here: Future Tech", value: "future-tech" }
+            ],
+            ui: {
+              component: "select"
+            }
+          },
+          {
+            type: "string",
+            name: "excerpt",
+            label: "Issue Description",
+            required: true,
+            description: "Brief summary of this issue's content",
+            ui: {
+              component: "textarea"
+            }
+          },
+          {
+            type: "boolean",
+            name: "subscriberOnly",
+            label: "Subscriber Only Content",
+            description: "If true, only show excerpt to non-subscribers (require subscription for full content)"
+          },
+          {
+            type: "string",
+            name: "previewContent",
+            label: "Preview Content",
+            description: "Content shown to non-subscribers (if different from excerpt)",
+            ui: {
+              component: "textarea"
+            }
+          },
+          {
+            type: "datetime",
+            name: "publishDate",
+            label: "Publish Date",
+            required: true,
+            ui: {
+              dateFormat: "YYYY-MM-DD",
+              timeFormat: "HH:mm"
+            }
+          },
+          {
+            type: "string",
+            name: "status",
+            label: "Issue Status",
+            options: [
+              { label: "\u{1F4DD} Draft", value: "draft" },
+              { label: "\u{1F440} Review", value: "review" },
+              { label: "\u{1F4E7} Scheduled", value: "scheduled" },
+              { label: "\u2705 Published", value: "published" },
+              { label: "\u{1F4CA} Archived", value: "archived" }
+            ],
+            ui: {
+              component: "radio-group"
+            }
+          },
+          {
+            type: "boolean",
+            name: "featured",
+            label: "Featured Issue",
+            description: "Highlight this issue prominently"
+          },
+          {
+            type: "image",
+            name: "coverImage",
+            label: "Issue Cover Image",
+            description: "cover for this issue"
+          },
+          {
+            type: "object",
+            name: "highlights",
+            label: "Issue Highlights",
+            list: true,
+            description: "Key topics covered in this issue",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "Highlight Title",
+                required: true
               },
               {
-                name: "codeBlock",
-                label: "Code Block",
+                type: "string",
+                name: "description",
+                label: "Highlight Description",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "string",
+                name: "link",
+                label: "Related Link"
+              }
+            ]
+          },
+          {
+            type: "boolean",
+            name: "trackStats",
+            label: "Track Statistics",
+            description: "Enable statistics tracking for this issue"
+          },
+          {
+            type: "object",
+            name: "stats",
+            label: "Issue Statistics",
+            description: "Engagement metrics for this issue (only fill if Track Statistics is enabled)",
+            fields: [
+              {
+                type: "number",
+                name: "subscribers",
+                label: "Subscriber Count",
+                description: "Number of subscribers when sent"
+              },
+              {
+                type: "number",
+                name: "openRate",
+                label: "Open Rate (%)",
+                description: "Email open rate percentage"
+              },
+              {
+                type: "number",
+                name: "clickRate",
+                label: "Click Rate (%)",
+                description: "Link click rate percentage"
+              }
+            ]
+          },
+          // 
+          {
+            type: "string",
+            name: "tags",
+            label: "Issue Tags",
+            list: true,
+            ui: {
+              component: "tags"
+            }
+          },
+          {
+            type: "object",
+            name: "seo",
+            label: "SEO Settings",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "SEO Title"
+              },
+              {
+                type: "string",
+                name: "description",
+                label: "SEO Description",
+                ui: {
+                  component: "textarea"
+                }
+              }
+            ]
+          },
+          {
+            type: "rich-text",
+            name: "body",
+            label: "Newsletter Content",
+            isBody: true,
+            description: "Main content of the newsletter issue",
+            templates: [
+              {
+                name: "NewsletterSection",
+                label: "\u{1F4F0} Newsletter Section",
                 fields: [
                   {
                     type: "string",
-                    name: "language",
-                    label: "Programming Language",
-                    options: [
-                      { label: "JavaScript", value: "javascript" },
-                      { label: "TypeScript", value: "typescript" },
-                      { label: "Python", value: "python" },
-                      { label: "Bash/Shell", value: "bash" },
-                      { label: "CSS", value: "css" },
-                      { label: "HTML", value: "html" },
-                      { label: "JSON", value: "json" },
-                      { label: "Astro", value: "astro" },
-                      { label: "React/JSX", value: "jsx" },
-                      { label: "Vue", value: "vue" },
-                      { label: "Markdown", value: "markdown" }
-                    ]
+                    name: "title",
+                    label: "Section Title",
+                    required: true,
+                    description: "e.g., 'This Week in Tech', 'Featured Articles'"
                   },
                   {
                     type: "string",
-                    name: "filename",
-                    label: "Filename (optional)",
-                    description: "e.g., 'src/components/Header.astro'"
+                    name: "icon",
+                    label: "Section Icon",
+                    description: "Emoji or icon for the section"
                   },
                   {
-                    type: "string",
-                    name: "code",
-                    label: "Code",
-                    ui: {
-                      component: "textarea"
-                    }
+                    type: "rich-text",
+                    name: "content",
+                    label: "Section Content"
                   }
                 ]
               },
               {
-                name: "quote",
-                label: "Quote",
+                name: "ArticleHighlight",
+                label: "\u2B50 Article Highlight",
                 fields: [
                   {
                     type: "string",
-                    name: "quote",
-                    label: "Quote Text",
+                    name: "title",
+                    label: "Article Title",
+                    required: true
+                  },
+                  {
+                    type: "string",
+                    name: "url",
+                    label: "Article URL",
+                    required: true,
+                    description: "Link to the full article"
+                  },
+                  {
+                    type: "string",
+                    name: "excerpt",
+                    label: "Article Excerpt",
+                    description: "Brief summary for the newsletter",
                     ui: {
                       component: "textarea"
                     }
@@ -568,79 +1481,13 @@ var config_default = defineConfig({
                   {
                     type: "string",
                     name: "author",
-                    label: "Quote Author"
+                    label: "Article Author"
                   },
                   {
                     type: "string",
-                    name: "role",
-                    label: "Author Role/Title"
-                  }
-                ]
-              },
-              {
-                name: "newsletter",
-                label: "Newsletter Signup",
-                fields: [
-                  {
-                    type: "string",
-                    name: "title",
-                    label: "CTA Title",
-                    description: "e.g., 'Want more insights like this?'"
-                  },
-                  {
-                    type: "string",
-                    name: "description",
-                    label: "Description",
-                    ui: {
-                      component: "textarea"
-                    }
-                  }
-                ]
-              },
-              {
-                name: "TwoColumnLayout",
-                label: "Two Column Layout",
-                ui: {
-                  defaultItem: {
-                    leftContent: "Left column content...",
-                    rightContent: "Right column content..."
-                  }
-                },
-                fields: [
-                  {
-                    type: "rich-text",
-                    name: "leftContent",
-                    label: "Left Column"
-                  },
-                  {
-                    type: "rich-text",
-                    name: "rightContent",
-                    label: "Right Column"
-                  }
-                ]
-              },
-              {
-                name: "VideoEmbed",
-                label: "Video Embed",
-                fields: [
-                  {
-                    type: "string",
-                    name: "url",
-                    label: "Video URL",
-                    description: "YouTube, Vimeo, or direct video URL"
-                  },
-                  {
-                    type: "string",
-                    name: "title",
-                    label: "Video Title"
-                  },
-                  {
-                    type: "string",
-                    name: "description",
-                    label: "Description",
-                    ui: {
-                      component: "textarea"
-                    }
+                    name: "readTime",
+                    label: "Reading Time",
+                    description: "e.g., '5 min read'"
                   }
                 ]
               }
@@ -648,29 +1495,1065 @@ var config_default = defineConfig({
           }
         ]
       },
-      // Categories Collection
+      // ALL TOPICS PAGE COLLECTION
       {
-        name: "categories",
-        label: "Categories",
-        path: "src/content/categories",
+        name: "allTopicsPage",
+        label: "\u{1F4D1} All Topics Page",
+        path: "src/content/pages",
         format: "md",
         ui: {
+          allowedActions: {
+            create: false,
+            delete: false
+          }
+        },
+        match: {
+          include: "all-topics"
+        },
+        fields: [
+          {
+            type: "object",
+            name: "hero",
+            label: "Hero Section",
+            fields: [
+              {
+                type: "string",
+                name: "badgeText",
+                label: "Badge Text",
+                required: true
+              },
+              {
+                type: "string",
+                name: "title",
+                label: "Main Title",
+                required: true
+              },
+              {
+                type: "string",
+                name: "titleAccent",
+                label: "Title Accent Text",
+                required: true
+              },
+              {
+                type: "string",
+                name: "subtitle",
+                label: "Subtitle",
+                required: true,
+                ui: {
+                  component: "textarea"
+                }
+              }
+            ]
+          },
+          {
+            type: "object",
+            name: "topics",
+            label: "Topic Categories",
+            list: true,
+            fields: [
+              {
+                type: "string",
+                name: "name",
+                label: "Topic Name",
+                required: true
+              },
+              {
+                type: "string",
+                name: "href",
+                label: "Link Path",
+                required: true,
+                description: "e.g., '/blog/categories/build-thinking'"
+              },
+              {
+                type: "string",
+                name: "description",
+                label: "Description",
+                required: true
+              },
+              {
+                type: "string",
+                name: "audience",
+                label: "Target Audience",
+                required: true
+              }
+            ]
+          },
+          {
+            type: "object",
+            name: "stats",
+            label: "Statistics Section",
+            fields: [
+              {
+                type: "number",
+                name: "topicCount",
+                label: "Number of Topics"
+              },
+              {
+                type: "string",
+                name: "articleCount",
+                label: "Article Count Display",
+                description: "e.g., '100+' or '150'"
+              },
+              {
+                type: "string",
+                name: "storiesLabel",
+                label: "Stories Label",
+                description: "e.g., 'Real' or 'Authentic'"
+              }
+            ]
+          },
+          {
+            type: "object",
+            name: "cta",
+            label: "Call to Action Section",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "CTA Title",
+                required: true
+              },
+              {
+                type: "string",
+                name: "description",
+                label: "CTA Description",
+                required: true
+              },
+              {
+                type: "string",
+                name: "primaryButtonText",
+                label: "Primary Button Text",
+                required: true
+              },
+              {
+                type: "string",
+                name: "primaryButtonLink",
+                label: "Primary Button Link",
+                required: true
+              },
+              {
+                type: "string",
+                name: "secondaryButtonText",
+                label: "Secondary Button Text",
+                required: true
+              },
+              {
+                type: "string",
+                name: "secondaryButtonLink",
+                label: "Secondary Button Link",
+                required: true
+              }
+            ]
+          }
+        ]
+      },
+      // PODCAST COLLECTION
+      {
+        name: "podcast",
+        label: "\u{1F399}\uFE0F Podcast Episodes",
+        path: "src/content/podcast",
+        format: "md",
+        ui: {
+          router: ({ document }) => `/podcast/${document._sys.filename}`,
           filename: {
             readonly: false,
             slugify: (values) => {
-              return `${values?.name?.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "")}`;
+              const episodeNumber = values?.episode;
+              if (episodeNumber) {
+                return `episode-${episodeNumber}`;
+              }
+              const title = values?.title;
+              if (typeof title === "string") {
+                return title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-");
+              }
+              return "new-episode";
             }
           }
         },
-        defaultItem: () => {
-          return {
-            name: "New Category",
-            description: "Category description",
-            color: "blue",
-            icon: "tag",
-            featured: false
-          };
+        defaultItem: () => ({
+          title: "New Podcast Episode",
+          episode: 1,
+          pubDate: (/* @__PURE__ */ new Date()).toISOString(),
+          status: "draft",
+          featured: false,
+          duration: "00:00",
+          downloadable: false,
+          guests: []
+        }),
+        fields: [
+          {
+            type: "string",
+            name: "title",
+            label: "Episode Title",
+            isTitle: true,
+            required: true
+          },
+          {
+            type: "number",
+            name: "episode",
+            label: "Episode Number",
+            required: true
+          },
+          {
+            type: "string",
+            name: "description",
+            label: "Episode Description",
+            required: true,
+            ui: {
+              component: "textarea"
+            }
+          },
+          {
+            type: "datetime",
+            name: "pubDate",
+            label: "Publish Date",
+            required: true
+          },
+          {
+            type: "string",
+            name: "status",
+            label: "Episode Status",
+            options: [
+              { label: "\u{1F4DD} Draft", value: "draft" },
+              { label: "\u{1F3AC} Recording", value: "recording" },
+              { label: "\u2702\uFE0F Editing", value: "editing" },
+              { label: "\u2705 Ready", value: "ready" },
+              { label: "\u{1F399}\uFE0F Published", value: "published" }
+            ],
+            ui: {
+              component: "radio-group"
+            }
+          },
+          {
+            type: "string",
+            name: "duration",
+            label: "Episode Duration",
+            required: true,
+            description: "Duration in MM:SS or HH:MM:SS format"
+          },
+          {
+            type: "string",
+            name: "audioUrl",
+            label: "Audio File URL",
+            description: "Direct link to the audio file"
+          },
+          {
+            type: "boolean",
+            name: "downloadable",
+            label: "Allow Downloads",
+            description: "Show download option for this episode"
+          },
+          {
+            type: "image",
+            name: "image",
+            label: "Episode Cover Image"
+          },
+          {
+            type: "object",
+            name: "guests",
+            label: "Episode Guests",
+            list: true,
+            fields: [
+              {
+                type: "string",
+                name: "name",
+                label: "Guest Name",
+                required: true
+              },
+              {
+                type: "string",
+                name: "role",
+                label: "Guest Role/Title"
+              },
+              {
+                type: "string",
+                name: "company",
+                label: "Company/Organization"
+              },
+              {
+                type: "string",
+                name: "bio",
+                label: "Guest Bio",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "image",
+                name: "photo",
+                label: "Guest Photo"
+              },
+              {
+                type: "object",
+                name: "social",
+                label: "Social Links",
+                fields: [
+                  {
+                    type: "string",
+                    name: "twitter",
+                    label: "Twitter URL"
+                  },
+                  {
+                    type: "string",
+                    name: "linkedin",
+                    label: "LinkedIn URL"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            type: "string",
+            name: "tags",
+            label: "Episode Tags",
+            list: true,
+            ui: {
+              component: "tags"
+            }
+          },
+          {
+            type: "boolean",
+            name: "featured",
+            label: "Featured Episode"
+          },
+          {
+            type: "string",
+            name: "transcript",
+            label: "Episode Transcript",
+            ui: {
+              component: "textarea"
+            }
+          },
+          {
+            type: "object",
+            name: "seo",
+            label: "SEO Settings",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "SEO Title"
+              },
+              {
+                type: "string",
+                name: "description",
+                label: "SEO Description",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "string",
+                name: "canonical",
+                label: "Canonical URL"
+              }
+            ]
+          },
+          {
+            type: "rich-text",
+            name: "body",
+            label: "Episode Show Notes",
+            isBody: true
+          }
+        ]
+      },
+      {
+        name: "contact",
+        label: "\u{1F4C4} Contact Page",
+        path: "src/content/contact",
+        format: "mdx",
+        ui: {
+          allowedActions: {
+            create: false,
+            delete: false
+          }
         },
+        fields: [
+          {
+            type: "string",
+            name: "title",
+            label: "Page Title",
+            required: true
+          },
+          {
+            type: "string",
+            name: "description",
+            label: "Page Description",
+            ui: {
+              component: "textarea"
+            }
+          },
+          {
+            type: "datetime",
+            name: "pubDate",
+            label: "Publication Date"
+          },
+          // Hero Section
+          {
+            type: "object",
+            name: "hero",
+            label: "Hero Section",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "Main Title",
+                description: "First part of the hero title"
+              },
+              {
+                type: "string",
+                name: "titleAccent",
+                label: "Accent Title",
+                description: "Highlighted part of the title"
+              },
+              {
+                type: "string",
+                name: "subtitle",
+                label: "Subtitle",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "string",
+                name: "responseTime",
+                label: "Response Time Badge",
+                description: "e.g., 'We usually respond within 24 hours'"
+              },
+              {
+                type: "string",
+                name: "badgeText",
+                label: "Badge Text"
+              }
+            ]
+          },
+          // Contact Methods
+          {
+            type: "object",
+            name: "contactMethods",
+            label: "Contact Methods",
+            list: true,
+            ui: {
+              itemProps: (item) => ({
+                label: item?.title || "Contact Method"
+              })
+            },
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "Title",
+                required: true
+              },
+              {
+                type: "string",
+                name: "description",
+                label: "Description",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "string",
+                name: "email",
+                label: "Email Address",
+                required: true
+              },
+              {
+                type: "string",
+                name: "icon",
+                label: "Icon",
+                description: "FontAwesome icon name (without 'fa-')",
+                options: [
+                  { value: "envelope", label: "Envelope" },
+                  { value: "edit", label: "Edit" },
+                  { value: "users", label: "Users" },
+                  { value: "handshake", label: "Handshake" },
+                  { value: "cog", label: "Settings" },
+                  { value: "microphone", label: "Microphone" },
+                  { value: "briefcase", label: "Briefcase" },
+                  { value: "heart", label: "Heart" }
+                ]
+              },
+              {
+                type: "string",
+                name: "color",
+                label: "Color Theme",
+                options: [
+                  { value: "blue", label: "Blue" },
+                  { value: "purple", label: "Purple" },
+                  { value: "green", label: "Green" },
+                  { value: "orange", label: "Orange" },
+                  { value: "red", label: "Red" },
+                  { value: "indigo", label: "Indigo" },
+                  { value: "pink", label: "Pink" },
+                  { value: "yellow", label: "Yellow" }
+                ]
+              },
+              {
+                type: "boolean",
+                name: "featured",
+                label: "Show on Page",
+                description: "Display this contact method on the page"
+              }
+            ]
+          },
+          // Social Links
+          {
+            type: "object",
+            name: "socialLinks",
+            label: "Social Media Links",
+            list: true,
+            ui: {
+              itemProps: (item) => ({
+                label: item?.name || "Social Link"
+              })
+            },
+            fields: [
+              {
+                type: "string",
+                name: "name",
+                label: "Platform Name",
+                required: true
+              },
+              {
+                type: "string",
+                name: "url",
+                label: "URL",
+                required: true
+              },
+              {
+                type: "string",
+                name: "icon",
+                label: "Icon Class",
+                description: "Full FontAwesome class (e.g., 'fab fa-twitter')"
+              },
+              {
+                type: "string",
+                name: "color",
+                label: "Color Theme",
+                options: [
+                  { value: "blue", label: "Blue" },
+                  { value: "purple", label: "Purple" },
+                  { value: "green", label: "Green" },
+                  { value: "orange", label: "Orange" },
+                  { value: "red", label: "Red" },
+                  { value: "pink", label: "Pink" },
+                  { value: "gray", label: "Gray" }
+                ]
+              },
+              {
+                type: "boolean",
+                name: "showInContact",
+                label: "Show on Contact Page",
+                description: "Display this social link on the contact page"
+              }
+            ]
+          },
+          // FAQ Section
+          {
+            type: "object",
+            name: "faq",
+            label: "FAQ Section",
+            fields: [
+              {
+                type: "boolean",
+                name: "enabled",
+                label: "Enable FAQ Section"
+              },
+              {
+                type: "string",
+                name: "title",
+                label: "Section Title",
+                description: "First part of the FAQ title"
+              },
+              {
+                type: "string",
+                name: "titleAccent",
+                label: "Title Accent",
+                description: "Highlighted part of the title"
+              },
+              {
+                type: "string",
+                name: "subtitle",
+                label: "Section Subtitle",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "object",
+                name: "items",
+                label: "FAQ Items",
+                list: true,
+                ui: {
+                  itemProps: (item) => ({
+                    label: item?.question || "FAQ Item"
+                  })
+                },
+                fields: [
+                  {
+                    type: "string",
+                    name: "question",
+                    label: "Question",
+                    required: true
+                  },
+                  {
+                    type: "rich-text",
+                    name: "answer",
+                    label: "Answer",
+                    required: true,
+                    templates: [
+                      {
+                        name: "link",
+                        label: "Link",
+                        fields: [
+                          {
+                            name: "url",
+                            label: "URL",
+                            type: "string"
+                          },
+                          {
+                            name: "text",
+                            label: "Link Text",
+                            type: "string"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    type: "string",
+                    name: "category",
+                    label: "Category",
+                    options: [
+                      { value: "general", label: "General" },
+                      { value: "content", label: "Content" },
+                      { value: "business", label: "Business" },
+                      { value: "technical", label: "Technical" },
+                      { value: "community", label: "Community" }
+                    ]
+                  },
+                  {
+                    type: "boolean",
+                    name: "featured",
+                    label: "Show on Page",
+                    description: "Display this FAQ item"
+                  }
+                ]
+              }
+            ]
+          },
+          // CTA Section
+          {
+            type: "object",
+            name: "cta",
+            label: "Call to Action Section",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "CTA Title"
+              },
+              {
+                type: "string",
+                name: "titleAccent",
+                label: "Title Accent"
+              },
+              {
+                type: "string",
+                name: "subtitle",
+                label: "CTA Subtitle",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "object",
+                name: "primaryButton",
+                label: "Primary Button",
+                fields: [
+                  {
+                    type: "string",
+                    name: "text",
+                    label: "Button Text"
+                  },
+                  {
+                    type: "string",
+                    name: "link",
+                    label: "Button Link"
+                  }
+                ]
+              },
+              {
+                type: "object",
+                name: "secondaryButton",
+                label: "Secondary Button",
+                fields: [
+                  {
+                    type: "string",
+                    name: "text",
+                    label: "Button Text"
+                  },
+                  {
+                    type: "string",
+                    name: "link",
+                    label: "Button Link"
+                  }
+                ]
+              }
+            ]
+          },
+          // SEO Section
+          {
+            type: "object",
+            name: "seo",
+            label: "SEO Settings",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "SEO Title"
+              },
+              {
+                type: "string",
+                name: "description",
+                label: "SEO Description",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "string",
+                name: "canonical",
+                label: "Canonical URL"
+              },
+              {
+                type: "boolean",
+                name: "noindex",
+                label: "No Index",
+                description: "Prevent search engines from indexing this page"
+              }
+            ]
+          },
+          // Rich text content for the main body
+          {
+            type: "rich-text",
+            name: "body",
+            label: "Page Content",
+            isBody: true
+          }
+        ]
+      },
+      // LEGAL COLLECTION (terms, privacy, cookies)
+      {
+        name: "legal",
+        label: "\u2696\uFE0F Legal Pages",
+        path: "src/content/legal",
+        format: "md",
+        ui: {
+          router: ({ document }) => `/legal/${document._sys.filename}`,
+          filename: {
+            readonly: false,
+            slugify: (values) => {
+              const title = values?.title;
+              if (typeof title === "string") {
+                return String(title).toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-");
+              }
+              return "new-legal-page";
+            }
+          }
+        },
+        defaultItem: () => ({
+          title: "New Legal Document",
+          description: "Legal document description",
+          pubDate: (/* @__PURE__ */ new Date()).toISOString(),
+          pageType: "legal",
+          effectiveDate: (/* @__PURE__ */ new Date()).toISOString().split("T")[0]
+        }),
+        fields: [
+          {
+            type: "string",
+            name: "title",
+            label: "Document Title",
+            isTitle: true,
+            required: true,
+            description: "e.g., 'Terms of Service', 'Privacy Policy'"
+          },
+          {
+            type: "string",
+            name: "description",
+            label: "Document Description",
+            required: true,
+            description: "Brief description for SEO and navigation",
+            ui: {
+              component: "textarea"
+            }
+          },
+          {
+            type: "datetime",
+            name: "pubDate",
+            label: "Created Date",
+            required: true
+          },
+          {
+            type: "datetime",
+            name: "updatedDate",
+            label: "Last Updated",
+            description: "When this document was last updated"
+          },
+          {
+            type: "string",
+            name: "effectiveDate",
+            label: "Effective Date",
+            description: "When these terms/policies take effect (YYYY-MM-DD format)"
+          },
+          {
+            type: "string",
+            name: "pageType",
+            label: "Document Type",
+            options: [
+              { label: "Legal Document", value: "legal" },
+              { label: "Privacy Policy", value: "privacy" },
+              { label: "Terms of Service", value: "terms" },
+              { label: "Cookie Policy", value: "cookies" },
+              { label: "Disclaimer", value: "disclaimer" },
+              { label: "GDPR Compliance", value: "gdpr" },
+              { label: "Data Processing", value: "data" }
+            ],
+            description: "Type of legal document",
+            ui: {
+              component: "select"
+            }
+          },
+          {
+            type: "object",
+            name: "contact",
+            label: "Contact Information",
+            description: "Contact details for legal inquiries",
+            fields: [
+              {
+                type: "string",
+                name: "email",
+                label: "Legal Contact Email"
+              },
+              {
+                type: "string",
+                name: "address",
+                label: "Business Address",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "string",
+                name: "phone",
+                label: "Contact Phone"
+              }
+            ]
+          },
+          {
+            type: "object",
+            name: "seo",
+            label: "SEO Settings",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "SEO Title"
+              },
+              {
+                type: "string",
+                name: "description",
+                label: "SEO Description",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "boolean",
+                name: "noindex",
+                label: "No Index",
+                description: "Prevent search engines from indexing this page"
+              }
+            ]
+          },
+          {
+            type: "rich-text",
+            name: "body",
+            label: "Legal Content",
+            isBody: true,
+            description: "Legal document content"
+          }
+        ]
+      },
+      // PAGES COLLECTION (from your original)
+      {
+        name: "pages",
+        label: "\u{1F4C4} Static Pages",
+        path: "src/content/pages",
+        format: "mdx",
+        ui: {
+          router: ({ document }) => `/${document._sys.filename}`,
+          filename: {
+            readonly: false,
+            slugify: (values) => {
+              const title = values?.title;
+              if (typeof title === "string") {
+                return title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-");
+              }
+              return "new-page";
+            }
+          }
+        },
+        defaultItem: () => ({
+          title: "New Page",
+          description: "Page description for SEO and navigation",
+          pubDate: (/* @__PURE__ */ new Date()).toISOString(),
+          layout: "default"
+        }),
+        fields: [
+          {
+            type: "string",
+            name: "title",
+            label: "Page Title",
+            isTitle: true,
+            required: true,
+            description: "Main title displayed on the page"
+          },
+          {
+            type: "string",
+            name: "description",
+            label: "Page Description",
+            required: true,
+            description: "Brief description for SEO and navigation",
+            ui: {
+              component: "textarea"
+            }
+          },
+          {
+            type: "datetime",
+            name: "pubDate",
+            label: "Created Date",
+            required: true
+          },
+          {
+            type: "datetime",
+            name: "updatedDate",
+            label: "Last Updated",
+            description: "When this page was last updated"
+          },
+          {
+            type: "string",
+            name: "layout",
+            label: "Page Layout",
+            options: [
+              { label: "Default", value: "default" },
+              { label: "Full Width", value: "full-width" },
+              { label: "Minimal", value: "minimal" },
+              { label: "Landing Page", value: "landing" },
+              { label: "Contact", value: "contact" },
+              { label: "Community", value: "community" }
+            ],
+            description: "Choose the layout template for this page",
+            ui: {
+              component: "select"
+            }
+          },
+          {
+            type: "object",
+            name: "hero",
+            label: "Hero Section",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "Hero Title"
+              },
+              {
+                type: "string",
+                name: "subtitle",
+                label: "Hero Subtitle",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "image",
+                name: "image",
+                label: "Hero Image"
+              }
+            ]
+          },
+          {
+            type: "object",
+            name: "seo",
+            label: "SEO Settings",
+            description: "Search engine optimization options",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "SEO Title",
+                description: "Custom title for search engines"
+              },
+              {
+                type: "string",
+                name: "description",
+                label: "Meta Description",
+                description: "Custom description for search engines",
+                ui: {
+                  component: "textarea"
+                }
+              },
+              {
+                type: "string",
+                name: "canonical",
+                label: "Canonical URL"
+              },
+              {
+                type: "boolean",
+                name: "noindex",
+                label: "Hide from Search Engines",
+                description: "Prevent search engines from indexing this page"
+              }
+            ]
+          },
+          {
+            type: "rich-text",
+            name: "body",
+            label: "Page Content",
+            isBody: true,
+            description: "Main content of the page"
+          }
+        ]
+      },
+      // CATEGORIES COLLECTION (from your original)
+      {
+        name: "categories",
+        label: "\u{1F3F7}\uFE0F Categories",
+        path: "src/content/categories",
+        format: "md",
+        ui: {
+          router: ({ document }) => `/blog/category/${document._sys.filename}`,
+          filename: {
+            readonly: false,
+            slugify: (values) => {
+              const name = values?.name;
+              if (typeof name === "string") {
+                return name.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
+              }
+              return "new-category";
+            }
+          }
+        },
+        defaultItem: () => ({
+          name: "New Category",
+          description: "Category description",
+          color: "blue",
+          icon: "tag",
+          featured: false
+        }),
         fields: [
           {
             type: "string",
@@ -708,15 +2591,7 @@ var config_default = defineConfig({
               { label: "Rocket (Startup)", value: "rocket" },
               { label: "Tools (Developer)", value: "tools" },
               { label: "Code (Programming)", value: "code" },
-              { label: "Cog (Other/Misc)", value: "cog" },
-              { label: "Star (Featured)", value: "star" },
-              { label: "Fire (Trending)", value: "fire" },
-              { label: "Shield (Security)", value: "shield-alt" },
-              { label: "Database (Data)", value: "database" },
-              { label: "Mobile (Mobile Dev)", value: "mobile-alt" },
-              { label: "Cloud (Cloud Tech)", value: "cloud" },
-              { label: "Lock (Privacy)", value: "lock" },
-              { label: "Microchip (Hardware)", value: "microchip" }
+              { label: "Cog (Other/Misc)", value: "cog" }
             ]
           },
           {
@@ -743,28 +2618,6 @@ var config_default = defineConfig({
             description: "Show this category prominently on the homepage"
           },
           {
-            type: "object",
-            name: "seo",
-            label: "SEO Settings",
-            fields: [
-              {
-                type: "string",
-                name: "title",
-                label: "SEO Title",
-                description: "Custom title for category pages"
-              },
-              {
-                type: "string",
-                name: "description",
-                label: "Meta Description",
-                description: "Description for search engines",
-                ui: {
-                  component: "textarea"
-                }
-              }
-            ]
-          },
-          {
             type: "rich-text",
             name: "body",
             label: "Category Content",
@@ -773,17 +2626,22 @@ var config_default = defineConfig({
           }
         ]
       },
-      // Authors Collection - FIXED to make fields optional
+      // AUTHORS COLLECTION (from your original)
       {
         name: "authors",
-        label: "Authors",
+        label: "\u{1F465} Authors",
         path: "src/content/authors",
         format: "md",
         ui: {
+          router: ({ document }) => `/authors/${document._sys.filename}`,
           filename: {
             readonly: false,
             slugify: (values) => {
-              return `${values?.name?.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "")}`;
+              const name = values?.name;
+              if (typeof name === "string") {
+                return name.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
+              }
+              return "new-author";
             }
           }
         },
@@ -794,14 +2652,12 @@ var config_default = defineConfig({
             label: "Full Name",
             isTitle: true,
             required: true
-            // Only name is required
           },
           {
             type: "string",
             name: "bio",
             label: "Biography",
             required: false,
-            // FIXED: Make optional
             ui: {
               component: "textarea"
             }
@@ -811,21 +2667,18 @@ var config_default = defineConfig({
             name: "avatar",
             label: "Profile Picture",
             required: false
-            // FIXED: Make optional
           },
           {
             type: "string",
             name: "role",
             label: "Role/Title",
             required: false
-            // FIXED: Make optional
           },
           {
             type: "string",
             name: "company",
             label: "Company",
             required: false,
-            // Already optional
             description: "Optional company affiliation"
           },
           {
@@ -833,7 +2686,6 @@ var config_default = defineConfig({
             name: "email",
             label: "Email Address",
             required: false,
-            // Already optional
             description: "Optional contact email"
           },
           {
@@ -841,7 +2693,6 @@ var config_default = defineConfig({
             name: "social",
             label: "Social Media",
             required: false,
-            // FIXED: Make optional
             fields: [
               {
                 type: "string",
@@ -884,805 +2735,14 @@ var config_default = defineConfig({
             label: "Extended Bio",
             isBody: true,
             required: false,
-            // FIXED: Make optional
             description: "Detailed author information for author page"
           }
         ]
       },
-      // Podcast Collection
-      {
-        name: "podcast",
-        label: "Podcast Episodes",
-        path: "src/content/podcast",
-        format: "md",
-        ui: {
-          filename: {
-            readonly: false,
-            slugify: (values) => {
-              return `episode-${values?.episode || "new"}`;
-            }
-          }
-        },
-        defaultItem: () => {
-          return {
-            title: "New Episode",
-            pubDate: (/* @__PURE__ */ new Date()).toISOString(),
-            episode: 1,
-            featured: false
-          };
-        },
-        fields: [
-          {
-            type: "string",
-            name: "title",
-            label: "Episode Title",
-            isTitle: true,
-            required: true
-          },
-          {
-            type: "string",
-            name: "description",
-            label: "Episode Description",
-            required: true,
-            ui: {
-              component: "textarea"
-            }
-          },
-          {
-            type: "datetime",
-            name: "pubDate",
-            label: "Publication Date",
-            required: true
-          },
-          {
-            type: "string",
-            name: "duration",
-            label: "Duration",
-            required: true,
-            description: "e.g., '45:30'"
-          },
-          {
-            type: "string",
-            name: "audioUrl",
-            label: "Audio File URL",
-            required: true,
-            description: "Direct link to MP3 file"
-          },
-          {
-            type: "image",
-            name: "image",
-            label: "Episode Artwork",
-            description: "Episode cover image"
-          },
-          {
-            type: "string",
-            name: "guests",
-            label: "Guests",
-            list: true,
-            description: "List of guest names"
-          },
-          {
-            type: "string",
-            name: "transcript",
-            label: "Transcript",
-            description: "Full episode transcript",
-            ui: {
-              component: "textarea"
-            }
-          },
-          {
-            type: "number",
-            name: "season",
-            label: "Season Number",
-            description: "Optional season grouping"
-          },
-          {
-            type: "number",
-            name: "episode",
-            label: "Episode Number",
-            required: true
-          },
-          {
-            type: "boolean",
-            name: "featured",
-            label: "Featured Episode"
-          },
-          {
-            type: "object",
-            name: "seo",
-            label: "SEO Settings",
-            fields: [
-              {
-                type: "string",
-                name: "title",
-                label: "SEO Title"
-              },
-              {
-                type: "string",
-                name: "description",
-                label: "Meta Description",
-                ui: {
-                  component: "textarea"
-                }
-              },
-              {
-                type: "string",
-                name: "canonical",
-                label: "Canonical URL"
-              }
-            ]
-          },
-          {
-            type: "rich-text",
-            name: "body",
-            label: "Show Notes",
-            isBody: true,
-            description: "Detailed show notes and links"
-          }
-        ]
-      },
-      // Newsletter Collection
-      {
-        name: "newsletter",
-        label: "Newsletter Issues",
-        path: "src/content/newsletter",
-        format: "md",
-        ui: {
-          filename: {
-            readonly: false,
-            slugify: (values) => {
-              return `issue-${values?.issue || "new"}`;
-            }
-          }
-        },
-        defaultItem: () => {
-          return {
-            title: "TinkStacks Weekly #1",
-            pubDate: (/* @__PURE__ */ new Date()).toISOString(),
-            issue: 1,
-            featured: false
-          };
-        },
-        fields: [
-          {
-            type: "string",
-            name: "title",
-            label: "Issue Title",
-            isTitle: true,
-            required: true
-          },
-          {
-            type: "string",
-            name: "excerpt",
-            label: "Issue Summary",
-            required: true,
-            ui: {
-              component: "textarea"
-            }
-          },
-          {
-            type: "datetime",
-            name: "pubDate",
-            label: "Publication Date",
-            required: true
-          },
-          {
-            type: "number",
-            name: "issue",
-            label: "Issue Number",
-            required: true
-          },
-          {
-            type: "boolean",
-            name: "featured",
-            label: "Featured Issue",
-            description: "Highlight this issue"
-          },
-          {
-            type: "rich-text",
-            name: "body",
-            label: "Newsletter Content",
-            isBody: true
-          }
-        ]
-      },
-      // Pages Collection
-      {
-        name: "pages",
-        label: "Static Pages",
-        path: "src/content/pages",
-        format: "md",
-        ui: {
-          filename: {
-            readonly: false,
-            slugify: (values) => {
-              return `${values?.title?.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "")}`;
-            }
-          }
-        },
-        defaultItem: () => {
-          return {
-            title: "New Page",
-            description: "Page description",
-            pubDate: (/* @__PURE__ */ new Date()).toISOString()
-          };
-        },
-        fields: [
-          {
-            type: "string",
-            name: "title",
-            label: "Page Title",
-            isTitle: true,
-            required: true
-          },
-          {
-            type: "string",
-            name: "description",
-            label: "Page Description",
-            required: true,
-            ui: {
-              component: "textarea"
-            }
-          },
-          {
-            type: "datetime",
-            name: "pubDate",
-            label: "Created Date"
-          },
-          {
-            type: "datetime",
-            name: "updatedDate",
-            label: "Last Updated"
-          },
-          {
-            type: "string",
-            name: "layout",
-            label: "Layout Template",
-            description: "Optional custom layout",
-            options: [
-              { label: "Default", value: "default" },
-              { label: "Full Width", value: "full-width" },
-              { label: "Minimal", value: "minimal" }
-            ]
-          },
-          {
-            type: "object",
-            name: "seo",
-            label: "SEO Settings",
-            fields: [
-              {
-                type: "string",
-                name: "title",
-                label: "SEO Title"
-              },
-              {
-                type: "string",
-                name: "description",
-                label: "Meta Description",
-                ui: {
-                  component: "textarea"
-                }
-              },
-              {
-                type: "string",
-                name: "canonical",
-                label: "Canonical URL"
-              },
-              {
-                type: "boolean",
-                name: "noindex",
-                label: "No Index",
-                description: "Prevent search engines from indexing this page"
-              }
-            ]
-          },
-          {
-            type: "rich-text",
-            name: "body",
-            label: "Page Content",
-            isBody: true,
-            templates: [
-              {
-                name: "Hero",
-                label: "Hero Section",
-                ui: {
-                  defaultItem: {
-                    title: "Welcome to TinkByte",
-                    subtitle: "Building meaningful, data-driven products",
-                    backgroundImage: ""
-                  }
-                },
-                fields: [
-                  {
-                    type: "string",
-                    name: "title",
-                    label: "Hero Title"
-                  },
-                  {
-                    type: "string",
-                    name: "subtitle",
-                    label: "Hero Subtitle",
-                    ui: {
-                      component: "textarea"
-                    }
-                  },
-                  {
-                    type: "image",
-                    name: "backgroundImage",
-                    label: "Background Image"
-                  },
-                  {
-                    type: "object",
-                    name: "cta",
-                    label: "Call to Action",
-                    fields: [
-                      {
-                        type: "string",
-                        name: "text",
-                        label: "Button Text"
-                      },
-                      {
-                        type: "string",
-                        name: "url",
-                        label: "Button URL"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                name: "ContentBlock",
-                label: "Content Block",
-                ui: {
-                  defaultItem: {
-                    content: "Start writing your content here..."
-                  }
-                },
-                fields: [
-                  {
-                    type: "rich-text",
-                    name: "content",
-                    label: "Content",
-                    ui: {
-                      component: "rich-text"
-                    }
-                  }
-                ]
-              },
-              {
-                name: "ImageBlock",
-                label: "Image Block",
-                ui: {
-                  defaultItem: {
-                    caption: "Image caption",
-                    layout: "full-width"
-                  }
-                },
-                fields: [
-                  {
-                    type: "image",
-                    name: "src",
-                    label: "Image"
-                  },
-                  {
-                    type: "string",
-                    name: "alt",
-                    label: "Alt Text"
-                  },
-                  {
-                    type: "string",
-                    name: "caption",
-                    label: "Caption"
-                  },
-                  {
-                    type: "string",
-                    name: "layout",
-                    label: "Layout",
-                    options: [
-                      { label: "Full Width", value: "full-width" },
-                      { label: "Centered", value: "centered" },
-                      { label: "Float Left", value: "float-left" },
-                      { label: "Float Right", value: "float-right" }
-                    ]
-                  }
-                ]
-              },
-              {
-                name: "CalloutBox",
-                label: "Callout Box",
-                ui: {
-                  defaultItem: {
-                    type: "info",
-                    title: "Important Note",
-                    content: "Add your callout content here..."
-                  }
-                },
-                fields: [
-                  {
-                    type: "string",
-                    name: "type",
-                    label: "Callout Type",
-                    options: [
-                      { label: "\u{1F4A1} Info", value: "info" },
-                      { label: "\u26A0\uFE0F Warning", value: "warning" },
-                      { label: "\u2705 Success", value: "success" },
-                      { label: "\u274C Error", value: "error" },
-                      { label: "\u{1F4A1} Tip", value: "tip" }
-                    ]
-                  },
-                  {
-                    type: "string",
-                    name: "title",
-                    label: "Title"
-                  },
-                  {
-                    type: "rich-text",
-                    name: "content",
-                    label: "Content"
-                  }
-                ]
-              },
-              {
-                name: "codeBlock",
-                label: "Code Block",
-                fields: [
-                  {
-                    type: "string",
-                    name: "language",
-                    label: "Programming Language",
-                    options: [
-                      { label: "JavaScript", value: "javascript" },
-                      { label: "TypeScript", value: "typescript" },
-                      { label: "Python", value: "python" },
-                      { label: "Bash/Shell", value: "bash" },
-                      { label: "CSS", value: "css" },
-                      { label: "HTML", value: "html" },
-                      { label: "JSON", value: "json" },
-                      { label: "Astro", value: "astro" },
-                      { label: "React/JSX", value: "jsx" },
-                      { label: "Vue", value: "vue" },
-                      { label: "Markdown", value: "markdown" }
-                    ]
-                  },
-                  {
-                    type: "string",
-                    name: "filename",
-                    label: "Filename (optional)",
-                    description: "e.g., 'src/components/Header.astro'"
-                  },
-                  {
-                    type: "string",
-                    name: "code",
-                    label: "Code",
-                    ui: {
-                      component: "textarea"
-                    }
-                  }
-                ]
-              },
-              {
-                name: "quote",
-                label: "Quote",
-                fields: [
-                  {
-                    type: "string",
-                    name: "quote",
-                    label: "Quote Text",
-                    ui: {
-                      component: "textarea"
-                    }
-                  },
-                  {
-                    type: "string",
-                    name: "author",
-                    label: "Quote Author"
-                  },
-                  {
-                    type: "string",
-                    name: "role",
-                    label: "Author Role/Title"
-                  }
-                ]
-              },
-              {
-                name: "newsletter",
-                label: "Newsletter Signup",
-                fields: [
-                  {
-                    type: "string",
-                    name: "title",
-                    label: "CTA Title",
-                    description: "e.g., 'Want more insights like this?'"
-                  },
-                  {
-                    type: "string",
-                    name: "description",
-                    label: "Description",
-                    ui: {
-                      component: "textarea"
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      // Legal Pages Collection
-      {
-        name: "legalPages",
-        label: "Legal Pages",
-        path: "src/content/legal",
-        format: "md",
-        ui: {
-          filename: {
-            readonly: false,
-            slugify: (values) => {
-              return `${values?.title?.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "")}`;
-            }
-          }
-        },
-        defaultItem: () => {
-          return {
-            title: "New Legal Page",
-            description: "Legal page description",
-            pubDate: (/* @__PURE__ */ new Date()).toISOString(),
-            pageType: "legal"
-          };
-        },
-        fields: [
-          {
-            type: "string",
-            name: "title",
-            label: "Page Title",
-            isTitle: true,
-            required: true,
-            description: "e.g., 'Terms of Service', 'Privacy Policy'"
-          },
-          {
-            type: "string",
-            name: "description",
-            label: "Page Description",
-            required: true,
-            description: "Brief description for SEO and meta tags",
-            ui: {
-              component: "textarea"
-            }
-          },
-          {
-            type: "datetime",
-            name: "pubDate",
-            label: "Created Date",
-            required: true
-          },
-          {
-            type: "datetime",
-            name: "updatedDate",
-            label: "Last Updated",
-            description: "When this legal document was last updated"
-          },
-          {
-            type: "string",
-            name: "pageType",
-            label: "Page Type",
-            options: [
-              { label: "Legal Document", value: "legal" },
-              { label: "Policy", value: "policy" },
-              { label: "Terms", value: "terms" },
-              { label: "General Page", value: "general" }
-            ],
-            description: "Type of legal/policy page"
-          },
-          {
-            type: "string",
-            name: "effectiveDate",
-            label: "Effective Date",
-            description: "When these terms/policies take effect (optional)"
-          },
-          {
-            type: "object",
-            name: "contact",
-            label: "Contact Information",
-            description: "Contact details for legal inquiries",
-            fields: [
-              {
-                type: "string",
-                name: "email",
-                label: "Legal Email",
-                description: "e.g., legal@tinkbyte.com"
-              },
-              {
-                type: "string",
-                name: "address",
-                label: "Legal Address",
-                description: "Company legal address",
-                ui: {
-                  component: "textarea"
-                }
-              },
-              {
-                type: "string",
-                name: "phone",
-                label: "Contact Phone",
-                description: "Optional phone number"
-              }
-            ]
-          },
-          {
-            type: "object",
-            name: "seo",
-            label: "SEO Settings",
-            description: "Advanced SEO options",
-            fields: [
-              {
-                type: "string",
-                name: "title",
-                label: "SEO Title",
-                description: "Custom title for search engines"
-              },
-              {
-                type: "string",
-                name: "description",
-                label: "Meta Description",
-                description: "Description for search engines",
-                ui: {
-                  component: "textarea"
-                }
-              },
-              {
-                type: "boolean",
-                name: "noindex",
-                label: "No Index",
-                description: "Prevent search engines from indexing"
-              }
-            ]
-          },
-          {
-            type: "rich-text",
-            name: "body",
-            label: "Legal Content",
-            isBody: true,
-            description: "The main legal document content",
-            templates: [
-              {
-                name: "legalSection",
-                label: "Legal Section",
-                fields: [
-                  {
-                    type: "string",
-                    name: "title",
-                    label: "Section Title",
-                    required: true
-                  },
-                  {
-                    type: "string",
-                    name: "number",
-                    label: "Section Number",
-                    description: "e.g., '01', '02' (optional)"
-                  },
-                  {
-                    type: "rich-text",
-                    name: "content",
-                    label: "Section Content"
-                  }
-                ]
-              },
-              {
-                name: "legalList",
-                label: "Legal List",
-                fields: [
-                  {
-                    type: "string",
-                    name: "title",
-                    label: "List Title"
-                  },
-                  {
-                    type: "string",
-                    name: "items",
-                    label: "List Items",
-                    list: true,
-                    ui: {
-                      component: "list"
-                    }
-                  },
-                  {
-                    type: "string",
-                    name: "listType",
-                    label: "List Style",
-                    options: [
-                      { label: "Bullet Points", value: "bullets" },
-                      { label: "Numbered List", value: "numbered" },
-                      { label: "Enhanced List", value: "enhanced" }
-                    ]
-                  }
-                ]
-              },
-              {
-                name: "contactInfo",
-                label: "Contact Information Block",
-                fields: [
-                  {
-                    type: "string",
-                    name: "title",
-                    label: "Contact Section Title",
-                    description: "e.g., 'Contact Us', 'Get in Touch'"
-                  },
-                  {
-                    type: "string",
-                    name: "description",
-                    label: "Contact Description",
-                    ui: {
-                      component: "textarea"
-                    }
-                  },
-                  {
-                    type: "object",
-                    name: "contactMethods",
-                    label: "Contact Methods",
-                    list: true,
-                    fields: [
-                      {
-                        type: "string",
-                        name: "type",
-                        label: "Contact Type",
-                        options: [
-                          { label: "Email", value: "email" },
-                          { label: "Phone", value: "phone" },
-                          { label: "Address", value: "address" },
-                          { label: "Website", value: "website" }
-                        ]
-                      },
-                      {
-                        type: "string",
-                        name: "value",
-                        label: "Contact Value",
-                        description: "Email address, phone number, etc."
-                      },
-                      {
-                        type: "string",
-                        name: "label",
-                        label: "Display Label",
-                        description: "How to display this contact method"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                name: "disclaimer",
-                label: "Disclaimer Box",
-                fields: [
-                  {
-                    type: "string",
-                    name: "type",
-                    label: "Disclaimer Type",
-                    options: [
-                      { label: "Important", value: "important" },
-                      { label: "Warning", value: "warning" },
-                      { label: "Note", value: "note" },
-                      { label: "Legal Notice", value: "legal" }
-                    ]
-                  },
-                  {
-                    type: "string",
-                    name: "title",
-                    label: "Disclaimer Title"
-                  },
-                  {
-                    type: "rich-text",
-                    name: "content",
-                    label: "Disclaimer Content"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      // Settings Collection
+      // SETTINGS COLLECTION (Enhanced from your original)
       {
         name: "settings",
-        label: "Site Settings",
+        label: "\u2699\uFE0F Site Settings",
         path: "src/content/settings",
         format: "md",
         ui: {
@@ -1700,6 +2760,8 @@ var config_default = defineConfig({
           include: "global-settings"
         },
         defaultItem: () => ({
+          title: "TinkByte Global Settings",
+          description: "Global configuration for TinkByte website",
           site: {
             name: "TinkByte",
             description: "Building meaningful, data-driven products that solve real problems",
@@ -1762,7 +2824,7 @@ var config_default = defineConfig({
           {
             type: "object",
             name: "site",
-            label: "Site Configuration",
+            label: "\u{1F310} Site Configuration",
             fields: [
               {
                 type: "string",
@@ -1790,6 +2852,7 @@ var config_default = defineConfig({
                 label: "Logo URL",
                 description: "Path to site logo"
               },
+              // Include the original giscus configuration
               {
                 type: "object",
                 name: "giscus",
@@ -1869,7 +2932,7 @@ var config_default = defineConfig({
               }
             ]
           },
-          // Category Settings
+          // Category Settings (from original)
           {
             type: "object",
             name: "categories",
@@ -1879,10 +2942,7 @@ var config_default = defineConfig({
                 type: "string",
                 name: "defaultColor",
                 label: "Default Category Color",
-                description: "Fallback color for categories without specific colors",
-                ui: {
-                  component: "color"
-                }
+                description: "Fallback color for categories without specific colors"
               },
               {
                 type: "object",
@@ -1906,10 +2966,7 @@ var config_default = defineConfig({
                     type: "string",
                     name: "color",
                     label: "Category Color",
-                    description: "Hex color code for this category",
-                    ui: {
-                      component: "color"
-                    }
+                    description: "Hex color code for this category"
                   },
                   {
                     type: "string",
@@ -1924,7 +2981,7 @@ var config_default = defineConfig({
               }
             ]
           },
-          // UI Text Configuration
+          // UI Text Configuration (from original)
           {
             type: "object",
             name: "uiText",
@@ -2083,7 +3140,7 @@ var config_default = defineConfig({
               }
             ]
           },
-          // Community Settings
+          // Community Settings (from original)
           {
             type: "object",
             name: "community",
@@ -2204,7 +3261,7 @@ var config_default = defineConfig({
               }
             ]
           },
-          // Research Settings
+          // Research Settings (from original)
           {
             type: "object",
             name: "research",
@@ -2245,25 +3302,7 @@ var config_default = defineConfig({
                       { label: "Database", value: "database" },
                       { label: "Microscope", value: "microscope" },
                       { label: "Brain", value: "brain" },
-                      { label: "Lightbulb", value: "lightbulb" },
-                      { label: "Hammer (Build)", value: "hammer" },
-                      { label: "Users (Community)", value: "users" },
-                      { label: "Book (Learning)", value: "book" },
-                      { label: "Target (No-Fluff)", value: "bullseye" },
-                      { label: "Chart (Research)", value: "chart-line" },
-                      { label: "Globe (Global)", value: "globe" },
-                      { label: "Rocket (Startup)", value: "rocket" },
-                      { label: "Tools (Developer)", value: "tools" },
-                      { label: "Code (Programming)", value: "code" },
-                      { label: "Cog (Other/Misc)", value: "cog" },
-                      { label: "Star (Featured)", value: "star" },
-                      { label: "Fire (Trending)", value: "fire" },
-                      { label: "Shield (Security)", value: "shield-alt" },
-                      { label: "Database (Data)", value: "database" },
-                      { label: "Mobile (Mobile Dev)", value: "mobile-alt" },
-                      { label: "Cloud (Cloud Tech)", value: "cloud" },
-                      { label: "Lock (Privacy)", value: "lock" },
-                      { label: "Microchip (Hardware)", value: "microchip" }
+                      { label: "Lightbulb", value: "lightbulb" }
                     ]
                   }
                 ]
@@ -2355,7 +3394,7 @@ var config_default = defineConfig({
               }
             ]
           },
-          // Newsletter Settings
+          // Newsletter Settings (from original)
           {
             type: "object",
             name: "newsletter",
@@ -2412,7 +3451,7 @@ var config_default = defineConfig({
               }
             ]
           },
-          // Social Media Settings
+          // Social Media Settings (from original)
           {
             type: "object",
             name: "social",
@@ -2476,7 +3515,7 @@ var config_default = defineConfig({
               }
             ]
           },
-          // Analytics and Tracking
+          // Analytics and Tracking (from original)
           {
             type: "object",
             name: "analytics",
@@ -2512,7 +3551,7 @@ var config_default = defineConfig({
               }
             ]
           },
-          // Performance and Technical Settings
+          // Performance and Technical Settings (from original)
           {
             type: "object",
             name: "performance",

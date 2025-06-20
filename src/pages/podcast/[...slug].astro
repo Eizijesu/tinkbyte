@@ -1,0 +1,473 @@
+---
+// src/pages/podcast/[...slug].astro
+import Layout from "../../layouts/Layout.astro";
+import AudioPlayer from "../../components/ui/AudioPlayer.astro";
+import ShareButtons from "../../components/ui/ShareButtons.astro";
+import { getCollection, type CollectionEntry } from "astro:content";
+import { Image } from "astro:assets";
+
+type PodcastEpisode = CollectionEntry<"podcast">;
+
+export async function getStaticPaths() {
+  // UPGRADED: Only show published episodes
+  const episodes: PodcastEpisode[] = await getCollection(
+    "podcast",
+    ({ data }) => data.status === "published"
+  );
+
+  return episodes.map((episode) => ({
+    params: { slug: episode.slug },
+    props: { episode },
+  }));
+}
+
+interface Props {
+  episode: PodcastEpisode;
+}
+
+const { episode }: Props = Astro.props;
+const { Content } = await episode.render();
+
+// Get related episodes (published only)
+const allEpisodes: PodcastEpisode[] = await getCollection(
+  "podcast",
+  ({ data }) => data.status === "published"
+);
+const relatedEpisodes = allEpisodes
+  .filter((ep) => ep.slug !== episode.slug)
+  .sort(
+    (a, b) =>
+      new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
+  )
+  .slice(0, 3);
+
+const publishedTime = new Date(episode.data.pubDate).toISOString();
+const formattedDate = new Date(episode.data.pubDate).toLocaleDateString(
+  "en-US",
+  {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }
+);
+---
+
+<Layout
+  title={`Episode ${episode.data.episode}: ${episode.data.title} | TinkByte Podcast`}
+  description={episode.data.description}
+  image={episode.data.image}
+  type="article"
+  publishedTime={publishedTime}
+  author={episode.data.guests && episode.data.guests.length > 0
+    ? episode.data.guests[0].name
+    : "TinkByte Team"}
+  tags={episode.data.tags || []}
+>
+  <article class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+    <!-- Episode Header -->
+    <header class="mb-8">
+      <nav class="mb-6">
+        <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
+          <a href="/podcast" class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide">
+            Podcast
+          </a>
+          <i class="fas fa-chevron-right text-xs mx-2"></i>
+          <span class="text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">
+            Episode {episode.data.episode}
+          </span>
+        </div>
+      </nav>
+
+      <!-- Episode Badge -->
+      <div class="mb-4">
+        <span class="inline-flex items-center px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 rounded-sm text-sm font-medium uppercase tracking-wide">
+          <i class="fas fa-headphones mr-2"></i>
+          Episode {episode.data.episode}
+        </span>
+        {episode.data.featured && (
+          <span class="ml-2 inline-flex items-center px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-sm text-sm font-medium uppercase tracking-wide">
+            <i class="fas fa-star mr-2"></i>
+            Featured
+          </span>
+        )}
+      </div>
+
+      <!-- Title -->
+      <h1
+        class="text-3xl sm:text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 leading-tight"
+      >
+        {episode.data.title}
+      </h1>
+
+      <!-- Episode Meta Info -->
+<div class="flex flex-wrap items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+  <time datetime={publishedTime}>{formattedDate}</time>
+  <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+  <span class="flex items-center gap-1">
+    <i class="fas fa-clock"></i>
+    {episode.data.duration}
+  </span>
+
+  {/* ✅ CONDITIONAL DOWNLOAD INFO */}
+  {episode.data.audioUrl && episode.data.downloadable && (
+    <>
+      <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+      <span class="flex items-center gap-1">
+        <i class="fas fa-download"></i>
+        Download Available
+      </span>
+    </>
+  )}
+  <!-- ✅ FIXED: Only show if guests exist and have names -->
+  {episode.data.guests && episode.data.guests.length > 0 && episode.data.guests.some(guest => guest.name) && (
+    <>
+      <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
+      <span class="flex items-center gap-1">
+        <i class="fas fa-users"></i>
+        Featuring: {episode.data.guests.map(guest => guest.name).filter(Boolean).join(", ")}
+      </span>
+    </>
+  )}
+</div>
+
+        <!-- FIXED: Display guest names properly -->
+        {
+          episode.data.guests && episode.data.guests.length > 0 && (
+            <>
+              <span class="w-1 h-1 bg-zinc-400 rounded-full" />
+              <span class="flex items-center gap-1">
+                <i class="fas fa-users" />
+                Featuring:{" "}
+                {episode.data.guests.map((guest) => guest.name).join(", ")}
+              </span>
+            </>
+          )
+        }
+      </div>
+
+      <!-- UPGRADED: Rich Guests Info -->
+      {
+        episode.data.guests && episode.data.guests.length > 0 && (
+          <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-sm p-6 mb-8">
+            <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4 uppercase tracking-wide">
+              Featuring
+            </h3>
+            <div class="grid gap-4">
+              {episode.data.guests.map((guest) => (
+                <div class="flex items-center gap-3">
+                  {guest.photo && (
+                    <Image
+                      src={guest.photo}
+                      alt={guest.name}
+                      width={48}
+                      height={48}
+                      class="w-12 h-12 rounded-full object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                  <div class="flex-1">
+                    <p class="text-zinc-900 dark:text-zinc-100 font-medium">
+                      {guest.name}
+                    </p>
+                    {guest.role && (
+                      <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                        {guest.role}
+                        {guest.company && ` at ${guest.company}`}
+                      </p>
+                    )}
+                  </div>
+                  {guest.social && (
+                    <div class="flex gap-2">
+                      {guest.social.twitter && (
+                        <a
+                          href={guest.social.twitter}
+                          class="text-zinc-400 hover:text-blue-500 transition-colors"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Twitter"
+                        >
+                          <i class="fab fa-twitter" />
+                        </a>
+                      )}
+                      {guest.social.linkedin && (
+                        <a
+                          href={guest.social.linkedin}
+                          class="text-zinc-400 hover:text-blue-600 transition-colors"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="LinkedIn"
+                        >
+                          <i class="fab fa-linkedin" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+    </header>
+
+    <!-- Episode Cover Image -->
+    {
+      episode.data.image && (
+        <div class="aspect-[16/9] overflow-hidden rounded-sm mb-8">
+          <Image
+            src={episode.data.image}
+            alt={episode.data.title}
+            width={1200}
+            height={675}
+            class="w-full h-full object-cover"
+            loading="eager"
+          />
+        </div>
+      )
+    }
+
+    <!-- Audio Player -->
+    {
+      episode.data.audioUrl && (
+        <div class="mb-8">
+          <AudioPlayer
+            audioUrl={episode.data.audioUrl}
+            title={episode.data.title}
+            duration={episode.data.duration}
+            downloadUrl={episode.data.audioUrl}
+          />
+        </div>
+      )
+    }
+
+    <!-- Episode Description -->
+    <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none mb-8">
+      <p class="text-xl leading-relaxed">
+        {episode.data.description}
+      </p>
+    </div>
+
+    <!-- Show Notes -->
+    <section class="mb-8">
+      <h2
+        class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wide"
+      >
+        Show Notes
+      </h2>
+      <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none">
+        <Content />
+      </div>
+    </section>
+
+    <!-- Transcript -->
+    {
+      episode.data.transcript && (
+        <section class="mb-8">
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 uppercase tracking-wide">
+            Transcript
+          </h2>
+          <details class="bg-white dark:bg-zinc-900 rounded-sm border border-zinc-200 dark:border-zinc-800">
+            <summary class="p-6 cursor-pointer font-medium text-zinc-900 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+              <span class="uppercase tracking-wide">Show Full Transcript</span>
+            </summary>
+            <div class="px-6 pb-6">
+              <div class="prose prose-sm prose-zinc dark:prose-invert max-w-none">
+                <pre class="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                  {episode.data.transcript}
+                </pre>
+              </div>
+            </div>
+          </details>
+        </section>
+      )
+    }
+
+    <!-- UPGRADED: Tags -->
+    {
+      episode.data.tags && episode.data.tags.length > 0 && (
+        <div class="flex flex-wrap gap-2 mb-8">
+          <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+            Tags:
+          </span>
+          {episode.data.tags.map((tag) => (
+            <a
+              href={`/podcast/tag/${tag.toLowerCase().replace(/\s+/g, "-")}`}
+              class="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors uppercase tracking-wide"
+            >
+              #{tag}
+            </a>
+          ))}
+        </div>
+      )
+    }
+
+    <!-- Share Buttons -->
+    <div class="border-t border-zinc-200 dark:border-zinc-800 pt-8 mb-8">
+      <ShareButtons
+        title={`Episode ${episode.data.episode}: ${episode.data.title}`}
+        url={`/podcast/${episode.slug}`}
+        description={episode.data.description}
+      />
+    </div>
+
+    <!-- UPGRADED: Guest Bios -->
+    <!-- FIXED: Rich Guests Info -->
+    {
+      episode.data.guests && episode.data.guests.length > 0 && (
+        <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-sm p-6 mb-8">
+          <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4 uppercase tracking-wide">
+            Featuring
+          </h3>
+          <div class="grid gap-4">
+            {episode.data.guests.map((guest) => (
+              <div class="flex items-center gap-3">
+                {guest.photo && (
+                  <Image
+                    src={guest.photo}
+                    alt={guest.name}
+                    width={48}
+                    height={48}
+                    class="w-12 h-12 rounded-full object-cover"
+                    loading="lazy"
+                  />
+                )}
+                <div class="flex-1">
+                  <p class="text-zinc-900 dark:text-zinc-100 font-medium">
+                    {guest.name}
+                  </p>
+                  {guest.role && (
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                      {guest.role}
+                      {guest.company && ` at ${guest.company}`}
+                    </p>
+                  )}
+                </div>
+                {guest.social && (
+                  <div class="flex gap-2">
+                    {guest.social.twitter && (
+                      <a
+                        href={guest.social.twitter}
+                        class="text-zinc-400 hover:text-blue-500 transition-colors"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Twitter"
+                      >
+                        <i class="fab fa-twitter" />
+                      </a>
+                    )}
+                    {guest.social.linkedin && (
+                      <a
+                        href={guest.social.linkedin}
+                        class="text-zinc-400 hover:text-blue-600 transition-colors"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="LinkedIn"
+                      >
+                        <i class="fab fa-linkedin" />
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+  </article>
+
+  <!-- Related Episodes -->
+  {
+    relatedEpisodes.length > 0 && (
+      <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+        <div class="max-w-7xl mx-auto">
+          <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+              More Episodes
+            </h2>
+            <p class="text-xl text-zinc-600 dark:text-zinc-400">
+              Continue your listening journey
+            </p>
+          </div>
+
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {relatedEpisodes.map((relatedEpisode) => (
+              <article class="bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-lg transition-shadow">
+                {relatedEpisode.data.image && (
+                  <div class="aspect-[16/9] overflow-hidden">
+                    <Image
+                      src={relatedEpisode.data.image}
+                      alt={relatedEpisode.data.title}
+                      width={400}
+                      height={225}
+                      class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+                <div class="p-6">
+                  <div class="flex items-center gap-2 mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+                    <span class="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 px-2 py-1 rounded text-xs font-medium">
+                      EP {relatedEpisode.data.episode}
+                      {relatedEpisode.data.season &&
+                        ` S${relatedEpisode.data.season}`}
+                    </span>
+                    <time
+                      datetime={new Date(
+                        relatedEpisode.data.pubDate
+                      ).toISOString()}
+                    >
+                      {new Date(relatedEpisode.data.pubDate).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )}
+                    </time>
+                    <span class="w-1 h-1 bg-zinc-400 rounded-full" />
+                    <span>{relatedEpisode.data.duration}</span>
+                  </div>
+                  <h3 class="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2 leading-tight">
+                    <a
+                      href={`/podcast/${relatedEpisode.slug}`}
+                      class="hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                    >
+                      {relatedEpisode.data.title}
+                    </a>
+                  </h3>
+                  <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2">
+                    {relatedEpisode.data.description}
+                  </p>
+                  {relatedEpisode.data.guests &&
+                    relatedEpisode.data.guests.length > 0 && (
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs text-zinc-500 dark:text-zinc-400">
+                          Featuring:
+                        </span>
+                        <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                          {relatedEpisode.data.guests
+                            .map((g) => g.name)
+                            .join(", ")}
+                        </span>
+                      </div>
+                    )}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+</Layout>
+
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
