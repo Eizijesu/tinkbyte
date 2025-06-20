@@ -1,0 +1,43 @@
+---
+// src/layouts/MDXLayout.astro
+import ImageBlock from "../components/tina/ImageBlock.astro";
+import VideoBlock from "../components/tina/VideoBlock.astro";
+import CalloutBox from "../components/tina/CalloutBox.astro";
+import ButtonBlock from "../components/tina/ButtonBlock.astro";
+import CodeBlock from "../components/tina/CodeBlock.astro";
+import Quote from "../components/tina/Quote.astro";
+import TableBlock from "../components/tina/TableBlock.astro";
+import ImageGallery from "../components/tina/ImageGallery.astro";
+import Newsletter from "../components/tina/Newsletter.astro";
+import TwoColumnLayout from "../components/tina/TwoColumnLayout.astro";
+
+// Make components available globally for MDX
+if (typeof globalThis !== "undefined") {
+  globalThis.ImageBlock = ImageBlock;
+  globalThis.VideoBlock = VideoBlock;
+  globalThis.Callout = CalloutBox;
+  globalThis.ButtonBlock = ButtonBlock;
+  globalThis.CodeBlock = CodeBlock;
+  globalThis.Quote = Quote;
+  globalThis.TableBlock = TableBlock;
+  globalThis.ImageGallery = ImageGallery;
+  globalThis.Newsletter = Newsletter;
+  globalThis.TwoColumnLayout = TwoColumnLayout;
+}
+
+export interface Props {
+  frontmatter?: any;
+}
+
+const { frontmatter } = Astro.props;
+---
+
+<div class="mdx-content">
+  <slot />
+</div>
+
+<style>
+  .mdx-content {
+    /* Your content styles here */
+  }
+</style>

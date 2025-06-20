@@ -82,7 +82,7 @@ export function formatDate(date: Date, options?: Intl.DateTimeFormatOptions): st
   /**
    * Generate excerpt from content
    */
-  export function generateExcerpt(content: string, maxLength: number = 160): string {
+  export function generateExcerpt(content: string, maxLength: number = 300): string {
     // Remove markdown formatting
     const plainText = content
       .replace(/#{1,6}\s+/g, '') // Remove headers

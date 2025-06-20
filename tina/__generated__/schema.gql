@@ -56,30 +56,36 @@ type Query {
   document(collection: String, relativePath: String): DocumentNode!
   blog(relativePath: String): Blog!
   blogConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: BlogFilter): BlogConnection!
+  newsletter(relativePath: String): Newsletter!
+  newsletterConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: NewsletterFilter): NewsletterConnection!
+  allTopicsPage(relativePath: String): AllTopicsPage!
+  allTopicsPageConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: AllTopicsPageFilter): AllTopicsPageConnection!
+  podcast(relativePath: String): Podcast!
+  podcastConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: PodcastFilter): PodcastConnection!
+  contact(relativePath: String): Contact!
+  contactConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: ContactFilter): ContactConnection!
+  legal(relativePath: String): Legal!
+  legalConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: LegalFilter): LegalConnection!
+  pages(relativePath: String): Pages!
+  pagesConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: PagesFilter): PagesConnection!
   categories(relativePath: String): Categories!
   categoriesConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: CategoriesFilter): CategoriesConnection!
   authors(relativePath: String): Authors!
   authorsConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: AuthorsFilter): AuthorsConnection!
-  podcast(relativePath: String): Podcast!
-  podcastConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: PodcastFilter): PodcastConnection!
-  newsletter(relativePath: String): Newsletter!
-  newsletterConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: NewsletterFilter): NewsletterConnection!
-  pages(relativePath: String): Pages!
-  pagesConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: PagesFilter): PagesConnection!
-  legalPages(relativePath: String): LegalPages!
-  legalPagesConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: LegalPagesFilter): LegalPagesConnection!
   settings(relativePath: String): Settings!
   settingsConnection(before: String, after: String, first: Float, last: Float, sort: String, filter: SettingsFilter): SettingsConnection!
 }
 
 input DocumentFilter {
   blog: BlogFilter
+  newsletter: NewsletterFilter
+  allTopicsPage: AllTopicsPageFilter
+  podcast: PodcastFilter
+  contact: ContactFilter
+  legal: LegalFilter
+  pages: PagesFilter
   categories: CategoriesFilter
   authors: AuthorsFilter
-  podcast: PodcastFilter
-  newsletter: NewsletterFilter
-  pages: PagesFilter
-  legalPages: LegalPagesFilter
   settings: SettingsFilter
 }
 
@@ -106,7 +112,13 @@ type Collection {
   documents(before: String, after: String, first: Float, last: Float, sort: String, filter: DocumentFilter, folder: String): DocumentConnection!
 }
 
-union DocumentNode = Blog | Categories | Authors | Podcast | Newsletter | Pages | LegalPages | Settings | Folder
+union DocumentNode = Blog | Newsletter | AllTopicsPage | Podcast | Contact | Legal | Pages | Categories | Authors | Settings | Folder
+
+type BlogEditorial {
+  status: String
+  assignedEditor: String
+  editorNotes: String
+}
 
 type BlogAuthorInfoSocial {
   twitter: String
@@ -123,7 +135,16 @@ type BlogAuthorInfo {
   social: BlogAuthorInfoSocial
 }
 
+type BlogHeroImage {
+  imageType: String!
+  uploadedImage: String
+  externalUrl: String
+  alt: String!
+  caption: String
+}
+
 type BlogSeo {
+  customSEO: Boolean
   title: String
   description: String
   canonical: String
@@ -131,11 +152,13 @@ type BlogSeo {
 }
 
 type Blog implements Node & Document {
+  editorial: BlogEditorial
   title: String!
   excerpt: String!
   pubDate: String!
   updatedDate: String
   authorInfo: BlogAuthorInfo
+  heroImage: BlogHeroImage
   image: String
   imageAlt: String
   category: String!
@@ -145,6 +168,7 @@ type Blog implements Node & Document {
   trending: Boolean
   draft: Boolean
   readTime: String
+  hasAudio: Boolean
   audioUrl: String
   audioDuration: String
   audioTranscript: String
@@ -160,6 +184,12 @@ input StringFilter {
   eq: String
   exists: Boolean
   in: [String]
+}
+
+input BlogEditorialFilter {
+  status: StringFilter
+  assignedEditor: StringFilter
+  editorNotes: StringFilter
 }
 
 input DatetimeFilter {
@@ -192,16 +222,53 @@ input BlogAuthorInfoFilter {
   social: BlogAuthorInfoSocialFilter
 }
 
+input BlogHeroImageFilter {
+  imageType: StringFilter
+  uploadedImage: ImageFilter
+  externalUrl: StringFilter
+  alt: StringFilter
+  caption: StringFilter
+}
+
 input BooleanFilter {
   eq: Boolean
   exists: Boolean
 }
 
 input BlogSeoFilter {
+  customSEO: BooleanFilter
   title: StringFilter
   description: StringFilter
   canonical: StringFilter
   noindex: BooleanFilter
+}
+
+input BlogBodyNewsletterFilter {
+  variant: StringFilter
+  title: StringFilter
+  description: StringFilter
+  buttonText: StringFilter
+  showFeatures: BooleanFilter
+  features: StringFilter
+}
+
+input BlogBodyImageBlockFilter {
+  sourceType: StringFilter
+  uploadedImage: ImageFilter
+  externalUrl: StringFilter
+  alt: StringFilter
+  caption: StringFilter
+  size: StringFilter
+  enableLightbox: BooleanFilter
+}
+
+input BlogBodyVideoBlockFilter {
+  platform: StringFilter
+  url: StringFilter
+  title: StringFilter
+  description: StringFilter
+  aspectRatio: StringFilter
+  startTime: StringFilter
 }
 
 input RichTextFilter {
@@ -212,16 +279,73 @@ input RichTextFilter {
 
 input BlogBodyCalloutFilter {
   type: StringFilter
+  customColor: StringFilter
   title: StringFilter
   content: RichTextFilter
+  dismissible: BooleanFilter
 }
 
-input BlogBodyImageBlockFilter {
-  src: ImageFilter
-  alt: StringFilter
-  caption: StringFilter
+input BlogBodyCodeBlockFilter {
+  language: StringFilter
+  customLanguage: StringFilter
+  filename: StringFilter
+  code: StringFilter
+  showLineNumbers: BooleanFilter
+  highlightLines: StringFilter
+}
+
+input BlogBodyQuoteFilter {
+  quote: StringFilter
+  author: StringFilter
+  role: StringFilter
+  company: StringFilter
+  avatar: StringFilter
+  style: StringFilter
+  citation: StringFilter
+}
+
+input BlogBodyButtonBlockFilter {
+  text: StringFilter
+  url: StringFilter
+  style: StringFilter
+  customColor: StringFilter
   size: StringFilter
   alignment: StringFilter
+  openInNewTab: BooleanFilter
+  icon: StringFilter
+  iconPosition: StringFilter
+}
+
+input BlogBodyTableBlockRowsFilter {
+  cells: StringFilter
+}
+
+input BlogBodyTableBlockFilter {
+  caption: StringFilter
+  hasHeaders: BooleanFilter
+  headers: StringFilter
+  rows: BlogBodyTableBlockRowsFilter
+  style: StringFilter
+  sortable: BooleanFilter
+}
+
+input BlogBodyTwoColumnLayoutFilter {
+  variant: StringFilter
+  customRatio: StringFilter
+  leftContent: RichTextFilter
+  rightContent: RichTextFilter
+  gap: StringFilter
+  stackOnMobile: BooleanFilter
+}
+
+input NumberFilter {
+  lt: Float
+  lte: Float
+  gte: Float
+  gt: Float
+  eq: Float
+  exists: Boolean
+  in: [Float]
 }
 
 input BlogBodyImageGalleryImagesFilter {
@@ -233,54 +357,32 @@ input BlogBodyImageGalleryImagesFilter {
 input BlogBodyImageGalleryFilter {
   caption: StringFilter
   layout: StringFilter
+  autoplay: BooleanFilter
+  autoplaySpeed: NumberFilter
   images: BlogBodyImageGalleryImagesFilter
 }
 
-input BlogBodyCodeBlockFilter {
-  language: StringFilter
-  filename: StringFilter
-  code: StringFilter
-}
-
-input BlogBodyQuoteFilter {
-  quote: StringFilter
-  author: StringFilter
-  role: StringFilter
-}
-
-input BlogBodyNewsletterFilter {
-  title: StringFilter
-  description: StringFilter
-}
-
-input BlogBodyTwoColumnLayoutFilter {
-  leftContent: RichTextFilter
-  rightContent: RichTextFilter
-}
-
-input BlogBodyVideoEmbedFilter {
-  url: StringFilter
-  title: StringFilter
-  description: StringFilter
-}
-
 input BlogBodyFilter {
-  callout: BlogBodyCalloutFilter
+  Newsletter: BlogBodyNewsletterFilter
   ImageBlock: BlogBodyImageBlockFilter
-  ImageGallery: BlogBodyImageGalleryFilter
-  codeBlock: BlogBodyCodeBlockFilter
-  quote: BlogBodyQuoteFilter
-  newsletter: BlogBodyNewsletterFilter
+  VideoBlock: BlogBodyVideoBlockFilter
+  Callout: BlogBodyCalloutFilter
+  CodeBlock: BlogBodyCodeBlockFilter
+  Quote: BlogBodyQuoteFilter
+  ButtonBlock: BlogBodyButtonBlockFilter
+  TableBlock: BlogBodyTableBlockFilter
   TwoColumnLayout: BlogBodyTwoColumnLayoutFilter
-  VideoEmbed: BlogBodyVideoEmbedFilter
+  ImageGallery: BlogBodyImageGalleryFilter
 }
 
 input BlogFilter {
+  editorial: BlogEditorialFilter
   title: StringFilter
   excerpt: StringFilter
   pubDate: DatetimeFilter
   updatedDate: DatetimeFilter
   authorInfo: BlogAuthorInfoFilter
+  heroImage: BlogHeroImageFilter
   image: ImageFilter
   imageAlt: StringFilter
   category: StringFilter
@@ -290,6 +392,7 @@ input BlogFilter {
   trending: BooleanFilter
   draft: BooleanFilter
   readTime: StringFilter
+  hasAudio: BooleanFilter
   audioUrl: StringFilter
   audioDuration: StringFilter
   audioTranscript: StringFilter
@@ -308,9 +411,588 @@ type BlogConnection implements Connection {
   edges: [BlogConnectionEdges]
 }
 
-type CategoriesSeo {
+type NewsletterHighlights {
+  title: String!
+  description: String
+  link: String
+}
+
+type NewsletterStats {
+  subscribers: Float
+  openRate: Float
+  clickRate: Float
+}
+
+type NewsletterSeo {
   title: String
   description: String
+}
+
+type Newsletter implements Node & Document {
+  title: String!
+  issueNumber: Float!
+  newsletterType: String!
+  excerpt: String!
+  subscriberOnly: Boolean
+  previewContent: String
+  publishDate: String!
+  status: String
+  featured: Boolean
+  coverImage: String
+  highlights: [NewsletterHighlights]
+  trackStats: Boolean
+  stats: NewsletterStats
+  tags: [String]
+  seo: NewsletterSeo
+  body: JSON
+  id: ID!
+  _sys: SystemInfo!
+  _values: JSON!
+}
+
+input NewsletterHighlightsFilter {
+  title: StringFilter
+  description: StringFilter
+  link: StringFilter
+}
+
+input NewsletterStatsFilter {
+  subscribers: NumberFilter
+  openRate: NumberFilter
+  clickRate: NumberFilter
+}
+
+input NewsletterSeoFilter {
+  title: StringFilter
+  description: StringFilter
+}
+
+input NewsletterBodyNewsletterSectionFilter {
+  title: StringFilter
+  icon: StringFilter
+  content: RichTextFilter
+}
+
+input NewsletterBodyArticleHighlightFilter {
+  title: StringFilter
+  url: StringFilter
+  excerpt: StringFilter
+  author: StringFilter
+  readTime: StringFilter
+}
+
+input NewsletterBodyFilter {
+  NewsletterSection: NewsletterBodyNewsletterSectionFilter
+  ArticleHighlight: NewsletterBodyArticleHighlightFilter
+}
+
+input NewsletterFilter {
+  title: StringFilter
+  issueNumber: NumberFilter
+  newsletterType: StringFilter
+  excerpt: StringFilter
+  subscriberOnly: BooleanFilter
+  previewContent: StringFilter
+  publishDate: DatetimeFilter
+  status: StringFilter
+  featured: BooleanFilter
+  coverImage: ImageFilter
+  highlights: NewsletterHighlightsFilter
+  trackStats: BooleanFilter
+  stats: NewsletterStatsFilter
+  tags: StringFilter
+  seo: NewsletterSeoFilter
+  body: NewsletterBodyFilter
+}
+
+type NewsletterConnectionEdges {
+  cursor: String!
+  node: Newsletter
+}
+
+type NewsletterConnection implements Connection {
+  pageInfo: PageInfo!
+  totalCount: Float!
+  edges: [NewsletterConnectionEdges]
+}
+
+type AllTopicsPageHero {
+  badgeText: String!
+  title: String!
+  titleAccent: String!
+  subtitle: String!
+}
+
+type AllTopicsPageTopics {
+  name: String!
+  href: String!
+  description: String!
+  audience: String!
+}
+
+type AllTopicsPageStats {
+  topicCount: Float
+  articleCount: String
+  storiesLabel: String
+}
+
+type AllTopicsPageCta {
+  title: String!
+  description: String!
+  primaryButtonText: String!
+  primaryButtonLink: String!
+  secondaryButtonText: String!
+  secondaryButtonLink: String!
+}
+
+type AllTopicsPage implements Node & Document {
+  hero: AllTopicsPageHero
+  topics: [AllTopicsPageTopics]
+  stats: AllTopicsPageStats
+  cta: AllTopicsPageCta
+  id: ID!
+  _sys: SystemInfo!
+  _values: JSON!
+}
+
+input AllTopicsPageHeroFilter {
+  badgeText: StringFilter
+  title: StringFilter
+  titleAccent: StringFilter
+  subtitle: StringFilter
+}
+
+input AllTopicsPageTopicsFilter {
+  name: StringFilter
+  href: StringFilter
+  description: StringFilter
+  audience: StringFilter
+}
+
+input AllTopicsPageStatsFilter {
+  topicCount: NumberFilter
+  articleCount: StringFilter
+  storiesLabel: StringFilter
+}
+
+input AllTopicsPageCtaFilter {
+  title: StringFilter
+  description: StringFilter
+  primaryButtonText: StringFilter
+  primaryButtonLink: StringFilter
+  secondaryButtonText: StringFilter
+  secondaryButtonLink: StringFilter
+}
+
+input AllTopicsPageFilter {
+  hero: AllTopicsPageHeroFilter
+  topics: AllTopicsPageTopicsFilter
+  stats: AllTopicsPageStatsFilter
+  cta: AllTopicsPageCtaFilter
+}
+
+type AllTopicsPageConnectionEdges {
+  cursor: String!
+  node: AllTopicsPage
+}
+
+type AllTopicsPageConnection implements Connection {
+  pageInfo: PageInfo!
+  totalCount: Float!
+  edges: [AllTopicsPageConnectionEdges]
+}
+
+type PodcastGuestsSocial {
+  twitter: String
+  linkedin: String
+}
+
+type PodcastGuests {
+  name: String!
+  role: String
+  company: String
+  bio: String
+  photo: String
+  social: PodcastGuestsSocial
+}
+
+type PodcastSeo {
+  title: String
+  description: String
+  canonical: String
+}
+
+type Podcast implements Node & Document {
+  title: String!
+  episode: Float!
+  description: String!
+  pubDate: String!
+  status: String
+  duration: String!
+  audioUrl: String
+  downloadable: Boolean
+  image: String
+  guests: [PodcastGuests]
+  tags: [String]
+  featured: Boolean
+  transcript: String
+  seo: PodcastSeo
+  body: JSON
+  id: ID!
+  _sys: SystemInfo!
+  _values: JSON!
+}
+
+input PodcastGuestsSocialFilter {
+  twitter: StringFilter
+  linkedin: StringFilter
+}
+
+input PodcastGuestsFilter {
+  name: StringFilter
+  role: StringFilter
+  company: StringFilter
+  bio: StringFilter
+  photo: ImageFilter
+  social: PodcastGuestsSocialFilter
+}
+
+input PodcastSeoFilter {
+  title: StringFilter
+  description: StringFilter
+  canonical: StringFilter
+}
+
+input PodcastFilter {
+  title: StringFilter
+  episode: NumberFilter
+  description: StringFilter
+  pubDate: DatetimeFilter
+  status: StringFilter
+  duration: StringFilter
+  audioUrl: StringFilter
+  downloadable: BooleanFilter
+  image: ImageFilter
+  guests: PodcastGuestsFilter
+  tags: StringFilter
+  featured: BooleanFilter
+  transcript: StringFilter
+  seo: PodcastSeoFilter
+  body: RichTextFilter
+}
+
+type PodcastConnectionEdges {
+  cursor: String!
+  node: Podcast
+}
+
+type PodcastConnection implements Connection {
+  pageInfo: PageInfo!
+  totalCount: Float!
+  edges: [PodcastConnectionEdges]
+}
+
+type ContactHero {
+  title: String
+  titleAccent: String
+  subtitle: String
+  responseTime: String
+  badgeText: String
+}
+
+type ContactContactMethods {
+  title: String!
+  description: String
+  email: String!
+  icon: String
+  color: String
+  featured: Boolean
+}
+
+type ContactSocialLinks {
+  name: String!
+  url: String!
+  icon: String
+  color: String
+  showInContact: Boolean
+}
+
+type ContactFaqItems {
+  question: String!
+  answer: JSON!
+  category: String
+  featured: Boolean
+}
+
+type ContactFaq {
+  enabled: Boolean
+  title: String
+  titleAccent: String
+  subtitle: String
+  items: [ContactFaqItems]
+}
+
+type ContactCtaPrimaryButton {
+  text: String
+  link: String
+}
+
+type ContactCtaSecondaryButton {
+  text: String
+  link: String
+}
+
+type ContactCta {
+  title: String
+  titleAccent: String
+  subtitle: String
+  primaryButton: ContactCtaPrimaryButton
+  secondaryButton: ContactCtaSecondaryButton
+}
+
+type ContactSeo {
+  title: String
+  description: String
+  canonical: String
+  noindex: Boolean
+}
+
+type Contact implements Node & Document {
+  title: String!
+  description: String
+  pubDate: String
+  hero: ContactHero
+  contactMethods: [ContactContactMethods]
+  socialLinks: [ContactSocialLinks]
+  faq: ContactFaq
+  cta: ContactCta
+  seo: ContactSeo
+  body: JSON
+  id: ID!
+  _sys: SystemInfo!
+  _values: JSON!
+}
+
+input ContactHeroFilter {
+  title: StringFilter
+  titleAccent: StringFilter
+  subtitle: StringFilter
+  responseTime: StringFilter
+  badgeText: StringFilter
+}
+
+input ContactContactMethodsFilter {
+  title: StringFilter
+  description: StringFilter
+  email: StringFilter
+  icon: StringFilter
+  color: StringFilter
+  featured: BooleanFilter
+}
+
+input ContactSocialLinksFilter {
+  name: StringFilter
+  url: StringFilter
+  icon: StringFilter
+  color: StringFilter
+  showInContact: BooleanFilter
+}
+
+input ContactFaqItemsAnswerLinkFilter {
+  url: StringFilter
+  text: StringFilter
+}
+
+input ContactFaqItemsAnswerFilter {
+  link: ContactFaqItemsAnswerLinkFilter
+}
+
+input ContactFaqItemsFilter {
+  question: StringFilter
+  answer: ContactFaqItemsAnswerFilter
+  category: StringFilter
+  featured: BooleanFilter
+}
+
+input ContactFaqFilter {
+  enabled: BooleanFilter
+  title: StringFilter
+  titleAccent: StringFilter
+  subtitle: StringFilter
+  items: ContactFaqItemsFilter
+}
+
+input ContactCtaPrimaryButtonFilter {
+  text: StringFilter
+  link: StringFilter
+}
+
+input ContactCtaSecondaryButtonFilter {
+  text: StringFilter
+  link: StringFilter
+}
+
+input ContactCtaFilter {
+  title: StringFilter
+  titleAccent: StringFilter
+  subtitle: StringFilter
+  primaryButton: ContactCtaPrimaryButtonFilter
+  secondaryButton: ContactCtaSecondaryButtonFilter
+}
+
+input ContactSeoFilter {
+  title: StringFilter
+  description: StringFilter
+  canonical: StringFilter
+  noindex: BooleanFilter
+}
+
+input ContactFilter {
+  title: StringFilter
+  description: StringFilter
+  pubDate: DatetimeFilter
+  hero: ContactHeroFilter
+  contactMethods: ContactContactMethodsFilter
+  socialLinks: ContactSocialLinksFilter
+  faq: ContactFaqFilter
+  cta: ContactCtaFilter
+  seo: ContactSeoFilter
+  body: RichTextFilter
+}
+
+type ContactConnectionEdges {
+  cursor: String!
+  node: Contact
+}
+
+type ContactConnection implements Connection {
+  pageInfo: PageInfo!
+  totalCount: Float!
+  edges: [ContactConnectionEdges]
+}
+
+type LegalContact {
+  email: String
+  address: String
+  phone: String
+}
+
+type LegalSeo {
+  title: String
+  description: String
+  noindex: Boolean
+}
+
+type Legal implements Node & Document {
+  title: String!
+  description: String!
+  pubDate: String!
+  updatedDate: String
+  effectiveDate: String
+  pageType: String
+  contact: LegalContact
+  seo: LegalSeo
+  body: JSON
+  id: ID!
+  _sys: SystemInfo!
+  _values: JSON!
+}
+
+input LegalContactFilter {
+  email: StringFilter
+  address: StringFilter
+  phone: StringFilter
+}
+
+input LegalSeoFilter {
+  title: StringFilter
+  description: StringFilter
+  noindex: BooleanFilter
+}
+
+input LegalFilter {
+  title: StringFilter
+  description: StringFilter
+  pubDate: DatetimeFilter
+  updatedDate: DatetimeFilter
+  effectiveDate: StringFilter
+  pageType: StringFilter
+  contact: LegalContactFilter
+  seo: LegalSeoFilter
+  body: RichTextFilter
+}
+
+type LegalConnectionEdges {
+  cursor: String!
+  node: Legal
+}
+
+type LegalConnection implements Connection {
+  pageInfo: PageInfo!
+  totalCount: Float!
+  edges: [LegalConnectionEdges]
+}
+
+type PagesHero {
+  title: String
+  subtitle: String
+  image: String
+}
+
+type PagesSeo {
+  title: String
+  description: String
+  canonical: String
+  noindex: Boolean
+}
+
+type Pages implements Node & Document {
+  title: String!
+  description: String!
+  pubDate: String!
+  updatedDate: String
+  layout: String
+  hero: PagesHero
+  seo: PagesSeo
+  body: JSON
+  id: ID!
+  _sys: SystemInfo!
+  _values: JSON!
+}
+
+input PagesHeroFilter {
+  title: StringFilter
+  subtitle: StringFilter
+  image: ImageFilter
+}
+
+input PagesSeoFilter {
+  title: StringFilter
+  description: StringFilter
+  canonical: StringFilter
+  noindex: BooleanFilter
+}
+
+input PagesFilter {
+  title: StringFilter
+  description: StringFilter
+  pubDate: DatetimeFilter
+  updatedDate: DatetimeFilter
+  layout: StringFilter
+  hero: PagesHeroFilter
+  seo: PagesSeoFilter
+  body: RichTextFilter
+}
+
+type PagesConnectionEdges {
+  cursor: String!
+  node: Pages
+}
+
+type PagesConnection implements Connection {
+  pageInfo: PageInfo!
+  totalCount: Float!
+  edges: [PagesConnectionEdges]
 }
 
 type Categories implements Node & Document {
@@ -319,16 +1001,10 @@ type Categories implements Node & Document {
   icon: String!
   color: String!
   featured: Boolean
-  seo: CategoriesSeo
   body: JSON
   id: ID!
   _sys: SystemInfo!
   _values: JSON!
-}
-
-input CategoriesSeoFilter {
-  title: StringFilter
-  description: StringFilter
 }
 
 input CategoriesFilter {
@@ -337,7 +1013,6 @@ input CategoriesFilter {
   icon: StringFilter
   color: StringFilter
   featured: BooleanFilter
-  seo: CategoriesSeoFilter
   body: RichTextFilter
 }
 
@@ -402,309 +1077,6 @@ type AuthorsConnection implements Connection {
   pageInfo: PageInfo!
   totalCount: Float!
   edges: [AuthorsConnectionEdges]
-}
-
-type PodcastSeo {
-  title: String
-  description: String
-  canonical: String
-}
-
-type Podcast implements Node & Document {
-  title: String!
-  description: String!
-  pubDate: String!
-  duration: String!
-  audioUrl: String!
-  image: String
-  guests: [String]
-  transcript: String
-  season: Float
-  episode: Float!
-  featured: Boolean
-  seo: PodcastSeo
-  body: JSON
-  id: ID!
-  _sys: SystemInfo!
-  _values: JSON!
-}
-
-input NumberFilter {
-  lt: Float
-  lte: Float
-  gte: Float
-  gt: Float
-  eq: Float
-  exists: Boolean
-  in: [Float]
-}
-
-input PodcastSeoFilter {
-  title: StringFilter
-  description: StringFilter
-  canonical: StringFilter
-}
-
-input PodcastFilter {
-  title: StringFilter
-  description: StringFilter
-  pubDate: DatetimeFilter
-  duration: StringFilter
-  audioUrl: StringFilter
-  image: ImageFilter
-  guests: StringFilter
-  transcript: StringFilter
-  season: NumberFilter
-  episode: NumberFilter
-  featured: BooleanFilter
-  seo: PodcastSeoFilter
-  body: RichTextFilter
-}
-
-type PodcastConnectionEdges {
-  cursor: String!
-  node: Podcast
-}
-
-type PodcastConnection implements Connection {
-  pageInfo: PageInfo!
-  totalCount: Float!
-  edges: [PodcastConnectionEdges]
-}
-
-type Newsletter implements Node & Document {
-  title: String!
-  excerpt: String!
-  pubDate: String!
-  issue: Float!
-  featured: Boolean
-  body: JSON
-  id: ID!
-  _sys: SystemInfo!
-  _values: JSON!
-}
-
-input NewsletterFilter {
-  title: StringFilter
-  excerpt: StringFilter
-  pubDate: DatetimeFilter
-  issue: NumberFilter
-  featured: BooleanFilter
-  body: RichTextFilter
-}
-
-type NewsletterConnectionEdges {
-  cursor: String!
-  node: Newsletter
-}
-
-type NewsletterConnection implements Connection {
-  pageInfo: PageInfo!
-  totalCount: Float!
-  edges: [NewsletterConnectionEdges]
-}
-
-type PagesSeo {
-  title: String
-  description: String
-  canonical: String
-  noindex: Boolean
-}
-
-type Pages implements Node & Document {
-  title: String!
-  description: String!
-  pubDate: String
-  updatedDate: String
-  layout: String
-  seo: PagesSeo
-  body: JSON
-  id: ID!
-  _sys: SystemInfo!
-  _values: JSON!
-}
-
-input PagesSeoFilter {
-  title: StringFilter
-  description: StringFilter
-  canonical: StringFilter
-  noindex: BooleanFilter
-}
-
-input PagesBodyHeroCtaFilter {
-  text: StringFilter
-  url: StringFilter
-}
-
-input PagesBodyHeroFilter {
-  title: StringFilter
-  subtitle: StringFilter
-  backgroundImage: ImageFilter
-  cta: PagesBodyHeroCtaFilter
-}
-
-input PagesBodyContentBlockFilter {
-  content: RichTextFilter
-}
-
-input PagesBodyImageBlockFilter {
-  src: ImageFilter
-  alt: StringFilter
-  caption: StringFilter
-  layout: StringFilter
-}
-
-input PagesBodyCalloutBoxFilter {
-  type: StringFilter
-  title: StringFilter
-  content: RichTextFilter
-}
-
-input PagesBodyCodeBlockFilter {
-  language: StringFilter
-  filename: StringFilter
-  code: StringFilter
-}
-
-input PagesBodyQuoteFilter {
-  quote: StringFilter
-  author: StringFilter
-  role: StringFilter
-}
-
-input PagesBodyNewsletterFilter {
-  title: StringFilter
-  description: StringFilter
-}
-
-input PagesBodyFilter {
-  Hero: PagesBodyHeroFilter
-  ContentBlock: PagesBodyContentBlockFilter
-  ImageBlock: PagesBodyImageBlockFilter
-  CalloutBox: PagesBodyCalloutBoxFilter
-  codeBlock: PagesBodyCodeBlockFilter
-  quote: PagesBodyQuoteFilter
-  newsletter: PagesBodyNewsletterFilter
-}
-
-input PagesFilter {
-  title: StringFilter
-  description: StringFilter
-  pubDate: DatetimeFilter
-  updatedDate: DatetimeFilter
-  layout: StringFilter
-  seo: PagesSeoFilter
-  body: PagesBodyFilter
-}
-
-type PagesConnectionEdges {
-  cursor: String!
-  node: Pages
-}
-
-type PagesConnection implements Connection {
-  pageInfo: PageInfo!
-  totalCount: Float!
-  edges: [PagesConnectionEdges]
-}
-
-type LegalPagesContact {
-  email: String
-  address: String
-  phone: String
-}
-
-type LegalPagesSeo {
-  title: String
-  description: String
-  noindex: Boolean
-}
-
-type LegalPages implements Node & Document {
-  title: String!
-  description: String!
-  pubDate: String!
-  updatedDate: String
-  pageType: String
-  effectiveDate: String
-  contact: LegalPagesContact
-  seo: LegalPagesSeo
-  body: JSON
-  id: ID!
-  _sys: SystemInfo!
-  _values: JSON!
-}
-
-input LegalPagesContactFilter {
-  email: StringFilter
-  address: StringFilter
-  phone: StringFilter
-}
-
-input LegalPagesSeoFilter {
-  title: StringFilter
-  description: StringFilter
-  noindex: BooleanFilter
-}
-
-input LegalPagesBodyLegalSectionFilter {
-  title: StringFilter
-  number: StringFilter
-  content: RichTextFilter
-}
-
-input LegalPagesBodyLegalListFilter {
-  title: StringFilter
-  items: StringFilter
-  listType: StringFilter
-}
-
-input LegalPagesBodyContactInfoContactMethodsFilter {
-  type: StringFilter
-  value: StringFilter
-  label: StringFilter
-}
-
-input LegalPagesBodyContactInfoFilter {
-  title: StringFilter
-  description: StringFilter
-  contactMethods: LegalPagesBodyContactInfoContactMethodsFilter
-}
-
-input LegalPagesBodyDisclaimerFilter {
-  type: StringFilter
-  title: StringFilter
-  content: RichTextFilter
-}
-
-input LegalPagesBodyFilter {
-  legalSection: LegalPagesBodyLegalSectionFilter
-  legalList: LegalPagesBodyLegalListFilter
-  contactInfo: LegalPagesBodyContactInfoFilter
-  disclaimer: LegalPagesBodyDisclaimerFilter
-}
-
-input LegalPagesFilter {
-  title: StringFilter
-  description: StringFilter
-  pubDate: DatetimeFilter
-  updatedDate: DatetimeFilter
-  pageType: StringFilter
-  effectiveDate: StringFilter
-  contact: LegalPagesContactFilter
-  seo: LegalPagesSeoFilter
-  body: LegalPagesBodyFilter
-}
-
-type LegalPagesConnectionEdges {
-  cursor: String!
-  node: LegalPages
-}
-
-type LegalPagesConnection implements Connection {
-  pageInfo: PageInfo!
-  totalCount: Float!
-  edges: [LegalPagesConnectionEdges]
 }
 
 type SettingsSiteGiscus {
@@ -1041,43 +1413,57 @@ type Mutation {
   createFolder(collection: String, relativePath: String!): DocumentNode!
   updateBlog(relativePath: String!, params: BlogMutation!): Blog!
   createBlog(relativePath: String!, params: BlogMutation!): Blog!
+  updateNewsletter(relativePath: String!, params: NewsletterMutation!): Newsletter!
+  createNewsletter(relativePath: String!, params: NewsletterMutation!): Newsletter!
+  updateAllTopicsPage(relativePath: String!, params: AllTopicsPageMutation!): AllTopicsPage!
+  createAllTopicsPage(relativePath: String!, params: AllTopicsPageMutation!): AllTopicsPage!
+  updatePodcast(relativePath: String!, params: PodcastMutation!): Podcast!
+  createPodcast(relativePath: String!, params: PodcastMutation!): Podcast!
+  updateContact(relativePath: String!, params: ContactMutation!): Contact!
+  createContact(relativePath: String!, params: ContactMutation!): Contact!
+  updateLegal(relativePath: String!, params: LegalMutation!): Legal!
+  createLegal(relativePath: String!, params: LegalMutation!): Legal!
+  updatePages(relativePath: String!, params: PagesMutation!): Pages!
+  createPages(relativePath: String!, params: PagesMutation!): Pages!
   updateCategories(relativePath: String!, params: CategoriesMutation!): Categories!
   createCategories(relativePath: String!, params: CategoriesMutation!): Categories!
   updateAuthors(relativePath: String!, params: AuthorsMutation!): Authors!
   createAuthors(relativePath: String!, params: AuthorsMutation!): Authors!
-  updatePodcast(relativePath: String!, params: PodcastMutation!): Podcast!
-  createPodcast(relativePath: String!, params: PodcastMutation!): Podcast!
-  updateNewsletter(relativePath: String!, params: NewsletterMutation!): Newsletter!
-  createNewsletter(relativePath: String!, params: NewsletterMutation!): Newsletter!
-  updatePages(relativePath: String!, params: PagesMutation!): Pages!
-  createPages(relativePath: String!, params: PagesMutation!): Pages!
-  updateLegalPages(relativePath: String!, params: LegalPagesMutation!): LegalPages!
-  createLegalPages(relativePath: String!, params: LegalPagesMutation!): LegalPages!
   updateSettings(relativePath: String!, params: SettingsMutation!): Settings!
   createSettings(relativePath: String!, params: SettingsMutation!): Settings!
 }
 
 input DocumentUpdateMutation {
   blog: BlogMutation
+  newsletter: NewsletterMutation
+  allTopicsPage: AllTopicsPageMutation
+  podcast: PodcastMutation
+  contact: ContactMutation
+  legal: LegalMutation
+  pages: PagesMutation
   categories: CategoriesMutation
   authors: AuthorsMutation
-  podcast: PodcastMutation
-  newsletter: NewsletterMutation
-  pages: PagesMutation
-  legalPages: LegalPagesMutation
   settings: SettingsMutation
   relativePath: String
 }
 
 input DocumentMutation {
   blog: BlogMutation
+  newsletter: NewsletterMutation
+  allTopicsPage: AllTopicsPageMutation
+  podcast: PodcastMutation
+  contact: ContactMutation
+  legal: LegalMutation
+  pages: PagesMutation
   categories: CategoriesMutation
   authors: AuthorsMutation
-  podcast: PodcastMutation
-  newsletter: NewsletterMutation
-  pages: PagesMutation
-  legalPages: LegalPagesMutation
   settings: SettingsMutation
+}
+
+input BlogEditorialMutation {
+  status: String
+  assignedEditor: String
+  editorNotes: String
 }
 
 input BlogAuthorInfoSocialMutation {
@@ -1095,7 +1481,16 @@ input BlogAuthorInfoMutation {
   social: BlogAuthorInfoSocialMutation
 }
 
+input BlogHeroImageMutation {
+  imageType: String
+  uploadedImage: String
+  externalUrl: String
+  alt: String
+  caption: String
+}
+
 input BlogSeoMutation {
+  customSEO: Boolean
   title: String
   description: String
   canonical: String
@@ -1103,11 +1498,13 @@ input BlogSeoMutation {
 }
 
 input BlogMutation {
+  editorial: BlogEditorialMutation
   title: String
   excerpt: String
   pubDate: String
   updatedDate: String
   authorInfo: BlogAuthorInfoMutation
+  heroImage: BlogHeroImageMutation
   image: String
   imageAlt: String
   category: String
@@ -1117,6 +1514,7 @@ input BlogMutation {
   trending: Boolean
   draft: Boolean
   readTime: String
+  hasAudio: Boolean
   audioUrl: String
   audioDuration: String
   audioTranscript: String
@@ -1124,9 +1522,240 @@ input BlogMutation {
   body: JSON
 }
 
-input CategoriesSeoMutation {
+input NewsletterHighlightsMutation {
   title: String
   description: String
+  link: String
+}
+
+input NewsletterStatsMutation {
+  subscribers: Float
+  openRate: Float
+  clickRate: Float
+}
+
+input NewsletterSeoMutation {
+  title: String
+  description: String
+}
+
+input NewsletterMutation {
+  title: String
+  issueNumber: Float
+  newsletterType: String
+  excerpt: String
+  subscriberOnly: Boolean
+  previewContent: String
+  publishDate: String
+  status: String
+  featured: Boolean
+  coverImage: String
+  highlights: [NewsletterHighlightsMutation]
+  trackStats: Boolean
+  stats: NewsletterStatsMutation
+  tags: [String]
+  seo: NewsletterSeoMutation
+  body: JSON
+}
+
+input AllTopicsPageHeroMutation {
+  badgeText: String
+  title: String
+  titleAccent: String
+  subtitle: String
+}
+
+input AllTopicsPageTopicsMutation {
+  name: String
+  href: String
+  description: String
+  audience: String
+}
+
+input AllTopicsPageStatsMutation {
+  topicCount: Float
+  articleCount: String
+  storiesLabel: String
+}
+
+input AllTopicsPageCtaMutation {
+  title: String
+  description: String
+  primaryButtonText: String
+  primaryButtonLink: String
+  secondaryButtonText: String
+  secondaryButtonLink: String
+}
+
+input AllTopicsPageMutation {
+  hero: AllTopicsPageHeroMutation
+  topics: [AllTopicsPageTopicsMutation]
+  stats: AllTopicsPageStatsMutation
+  cta: AllTopicsPageCtaMutation
+}
+
+input PodcastGuestsSocialMutation {
+  twitter: String
+  linkedin: String
+}
+
+input PodcastGuestsMutation {
+  name: String
+  role: String
+  company: String
+  bio: String
+  photo: String
+  social: PodcastGuestsSocialMutation
+}
+
+input PodcastSeoMutation {
+  title: String
+  description: String
+  canonical: String
+}
+
+input PodcastMutation {
+  title: String
+  episode: Float
+  description: String
+  pubDate: String
+  status: String
+  duration: String
+  audioUrl: String
+  downloadable: Boolean
+  image: String
+  guests: [PodcastGuestsMutation]
+  tags: [String]
+  featured: Boolean
+  transcript: String
+  seo: PodcastSeoMutation
+  body: JSON
+}
+
+input ContactHeroMutation {
+  title: String
+  titleAccent: String
+  subtitle: String
+  responseTime: String
+  badgeText: String
+}
+
+input ContactContactMethodsMutation {
+  title: String
+  description: String
+  email: String
+  icon: String
+  color: String
+  featured: Boolean
+}
+
+input ContactSocialLinksMutation {
+  name: String
+  url: String
+  icon: String
+  color: String
+  showInContact: Boolean
+}
+
+input ContactFaqItemsMutation {
+  question: String
+  answer: JSON
+  category: String
+  featured: Boolean
+}
+
+input ContactFaqMutation {
+  enabled: Boolean
+  title: String
+  titleAccent: String
+  subtitle: String
+  items: [ContactFaqItemsMutation]
+}
+
+input ContactCtaPrimaryButtonMutation {
+  text: String
+  link: String
+}
+
+input ContactCtaSecondaryButtonMutation {
+  text: String
+  link: String
+}
+
+input ContactCtaMutation {
+  title: String
+  titleAccent: String
+  subtitle: String
+  primaryButton: ContactCtaPrimaryButtonMutation
+  secondaryButton: ContactCtaSecondaryButtonMutation
+}
+
+input ContactSeoMutation {
+  title: String
+  description: String
+  canonical: String
+  noindex: Boolean
+}
+
+input ContactMutation {
+  title: String
+  description: String
+  pubDate: String
+  hero: ContactHeroMutation
+  contactMethods: [ContactContactMethodsMutation]
+  socialLinks: [ContactSocialLinksMutation]
+  faq: ContactFaqMutation
+  cta: ContactCtaMutation
+  seo: ContactSeoMutation
+  body: JSON
+}
+
+input LegalContactMutation {
+  email: String
+  address: String
+  phone: String
+}
+
+input LegalSeoMutation {
+  title: String
+  description: String
+  noindex: Boolean
+}
+
+input LegalMutation {
+  title: String
+  description: String
+  pubDate: String
+  updatedDate: String
+  effectiveDate: String
+  pageType: String
+  contact: LegalContactMutation
+  seo: LegalSeoMutation
+  body: JSON
+}
+
+input PagesHeroMutation {
+  title: String
+  subtitle: String
+  image: String
+}
+
+input PagesSeoMutation {
+  title: String
+  description: String
+  canonical: String
+  noindex: Boolean
+}
+
+input PagesMutation {
+  title: String
+  description: String
+  pubDate: String
+  updatedDate: String
+  layout: String
+  hero: PagesHeroMutation
+  seo: PagesSeoMutation
+  body: JSON
 }
 
 input CategoriesMutation {
@@ -1135,7 +1764,6 @@ input CategoriesMutation {
   icon: String
   color: String
   featured: Boolean
-  seo: CategoriesSeoMutation
   body: JSON
 }
 
@@ -1155,78 +1783,6 @@ input AuthorsMutation {
   email: String
   social: AuthorsSocialMutation
   featured: Boolean
-  body: JSON
-}
-
-input PodcastSeoMutation {
-  title: String
-  description: String
-  canonical: String
-}
-
-input PodcastMutation {
-  title: String
-  description: String
-  pubDate: String
-  duration: String
-  audioUrl: String
-  image: String
-  guests: [String]
-  transcript: String
-  season: Float
-  episode: Float
-  featured: Boolean
-  seo: PodcastSeoMutation
-  body: JSON
-}
-
-input NewsletterMutation {
-  title: String
-  excerpt: String
-  pubDate: String
-  issue: Float
-  featured: Boolean
-  body: JSON
-}
-
-input PagesSeoMutation {
-  title: String
-  description: String
-  canonical: String
-  noindex: Boolean
-}
-
-input PagesMutation {
-  title: String
-  description: String
-  pubDate: String
-  updatedDate: String
-  layout: String
-  seo: PagesSeoMutation
-  body: JSON
-}
-
-input LegalPagesContactMutation {
-  email: String
-  address: String
-  phone: String
-}
-
-input LegalPagesSeoMutation {
-  title: String
-  description: String
-  noindex: Boolean
-}
-
-input LegalPagesMutation {
-  title: String
-  description: String
-  pubDate: String
-  updatedDate: String
-  pageType: String
-  effectiveDate: String
-  contact: LegalPagesContactMutation
-  seo: LegalPagesSeoMutation
   body: JSON
 }
 

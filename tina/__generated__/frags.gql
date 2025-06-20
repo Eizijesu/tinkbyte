@@ -1,5 +1,11 @@
 fragment BlogParts on Blog {
   __typename
+  editorial {
+    __typename
+    status
+    assignedEditor
+    editorNotes
+  }
   title
   excerpt
   pubDate
@@ -18,6 +24,14 @@ fragment BlogParts on Blog {
       website
     }
   }
+  heroImage {
+    __typename
+    imageType
+    uploadedImage
+    externalUrl
+    alt
+    caption
+  }
   image
   imageAlt
   category
@@ -27,9 +41,230 @@ fragment BlogParts on Blog {
   trending
   draft
   readTime
+  hasAudio
   audioUrl
   audioDuration
   audioTranscript
+  seo {
+    __typename
+    customSEO
+    title
+    description
+    canonical
+    noindex
+  }
+  body
+}
+
+fragment NewsletterParts on Newsletter {
+  __typename
+  title
+  issueNumber
+  newsletterType
+  excerpt
+  subscriberOnly
+  previewContent
+  publishDate
+  status
+  featured
+  coverImage
+  highlights {
+    __typename
+    title
+    description
+    link
+  }
+  trackStats
+  stats {
+    __typename
+    subscribers
+    openRate
+    clickRate
+  }
+  tags
+  seo {
+    __typename
+    title
+    description
+  }
+  body
+}
+
+fragment AllTopicsPageParts on AllTopicsPage {
+  __typename
+  hero {
+    __typename
+    badgeText
+    title
+    titleAccent
+    subtitle
+  }
+  topics {
+    __typename
+    name
+    href
+    description
+    audience
+  }
+  stats {
+    __typename
+    topicCount
+    articleCount
+    storiesLabel
+  }
+  cta {
+    __typename
+    title
+    description
+    primaryButtonText
+    primaryButtonLink
+    secondaryButtonText
+    secondaryButtonLink
+  }
+}
+
+fragment PodcastParts on Podcast {
+  __typename
+  title
+  episode
+  description
+  pubDate
+  status
+  duration
+  audioUrl
+  downloadable
+  image
+  guests {
+    __typename
+    name
+    role
+    company
+    bio
+    photo
+    social {
+      __typename
+      twitter
+      linkedin
+    }
+  }
+  tags
+  featured
+  transcript
+  seo {
+    __typename
+    title
+    description
+    canonical
+  }
+  body
+}
+
+fragment ContactParts on Contact {
+  __typename
+  title
+  description
+  pubDate
+  hero {
+    __typename
+    title
+    titleAccent
+    subtitle
+    responseTime
+    badgeText
+  }
+  contactMethods {
+    __typename
+    title
+    description
+    email
+    icon
+    color
+    featured
+  }
+  socialLinks {
+    __typename
+    name
+    url
+    icon
+    color
+    showInContact
+  }
+  faq {
+    __typename
+    enabled
+    title
+    titleAccent
+    subtitle
+    items {
+      __typename
+      question
+      answer
+      category
+      featured
+    }
+  }
+  cta {
+    __typename
+    title
+    titleAccent
+    subtitle
+    primaryButton {
+      __typename
+      text
+      link
+    }
+    secondaryButton {
+      __typename
+      text
+      link
+    }
+  }
+  seo {
+    __typename
+    title
+    description
+    canonical
+    noindex
+  }
+  body
+}
+
+fragment LegalParts on Legal {
+  __typename
+  title
+  description
+  pubDate
+  updatedDate
+  effectiveDate
+  pageType
+  contact {
+    __typename
+    email
+    address
+    phone
+  }
+  seo {
+    __typename
+    title
+    description
+    noindex
+  }
+  body
+}
+
+fragment PagesParts on Pages {
+  __typename
+  title
+  description
+  pubDate
+  updatedDate
+  layout
+  hero {
+    __typename
+    title
+    subtitle
+    image
+  }
   seo {
     __typename
     title
@@ -47,11 +282,6 @@ fragment CategoriesParts on Categories {
   icon
   color
   featured
-  seo {
-    __typename
-    title
-    description
-  }
   body
 }
 
@@ -71,78 +301,6 @@ fragment AuthorsParts on Authors {
     website
   }
   featured
-  body
-}
-
-fragment PodcastParts on Podcast {
-  __typename
-  title
-  description
-  pubDate
-  duration
-  audioUrl
-  image
-  guests
-  transcript
-  season
-  episode
-  featured
-  seo {
-    __typename
-    title
-    description
-    canonical
-  }
-  body
-}
-
-fragment NewsletterParts on Newsletter {
-  __typename
-  title
-  excerpt
-  pubDate
-  issue
-  featured
-  body
-}
-
-fragment PagesParts on Pages {
-  __typename
-  title
-  description
-  pubDate
-  updatedDate
-  layout
-  seo {
-    __typename
-    title
-    description
-    canonical
-    noindex
-  }
-  body
-}
-
-fragment LegalPagesParts on LegalPages {
-  __typename
-  title
-  description
-  pubDate
-  updatedDate
-  pageType
-  effectiveDate
-  contact {
-    __typename
-    email
-    address
-    phone
-  }
-  seo {
-    __typename
-    title
-    description
-    noindex
-  }
   body
 }
 

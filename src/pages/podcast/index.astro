@@ -7,7 +7,9 @@ import AudioPlayer from "../../components/ui/AudioPlayer.astro";
 import { getCollection } from "astro:content";
 
 // Get all published podcast episodes
-const allEpisodes = await getCollection("podcast", ({ data }) => !data.draft);
+const allEpisodes = await getCollection("podcast", ({ data }) => 
+  data.status === "published"
+);
 
 // Sort episodes by publication date (newest first)
 const sortedEpisodes = allEpisodes.sort(
@@ -53,7 +55,7 @@ const avgDuration = "28 min";
 const transformEpisode = (episode: any) => ({
   title: episode.data.title,
   description: episode.data.description,
-  date: episode.data.pubDate.toLocaleDateString("en-US", {
+  date: episode.data.pubDate.toLocaleDateString("en-US", { // ✅ Correct field
     year: "numeric",
     month: "long", 
     day: "numeric",
@@ -63,11 +65,12 @@ const transformEpisode = (episode: any) => ({
   image: episode.data.image || "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=600&h=600&fit=crop",
   audioUrl: episode.data.audioUrl,
   guests: episode.data.guests || [],
-  host: episode.data.host || "TinkByte Team",
+  host: "TinkByte Team",
   season: episode.data.season,
   episode: episode.data.episode,
   featured: episode.data.featured,
-  transcript: episode.data.transcript
+  transcript: episode.data.transcript,
+  tags: episode.data.tags || []
 });
 ---
 
@@ -86,9 +89,9 @@ const transformEpisode = (episode: any) => ({
         
         <!-- Badge -->
         <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm rounded-sm border border-zinc-200 dark:border-zinc-700 mb-6">
-          <div class="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+          <div class="w-3 h-3 bg-purple-500 rounded-sm animate-pulse"></div>
           <span class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
-            Podcast Episodes
+            TinkPod Episodes
           </span>
         </div>
 
@@ -130,106 +133,109 @@ const transformEpisode = (episode: any) => ({
   </section>
 
   <!-- Featured Episode -->
-  {featuredEpisodes.length > 0 && (
-    <section class="py-16 px-4">
-      <div class="container mx-auto">
-        <div class="max-w-6xl mx-auto">
-          
-          <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
-              Featured
-              <span class="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Episode
-              </span>
-            </h2>
-            <p class="text-xl text-zinc-600 dark:text-zinc-400">
-              Our latest deep dive into what's really happening in tech
-            </p>
-          </div>
+    {featuredEpisodes.length > 0 && (
+      <section class="py-16 px-4">
+        <div class="container mx-auto">
+          <div class="max-w-6xl mx-auto">
+            
+            <div class="text-center mb-12">
+              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+                Featured
+                <span class="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  Episode
+                </span>
+              </h2>
+              <p class="text-xl text-zinc-600 dark:text-zinc-400">
+                Our latest deep dive into what's really happening in tech
+              </p>
+            </div>
 
-          {featuredEpisodes.slice(0, 1).map(episode => (
-            <div class="group bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-xl transition-all duration-300 overflow-hidden">
-              <div class="grid lg:grid-cols-2 gap-0">
-                
-                <!-- Episode Image -->
-                <div class="aspect-square lg:aspect-auto relative overflow-hidden">
-                  <img 
-                    src={transformEpisode(episode).image} 
-                    alt={transformEpisode(episode).title}
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="eager"
-                  />
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                  <div class="absolute top-4 left-4">
-                    <span class="px-3 py-1 bg-purple-500 text-white text-xs font-semibold rounded uppercase tracking-wider">
-                      Featured
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Episode Details -->
-                <div class="p-8 flex flex-col justify-center">
+            {featuredEpisodes.slice(0, 1).map(episode => (
+              <div class="group bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-xl transition-all duration-300 overflow-hidden">
+                <div class="grid lg:grid-cols-2 gap-0">
                   
-                  <!-- Episode Meta -->
-                  <div class="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-4">
-                    <time datetime={episode.data.pubDate.toISOString()}>
-                      {transformEpisode(episode).date}
-                    </time>
-                    <span class="flex items-center gap-1">
-                      <i class="fas fa-clock"></i>
-                      {transformEpisode(episode).duration}
-                    </span>
-                    {episode.data.episode && (
-                      <span class="flex items-center gap-1">
-                        <i class="fas fa-hashtag"></i>
-                        Episode {episode.data.episode}
-                      </span>
-                    )}
-                  </div>
-
-                  <!-- Title -->
-                  <h3 class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white mb-4 leading-tight group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-200">
-                    {transformEpisode(episode).title}
-                  </h3>
-
-                  <!-- Description -->
-                  <p class="text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
-                    {transformEpisode(episode).description}
-                  </p>
-
-                  <!-- Host & Guests -->
-                  <div class="flex flex-wrap items-center gap-6 text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-                    <div>
-                      <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Host:</span>
-                      <span class="ml-1">{transformEpisode(episode).host}</span>
-                    </div>
-                    {transformEpisode(episode).guests.length > 0 && (
-                      <div>
-                        <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Guests:</span>
-                        <span class="ml-1">{transformEpisode(episode).guests.join(', ')}</span>
+                  {/* ✅ LINK ON IMAGE */}
+                  <a href={`/podcast/${episode.slug}`} class="block">
+                    <div class="aspect-square lg:aspect-auto relative overflow-hidden">
+                      <img 
+                        src={transformEpisode(episode).image} 
+                        alt={transformEpisode(episode).title}
+                        class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        loading="eager"
+                      />
+                      <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                      <div class="absolute top-4 left-4">
+                        <span class="px-3 py-1 bg-purple-500 text-white text-xs font-semibold rounded uppercase tracking-wider">
+                          Featured
+                        </span>
                       </div>
+                    </div>
+                  </a>
+
+                  <div class="p-8 flex flex-col justify-center">
+                    
+                    <div class="flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                      <time datetime={episode.data.pubDate.toISOString()}>
+                        {transformEpisode(episode).date}
+                      </time>
+                      <span class="flex items-center gap-1">
+                        <i class="fas fa-clock"></i>
+                        {transformEpisode(episode).duration}
+                      </span>
+                      {episode.data.episode && (
+                        <span class="flex items-center gap-1">
+                          <i class="fas fa-hashtag"></i>
+                          Episode {episode.data.episode}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* ✅ LINK ON TITLE */}
+                    <h3 class="text-2xl lg:text-3xl font-bold text-zinc-900 dark:text-white mb-4 leading-tight">
+                      <a 
+                        href={`/podcast/${episode.slug}`}
+                        class="hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-200"
+                      >
+                        {transformEpisode(episode).title}
+                      </a>
+                    </h3>
+
+                    {/* ✅ DESCRIPTION - NO LINK */}
+                    <p class="text-zinc-600 dark:text-zinc-400 mb-6 leading-relaxed">
+                      {transformEpisode(episode).description}
+                    </p>
+
+                    <div class="flex flex-wrap items-center gap-6 text-sm text-zinc-500 dark:text-zinc-400 mb-6">
+                      <div>
+                        <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Host:</span>
+                        <span class="ml-1">{transformEpisode(episode).host}</span>
+                      </div>
+                      {transformEpisode(episode).guests.length > 0 && (
+                        <div>
+                          <span class="font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wide">Guests:</span>
+                          <span class="ml-1">{transformEpisode(episode).guests.join(', ')}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {transformEpisode(episode).audioUrl && (
+                      <AudioPlayer
+                        audioUrl={transformEpisode(episode).audioUrl}
+                        title={transformEpisode(episode).title}
+                        duration={transformEpisode(episode).duration}
+                        transcript={transformEpisode(episode).transcript}
+                      />
                     )}
+
                   </div>
-
-                  <!-- Audio Player -->
-                  {transformEpisode(episode).audioUrl && (
-                    <AudioPlayer
-                      audioUrl={transformEpisode(episode).audioUrl}
-                      title={transformEpisode(episode).title}
-                      duration={transformEpisode(episode).duration}
-                      transcript={transformEpisode(episode).transcript}
-                    />
-                  )}
-
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
 
+          </div>
         </div>
-      </div>
-    </section>
-  )}
+      </section>
+    )}
 
   <!-- Recent Episodes -->
   {recentEpisodes.length > 0 && (
@@ -251,7 +257,7 @@ const transformEpisode = (episode: any) => ({
             </div>
             <Button
               variant="outline"
-              href="/podcast/archive"
+              href="/archive"
               className="hidden sm:flex border-2 hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200"
             >
               View All Episodes
@@ -268,7 +274,7 @@ const transformEpisode = (episode: any) => ({
           <div class="text-center mt-12 sm:hidden">
             <Button
               variant="outline"
-              href="/podcast/archive"
+              href="/podcast"
               className="border-2 hover:border-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-all duration-200"
             >
               View All Episodes

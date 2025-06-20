@@ -1,28 +1,591 @@
 ---
+// src/components/tina/ImageBlock.astro - FIXED VERSION
 export interface Props {
-  src: string;
+  sourceType?: "url" | "upload";
+  uploadedImage?: string;
+  externalUrl?: string;
   alt: string;
   caption?: string;
-  layout: "full-width" | "centered" | "float-left" | "float-right";
+  size?: "small" | "medium" | "large" | "full";
+  src?: string; // Fallback prop
 }
 
-const { src, alt, caption, layout } = Astro.props;
+const {
+  sourceType = "url",
+  uploadedImage,
+  externalUrl,
+  alt,
+  caption,
+  size = "large",
+  src, // Direct src prop as fallback
+} = Astro.props;
 
-const layoutClasses = {
-  "full-width": "w-full my-8",
-  centered: "max-w-2xl mx-auto my-8",
-  "float-left": "float-left mr-6 mb-4 max-w-sm",
-  "float-right": "float-right ml-6 mb-4 max-w-sm",
+// ENHANCED: More robust image source resolution
+const getImageSrc = () => {
+  console.log("🖼️ ImageBlock Debug:", {
+    sourceType,
+    uploadedImage,
+    externalUrl,
+    src,
+    alt
+  });
+
+  // Priority 1: Direct src prop (for simple usage)
+  if (src) {
+    console.log("✅ Using direct src:", src);
+    return src;
+  }
+
+  // Priority 2: Upload type with uploadedImage
+  if (sourceType === "upload" && uploadedImage) {
+    let imagePath = uploadedImage;
+    
+    // Handle different upload path formats
+    if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+      console.log("✅ Using full URL upload:", imagePath);
+      return imagePath;
+    }
+    
+    if (imagePath.startsWith("/")) {
+      console.log("✅ Using absolute path upload:", imagePath);
+      return imagePath;
+    }
+    
+    // Handle relative paths - try multiple common locations
+    const possiblePaths = [
+      `/images/${imagePath}`,
+      `/uploads/${imagePath}`,
+      `/media/${imagePath}`,
+      `/public/images/${imagePath}`,
+      `/${imagePath}`
+    ];
+    
+    console.log("✅ Using constructed upload path:", possiblePaths[0]);
+    return possiblePaths[0]; // Default to /images/
+  }
+
+  // Priority 3: External URL
+  if (sourceType === "url" && externalUrl) {
+    console.log("✅ Using external URL:", externalUrl);
+    return externalUrl;
+  }
+
+  // Priority 4: Try uploadedImage regardless of sourceType (fallback)
+  if (uploadedImage) {
+    const fallbackPath = uploadedImage.startsWith("/") ? uploadedImage : `/images/${uploadedImage}`;
+    console.log("⚠️ Using fallback upload path:", fallbackPath);
+    return fallbackPath;
+  }
+
+  // Priority 5: Try externalUrl regardless of sourceType (fallback)
+  if (externalUrl) {
+    console.log("⚠️ Using fallback external URL:", externalUrl);
+    return externalUrl;
+  }
+
+  console.error("❌ No valid image source found");
+  return null;
 };
+
+const imageSrc = getImageSrc();
+
+const sizeClasses = {
+  small: "max-w-md",
+  medium: "max-w-2xl", 
+  large: "max-w-4xl",
+  full: "max-w-full",
+};
+
+const sizeClass = sizeClasses[size] || sizeClasses.large;
 ---
 
-<figure class={layoutClasses[layout]}>
-  <img src={src} alt={alt} class="rounded-lg shadow-lg w-full" />
+<!-- ALWAYS render the container for TinaCMS editing -->
+<div class="tinkbyte-image-block" data-component="ImageBlock">
   {
-    caption && (
-      <figcaption class="text-sm text-gray-600 mt-2 text-center">
-        {caption}
-      </figcaption>
+    imageSrc ? (
+      <figure
+        class={`tinkbyte-image-container ${sizeClass}`}
+        data-tina-field="alt"
+      >
+        <div class="image-wrapper">
+          <img
+            src={imageSrc}
+            alt={alt || "Image"}
+            loading="lazy"
+            decoding="async"
+            class="tinkbyte-image"
+            onload="console.log('✅ Image loaded successfully:', this.src); this.classList.add('loaded');"
+            onerror="console.error('❌ Image failed to load:', this.src); this.classList.add('error');"
+          />
+          <div class="image-loading">Loading...</div>
+        </div>
+        {caption && (
+          <figcaption class="image-caption" data-tina-field="caption">
+            {caption}
+          </figcaption>
+        )}
+      </figure>
+    ) : (
+      <div class="image-placeholder" data-component="ImageBlock-Placeholder">
+        <div class="placeholder-content">
+          <div class="placeholder-icon">□</div>
+          <h4 class="placeholder-title">Image Block</h4>
+          <p class="placeholder-text">
+            Add an image in TinaCMS editor
+          </p>
+          <div class="placeholder-details">
+            <div class="detail-row">
+              <span class="detail-label">Source Type:</span>
+              <span class="detail-value">{sourceType}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Alt Text:</span>
+              <span class="detail-value">{alt || "Not set"}</span>
+            </div>
+            {uploadedImage && (
+              <div class="detail-row">
+                <span class="detail-label">Upload:</span>
+                <span class="detail-value">{uploadedImage}</span>
+              </div>
+            )}
+            {externalUrl && (
+              <div class="detail-row">
+                <span class="detail-label">URL:</span>
+                <span class="detail-value">{externalUrl}</span>
+              </div>
+            )}
+          </div>
+          
+          <!-- TinaCMS Edit Button for Admin Mode -->
+          <button class="edit-image-btn" onclick="console.log('Edit image in TinaCMS')">
+            Edit Image
+          </button>
+        </div>
+      </div>
     )
   }
-</figure>
+</div>
+
+<style>
+  .tinkbyte-image-block {
+    margin: 2rem 0;
+    font-family: "Space Grotesk", sans-serif;
+    /* CRITICAL: Ensure visibility */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .tinkbyte-image-container {
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+  }
+
+  .image-wrapper {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    border: 2px solid #e2e8f0;
+    border-radius: 0; /* Square corners */
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+  }
+
+  .image-wrapper:hover {
+    border-color: #243788;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(36, 55, 136, 0.15);
+  }
+
+  .tinkbyte-image {
+    width: 100%;
+    height: auto;
+    display: block !important;
+    transition: all 0.3s ease;
+    /* CRITICAL: Force visibility */
+    opacity: 0;
+    visibility: visible !important;
+  }
+
+  .tinkbyte-image.loaded {
+    opacity: 1 !important;
+  }
+
+  .tinkbyte-image.error {
+    opacity: 1 !important;
+    border: 3px solid #dc2626;
+    background: #fee2e2;
+    min-height: 200px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tinkbyte-image.error::after {
+    content: "❌ Image failed to load";
+    color: #dc2626;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .image-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    pointer-events: none;
+  }
+
+  .tinkbyte-image.loaded + .image-loading {
+    display: none;
+  }
+
+  .tinkbyte-image:hover {
+    transform: scale(1.02);
+  }
+
+  .image-caption {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #64748b;
+    font-style: italic;
+    line-height: 1.5;
+    font-family: "Space Grotesk", sans-serif;
+    transition: color 0.3s ease;
+  }
+
+  /* Enhanced Image Placeholder */
+  .image-placeholder {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 2px dashed #cbd5e1;
+    border-radius: 0; /* Square corners */
+    padding: 2rem;
+    margin: 0 auto;
+    max-width: 500px;
+    font-family: "Space Grotesk", sans-serif;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .image-placeholder:hover {
+    border-color: #243788;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(36, 55, 136, 0.1);
+  }
+
+  .placeholder-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .placeholder-icon {
+    font-size: 3rem;
+    color: #94a3b8;
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .placeholder-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #243788;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .placeholder-text {
+    font-size: 1rem;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .placeholder-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    background: rgba(36, 55, 136, 0.05);
+    padding: 1rem;
+    border-radius: 0;
+    border: 1px solid rgba(36, 55, 136, 0.1);
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .detail-label {
+    font-weight: 600;
+    color: #243788;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .detail-value {
+    font-family: monospace;
+    color: #64748b;
+    font-size: 0.8125rem;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0;
+    word-break: break-all;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .edit-image-btn {
+    font-family: "Space Grotesk", sans-serif;
+    background: #243788;
+    color: white;
+    border: 2px solid #243788;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+  }
+
+  .edit-image-btn:hover {
+    background: #1e2f6b;
+    border-color: #1e2f6b;
+    transform: translateY(-1px);
+  }
+
+  /* Dark mode support */
+  :global(.dark) .image-wrapper {
+    border-color: #374151;
+    background: #1e293b;
+  }
+
+  :global(.dark) .image-wrapper:hover {
+    border-color: #b4bce1;
+    box-shadow: 0 8px 30px rgba(180, 188, 225, 0.15);
+  }
+
+  :global(.dark) .image-caption {
+    color: rgb(156, 163, 175);
+  }
+
+  :global(.dark) .image-placeholder {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-color: #475569;
+  }
+
+  :global(.dark) .image-placeholder:hover {
+    border-color: #b4bce1;
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
+  }
+
+  :global(.dark) .placeholder-icon {
+    color: #64748b;
+  }
+
+  :global(.dark) .placeholder-title {
+    color: #b4bce1;
+  }
+
+  :global(.dark) .placeholder-text {
+    color: #94a3b8;
+  }
+
+  :global(.dark) .placeholder-details {
+    background: rgba(180, 188, 225, 0.1);
+    border-color: rgba(180, 188, 225, 0.2);
+  }
+
+  :global(.dark) .detail-label {
+    color: #b4bce1;
+  }
+
+  :global(.dark) .detail-value {
+    background: rgba(0, 0, 0, 0.3);
+    color: #94a3b8;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .tinkbyte-image-block {
+      margin: 1.5rem 0;
+    }
+    
+    .image-wrapper {
+      border-width: 1px;
+    }
+    
+    .image-caption {
+      font-size: 0.8125rem;
+      margin-top: 0.75rem;
+    }
+    
+    .image-placeholder {
+      padding: 1.5rem;
+    }
+    
+    .placeholder-icon {
+      font-size: 2rem;
+    }
+    
+    .placeholder-title {
+      font-size: 1rem;
+    }
+    
+    .placeholder-text {
+      font-size: 0.875rem;
+    }
+    
+    .placeholder-details {
+      max-width: 100%;
+    }
+    
+    .detail-value {
+      max-width: 120px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .image-placeholder {
+      padding: 1rem;
+    }
+    
+    .detail-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+    
+    .detail-value {
+      max-width: 100%;
+      word-break: break-word;
+      white-space: normal;
+    }
+  }
+
+  /* Accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .image-wrapper,
+    .tinkbyte-image,
+    .image-placeholder,
+    .edit-image-btn {
+      transition: none;
+    }
+    
+    .image-wrapper:hover,
+    .tinkbyte-image:hover,
+    .edit-image-btn:hover {
+      transform: none;
+    }
+  }
+
+  /* Force visibility for TinaCMS */
+  [data-component="ImageBlock"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  [data-component="ImageBlock"] * {
+    visibility: visible !important;
+  }
+
+  /* Debug styles for development */
+  .debug-mode .tinkbyte-image-block {
+    border: 2px solid #059669;
+    background: rgba(5, 150, 105, 0.1);
+  }
+
+  .debug-mode .image-placeholder {
+    border-color: #059669;
+    background: rgba(5, 150, 105, 0.05);
+  }
+</style>
+
+<script>
+  // Enhanced image loading and error handling
+  document.addEventListener("DOMContentLoaded", () => {
+    const images = document.querySelectorAll(".tinkbyte-image") as NodeListOf<HTMLImageElement>;
+    
+    images.forEach((img) => {
+      // Set up loading state
+      img.style.opacity = "0";
+      
+      // Handle successful load
+      img.addEventListener("load", () => {
+        console.log("✅ Image loaded:", img.src);
+        img.classList.add("loaded");
+        img.style.opacity = "1";
+      });
+      
+      // Handle load error
+      img.addEventListener("error", () => {
+        console.error("❌ Image failed to load:", img.src);
+        img.classList.add("error");
+        img.style.opacity = "1";
+        
+        // Try alternative paths if it's a relative URL
+        if (!img.src.startsWith("http") && !img.dataset.retried) {
+          img.dataset.retried = "true";
+          const originalSrc = img.getAttribute("src");
+          
+          if (originalSrc) {
+            // Try different base paths
+            const alternatives = [
+              `/public${originalSrc}`,
+              `/assets${originalSrc}`,
+              `/static${originalSrc}`,
+              originalSrc.replace("/images/", "/uploads/"),
+              originalSrc.replace("/images/", "/media/")
+            ];
+            
+            console.log("🔄 Trying alternative paths:", alternatives);
+            
+            // Try the first alternative
+            if (alternatives[0]) {
+              img.src = alternatives[0];
+            }
+          }
+        }
+      });
+      
+      // Force a recheck if image is already cached
+      if (img.complete) {
+        if (img.naturalWidth > 0) {
+          img.classList.add("loaded");
+          img.style.opacity = "1";
+        } else {
+          img.classList.add("error");
+          img.style.opacity = "1";
+        }
+      }
+    });
+    
+    // Debug mode toggle (for development)
+    if (window.location.search.includes("debug=true")) {
+      document.body.classList.add("debug-mode");
+      console.log("🐛 ImageBlock debug mode enabled");
+    }
+  });
+</script>

@@ -34,7 +34,46 @@
             "github": {
               "type": "string"
             },
+            "instagram": {
+              "type": "string"
+            },
+            "youtube": {
+              "type": "string"
+            },
+            "discord": {
+              "type": "string"
+            },
+            "substack": {
+              "type": "string"
+            },
+            "medium": {
+              "type": "string"
+            },
+            "devto": {
+              "type": "string"
+            },
+            "hashnode": {
+              "type": "string"
+            },
+            "reddit": {
+              "type": "string"
+            },
+            "facebook": {
+              "type": "string"
+            },
+            "tiktok": {
+              "type": "string"
+            },
+            "threads": {
+              "type": "string"
+            },
+            "mastodon": {
+              "type": "string"
+            },
             "website": {
+              "type": "string"
+            },
+            "email": {
               "type": "string"
             }
           },

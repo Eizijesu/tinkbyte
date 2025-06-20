@@ -1,0 +1,27 @@
+---
+import ImageBlock from "./ImageBlock.astro";
+import VideoBlock from "./VideoBlock.astro";
+import Callout from "./CalloutBox.astro";
+import ButtonBlock from "./ButtonBlock.astro";
+import TableBlock from "./TableBlock.astro";
+import CodeBlock from "./CodeBlock.astro";
+import Quote from "./Quote.astro";
+import Newsletter from "./Newsletter.astro";
+import TwoColumnLayout from "./TwoColumnLayout.astro";
+import ImageGallery from "./ImageGallery.astro";
+
+const components = {
+  ImageBlock,
+  VideoBlock,
+  callout: Callout,
+  ButtonBlock,
+  TableBlock,
+  CodeBlock: CodeBlock,
+  Quote: Quote,
+  Newsletter: Newsletter,
+  TwoColumnLayout,
+  ImageGallery,
+};
+
+export { components };
+---

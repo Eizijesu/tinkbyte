@@ -1,0 +1,55 @@
+---
+import { getCollection } from "astro:content";
+
+let issues = [];
+let error = null;
+
+try {
+  issues = await getCollection("newsletter");
+  console.log("Found issues:", issues.length);
+  console.log("Issues:", issues.map(i => ({ slug: i.slug, title: i.data.title, status: i.data.status })));
+} catch (e) {
+  error = e;
+  console.error("Collection error:", e);
+}
+---
+
+<html>
+<head><title>Debug Newsletter</title></head>
+<body style="font-family: monospace; padding: 20px;">
+  <h1>Newsletter Collection Debug</h1>
+  
+  {error ? (
+    <div style="color: red; background: #ffe6e6; padding: 10px; border-radius: 5px;">
+      <h2>❌ Error:</h2>
+      <pre>{JSON.stringify(error, null, 2)}</pre>
+    </div>
+  ) : (
+    <div>
+      <h2>✅ Found {issues.length} newsletter issues:</h2>
+      <ul>
+        {issues.map(issue => (
+          <li style="margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+            <strong>Slug:</strong> {issue.slug}<br/>
+            <strong>Title:</strong> {issue.data.title}<br/>
+            <strong>Status:</strong> {issue.data.status}<br/>
+            <strong>Issue Number:</strong> {issue.data.issueNumber}<br/>
+            <strong>URL should be:</strong> /newsletter/{issue.slug}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+  
+  <hr style="margin: 20px 0;"/>
+  
+  <h2>File Structure Check:</h2>
+  <p>Expected files:</p>
+  <ul>
+    <li>src/content/newsletter/issue-1.mdx</li>
+    <li>src/content/newsletter/issue-2.mdx</li>
+    <li>src/pages/newsletter/index.astro</li>
+    <li>src/pages/newsletter/[...slug].astro</li>
+  </ul>
+</body>
+</html>

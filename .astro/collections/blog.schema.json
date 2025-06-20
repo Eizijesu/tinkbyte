@@ -8,9 +8,15 @@
           "type": "string",
           "maxLength": 100
         },
+        "subtitle": {
+          "type": "string"
+        },
         "excerpt": {
           "type": "string",
-          "maxLength": 160
+          "maxLength": 300
+        },
+        "description": {
+          "type": "string"
         },
         "pubDate": {
           "anyOf": [
@@ -59,12 +65,6 @@
             "role": {
               "type": "string"
             },
-            "company": {
-              "type": "string"
-            },
-            "email": {
-              "type": "string"
-            },
             "social": {
               "type": "object",
               "properties": {
@@ -77,7 +77,46 @@
                 "github": {
                   "type": "string"
                 },
+                "instagram": {
+                  "type": "string"
+                },
+                "youtube": {
+                  "type": "string"
+                },
+                "discord": {
+                  "type": "string"
+                },
+                "substack": {
+                  "type": "string"
+                },
+                "medium": {
+                  "type": "string"
+                },
+                "devto": {
+                  "type": "string"
+                },
+                "hashnode": {
+                  "type": "string"
+                },
+                "reddit": {
+                  "type": "string"
+                },
+                "facebook": {
+                  "type": "string"
+                },
+                "tiktok": {
+                  "type": "string"
+                },
+                "threads": {
+                  "type": "string"
+                },
+                "mastodon": {
+                  "type": "string"
+                },
                 "website": {
+                  "type": "string"
+                },
+                "email": {
                   "type": "string"
                 }
               },
@@ -86,6 +125,35 @@
           },
           "required": [
             "name"
+          ],
+          "additionalProperties": false
+        },
+        "heroImage": {
+          "type": "object",
+          "properties": {
+            "imageType": {
+              "type": "string",
+              "enum": [
+                "upload",
+                "url"
+              ]
+            },
+            "uploadedImage": {
+              "type": "string"
+            },
+            "externalUrl": {
+              "type": "string"
+            },
+            "alt": {
+              "type": "string"
+            },
+            "caption": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "imageType",
+            "alt"
           ],
           "additionalProperties": false
         },
@@ -111,18 +179,23 @@
             "tech-culture",
             "startup-insights",
             "build-thinking",
-            "learning-by-doing",
             "community-innovation",
-            "global-perspective",
+            "learning-by-doing",
             "no-fluff-coverage",
-            "research-backed"
+            "research-backed",
+            "global-perspective",
+            "privacy-security",
+            "mobile-development",
+            "cloud-technologies",
+            "data-science",
+            "other"
           ]
         },
         "storyType": {
           "type": "string",
           "enum": [
             "feature",
-            "deep-dive",
+            "technical-analysis",
             "quick-read",
             "data-story",
             "build-guide",
@@ -154,6 +227,28 @@
         "audioTranscript": {
           "type": "string"
         },
+        "editorial": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "review",
+                "approved",
+                "published",
+                "revision"
+              ]
+            },
+            "assignedEditor": {
+              "type": "string"
+            },
+            "editorNotes": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "seo": {
           "type": "object",
           "properties": {
@@ -181,7 +276,6 @@
         "title",
         "excerpt",
         "pubDate",
-        "authorInfo",
         "category"
       ],
       "additionalProperties": false

@@ -1,0 +1,336 @@
+---
+// src/components/tina/CodeBlock.astro - TinkByte Design System
+export interface Props {
+  language?: string;
+  filename?: string;
+  code: string;
+}
+
+const { language = "text", filename, code } = Astro.props;
+
+const languageNames: { [key: string]: string } = {
+  javascript: "JavaScript",
+  typescript: "TypeScript",
+  jsx: "React/JSX",
+  tsx: "React/TSX",
+  astro: "Astro",
+  python: "Python",
+  bash: "Bash",
+  shell: "Shell",
+  css: "CSS",
+  scss: "SCSS",
+  html: "HTML",
+  json: "JSON",
+  yaml: "YAML",
+  markdown: "Markdown",
+  sql: "SQL",
+  go: "Go",
+  rust: "Rust",
+  php: "PHP",
+  java: "Java",
+  csharp: "C#",
+  cpp: "C++",
+  c: "C",
+  text: "Plain Text",
+};
+
+const displayName = languageNames[language] || language;
+---
+
+<div class="tinkbyte-code-block my-8" data-tina-field="code">
+  <!-- Header -->
+  <div class="code-header">
+    <div class="header-left">
+      {
+        filename && (
+          <span class="filename" data-tina-field="filename">
+            {filename}
+          </span>
+        )
+      }
+      <span class="language-badge">{displayName}</span>
+    </div>
+
+    <button
+      class="copy-button"
+      data-code={code}
+      aria-label="Copy code to clipboard"
+    >
+      <span class="copy-text">COPY</span>
+    </button>
+  </div>
+
+  <!-- Code content -->
+  <pre
+    class="code-content"><code class={`language-${language}`} set:html={code} /></pre>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const copyButtons = document.querySelectorAll(
+      ".copy-button"
+    ) as NodeListOf<HTMLButtonElement>;
+
+    copyButtons.forEach((button) => {
+      button.addEventListener("click", async () => {
+        const code = button.getAttribute("data-code");
+        if (code) {
+          try {
+            await navigator.clipboard.writeText(code);
+            const textSpan = button.querySelector(".copy-text") as HTMLElement;
+            const originalText = textSpan.textContent;
+
+            textSpan.textContent = "COPIED!";
+            button.classList.add("copied");
+
+            setTimeout(() => {
+              if (originalText) {
+                textSpan.textContent = originalText;
+              }
+              button.classList.remove("copied");
+            }, 2000);
+          } catch (err) {
+            console.error("Failed to copy code:", err);
+          }
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .tinkbyte-code-block {
+    background: #0f172a;
+    border: 2px solid #1e293b;
+    border-radius: 0; /* Square corners */
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  }
+
+  .tinkbyte-code-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .filename {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .language-badge {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.75rem;
+    background: #243788;
+    color: white;
+    border-radius: 0; /* Square corners */
+  }
+
+  .copy-button {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 1rem;
+    background: #243788;
+    color: white;
+    border: none;
+    border-radius: 0; /* Square corners */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .copy-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  .copy-button:hover::before {
+    left: 100%;
+  }
+
+  .copy-button:hover {
+    background: #1e2f6b;
+    transform: translateY(-1px);
+  }
+
+  .copy-button.copied {
+    background: #059669;
+  }
+
+  .copy-text {
+    position: relative;
+    z-index: 1;
+  }
+
+  .code-content {
+    padding: 1.5rem;
+    margin: 0;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    background: #0f172a;
+    color: #e2e8f0;
+  }
+
+  .code-content code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border: none;
+    font-size: inherit;
+    border-radius: 0;
+  }
+
+  /* Enhanced syntax highlighting */
+  .language-javascript .token.keyword,
+  .language-typescript .token.keyword,
+  .language-jsx .token.keyword,
+  .language-tsx .token.keyword {
+    color: #c084fc;
+    font-weight: 600;
+  }
+
+  .language-javascript .token.string,
+  .language-typescript .token.string,
+  .language-jsx .token.string,
+  .language-tsx .token.string {
+    color: #34d399;
+  }
+
+  .language-javascript .token.function,
+  .language-typescript .token.function,
+  .language-jsx .token.function,
+  .language-tsx .token.function {
+    color: #60a5fa;
+  }
+
+  .language-javascript .token.comment,
+  .language-typescript .token.comment,
+  .language-jsx .token.comment,
+  .language-tsx .token.comment {
+    color: #6b7280;
+    font-style: italic;
+  }
+
+  .language-javascript .token.number,
+  .language-typescript .token.number,
+  .language-jsx .token.number,
+  .language-tsx .token.number {
+    color: #fbbf24;
+  }
+
+  .language-javascript .token.operator,
+  .language-typescript .token.operator,
+  .language-jsx .token.operator,
+  .language-tsx .token.operator {
+    color: #f87171;
+  }
+
+  /* Dark mode adjustments */
+  :global(.dark) .tinkbyte-code-block {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  :global(.dark) .tinkbyte-code-block:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .code-header {
+      padding: 0.75rem 1rem;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .header-left {
+      gap: 0.75rem;
+    }
+
+    .copy-button {
+      align-self: stretch;
+      text-align: center;
+    }
+
+    .code-content {
+      padding: 1rem;
+      font-size: 0.8125rem;
+    }
+
+    .filename {
+      font-size: 0.8125rem;
+    }
+  }
+
+  /* Accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .tinkbyte-code-block,
+    .copy-button,
+    .copy-button::before {
+      transition: none;
+    }
+
+    .tinkbyte-code-block:hover,
+    .copy-button:hover {
+      transform: none;
+    }
+  }
+
+  /* Custom scrollbar */
+  .code-content::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .code-content::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+
+  .code-content::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 0;
+  }
+
+  .code-content::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+</style>

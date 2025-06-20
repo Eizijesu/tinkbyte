@@ -1,16 +1,29 @@
 ---
-// src/pages/contact.astro - Enhanced design without contact form
+// src/pages/contact.astro - TinaCMS ready version with HTML links
 import Layout from "../layouts/Layout.astro";
 import Button from "../components/ui/Button.astro";
+import { getEntry } from "astro:content";
 
-// Contact methods
-const contactMethods = [
+// Get contact page content from TinaCMS
+const contactPage = await getEntry("contact", "main").catch(() => null);
+
+// Fallback data
+const defaultHero = {
+  title: "Let's",
+  titleAccent: "Connect",
+  subtitle: "Have a story idea? Want to collaborate? Looking to partner with us? We'd love to hear from you and explore how we can work together.",
+  responseTime: "We usually respond within 24 hours",
+  badgeText: "Get in touch",
+};
+
+const defaultContactMethods = [
   {
     title: "General Inquiries",
     description: "Questions about TinkByte, partnerships, or general feedback",
     email: "hello@tinkbyte.com",
     icon: "envelope",
     color: "blue",
+    featured: true,
   },
   {
     title: "Editorial",
@@ -18,6 +31,7 @@ const contactMethods = [
     email: "editorial@tinkbyte.com",
     icon: "edit",
     color: "purple",
+    featured: true,
   },
   {
     title: "Community",
@@ -25,6 +39,7 @@ const contactMethods = [
     email: "community@tinkbyte.com",
     icon: "users",
     color: "green",
+    featured: true,
   },
   {
     title: "Business",
@@ -32,115 +47,129 @@ const contactMethods = [
     email: "business@tinkbyte.com",
     icon: "handshake",
     color: "orange",
+    featured: true,
   },
 ];
 
-// FAQ items
-const faqItems = [
-  {
-    question: "How can I contribute to TinkByte?",
-    answer:
-      "We welcome guest posts, case studies, and story ideas. Email us at editorial@tinkbyte.com with your pitch and writing samples.",
-  },
-  {
-    question: "Do you offer sponsored content?",
-    answer:
-      "We offer selective sponsorship opportunities that align with our values. Contact business@tinkbyte.com for our media kit.",
-  },
-  {
-    question: "Can I republish TinkByte articles?",
-    answer:
-      "Most of our content is available under Creative Commons. Please contact us for specific republishing requests.",
-  },
-  {
-    question: "How do I report a technical issue?",
-    answer:
-      "For website bugs or technical issues, please email us at feedback@tinkbyte.com with details about the problem.",
-  },
-  {
-    question: "Do you accept guest writers?",
-    answer:
-      "Yes! We're always looking for fresh perspectives. Send your pitch and 2-3 writing samples to editorial@tinkbyte.com.",
-  },
-  {
-    question: "How can I stay updated with TinkByte?",
-    answer:
-      "Subscribe to our weekly newsletter TinkStacks for the latest insights, or follow us on social media for daily updates.",
-  },
-];
-
-// Social links
-const socialLinks = [
+const defaultSocialLinks = [
   {
     name: "Twitter",
-    url: "https://twitter.com/tinkbyte",
+    url: "https://twitter.com/tinkbytehq",
     icon: "fab fa-twitter",
     color: "blue",
+    showInContact: true,
   },
   {
     name: "LinkedIn",
-    url: "https://linkedin.com/company/tinkbyte",
+    url: "https://linkedin.com/company/tinkbytehq",
     icon: "fab fa-linkedin",
     color: "blue",
+    showInContact: true,
   },
   {
     name: "GitHub",
     url: "https://github.com/tinkbyte",
     icon: "fab fa-github",
     color: "gray",
+    showInContact: true,
   },
   {
     name: "Discord",
     url: "https://discord.gg/tinkbyte",
     icon: "fab fa-discord",
     color: "purple",
+    showInContact: true,
   },
 ];
+
+const defaultFaqItems = [
+  {
+    question: "How can I contribute to TinkByte?",
+    answer: "We welcome guest posts, case studies, and story ideas. Email us at <a href='mailto:editorial@tinkbyte.com' class='faq-link'>editorial@tinkbyte.com</a> with your pitch and writing samples. We're particularly interested in real-world experiences, practical insights, and no-hype content.",
+    featured: true,
+  },
+  {
+    question: "Do you offer sponsored content?",
+    answer: "We offer selective sponsorship opportunities that align with our values of practical, no-hype content. Contact <a href='mailto:business@tinkbyte.com' class='faq-link'>business@tinkbyte.com</a> for our media kit and sponsorship guidelines.",
+    featured: true,
+  },
+  {
+    question: "Can I republish TinkByte articles?",
+    answer: "Most of our content is available under Creative Commons licensing. Please contact us at <a href='mailto:hello@tinkbyte.com' class='faq-link'>hello@tinkbyte.com</a> for specific republishing requests and attribution requirements.",
+    featured: true,
+  },
+  {
+    question: "How do I report a technical issue?",
+    answer: "For website bugs or technical issues, please email us at <a href='mailto:support@tinkbyte.com' class='faq-link'>support@tinkbyte.com</a> with details about the problem, your browser, and steps to reproduce the issue.",
+    featured: false,
+  },
+  {
+    question: "Do you accept guest writers?",
+    answer: "Yes! We're always looking for fresh perspectives from builders and product experts. Send your pitch and 2-3 writing samples to <a href='mailto:editorial@tinkbyte.com' class='faq-link'>editorial@tinkbyte.com</a>.",
+    featured: true,
+  },
+  {
+    question: "How can I stay updated with TinkByte?",
+    answer: "Subscribe to our weekly newsletter TinkStacks for the latest insights, or follow us on social media for daily updates and community discussions.",
+    featured: true,
+  },
+];
+
+const defaultCta = {
+  title: "Stay",
+  titleAccent: "Connected",
+  subtitle: "Join our weekly newsletter for the latest insights, stories, and updates from the TinkByte community.",
+  primaryButton: {
+    text: "Subscribe to Newsletter",
+    link: "/newsletter",
+  },
+  secondaryButton: {
+    text: "Join Community",
+    link: "/community",
+  },
+};
+
+// Use TinaCMS data if available, otherwise use defaults
+const hero = contactPage?.data.hero || defaultHero;
+const contactMethods = contactPage?.data.contactMethods?.filter(method => method.featured !== false) || defaultContactMethods;
+const socialLinks = contactPage?.data.socialLinks?.filter(social => social.showInContact) || defaultSocialLinks;
+const faqData = contactPage?.data.faq || { enabled: true, items: defaultFaqItems };
+const cta = contactPage?.data.cta || defaultCta;
+
+// Filter featured FAQ items
+const faqItems = faqData.enabled ? faqData.items.filter(item => item.featured !== false) : [];
 ---
 
 <Layout
-  title="Contact | TinkByte - Get in Touch"
-  description="Get in touch with the TinkByte team. We'd love to hear from you about partnerships, contributions, or just to say hello."
+  title={contactPage?.data.seo?.title || "Contact | TinkByte - Get in Touch"}
+  description={contactPage?.data.seo?.description || "Get in touch with the TinkByte team. We'd love to hear from you about partnerships, contributions, or just to say hello."}
 >
   <!-- Enhanced Contact Hero -->
   <section class="relative py-16 lg:py-24 overflow-hidden">
-    <div
-      class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 opacity-10"
-    >
-    </div>
-    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5">
-    </div>
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 opacity-10"></div>
+    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5"></div>
 
     <div class="container mx-auto px-4 relative z-10">
       <div class="max-w-4xl mx-auto text-center">
-        <h1
-          class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6"
-        >
-          Let's
-          <span
-            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-          >
-            Connect
+        <h1 class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6">
+          {hero.title}
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            {hero.titleAccent}
           </span>
         </h1>
 
-        <p
-          class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12"
-        >
-          Have a story idea? Want to collaborate? Looking to partner with us?
-          We'd love to hear from you and explore how we can work together.
+        <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12">
+          {hero.subtitle}
         </p>
 
-        <div
-          class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-sm border border-green-200 dark:border-green-700"
-        >
-          <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-          <span
-            class="text-sm font-bold uppercase tracking-wider text-green-800 dark:text-green-300"
-          >
-            We usually respond within 24 hours
-          </span>
-        </div>
+        {hero.responseTime && (
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 rounded-sm border border-green-200 dark:border-green-700">
+            <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <span class="text-sm font-bold uppercase tracking-wider text-green-800 dark:text-green-300">
+              {hero.responseTime}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   </section>
@@ -151,52 +180,43 @@ const socialLinks = [
       <div class="text-center mb-12">
         <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
           How to
-          <span
-            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-          >
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Reach Us
           </span>
         </h2>
         <p class="text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
-          Choose the best way to get in touch based on your needs. We're here to
-          help and collaborate.
+          Choose the best way to get in touch based on your needs. We're here to help and collaborate.
         </p>
       </div>
 
       <div class="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-        {
-          contactMethods.map((method) => (
-            <div class="group bg-white dark:bg-zinc-800 p-6 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200">
-              <div class="flex items-start gap-4">
-                <div
-                  class={`w-16 h-16 bg-${method.color}-100 dark:bg-${method.color}-900/30 rounded-sm flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}
+        {contactMethods.map((method) => (
+          <div class="group bg-white dark:bg-zinc-800 p-6 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200">
+            <div class="flex items-start gap-4">
+              <div class={`w-16 h-16 bg-${method.color}-100 dark:bg-${method.color}-900/30 rounded-sm flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}>
+                <i class={`fas fa-${method.icon} text-2xl text-${method.color}-600 dark:text-${method.color}-400`}></i>
+              </div>
+
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2 uppercase tracking-wide group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
+                  {method.title}
+                </h3>
+
+                <p class="text-zinc-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                  {method.description}
+                </p>
+
+                <a
+                  href={`mailto:${method.email}`}
+                  class="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors group/link"
                 >
-                  <i
-                    class={`fas fa-${method.icon} text-2xl text-${method.color}-600 dark:text-${method.color}-400`}
-                  />
-                </div>
-
-                <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2 uppercase tracking-wide group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
-                    {method.title}
-                  </h3>
-
-                  <p class="text-zinc-600 dark:text-zinc-400 mb-4 leading-relaxed">
-                    {method.description}
-                  </p>
-
-                  <a
-                    href={`mailto:${method.email}`}
-                    class="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors group/link"
-                  >
-                    {method.email}
-                    <i class="fas fa-external-link-alt text-sm group-hover/link:translate-x-1 transition-transform duration-200" />
-                  </a>
-                </div>
+                  {method.email}
+                  <i class="fas fa-external-link-alt text-sm group-hover/link:translate-x-1 transition-transform duration-200"></i>
+                </a>
               </div>
             </div>
-          ))
-        }
+          </div>
+        ))}
       </div>
     </div>
   </section>
@@ -207,93 +227,78 @@ const socialLinks = [
       <div class="text-center mb-12">
         <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
           Follow
-          <span
-            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-          >
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Our Journey
           </span>
         </h2>
         <p class="text-xl text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
-          Stay connected with us on social media for daily updates,
-          behind-the-scenes content, and community discussions.
+          Stay connected with us on social media for daily updates, behind-the-scenes content, and community discussions.
         </p>
       </div>
 
       <div class="flex justify-center gap-6 flex-wrap">
-        {
-          socialLinks.map((social) => (
-            <a
-              href={social.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="group flex items-center gap-3 px-6 py-4 bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200"
-            >
-              <i
-                class={`${social.icon} text-xl text-zinc-600 dark:text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200`}
-              />
-              <span class="font-medium text-zinc-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
-                {social.name}
-              </span>
-              <i class="fas fa-external-link-alt text-sm text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-1 transition-all duration-200" />
-            </a>
-          ))
-        }
+        {socialLinks.map((social) => (
+          <a
+            href={social.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group flex items-center gap-3 px-6 py-4 bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200"
+          >
+            <i class={`${social.icon} text-xl text-zinc-600 dark:text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200`}></i>
+            <span class="font-medium text-zinc-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
+              {social.name}
+            </span>
+            <i class="fas fa-external-link-alt text-sm text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-1 transition-all duration-200"></i>
+          </a>
+        ))}
       </div>
     </div>
   </section>
 
   <!-- Collapsible FAQ Section -->
-  <section class="py-16 px-4 sm:px-6">
-    <div class="container mx-auto">
-      <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-8">
-          <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
-            Frequently
-            <span
-              class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-            >
-              Asked Questions
-            </span>
-          </h2>
-          <p class="text-xl text-zinc-600 dark:text-zinc-400 mb-6">
-            Quick answers to common questions about working with TinkByte
-          </p>
+  {faqData.enabled && faqItems.length > 0 && (
+    <section class="py-16 px-4 sm:px-6">
+      <div class="container mx-auto">
+        <div class="max-w-4xl mx-auto">
+          <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+              {faqData.title || "Frequently"}
+              <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                {faqData.titleAccent || "Asked Questions"}
+              </span>
+            </h2>
+            <p class="text-xl text-zinc-600 dark:text-zinc-400 mb-6">
+              {faqData.subtitle || "Quick answers to common questions about working with TinkByte"}
+            </p>
 
-          <!-- Collapsible Toggle Button -->
-          <button
-            id="faq-toggle"
-            class="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 group"
-            aria-expanded="false"
-            aria-controls="faq-content"
+            <!-- Collapsible Toggle Button -->
+            <button
+              id="faq-toggle"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-sm hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200 group"
+              aria-expanded="false"
+              aria-controls="faq-content"
+            >
+              <span class="font-medium text-zinc-900 dark:text-white">View FAQs</span>
+              <svg
+                class="w-5 h-5 text-zinc-500 dark:text-zinc-400 transition-transform duration-200 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                id="faq-icon"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Collapsible Content -->
+          <div
+            id="faq-content"
+            class="overflow-hidden transition-all duration-300 ease-in-out"
+            style="max-height: 0;"
           >
-            <span class="font-medium text-zinc-900 dark:text-white"
-              >View FAQs</span
-            >
-            <svg
-              class="w-5 h-5 text-zinc-500 dark:text-zinc-400 transition-transform duration-200 group-hover:text-blue-600 dark:group-hover:text-blue-400"
-              id="faq-icon"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Collapsible Content -->
-        <div
-          id="faq-content"
-          class="overflow-hidden transition-all duration-300 ease-in-out"
-          style="max-height: 0;"
-        >
-          <div class="space-y-6 pt-6">
-            {
-              faqItems.map((item, index) => (
+            <div class="space-y-6 pt-6">
+              {faqItems.map((item, index) => (
                 <div class="group bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200">
                   <button
                     class="w-full text-left p-6 focus:outline-none faq-trigger"
@@ -311,66 +316,59 @@ const socialLinks = [
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M19 9l-7 7-7-7"
-                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                       </svg>
                     </div>
                   </button>
+                  
                   <div
                     class="overflow-hidden transition-all duration-300 ease-in-out"
                     data-faq-content={index}
                     style="max-height: 0;"
                   >
                     <div class="px-6 pb-6">
-                      <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed border-t border-zinc-100 dark:border-zinc-700 pt-4">
-                        {item.answer}
-                      </p>
+                      <div class="text-zinc-600 dark:text-zinc-400 leading-relaxed border-t border-zinc-100 dark:border-zinc-700 pt-4">
+                        <div set:html={item.answer}></div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              ))
-            }
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  )}
 
   <!-- Newsletter CTA -->
   <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
     <div class="container mx-auto">
       <div class="max-w-2xl mx-auto text-center">
         <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
-          Stay
-          <span
-            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-          >
-            Connected
+          {cta.title}
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            {cta.titleAccent}
           </span>
         </h2>
         <p class="text-xl text-zinc-600 dark:text-zinc-400 mb-8">
-          Join our weekly newsletter for the latest insights, stories, and
-          updates from the TinkByte community.
+          {cta.subtitle}
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
-            href="/newsletter"
+            href={cta.primaryButton.link}
             variant="primary"
             className="px-8 py-3 rounded-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
           >
-            Subscribe to Newsletter
+            {cta.primaryButton.text}
           </Button>
           <Button
-            href="/community"
+            href={cta.secondaryButton.link}
             variant="outline"
             className="px-8 py-3 rounded-sm font-semibold border-2 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200"
           >
-            Join Community
+            {cta.secondaryButton.text}
           </Button>
         </div>
       </div>
@@ -379,77 +377,145 @@ const socialLinks = [
 </Layout>
 
 <style>
-  /* Enhanced styles */
+  /* Enhanced FAQ styles */
   .group:hover .group-hover\:scale-110 {
     transform: scale(1.1);
   }
 
+  /* Smooth collapsible animations */
+  #faq-content,
+  [data-faq-content] {
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+
+  /* FAQ link styling */
+  [data-faq-content] a,
+  [data-faq-content] .faq-link {
+    color: #2563eb;
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  [data-faq-content] a:hover,
+  [data-faq-content] .faq-link:hover {
+    color: #1d4ed8;
+    text-decoration: none;
+  }
+
+  :global(.dark) [data-faq-content] a,
+  :global(.dark) [data-faq-content] .faq-link {
+    color: rgb(96, 165, 250);
+  }
+
+  :global(.dark) [data-faq-content] a:hover,
+  :global(.dark) [data-faq-content] .faq-link:hover {
+    color: rgb(147, 197, 253);
+  }
+
+  /* Ensure proper spacing during animations */
+  #faq-content > div {
+    padding-top: 1.5rem;
+  }
+
+  /* Icon rotation animation */
+  #faq-icon,
+  [data-faq-icon] {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
   /* Gradient text animation */
   @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 
   .bg-gradient-to-r.bg-clip-text {
     background-size: 200% 200%;
     animation: gradient 3s ease-in-out infinite;
   }
+
+  /* Prevent content jumping during animations */
+  .faq-trigger {
+    position: relative;
+  }
+
+  /* Ensure FAQ items don't collapse unexpectedly */
+  [data-faq-content] > div {
+    min-height: fit-content;
+  }
 </style>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    // Utility function to get actual content height
+    function getContentHeight(element) {
+      const clone = element.cloneNode(true);
+      clone.style.cssText = 'position: absolute; visibility: hidden; height: auto; max-height: none; overflow: visible;';
+      element.parentNode.appendChild(clone);
+      const height = clone.offsetHeight;
+      element.parentNode.removeChild(clone);
+      return height;
+    }
+
+    // Utility function to update parent container height
+    function updateParentHeight() {
+      const parentContent = document.getElementById("faq-content");
+      if (parentContent && parentContent.style.maxHeight !== "0px" && parentContent.style.maxHeight !== "") {
+        setTimeout(() => {
+          const newHeight = getContentHeight(parentContent);
+          parentContent.style.maxHeight = newHeight + "px";
+        }, 50);
+      }
+    }
+
     // Main FAQ section toggle
-    function setupCollapsible(
-      toggleId: string,
-      contentId: string,
-      iconId: string
-    ) {
-      const toggle = document.getElementById(toggleId);
-      const content = document.getElementById(contentId);
-      const icon = document.getElementById(iconId);
+    const faqToggle = document.getElementById("faq-toggle");
+    const faqContent = document.getElementById("faq-content");
+    const faqIcon = document.getElementById("faq-icon");
 
-      if (!toggle || !content || !icon) return;
+    if (faqToggle && faqContent && faqIcon) {
+      let isMainExpanded = false;
 
-      let isExpanded = false;
-
-      toggle.addEventListener("click", () => {
-        isExpanded = !isExpanded;
-
+      faqToggle.addEventListener("click", () => {
+        isMainExpanded = !isMainExpanded;
+        
         // Update ARIA attributes
-        toggle.setAttribute("aria-expanded", isExpanded.toString());
+        faqToggle.setAttribute("aria-expanded", isMainExpanded.toString());
 
-        // Toggle content
-        if (isExpanded) {
-          content.style.maxHeight = content.scrollHeight + "px";
-          icon.style.transform = "rotate(180deg)";
-          toggle.querySelector("span")!.textContent = "Hide FAQs";
+        if (isMainExpanded) {
+          // Expanding main FAQ section
+          const contentHeight = getContentHeight(faqContent);
+          faqContent.style.maxHeight = contentHeight + "px";
+          faqIcon.style.transform = "rotate(180deg)";
+          faqToggle.querySelector("span").textContent = "Hide FAQs";
+          
+          // Remove max-height after animation completes
+          setTimeout(() => {
+            faqContent.style.maxHeight = "none";
+          }, 300);
         } else {
-          content.style.maxHeight = "0";
-          icon.style.transform = "rotate(0deg)";
-          toggle.querySelector("span")!.textContent = "View FAQs";
+          // Collapsing main FAQ section
+          const currentHeight = faqContent.scrollHeight;
+          faqContent.style.maxHeight = currentHeight + "px";
+          
+          // Force reflow then collapse
+          requestAnimationFrame(() => {
+            faqContent.style.maxHeight = "0";
+            faqIcon.style.transform = "rotate(0deg)";
+            faqToggle.querySelector("span").textContent = "View FAQs";
+          });
         }
       });
     }
 
-    // Setup main FAQ toggle
-    setupCollapsible("faq-toggle", "faq-content", "faq-icon");
-
     // Individual FAQ item toggles
     document.querySelectorAll("[data-faq-toggle]").forEach((trigger) => {
       const index = trigger.getAttribute("data-faq-toggle");
-      const content = document.querySelector(
-        `[data-faq-content="${index}"]`
-      ) as HTMLElement;
-      const icon = document.querySelector(
-        `[data-faq-icon="${index}"]`
-      ) as HTMLElement;
+      const content = document.querySelector(`[data-faq-content="${index}"]`);
+      const icon = document.querySelector(`[data-faq-icon="${index}"]`);
 
       if (!content || !icon) return;
 
@@ -461,15 +527,56 @@ const socialLinks = [
         // Update ARIA attributes
         trigger.setAttribute("aria-expanded", isExpanded.toString());
 
-        // Toggle content
         if (isExpanded) {
-          content.style.maxHeight = content.scrollHeight + "px";
+          // Expanding individual FAQ item
+          const contentHeight = getContentHeight(content);
+          content.style.maxHeight = contentHeight + "px";
           icon.style.transform = "rotate(180deg)";
+          
+          // Update parent container height after expansion
+          updateParentHeight();
+          
+          // Remove max-height after animation
+          setTimeout(() => {
+            content.style.maxHeight = "none";
+            updateParentHeight();
+          }, 300);
         } else {
-          content.style.maxHeight = "0";
-          icon.style.transform = "rotate(0deg)";
+          // Collapsing individual FAQ item
+          const currentHeight = content.scrollHeight;
+          content.style.maxHeight = currentHeight + "px";
+          
+          // Force reflow then collapse
+          requestAnimationFrame(() => {
+            content.style.maxHeight = "0";
+            icon.style.transform = "rotate(0deg)";
+            
+            // Update parent container height after collapse
+            setTimeout(() => {
+              updateParentHeight();
+            }, 300);
+          });
         }
       });
+    });
+
+    // Handle window resize to recalculate heights
+    let resizeTimeout;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        // Recalculate all expanded elements
+        const expandedFaqItems = document.querySelectorAll('[data-faq-content]');
+        expandedFaqItems.forEach(item => {
+          if (item.style.maxHeight !== "0px" && item.style.maxHeight !== "") {
+            const newHeight = getContentHeight(item);
+            item.style.maxHeight = newHeight + "px";
+          }
+        });
+        
+        // Update parent if expanded
+        updateParentHeight();
+      }, 250);
     });
   });
 </script>

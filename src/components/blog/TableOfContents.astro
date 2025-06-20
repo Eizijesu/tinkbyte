@@ -1,97 +1,20 @@
----
-export interface Props {
-  headings: Array<{
-    depth: number;
-    slug: string;
-    text: string;
-  }>;
-}
-
-const { headings } = Astro.props;
-
-// Filter and structure headings
-const structuredHeadings = headings
-  .filter((heading) => heading.depth <= 3)
-  .map((heading) => ({
-    ...heading,
-    children: headings.filter(
-      (child) =>
-        child.depth === heading.depth + 1 &&
-        headings.indexOf(child) > headings.indexOf(heading)
-    ),
-  }));
----
-
-{
-  structuredHeadings.length > 0 && (
-    <div class="toc-container">
-      <div class="toc-header">
-        <h3 class="toc-title">Table of Contents</h3>
-        <button class="toc-toggle" aria-label="Toggle table of contents">
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
-      </div>
-
-      <nav class="toc-nav" id="table-of-contents">
-        <ul class="toc-list">
-          {structuredHeadings.map((heading) => (
-            <li class="toc-item">
-              <a
-                href={`#${heading.slug}`}
-                class="toc-link"
-                data-heading={heading.slug}
-              >
-                {heading.text}
-              </a>
-              {heading.children.length > 0 && (
-                <ul class="toc-sublist">
-                  {heading.children.map((child) => (
-                    <li class="toc-subitem">
-                      <a
-                        href={`#${child.slug}`}
-                        class="toc-sublink"
-                        data-heading={child.slug}
-                      >
-                        {child.text}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </div>
-  )
-}
-
 <style>
   .toc-container {
     background: white;
     border: 1px solid #e5e7eb;
-    border-radius: 0.5rem;
-    padding: 1rem;
+    border-radius: 2px;
+    padding: 1.5rem;
     margin-bottom: 2rem;
     position: sticky;
     top: 2rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
   }
 
   :global(.dark) .toc-container {
     background: rgb(17, 24, 39);
     border-color: rgb(55, 65, 81);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
   }
 
   .toc-header {
@@ -99,13 +22,21 @@ const structuredHeadings = headings
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  :global(.dark) .toc-header {
+    border-bottom-color: rgb(55, 65, 81);
   }
 
   .toc-title {
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #111827;
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
   :global(.dark) .toc-title {
@@ -117,9 +48,12 @@ const structuredHeadings = headings
     border: none;
     color: #6b7280;
     cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 0.25rem;
+    padding: 0.5rem;
+    border-radius: 2px;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .toc-toggle:hover {
@@ -154,18 +88,19 @@ const structuredHeadings = headings
     display: block;
     color: #6b7280;
     text-decoration: none;
-    padding: 0.25rem 0;
+    padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
     line-height: 1.25rem;
-    transition: color 0.2s ease;
-    border-left: 2px solid transparent;
-    padding-left: 0.5rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    border-radius: 0 2px 2px 0;
   }
 
   .toc-link:hover,
   .toc-link.active {
     color: #2563eb;
     border-left-color: #2563eb;
+    background: #eff6ff;
   }
 
   :global(.dark) .toc-link {
@@ -176,6 +111,7 @@ const structuredHeadings = headings
   :global(.dark) .toc-link.active {
     color: rgb(96, 165, 250);
     border-left-color: rgb(96, 165, 250);
+    background: rgba(96, 165, 250, 0.1);
   }
 
   .toc-sublist {
@@ -192,15 +128,17 @@ const structuredHeadings = headings
     display: block;
     color: #9ca3af;
     text-decoration: none;
-    padding: 0.125rem 0;
+    padding: 0.25rem 0.75rem;
     font-size: 0.8125rem;
     line-height: 1.25rem;
-    transition: color 0.2s ease;
+    transition: all 0.2s ease;
+    border-radius: 2px;
   }
 
   .toc-sublink:hover,
   .toc-sublink.active {
     color: #2563eb;
+    background: #eff6ff;
   }
 
   :global(.dark) .toc-sublink {
@@ -210,6 +148,7 @@ const structuredHeadings = headings
   :global(.dark) .toc-sublink:hover,
   :global(.dark) .toc-sublink.active {
     color: rgb(96, 165, 250);
+    background: rgba(96, 165, 250, 0.1);
   }
 
   /* Mobile responsive */
@@ -217,112 +156,7 @@ const structuredHeadings = headings
     .toc-container {
       position: static;
       margin-bottom: 1.5rem;
+      padding: 1.25rem;
     }
   }
 </style>
-
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const tocContainer = document.querySelector(
-      ".toc-container"
-    ) as HTMLElement;
-    const tocToggle = document.querySelector(
-      ".toc-toggle"
-    ) as HTMLButtonElement;
-    const tocNav = document.querySelector(".toc-nav") as HTMLElement;
-    const tocLinks = document.querySelectorAll(".toc-link, .toc-sublink");
-
-    if (!tocContainer || !tocToggle || !tocNav) return;
-
-    // Toggle functionality
-    let isCollapsed = false;
-
-    tocToggle.addEventListener("click", () => {
-      isCollapsed = !isCollapsed;
-
-      if (isCollapsed) {
-        tocNav.style.display = "none";
-        tocToggle.style.transform = "rotate(-90deg)";
-      } else {
-        tocNav.style.display = "block";
-        tocToggle.style.transform = "rotate(0deg)";
-      }
-    });
-
-    // Smooth scrolling for TOC links
-    tocLinks.forEach((link: Element) => {
-      link.addEventListener("click", (e: Event) => {
-        e.preventDefault();
-        const href = (link as HTMLAnchorElement).getAttribute("href");
-        if (href) {
-          const targetId = href.substring(1);
-          const targetElement = document.getElementById(targetId);
-          if (targetElement) {
-            targetElement.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          }
-        }
-      });
-    });
-
-    // Active link highlighting
-    const observerOptions = {
-      rootMargin: "-20% 0px -70% 0px",
-      threshold: 0,
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        const headingId = entry.target.id;
-        const tocLink = document.querySelector(
-          `[data-heading="${headingId}"]`
-        ) as HTMLElement;
-
-        if (entry.isIntersecting && tocLink) {
-          // Remove active class from all links
-          tocLinks.forEach((link: Element) => {
-            (link as HTMLElement).classList.remove("active");
-          });
-
-          // Add active class to current link
-          tocLink.classList.add("active");
-        }
-      });
-    }, observerOptions);
-
-    // Observe all headings
-    document
-      .querySelectorAll("h1, h2, h3, h4, h5, h6")
-      .forEach((heading: Element) => {
-        if (heading.id) {
-          observer.observe(heading);
-        }
-      });
-
-    // Show/hide TOC based on scroll position
-    let lastScrollY = window.scrollY;
-
-    window.addEventListener("scroll", () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY > 200) {
-        if (currentScrollY < lastScrollY) {
-          // Scrolling up
-          tocContainer.style.transform = "translateY(0)";
-          tocContainer.style.opacity = "1";
-        } else {
-          // Scrolling down
-          tocContainer.style.transform = "translateY(-100%)";
-          tocContainer.style.opacity = "0";
-        }
-      } else {
-        tocContainer.style.transform = "translateY(0)";
-        tocContainer.style.opacity = "1";
-      }
-
-      lastScrollY = currentScrollY;
-    });
-  });
-</script>

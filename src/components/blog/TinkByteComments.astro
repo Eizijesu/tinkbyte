@@ -1,0 +1,1880 @@
+---
+// src/components/blog/TinkByteComments.astro
+export interface Props {
+  postSlug: string;
+  postTitle: string;
+}
+
+const { postSlug, postTitle } = Astro.props;
+---
+
+<div class="tinkbyte-comments" data-post-slug={postSlug} data-post-title={postTitle} id="comments-section">
+  <!-- Comments Header -->
+  <div class="comments-header">
+    <div class="comments-stats">
+      <div class="comments-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <div class="stats-content">
+        <h3 class="comments-title">
+          TinkByte Comments
+          <span class="comment-count" id="comment-count">(0)</span>
+        </h3>
+        <div class="engagement-stats">
+          <span class="stat-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <span id="view-count">Loading...</span> views
+          </span>
+          <span class="stat-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <span id="reaction-count">0</span> reactions
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <button class="new-comment-btn" id="new-comment-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      New Comment
+    </button>
+  </div>
+
+  <!-- Comment Form -->
+  <div class="comment-form-container" id="comment-form-container" style="display: none;">
+    <div class="comment-form">
+      <div class="form-header">
+        <div class="user-avatar-placeholder">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div class="user-inputs">
+          <input 
+            type="text" 
+            placeholder="Your name *" 
+            class="user-name-input"
+            id="user-name"
+            required
+          />
+          <input 
+            type="email" 
+            placeholder="Email (optional)" 
+            class="user-email-input"
+            id="user-email"
+          />
+        </div>
+      </div>
+      
+      <div class="comment-editor">
+        <textarea 
+          placeholder="Share your thoughts... (Markdown supported)"
+          class="comment-textarea"
+          id="comment-content"
+          rows="4"
+          required
+        ></textarea>
+        
+        <div class="editor-toolbar">
+          <div class="formatting-help">
+            <button type="button" class="format-btn" data-format="**bold**" title="Bold">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-format="_italic_" title="Italic">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="4" x2="10" y2="4"/>
+                <line x1="14" y1="20" x2="5" y2="20"/>
+                <line x1="15" y1="4" x2="9" y2="20"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-format="`code`" title="Code">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16,18 22,12 16,6"/>
+                <polyline points="8,6 2,12 8,18"/>
+              </svg>
+            </button>
+            <button type="button" class="format-btn" data-format="[link](url)" title="Link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </button>
+            <!-- Emoji Picker Button -->
+            <button type="button" class="format-btn emoji-picker-btn" id="emoji-picker-btn" title="Add Emoji">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                <line x1="15" y1="9" x2="15.01" y2="9"/>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="cancel-btn" id="cancel-comment">
+              Cancel
+            </button>
+            <button type="button" class="submit-btn" id="submit-comment">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+              </svg>
+              Post Comment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Emoji Picker -->
+  <div class="emoji-picker" id="emoji-picker" style="display: none;">
+    <div class="emoji-picker-header">
+      <span>Add Emoji</span>
+      <button class="emoji-picker-close" id="emoji-picker-close">×</button>
+    </div>
+    <div class="emoji-grid" id="emoji-grid">
+      <!-- Emojis will be populated by JavaScript -->
+    </div>
+  </div>
+
+  <!-- Comments List -->
+  <div class="comments-list" id="comments-list">
+    <div class="loading-comments">
+      <div class="loading-spinner">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="2" x2="12" y2="6"/>
+          <line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+          <line x1="2" y1="12" x2="6" y2="12"/>
+          <line x1="18" y1="12" x2="22" y2="12"/>
+          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+        </svg>
+      </div>
+      <p>Loading comments...</p>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-comments" id="empty-comments" style="display: none;">
+    <div class="empty-icon">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        <path d="M8 9h8"/>
+        <path d="M8 13h6"/>
+      </svg>
+    </div>
+    <h4>Start the conversation</h4>
+    <p>Be the first to share your thoughts on this article. Your insights matter to our community.</p>
+    <button class="start-discussion-btn" id="start-discussion-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Start Discussion
+    </button>
+  </div>
+
+  <!-- TinkByte Comments Notice -->
+  <div class="tinkbyte-notice">
+    <div class="notice-content">
+      <div class="notice-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16,18 22,12 16,6"/>
+          <polyline points="8,6 2,12 8,18"/>
+        </svg>
+        <span>TinkByte Comments</span>
+      </div>
+      <p>
+        Comments stored locally • No sign-up required
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .tinkbyte-comments {
+    background: white;
+    border: 1px solid #e1e5e9;
+    margin: 2rem 0;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  :global(.dark) .tinkbyte-comments {
+    background: #0d1117;
+    border-color: #30363d;
+  }
+
+  .comments-header {
+    background: #f6f8fa;
+    border-bottom: 1px solid #e1e5e9;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  :global(.dark) .comments-header {
+    background: #161b22;
+    border-bottom-color: #30363d;
+  }
+
+  .comments-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .comments-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #0969da, #0550ae);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .stats-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .comments-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2328;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  :global(.dark) .comments-title {
+    color: #f0f6fc;
+  }
+
+  .comment-count {
+    color: #656d76;
+    font-weight: 400;
+    font-size: 16px;
+  }
+
+  :global(.dark) .comment-count {
+    color: #7d8590;
+  }
+
+  .engagement-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+    color: #656d76;
+  }
+
+  :global(.dark) .engagement-stats {
+    color: #7d8590;
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+  }
+
+  .stat-item svg {
+    color: #0969da;
+    flex-shrink: 0;
+  }
+
+  :global(.dark) .stat-item svg {
+    color: #58a6ff;
+  }
+
+  .new-comment-btn {
+    background: linear-gradient(135deg, #0969da, #0550ae);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+  }
+
+  .new-comment-btn:hover {
+    background: linear-gradient(135deg, #0550ae, #033d8b);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(9, 105, 218, 0.3);
+  }
+
+  .comment-form-container {
+    border-bottom: 1px solid #e1e5e9;
+    background: #f6f8fa;
+  }
+
+  :global(.dark) .comment-form-container {
+    border-bottom-color: #30363d;
+    background: #161b22;
+  }
+
+  .comment-form {
+    padding: 24px;
+    position: relative;
+  }
+
+  .form-header {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .user-avatar-placeholder {
+    width: 48px;
+    height: 48px;
+    background: #f6f8fa;
+    border: 2px solid #d1d9e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #656d76;
+    flex-shrink: 0;
+  }
+
+  :global(.dark) .user-avatar-placeholder {
+    background: #21262d;
+    border-color: #30363d;
+    color: #7d8590;
+  }
+
+  .user-inputs {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .user-name-input,
+  .user-email-input {
+    padding: 12px;
+    border: 1px solid #d1d9e0;
+    font-size: 14px;
+    background: white;
+    transition: border-color 0.2s ease;
+    font-weight: 500;
+  }
+
+  .user-name-input:focus,
+  .user-email-input:focus {
+    outline: none;
+    border-color: #0969da;
+    box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+  }
+
+  :global(.dark) .user-name-input,
+  :global(.dark) .user-email-input {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #f0f6fc;
+  }
+
+  :global(.dark) .user-name-input:focus,
+  :global(.dark) .user-email-input:focus {
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+  }
+
+  .comment-editor {
+    background: white;
+    border: 1px solid #d1d9e0;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+  }
+
+  .comment-editor:focus-within {
+    border-color: #0969da;
+    box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+  }
+
+  :global(.dark) .comment-editor {
+    background: #0d1117;
+    border-color: #30363d;
+  }
+
+  :global(.dark) .comment-editor:focus-within {
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+  }
+
+  .comment-textarea {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    background: transparent;
+    resize: vertical;
+    min-height: 120px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1f2328;
+  }
+
+  :global(.dark) .comment-textarea {
+    color: #f0f6fc;
+  }
+
+  .comment-textarea:focus {
+    outline: none;
+  }
+
+  .comment-textarea::placeholder {
+    color: #656d76;
+  }
+
+  :global(.dark) .comment-textarea::placeholder {
+    color: #7d8590;
+  }
+
+  .editor-toolbar {
+    background: #f6f8fa;
+    border-top: 1px solid #e1e5e9;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  :global(.dark) .editor-toolbar {
+    background: #161b22;
+    border-top-color: #30363d;
+  }
+
+  .formatting-help {
+    display: flex;
+    gap: 8px;
+  }
+
+  .format-btn {
+    background: white;
+    border: 1px solid #d1d9e0;
+    padding: 8px;
+    cursor: pointer;
+    color: #656d76;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .format-btn:hover {
+    background: #0969da;
+    color: white;
+    border-color: #0969da;
+    transform: translateY(-1px);
+  }
+
+  :global(.dark) .format-btn {
+    background: #21262d;
+    border-color: #30363d;
+    color: #7d8590;
+  }
+
+  :global(.dark) .format-btn:hover {
+    background: #58a6ff;
+    color: #0d1117;
+    border-color: #58a6ff;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .cancel-btn {
+    background: white;
+    border: 1px solid #d1d9e0;
+    padding: 8px 16px;
+    cursor: pointer;
+    color: #656d76;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    font-size: 14px;
+  }
+
+  .cancel-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+  }
+
+  :global(.dark) .cancel-btn {
+    background: #21262d;
+    border-color: #30363d;
+    color: #7d8590;
+  }
+
+  :global(.dark) .cancel-btn:hover {
+    background: #30363d;
+    border-color: #484f58;
+  }
+
+  .submit-btn {
+    background: linear-gradient(135deg, #1a7f37, #0f5323);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+  }
+
+  .submit-btn:hover {
+    background: linear-gradient(135deg, #0f5323, #0a3f1a);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(26, 127, 55, 0.3);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Emoji Picker Styles */
+  .emoji-picker {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #d1d9e0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    width: 320px;
+    max-height: 400px;
+    overflow: hidden;
+  }
+
+  :global(.dark) .emoji-picker {
+    background: #21262d;
+    border-color: #30363d;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .emoji-picker-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e1e5e9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1f2328;
+  }
+
+  :global(.dark) .emoji-picker-header {
+    border-bottom-color: #30363d;
+    color: #f0f6fc;
+  }
+
+  .emoji-picker-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #656d76;
+    transition: color 0.2s ease;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .emoji-picker-close:hover {
+    color: #1f2328;
+  }
+
+  :global(.dark) .emoji-picker-close {
+    color: #7d8590;
+  }
+
+  :global(.dark) .emoji-picker-close:hover {
+    color: #f0f6fc;
+  }
+
+  .emoji-grid {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .emoji-option {
+    padding: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    user-select: none;
+  }
+
+  .emoji-option:hover {
+    background: #f6f8fa;
+    transform: scale(1.2);
+  }
+
+  :global(.dark) .emoji-option:hover {
+    background: #30363d;
+  }
+
+  .comments-list {
+    max-height: none;
+  }
+
+  .loading-comments {
+    padding: 48px 24px;
+    text-align: center;
+    color: #656d76;
+  }
+
+  :global(.dark) .loading-comments {
+    color: #7d8590;
+  }
+
+  .loading-spinner {
+    margin-bottom: 16px;
+    color: #0969da;
+    animation: spin 1s linear infinite;
+  }
+
+  :global(.dark) .loading-spinner {
+    color: #58a6ff;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .comment-item {
+    border-bottom: 1px solid #e1e5e9;
+    padding: 24px;
+    transition: background-color 0.2s ease;
+  }
+
+  .comment-item:hover {
+    background: #f6f8fa;
+  }
+
+  :global(.dark) .comment-item {
+    border-bottom-color: #30363d;
+  }
+
+  :global(.dark) .comment-item:hover {
+    background: #161b22;
+  }
+
+  .comment-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .comment-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #0969da, #0550ae);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .comment-meta {
+    flex: 1;
+  }
+
+  .comment-author {
+    font-weight: 600;
+    color: #1f2328;
+    margin-bottom: 2px;
+    font-size: 14px;
+  }
+
+  :global(.dark) .comment-author {
+    color: #f0f6fc;
+  }
+
+  .comment-date {
+    font-size: 12px;
+    color: #656d76;
+    font-weight: 400;
+  }
+
+  :global(.dark) .comment-date {
+    color: #7d8590;
+  }
+
+  .comment-content {
+    color: #1f2328;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+
+  :global(.dark) .comment-content {
+    color: #e6edf3;
+  }
+
+  .comment-content p {
+    margin-bottom: 12px;
+  }
+
+  .comment-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+  }
+
+  .reaction-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .reaction-btn {
+    background: white;
+    border: 1px solid #d1d9e0;
+    padding: 6px 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #656d76;
+    transition: all 0.2s ease;
+    font-weight: 500;
+  }
+
+  .reaction-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    transform: translateY(-1px);
+  }
+
+  .reaction-btn.active {
+    background: #dbeafe;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+  }
+
+  :global(.dark) .reaction-btn {
+    background: #21262d;
+    border-color: #30363d;
+    color: #7d8590;
+  }
+
+  :global(.dark) .reaction-btn:hover {
+    background: #30363d;
+    border-color: #484f58;
+  }
+
+  :global(.dark) .reaction-btn.active {
+    background: #1e3a8a;
+    border-color: #3b82f6;
+    color: #93c5fd;
+  }
+
+  .comment-action {
+    color: #656d76;
+    text-decoration: none;
+    padding: 6px 10px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .comment-action:hover {
+    background: #f3f4f6;
+    color: #1f2328;
+    transform: translateY(-1px);
+  }
+
+  :global(.dark) .comment-action {
+    color: #7d8590;
+  }
+
+  :global(.dark) .comment-action:hover {
+    background: #30363d;
+    color: #f0f6fc;
+  }
+
+  .empty-comments {
+    padding: 64px 24px;
+    text-align: center;
+    color: #656d76;
+  }
+
+  :global(.dark) .empty-comments {
+    color: #7d8590;
+  }
+
+  .empty-icon {
+    margin-bottom: 24px;
+    opacity: 0.6;
+    color: #0969da;
+  }
+
+  :global(.dark) .empty-icon {
+    color: #58a6ff;
+  }
+
+  .empty-comments h4 {
+    color: #1f2328;
+    margin-bottom: 12px;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  :global(.dark) .empty-comments h4 {
+    color: #f0f6fc;
+  }
+
+  .empty-comments p {
+    margin-bottom: 24px;
+    font-size: 16px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+  }
+
+  .start-discussion-btn {
+    background: linear-gradient(135deg, #0969da, #0550ae);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 auto;
+    transition: all 0.2s ease;
+  }
+
+  .start-discussion-btn:hover {
+    background: linear-gradient(135deg, #0550ae, #033d8b);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(9, 105, 218, 0.3);
+  }
+
+  .tinkbyte-notice {
+    background: #f6f8fa;
+    border-top: 1px solid #e1e5e9;
+    padding: 16px 24px;
+  }
+
+  :global(.dark) .tinkbyte-notice {
+    background: #161b22;
+    border-top-color: #30363d;
+  }
+
+  .notice-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #656d76;
+  }
+
+  :global(.dark) .notice-content {
+    color: #7d8590;
+  }
+
+  .notice-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #0969da;
+  }
+
+  :global(.dark) .notice-logo {
+    color: #58a6ff;
+  }
+
+  /* Success message styles */
+  .success-message {
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    padding: 16px;
+    margin: 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+  }
+
+  :global(.dark) .success-message {
+    background: #14532d;
+    border-color: #166534;
+    color: #22c55e;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .comments-header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .comments-stats {
+      width: 100%;
+    }
+
+    .stats-content {
+      flex: 1;
+    }
+
+    .engagement-stats {
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .user-inputs {
+      grid-template-columns: 1fr;
+    }
+
+    .editor-toolbar {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .formatting-help {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .form-actions {
+      justify-content: stretch;
+    }
+
+    .form-actions button {
+      flex: 1;
+    }
+
+    .notice-content {
+      flex-direction: column;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .comment-actions {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .emoji-picker {
+      width: calc(100vw - 32px);
+      left: 50%;
+      transform: translateX(-50%);
+      right: auto;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .tinkbyte-comments {
+      margin: 16px 0;
+    }
+
+    .comments-header,
+    .comment-form,
+    .comment-item {
+      padding: 16px;
+    }
+
+    .empty-comments {
+      padding: 32px 16px;
+    }
+
+    .empty-icon svg {
+      width: 60px;
+      height: 60px;
+    }
+  }
+
+  /* Focus styles for accessibility */
+  .new-comment-btn:focus,
+  .start-discussion-btn:focus,
+  .submit-btn:focus,
+  .cancel-btn:focus,
+  .format-btn:focus,
+  .reaction-btn:focus,
+  .comment-action:focus {
+    outline: 2px solid #0969da;
+    outline-offset: 2px;
+  }
+
+  :global(.dark) .new-comment-btn:focus,
+  :global(.dark) .start-discussion-btn:focus,
+  :global(.dark) .submit-btn:focus,
+  :global(.dark) .cancel-btn:focus,
+  :global(.dark) .format-btn:focus,
+  :global(.dark) .reaction-btn:focus,
+  :global(.dark) .comment-action:focus {
+    outline-color: #58a6ff;
+  }
+</style>
+
+<script>
+  // Load marked.js for markdown parsing
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js';
+  script.onload = initializeTinkByteComments;
+  document.head.appendChild(script);
+
+  function initializeTinkByteComments() {
+    const commentsContainer = document.querySelector('.tinkbyte-comments');
+    if (!commentsContainer) return;
+    
+    const postSlug = commentsContainer.dataset.postSlug;
+    const postTitle = commentsContainer.dataset.postTitle;
+    
+    // Common emojis for the picker
+    const commonEmojis = [
+      '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣',
+      '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰',
+      '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜',
+      '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏',
+      '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+      '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠',
+      '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨',
+      '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥',
+      '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧',
+      '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐',
+      '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑',
+      '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻',
+      '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸',
+      '😹', '😻', '😼', '😽', '🙀', '😿', '😾', '👋',
+      '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️',
+      '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕',
+      '👇', '☝️', '👍', '👎', '👊', '✊', '🤛', '🤜',
+      '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅',
+      '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻',
+      '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️',
+      '👅', '👄', '💋', '🩸', '🔥', '💯', '💢', '💨',
+      '💫', '💦', '💤', '🕳️', '💣', '💥', '💪', '🦴',
+      '👀', '🧠', '🫀', '🫁', '🦷', '👅', '👄', '👃',
+      '👂', '🦻', '🦵', '🦶', '💄', '💋', '👄', '🦷',
+      '👅', '👃', '👂', '👀', '🧠', '🗣️', '👤', '👥'
+    ];
+    
+    // Initialize comments system
+    async function init() {
+      loadComments();
+      setupEventListeners();
+      updateViewCount();
+      setupEmojiPicker();
+    }
+    
+    // Setup emoji picker
+    function setupEmojiPicker() {
+      const emojiGrid = document.getElementById('emoji-grid');
+      if (emojiGrid) {
+        emojiGrid.innerHTML = commonEmojis.map(emoji => 
+          `<div class="emoji-option" data-emoji="${emoji}" title="${emoji}">${emoji}</div>`
+        ).join('');
+        
+        // Add click handlers for emoji options
+        emojiGrid.querySelectorAll('.emoji-option').forEach(option => {
+          option.addEventListener('click', (e) => {
+            const emoji = e.target.dataset.emoji;
+            insertEmoji(emoji);
+            hideEmojiPicker();
+          });
+        });
+      }
+    }
+    
+    // Insert emoji into textarea
+    function insertEmoji(emoji) {
+      const textarea = document.getElementById('comment-content');
+      if (!textarea) return;
+      
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const currentValue = textarea.value;
+      
+      textarea.value = currentValue.substring(0, start) + emoji + currentValue.substring(end);
+      textarea.focus();
+      
+      // Set cursor position after emoji
+      const newPos = start + emoji.length;
+      textarea.setSelectionRange(newPos, newPos);
+    }
+    
+    // Show emoji picker
+    function showEmojiPicker() {
+      const picker = document.getElementById('emoji-picker');
+      if (picker) {
+        picker.style.display = 'block';
+      }
+    }
+    
+    // Hide emoji picker
+    function hideEmojiPicker() {
+      const picker = document.getElementById('emoji-picker');
+      if (picker) {
+        picker.style.display = 'none';
+      }
+    }
+    
+    // Load comments from localStorage
+    function loadComments() {
+      try {
+        const storageKey = `tinkbyte-comments-${postSlug}`;
+        const storedComments = localStorage.getItem(storageKey);
+        const comments = storedComments ? JSON.parse(storedComments) : [];
+        
+        displayComments(comments);
+        updateReactionCount(comments);
+      } catch (error) {
+        console.error('Error loading comments:', error);
+        showErrorState();
+      }
+    }
+    
+    // Save comments to localStorage
+    function saveComments(comments) {
+      try {
+        const storageKey = `tinkbyte-comments-${postSlug}`;
+        localStorage.setItem(storageKey, JSON.stringify(comments));
+      } catch (error) {
+        console.error('Error saving comments:', error);
+      }
+    }
+    
+    // Display comments in the UI
+    function displayComments(comments) {
+      const commentsList = document.getElementById('comments-list');
+      const emptyComments = document.getElementById('empty-comments');
+      const commentCount = document.getElementById('comment-count');
+      
+      commentCount.textContent = `(${comments.length})`;
+      
+      if (comments.length === 0) {
+        showEmptyState();
+        return;
+      }
+      
+      emptyComments.style.display = 'none';
+      commentsList.style.display = 'block';
+      
+      const commentsHTML = comments.map(comment => createCommentHTML(comment)).join('');
+      commentsList.innerHTML = commentsHTML;
+      
+      setupReactionHandlers();
+    }
+    
+    // Create HTML for a single comment
+    function createCommentHTML(comment) {
+      const author = comment.author;
+      const avatar = author.charAt(0).toUpperCase() + (author.charAt(1) || '').toLowerCase();
+      const date = new Date(comment.date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // Parse markdown content
+      const content = marked.parse(comment.content);
+      
+      // Get reactions
+      const reactions = comment.reactions || {};
+      const reactionButtons = Object.entries(reactions)
+        .filter(([key, count]) => count > 0)
+        .map(([key, count]) => {
+          const emojiMap = {
+            'thumbsup': '👍',
+            'thumbsdown': '👎',
+            'heart': '❤️',
+            'laugh': '😄',
+            'hooray': '🎉',
+            'confused': '😕',
+            'rocket': '🚀',
+            'eyes': '👀'
+          };
+          return `
+            <button class="reaction-btn" data-reaction="${key}" data-comment-id="${comment.id}" title="${key}">
+              ${emojiMap[key] || '👍'} ${count}
+            </button>
+          `;
+        }).join('');
+      
+      return `
+        <div class="comment-item" data-comment-id="${comment.id}">
+          <div class="comment-header">
+            <div class="comment-avatar">${avatar}</div>
+            <div class="comment-meta">
+              <div class="comment-author">${author}</div>
+              <div class="comment-date">${date}</div>
+            </div>
+          </div>
+          <div class="comment-content">${content}</div>
+          <div class="comment-actions">
+            <div class="reaction-group">
+              ${reactionButtons}
+              <button class="comment-action add-reaction-btn" data-comment-id="${comment.id}" title="Add reaction">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                  <line x1="9" y1="9" x2="9.01" y2="9"/>
+                  <line x1="15" y1="9" x2="15.01" y2="9"/>
+                </svg>
+                React
+              </button>
+            </div>
+            <button class="comment-action reply-btn" data-comment-id="${comment.id}" title="Reply to comment">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9,17 4,12 9,7"/>
+                <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
+              </svg>
+              Reply
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Setup event listeners
+    function setupEventListeners() {
+      // New comment button
+      const newCommentBtn = document.getElementById('new-comment-btn');
+      if (newCommentBtn) {
+        newCommentBtn.addEventListener('click', () => {
+          const formContainer = document.getElementById('comment-form-container');
+          const isVisible = formContainer.style.display !== 'none';
+          formContainer.style.display = isVisible ? 'none' : 'block';
+          
+          if (!isVisible) {
+            const userNameInput = document.getElementById('user-name');
+            if (userNameInput) {
+              userNameInput.focus();
+            }
+          }
+        });
+      }
+      
+      // Start discussion button
+      const startDiscussionBtn = document.getElementById('start-discussion-btn');
+      if (startDiscussionBtn) {
+        startDiscussionBtn.addEventListener('click', () => {
+          const newCommentBtn = document.getElementById('new-comment-btn');
+          if (newCommentBtn) {
+            newCommentBtn.click();
+          }
+        });
+      }
+      
+      // Cancel comment
+      const cancelBtn = document.getElementById('cancel-comment');
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+          const formContainer = document.getElementById('comment-form-container');
+          if (formContainer) {
+            formContainer.style.display = 'none';
+          }
+          clearForm();
+        });
+      }
+      
+      // Submit comment
+      const submitBtn = document.getElementById('submit-comment');
+      if (submitBtn) {
+        submitBtn.addEventListener('click', handleCommentSubmit);
+      }
+      
+      // Format buttons
+      document.querySelectorAll('.format-btn:not(.emoji-picker-btn)').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const format = e.target.closest('.format-btn').dataset.format;
+          if (format) {
+            insertFormat(format);
+          }
+        });
+      });
+      
+      // Emoji picker button
+      const emojiPickerBtn = document.getElementById('emoji-picker-btn');
+      if (emojiPickerBtn) {
+        emojiPickerBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const picker = document.getElementById('emoji-picker');
+          if (picker.style.display === 'none' || !picker.style.display) {
+            showEmojiPicker();
+          } else {
+            hideEmojiPicker();
+          }
+        });
+      }
+      
+      // Emoji picker close button
+      const emojiPickerClose = document.getElementById('emoji-picker-close');
+      if (emojiPickerClose) {
+        emojiPickerClose.addEventListener('click', (e) => {
+          e.preventDefault();
+          hideEmojiPicker();
+        });
+      }
+      
+      // Close emoji picker when clicking outside
+      document.addEventListener('click', (e) => {
+        const emojiPicker = document.getElementById('emoji-picker');
+        const emojiPickerBtn = document.getElementById('emoji-picker-btn');
+        
+        if (emojiPicker && 
+            emojiPicker.style.display === 'block' && 
+            !emojiPicker.contains(e.target) && 
+            e.target !== emojiPickerBtn &&
+            !emojiPickerBtn.contains(e.target)) {
+          hideEmojiPicker();
+        }
+      });
+    }
+    
+    // Handle comment submission
+    function handleCommentSubmit() {
+      const nameInput = document.getElementById('user-name');
+      const emailInput = document.getElementById('user-email');
+      const contentInput = document.getElementById('comment-content');
+      const submitBtn = document.getElementById('submit-comment');
+      
+      if (!nameInput || !contentInput) {
+        showAlert('Form elements not found.', 'error');
+        return;
+      }
+      
+      const name = nameInput.value.trim();
+      const email = emailInput ? emailInput.value.trim() : '';
+      const content = contentInput.value.trim();
+      
+      if (!name || !content) {
+        showAlert('Please fill in your name and comment.', 'error');
+        return;
+      }
+      
+      // Disable submit button
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="2" x2="12" y2="6"/>
+          <line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+          <line x1="2" y1="12" x2="6" y2="12"/>
+          <line x1="18" y1="12" x2="22" y2="12"/>
+          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+        </svg>
+        Posting...
+      `;
+      
+      try {
+        // Create new comment
+        const newComment = {
+          id: Date.now().toString(),
+          author: name,
+          email: email,
+          content: content,
+          date: new Date().toISOString(),
+          reactions: {}
+        };
+        
+        // Get existing comments
+        const storageKey = `tinkbyte-comments-${postSlug}`;
+        const existingComments = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        
+        // Add new comment
+        existingComments.push(newComment);
+        
+        // Save to localStorage
+        saveComments(existingComments);
+        
+        // Update UI
+        displayComments(existingComments);
+        
+        // Clear form
+        clearForm();
+        
+        // Hide form
+        document.getElementById('comment-form-container').style.display = 'none';
+        
+        // Show success message
+        showSuccessMessage();
+        
+        // Scroll to new comment
+        setTimeout(() => {
+          const newCommentElement = document.querySelector(`[data-comment-id="${newComment.id}"]`);
+          if (newCommentElement) {
+            newCommentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+        
+      } catch (error) {
+        console.error('Error posting comment:', error);
+        showAlert('Failed to post comment. Please try again.', 'error');
+      } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+          </svg>
+          Post Comment
+        `;
+      }
+    }
+    
+    // Show success message
+    function showSuccessMessage() {
+      const successMsg = document.createElement('div');
+      successMsg.className = 'success-message';
+      successMsg.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22,4 12,14.01 9,11.01"/>
+        </svg>
+        Comment posted successfully! Thank you for joining the discussion.
+      `;
+      
+      const commentsHeader = document.querySelector('.comments-header');
+      if (commentsHeader) {
+        commentsHeader.insertAdjacentElement('afterend', successMsg);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+          successMsg.remove();
+        }, 5000);
+      }
+    }
+    
+    // Insert formatting into textarea
+    function insertFormat(format) {
+      const textarea = document.getElementById('comment-content');
+      if (!textarea) return;
+      
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end);
+      
+      let replacement;
+      if (format === '**bold**') {
+        replacement = selectedText ? `**${selectedText}**` : '**bold text**';
+      } else if (format === '_italic_') {
+        replacement = selectedText ? `_${selectedText}_` : '_italic text_';
+      } else if (format === '`code`') {
+        replacement = selectedText ? `\`${selectedText}\`` : '`code`';
+      } else if (format === '[link](url)') {
+        replacement = selectedText ? `[${selectedText}](url)` : '[link text](url)';
+      }
+      
+      if (replacement) {
+        textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+        textarea.focus();
+        
+        // Set cursor position
+        const newPos = start + replacement.length;
+        textarea.setSelectionRange(newPos, newPos);
+      }
+    }
+    
+    // Clear form
+    function clearForm() {
+      const nameInput = document.getElementById('user-name');
+      const emailInput = document.getElementById('user-email');
+      const contentInput = document.getElementById('comment-content');
+      
+      if (nameInput) nameInput.value = '';
+      if (emailInput) emailInput.value = '';
+      if (contentInput) contentInput.value = '';
+    }
+    
+    // Setup reaction handlers
+    function setupReactionHandlers() {
+      // Add reaction buttons
+      document.querySelectorAll('.add-reaction-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const commentId = e.target.closest('.add-reaction-btn').dataset.commentId;
+          showReactionPicker(e.target, commentId);
+        });
+      });
+      
+      // Existing reaction buttons
+      document.querySelectorAll('.reaction-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const reaction = e.target.dataset.reaction;
+          const commentId = e.target.dataset.commentId;
+          handleReaction(reaction, commentId);
+        });
+      });
+      
+      // Reply buttons
+      document.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const commentId = e.target.dataset.commentId;
+          handleReply(commentId);
+        });
+      });
+    }
+    
+    // Show reaction picker
+    function showReactionPicker(trigger, commentId) {
+      // Remove existing picker
+      document.querySelectorAll('.reaction-picker').forEach(p => p.remove());
+      
+      const reactions = [
+        { emoji: '👍', key: 'thumbsup', name: 'thumbs up' },
+        { emoji: '👎', key: 'thumbsdown', name: 'thumbs down' },
+        { emoji: '❤️', key: 'heart', name: 'heart' },
+        { emoji: '😄', key: 'laugh', name: 'laugh' },
+        { emoji: '🎉', key: 'hooray', name: 'hooray' },
+        { emoji: '😕', key: 'confused', name: 'confused' },
+        { emoji: '🚀', key: 'rocket', name: 'rocket' },
+        { emoji: '👀', key: 'eyes', name: 'eyes' }
+      ];
+      
+      const picker = document.createElement('div');
+      picker.className = 'reaction-picker';
+      picker.innerHTML = reactions.map(r => 
+        `<div class="reaction-option" data-reaction="${r.key}" data-comment-id="${commentId}" title="${r.name}">${r.emoji}</div>`
+      ).join('');
+      
+      const rect = trigger.getBoundingClientRect();
+      picker.style.cssText = `
+        position: absolute;
+        top: ${rect.bottom + window.scrollY}px;
+        left: ${rect.left + window.scrollX}px;
+        background: white;
+        border: 1px solid #d1d9e0;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        padding: 12px;
+        display: flex;
+        gap: 8px;
+        z-index: 100;
+        border-radius: 8px;
+      `;
+      
+      // Dark mode support
+      if (document.documentElement.classList.contains('dark')) {
+        picker.style.background = '#21262d';
+        picker.style.borderColor = '#30363d';
+        picker.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)';
+      }
+      
+      document.body.appendChild(picker);
+      
+      // Handle reaction selection
+      picker.querySelectorAll('.reaction-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+          const reaction = e.target.dataset.reaction;
+          const commentId = e.target.dataset.commentId;
+          handleReaction(reaction, commentId);
+          picker.remove();
+        });
+      });
+      
+      // Close picker when clicking outside
+      setTimeout(() => {
+        document.addEventListener('click', function closePicker(e) {
+          if (!picker.contains(e.target) && e.target !== trigger) {
+            picker.remove();
+            document.removeEventListener('click', closePicker);
+          }
+        });
+      }, 100);
+    }
+    
+    // Handle reactions
+    function handleReaction(reaction, commentId) {
+      try {
+        const storageKey = `tinkbyte-comments-${postSlug}`;
+        const comments = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        
+        const comment = comments.find(c => c.id === commentId);
+        if (comment) {
+          if (!comment.reactions) {
+            comment.reactions = {};
+          }
+          
+          // Toggle reaction
+          if (comment.reactions[reaction]) {
+            comment.reactions[reaction]++;
+          } else {
+            comment.reactions[reaction] = 1;
+          }
+          
+          saveComments(comments);
+          displayComments(comments);
+        }
+      } catch (error) {
+        console.error('Error handling reaction:', error);
+      }
+    }
+    
+    // Handle replies
+    function handleReply(commentId) {
+      const formContainer = document.getElementById('comment-form-container');
+      const textarea = document.getElementById('comment-content');
+      
+      if (formContainer && textarea) {
+        formContainer.style.display = 'block';
+        textarea.value = `> Replying to comment...\n\n`;
+        textarea.focus();
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        
+        // Scroll to form
+        formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+    
+    // Show empty state
+    function showEmptyState() {
+      const commentsList = document.getElementById('comments-list');
+      const emptyComments = document.getElementById('empty-comments');
+      const commentCount = document.getElementById('comment-count');
+      
+      if (commentsList) commentsList.style.display = 'none';
+      if (emptyComments) emptyComments.style.display = 'block';
+      if (commentCount) commentCount.textContent = '(0)';
+    }
+    
+    // Show error state
+    function showErrorState() {
+      const commentsList = document.getElementById('comments-list');
+      if (commentsList) {
+        commentsList.innerHTML = `
+          <div class="loading-comments">
+            <div style="color: #d73a49; margin-bottom: 16px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+            </div>
+            <p style="color: #d73a49;">Failed to load comments. Please try again later.</p>
+          </div>
+        `;
+      }
+    }
+    
+    // Update reaction count
+    function updateReactionCount(comments) {
+      const reactionCount = document.getElementById('reaction-count');
+      if (!reactionCount) return;
+      
+      let totalReactions = 0;
+      comments.forEach(comment => {
+        const reactions = comment.reactions || {};
+        totalReactions += Object.values(reactions).reduce((sum, count) => sum + count, 0);
+      });
+      
+      reactionCount.textContent = totalReactions;
+    }
+    
+    // Update view count (simple localStorage-based counter)
+    function updateViewCount() {
+      const viewCount = document.getElementById('view-count');
+      if (!viewCount) return;
+      
+      const storageKey = `tinkbyte-views-${postSlug}`;
+      let views = parseInt(localStorage.getItem(storageKey) || '0');
+      
+      // Increment view count
+      views++;
+      localStorage.setItem(storageKey, views.toString());
+      
+      viewCount.textContent = views.toLocaleString();
+    }
+    
+    // Show alert messages
+    function showAlert(message, type = 'info') {
+      const alert = document.createElement('div');
+      alert.className = `tinkbyte-alert tinkbyte-alert-${type}`;
+      alert.innerHTML = `
+        <div class="alert-content">
+          <div class="alert-icon">
+            ${type === 'error' ? 
+              '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' :
+              '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>'
+            }
+          </div>
+          <span>${message}</span>
+          <button class="alert-close" onclick="this.parentElement.parentElement.remove()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      `;
+      
+      const isDark = document.documentElement.classList.contains('dark');
+      
+      alert.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'error' 
+          ? (isDark ? '#7f1d1d' : '#fef2f2') 
+          : (isDark ? '#1e40af' : '#f0f9ff')};
+        border: 1px solid ${type === 'error' 
+          ? (isDark ? '#dc2626' : '#fecaca') 
+          : (isDark ? '#3b82f6' : '#bae6fd')};
+        color: ${type === 'error' 
+          ? (isDark ? '#fca5a5' : '#dc2626') 
+          : (isDark ? '#dbeafe' : '#0369a1')};
+        padding: 16px;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        max-width: 400px;
+        animation: slideIn 0.3s ease-out;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      `;
+      
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+        .alert-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .alert-icon { flex-shrink: 0; }
+        .alert-close {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 4px;
+          margin-left: auto;
+          opacity: 0.7;
+          transition: opacity 0.2s ease;
+          color: inherit;
+        }
+        .alert-close:hover { opacity: 1; }
+      `;
+      document.head.appendChild(style);
+      
+      document.body.appendChild(alert);
+      
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        if (alert.parentElement) {
+          alert.style.animation = 'slideOut 0.3s ease-in';
+          setTimeout(() => {
+            alert.remove();
+            style.remove();
+          }, 300);
+        }
+      }, 5000);
+    }
+    
+    // Initialize the comments system
+    init();
+  }
+
+  // Update ReactionBar to scroll to comments when "Talk" is clicked
+  document.addEventListener('DOMContentLoaded', () => {
+    // Wait a bit for other scripts to load
+    setTimeout(() => {
+      // Find reaction bar talk button and add click handler
+      const talkButtons = document.querySelectorAll('[data-reaction="talk"], .reaction-talk, .talk-btn');
+      
+      talkButtons.forEach(talkButton => {
+        // Remove any existing listeners to avoid conflicts
+        const newTalkButton = talkButton.cloneNode(true);
+        talkButton.parentNode.replaceChild(newTalkButton, talkButton);
+        
+        newTalkButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const commentsSection = document.getElementById('comments-section');
+          if (commentsSection) {
+            commentsSection.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start' 
+            });
+            
+            // Auto-open comment form after scrolling
+            setTimeout(() => {
+              const newCommentBtn = document.getElementById('new-comment-btn');
+              if (newCommentBtn) {
+                newCommentBtn.click();
+              }
+            }, 800);
+          }
+        });
+      });
+    }, 1000);
+  });
+</script>

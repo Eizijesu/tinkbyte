@@ -1,0 +1,211 @@
+---
+// src/components/tina/ButtonBlock.astro - TinkByte Design System
+export interface Props {
+  text: string;
+  url: string;
+  style?: "primary" | "secondary" | "success" | "warning" | "danger" | "link";
+  size?: "small" | "medium" | "large";
+  alignment?: "left" | "center" | "right";
+  openInNewTab?: boolean;
+  icon?: string;
+}
+
+const {
+  text,
+  url,
+  style = "primary",
+  size = "medium",
+  alignment = "left",
+  openInNewTab = false,
+  icon,
+} = Astro.props;
+
+const styleClasses = {
+  primary:
+    "bg-tinkbyte-primary hover:bg-tinkbyte-primary-dark text-white border-2 border-tinkbyte-primary hover:border-tinkbyte-primary-dark",
+  secondary:
+    "bg-white hover:bg-gray-50 text-tinkbyte-primary border-2 border-tinkbyte-primary hover:border-tinkbyte-primary-dark",
+  success:
+    "bg-green-600 hover:bg-green-700 text-white border-2 border-green-600 hover:border-green-700",
+  warning:
+    "bg-yellow-600 hover:bg-yellow-700 text-white border-2 border-yellow-600 hover:border-yellow-700",
+  danger:
+    "bg-red-600 hover:bg-red-700 text-white border-2 border-red-600 hover:border-red-700",
+  link: "text-tinkbyte-primary hover:text-tinkbyte-primary-dark underline bg-transparent hover:bg-tinkbyte-light border-2 border-transparent",
+};
+
+const sizeClasses = {
+  small: "px-4 py-2 text-sm",
+  medium: "px-6 py-3 text-base",
+  large: "px-8 py-4 text-lg",
+};
+
+const alignmentClasses = {
+  left: "justify-start",
+  center: "justify-center",
+  right: "justify-end",
+};
+---
+
+<div class={`my-6 flex ${alignmentClasses[alignment]}`}>
+  <a
+    href={url}
+    target={openInNewTab ? "_blank" : "_self"}
+    rel={openInNewTab ? "noopener noreferrer" : undefined}
+    class={`tinkbyte-button inline-flex items-center gap-2 font-semibold transition-all duration-300 ${styleClasses[style]} ${sizeClasses[size]}`}
+    data-tina-field="url"
+  >
+    {icon && <span class="button-icon">{icon}</span>}
+    <span data-tina-field="text">{text}</span>
+    {
+      openInNewTab && (
+        <svg
+          class="w-4 h-4 ml-1"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+          />
+        </svg>
+      )
+    }
+  </a>
+</div>
+
+<style>
+  .tinkbyte-button {
+    font-family: "Space Grotesk", sans-serif;
+    border-radius: 0; /* Square corners */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    box-shadow: 0 2px 4px rgba(36, 55, 136, 0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tinkbyte-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  .tinkbyte-button:hover::before {
+    left: 100%;
+  }
+
+  .tinkbyte-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(36, 55, 136, 0.2);
+  }
+
+  .button-icon {
+    font-size: 1.125em;
+  }
+
+  /* TinkByte Brand Colors */
+  :root {
+    --tinkbyte-primary: #243788;
+    --tinkbyte-primary-dark: #1e2f6b;
+    --tinkbyte-light: #b4bce1;
+  }
+
+  .bg-tinkbyte-primary {
+    background-color: var(--tinkbyte-primary);
+  }
+
+  .bg-tinkbyte-primary-dark {
+    background-color: var(--tinkbyte-primary-dark);
+  }
+
+  .text-tinkbyte-primary {
+    color: var(--tinkbyte-primary);
+  }
+
+  .text-tinkbyte-primary-dark {
+    color: var(--tinkbyte-primary-dark);
+  }
+
+  .border-tinkbyte-primary {
+    border-color: var(--tinkbyte-primary);
+  }
+
+  .border-tinkbyte-primary-dark {
+    border-color: var(--tinkbyte-primary-dark);
+  }
+
+  .bg-tinkbyte-light {
+    background-color: rgba(180, 188, 225, 0.1);
+  }
+
+  /* Hover states */
+  .hover\\:bg-tinkbyte-primary-dark:hover {
+    background-color: var(--tinkbyte-primary-dark);
+  }
+
+  .hover\\:text-tinkbyte-primary-dark:hover {
+    color: var(--tinkbyte-primary-dark);
+  }
+
+  .hover\\:border-tinkbyte-primary-dark:hover {
+    border-color: var(--tinkbyte-primary-dark);
+  }
+
+  .hover\\:bg-tinkbyte-light:hover {
+    background-color: rgba(180, 188, 225, 0.1);
+  }
+
+  /* Dark mode support */
+  :global(.dark) .tinkbyte-button {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  :global(.dark) .tinkbyte-button:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .tinkbyte-button {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .my-6 {
+      margin: 1.5rem 0;
+    }
+  }
+
+  /* Accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .tinkbyte-button,
+    .tinkbyte-button::before {
+      transition: none;
+    }
+
+    .tinkbyte-button:hover {
+      transform: none;
+    }
+  }
+
+  /* Focus styles */
+  .tinkbyte-button:focus {
+    outline: 2px solid var(--tinkbyte-primary);
+    outline-offset: 2px;
+  }
+</style>

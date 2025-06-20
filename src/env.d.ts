@@ -2,6 +2,9 @@
 /// <reference path="../.astro/types.d.ts" />
 /// <reference types="astro/client" />
 
+declare module 'astro:components' {
+  export { default as ClientOnly } from 'astro/components';
+}
 interface ImportMetaEnv {
   // TinaCMS
   readonly TINA_CLIENT_ID: string;

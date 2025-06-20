@@ -84,18 +84,22 @@ export type Query = {
   document: DocumentNode;
   blog: Blog;
   blogConnection: BlogConnection;
+  newsletter: Newsletter;
+  newsletterConnection: NewsletterConnection;
+  allTopicsPage: AllTopicsPage;
+  allTopicsPageConnection: AllTopicsPageConnection;
+  podcast: Podcast;
+  podcastConnection: PodcastConnection;
+  contact: Contact;
+  contactConnection: ContactConnection;
+  legal: Legal;
+  legalConnection: LegalConnection;
+  pages: Pages;
+  pagesConnection: PagesConnection;
   categories: Categories;
   categoriesConnection: CategoriesConnection;
   authors: Authors;
   authorsConnection: AuthorsConnection;
-  podcast: Podcast;
-  podcastConnection: PodcastConnection;
-  newsletter: Newsletter;
-  newsletterConnection: NewsletterConnection;
-  pages: Pages;
-  pagesConnection: PagesConnection;
-  legalPages: LegalPages;
-  legalPagesConnection: LegalPagesConnection;
   settings: Settings;
   settingsConnection: SettingsConnection;
 };
@@ -137,6 +141,96 @@ export type QueryBlogConnectionArgs = {
 };
 
 
+export type QueryNewsletterArgs = {
+  relativePath?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryNewsletterConnectionArgs = {
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<NewsletterFilter>;
+};
+
+
+export type QueryAllTopicsPageArgs = {
+  relativePath?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryAllTopicsPageConnectionArgs = {
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<AllTopicsPageFilter>;
+};
+
+
+export type QueryPodcastArgs = {
+  relativePath?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryPodcastConnectionArgs = {
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<PodcastFilter>;
+};
+
+
+export type QueryContactArgs = {
+  relativePath?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryContactConnectionArgs = {
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<ContactFilter>;
+};
+
+
+export type QueryLegalArgs = {
+  relativePath?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryLegalConnectionArgs = {
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<LegalFilter>;
+};
+
+
+export type QueryPagesArgs = {
+  relativePath?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueryPagesConnectionArgs = {
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<PagesFilter>;
+};
+
+
 export type QueryCategoriesArgs = {
   relativePath?: InputMaybe<Scalars['String']['input']>;
 };
@@ -167,66 +261,6 @@ export type QueryAuthorsConnectionArgs = {
 };
 
 
-export type QueryPodcastArgs = {
-  relativePath?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryPodcastConnectionArgs = {
-  before?: InputMaybe<Scalars['String']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Float']['input']>;
-  last?: InputMaybe<Scalars['Float']['input']>;
-  sort?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<PodcastFilter>;
-};
-
-
-export type QueryNewsletterArgs = {
-  relativePath?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryNewsletterConnectionArgs = {
-  before?: InputMaybe<Scalars['String']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Float']['input']>;
-  last?: InputMaybe<Scalars['Float']['input']>;
-  sort?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<NewsletterFilter>;
-};
-
-
-export type QueryPagesArgs = {
-  relativePath?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryPagesConnectionArgs = {
-  before?: InputMaybe<Scalars['String']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Float']['input']>;
-  last?: InputMaybe<Scalars['Float']['input']>;
-  sort?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<PagesFilter>;
-};
-
-
-export type QueryLegalPagesArgs = {
-  relativePath?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryLegalPagesConnectionArgs = {
-  before?: InputMaybe<Scalars['String']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Float']['input']>;
-  last?: InputMaybe<Scalars['Float']['input']>;
-  sort?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<LegalPagesFilter>;
-};
-
-
 export type QuerySettingsArgs = {
   relativePath?: InputMaybe<Scalars['String']['input']>;
 };
@@ -243,12 +277,14 @@ export type QuerySettingsConnectionArgs = {
 
 export type DocumentFilter = {
   blog?: InputMaybe<BlogFilter>;
+  newsletter?: InputMaybe<NewsletterFilter>;
+  allTopicsPage?: InputMaybe<AllTopicsPageFilter>;
+  podcast?: InputMaybe<PodcastFilter>;
+  contact?: InputMaybe<ContactFilter>;
+  legal?: InputMaybe<LegalFilter>;
+  pages?: InputMaybe<PagesFilter>;
   categories?: InputMaybe<CategoriesFilter>;
   authors?: InputMaybe<AuthorsFilter>;
-  podcast?: InputMaybe<PodcastFilter>;
-  newsletter?: InputMaybe<NewsletterFilter>;
-  pages?: InputMaybe<PagesFilter>;
-  legalPages?: InputMaybe<LegalPagesFilter>;
   settings?: InputMaybe<SettingsFilter>;
 };
 
@@ -289,7 +325,14 @@ export type CollectionDocumentsArgs = {
   folder?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type DocumentNode = Blog | Categories | Authors | Podcast | Newsletter | Pages | LegalPages | Settings | Folder;
+export type DocumentNode = Blog | Newsletter | AllTopicsPage | Podcast | Contact | Legal | Pages | Categories | Authors | Settings | Folder;
+
+export type BlogEditorial = {
+  __typename?: 'BlogEditorial';
+  status?: Maybe<Scalars['String']['output']>;
+  assignedEditor?: Maybe<Scalars['String']['output']>;
+  editorNotes?: Maybe<Scalars['String']['output']>;
+};
 
 export type BlogAuthorInfoSocial = {
   __typename?: 'BlogAuthorInfoSocial';
@@ -308,8 +351,18 @@ export type BlogAuthorInfo = {
   social?: Maybe<BlogAuthorInfoSocial>;
 };
 
+export type BlogHeroImage = {
+  __typename?: 'BlogHeroImage';
+  imageType: Scalars['String']['output'];
+  uploadedImage?: Maybe<Scalars['String']['output']>;
+  externalUrl?: Maybe<Scalars['String']['output']>;
+  alt: Scalars['String']['output'];
+  caption?: Maybe<Scalars['String']['output']>;
+};
+
 export type BlogSeo = {
   __typename?: 'BlogSeo';
+  customSEO?: Maybe<Scalars['Boolean']['output']>;
   title?: Maybe<Scalars['String']['output']>;
   description?: Maybe<Scalars['String']['output']>;
   canonical?: Maybe<Scalars['String']['output']>;
@@ -318,11 +371,13 @@ export type BlogSeo = {
 
 export type Blog = Node & Document & {
   __typename?: 'Blog';
+  editorial?: Maybe<BlogEditorial>;
   title: Scalars['String']['output'];
   excerpt: Scalars['String']['output'];
   pubDate: Scalars['String']['output'];
   updatedDate?: Maybe<Scalars['String']['output']>;
   authorInfo?: Maybe<BlogAuthorInfo>;
+  heroImage?: Maybe<BlogHeroImage>;
   image?: Maybe<Scalars['String']['output']>;
   imageAlt?: Maybe<Scalars['String']['output']>;
   category: Scalars['String']['output'];
@@ -332,6 +387,7 @@ export type Blog = Node & Document & {
   trending?: Maybe<Scalars['Boolean']['output']>;
   draft?: Maybe<Scalars['Boolean']['output']>;
   readTime?: Maybe<Scalars['String']['output']>;
+  hasAudio?: Maybe<Scalars['Boolean']['output']>;
   audioUrl?: Maybe<Scalars['String']['output']>;
   audioDuration?: Maybe<Scalars['String']['output']>;
   audioTranscript?: Maybe<Scalars['String']['output']>;
@@ -347,6 +403,12 @@ export type StringFilter = {
   eq?: InputMaybe<Scalars['String']['input']>;
   exists?: InputMaybe<Scalars['Boolean']['input']>;
   in?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type BlogEditorialFilter = {
+  status?: InputMaybe<StringFilter>;
+  assignedEditor?: InputMaybe<StringFilter>;
+  editorNotes?: InputMaybe<StringFilter>;
 };
 
 export type DatetimeFilter = {
@@ -379,16 +441,53 @@ export type BlogAuthorInfoFilter = {
   social?: InputMaybe<BlogAuthorInfoSocialFilter>;
 };
 
+export type BlogHeroImageFilter = {
+  imageType?: InputMaybe<StringFilter>;
+  uploadedImage?: InputMaybe<ImageFilter>;
+  externalUrl?: InputMaybe<StringFilter>;
+  alt?: InputMaybe<StringFilter>;
+  caption?: InputMaybe<StringFilter>;
+};
+
 export type BooleanFilter = {
   eq?: InputMaybe<Scalars['Boolean']['input']>;
   exists?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type BlogSeoFilter = {
+  customSEO?: InputMaybe<BooleanFilter>;
   title?: InputMaybe<StringFilter>;
   description?: InputMaybe<StringFilter>;
   canonical?: InputMaybe<StringFilter>;
   noindex?: InputMaybe<BooleanFilter>;
+};
+
+export type BlogBodyNewsletterFilter = {
+  variant?: InputMaybe<StringFilter>;
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  buttonText?: InputMaybe<StringFilter>;
+  showFeatures?: InputMaybe<BooleanFilter>;
+  features?: InputMaybe<StringFilter>;
+};
+
+export type BlogBodyImageBlockFilter = {
+  sourceType?: InputMaybe<StringFilter>;
+  uploadedImage?: InputMaybe<ImageFilter>;
+  externalUrl?: InputMaybe<StringFilter>;
+  alt?: InputMaybe<StringFilter>;
+  caption?: InputMaybe<StringFilter>;
+  size?: InputMaybe<StringFilter>;
+  enableLightbox?: InputMaybe<BooleanFilter>;
+};
+
+export type BlogBodyVideoBlockFilter = {
+  platform?: InputMaybe<StringFilter>;
+  url?: InputMaybe<StringFilter>;
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  aspectRatio?: InputMaybe<StringFilter>;
+  startTime?: InputMaybe<StringFilter>;
 };
 
 export type RichTextFilter = {
@@ -399,16 +498,73 @@ export type RichTextFilter = {
 
 export type BlogBodyCalloutFilter = {
   type?: InputMaybe<StringFilter>;
+  customColor?: InputMaybe<StringFilter>;
   title?: InputMaybe<StringFilter>;
   content?: InputMaybe<RichTextFilter>;
+  dismissible?: InputMaybe<BooleanFilter>;
 };
 
-export type BlogBodyImageBlockFilter = {
-  src?: InputMaybe<ImageFilter>;
-  alt?: InputMaybe<StringFilter>;
-  caption?: InputMaybe<StringFilter>;
+export type BlogBodyCodeBlockFilter = {
+  language?: InputMaybe<StringFilter>;
+  customLanguage?: InputMaybe<StringFilter>;
+  filename?: InputMaybe<StringFilter>;
+  code?: InputMaybe<StringFilter>;
+  showLineNumbers?: InputMaybe<BooleanFilter>;
+  highlightLines?: InputMaybe<StringFilter>;
+};
+
+export type BlogBodyQuoteFilter = {
+  quote?: InputMaybe<StringFilter>;
+  author?: InputMaybe<StringFilter>;
+  role?: InputMaybe<StringFilter>;
+  company?: InputMaybe<StringFilter>;
+  avatar?: InputMaybe<StringFilter>;
+  style?: InputMaybe<StringFilter>;
+  citation?: InputMaybe<StringFilter>;
+};
+
+export type BlogBodyButtonBlockFilter = {
+  text?: InputMaybe<StringFilter>;
+  url?: InputMaybe<StringFilter>;
+  style?: InputMaybe<StringFilter>;
+  customColor?: InputMaybe<StringFilter>;
   size?: InputMaybe<StringFilter>;
   alignment?: InputMaybe<StringFilter>;
+  openInNewTab?: InputMaybe<BooleanFilter>;
+  icon?: InputMaybe<StringFilter>;
+  iconPosition?: InputMaybe<StringFilter>;
+};
+
+export type BlogBodyTableBlockRowsFilter = {
+  cells?: InputMaybe<StringFilter>;
+};
+
+export type BlogBodyTableBlockFilter = {
+  caption?: InputMaybe<StringFilter>;
+  hasHeaders?: InputMaybe<BooleanFilter>;
+  headers?: InputMaybe<StringFilter>;
+  rows?: InputMaybe<BlogBodyTableBlockRowsFilter>;
+  style?: InputMaybe<StringFilter>;
+  sortable?: InputMaybe<BooleanFilter>;
+};
+
+export type BlogBodyTwoColumnLayoutFilter = {
+  variant?: InputMaybe<StringFilter>;
+  customRatio?: InputMaybe<StringFilter>;
+  leftContent?: InputMaybe<RichTextFilter>;
+  rightContent?: InputMaybe<RichTextFilter>;
+  gap?: InputMaybe<StringFilter>;
+  stackOnMobile?: InputMaybe<BooleanFilter>;
+};
+
+export type NumberFilter = {
+  lt?: InputMaybe<Scalars['Float']['input']>;
+  lte?: InputMaybe<Scalars['Float']['input']>;
+  gte?: InputMaybe<Scalars['Float']['input']>;
+  gt?: InputMaybe<Scalars['Float']['input']>;
+  eq?: InputMaybe<Scalars['Float']['input']>;
+  exists?: InputMaybe<Scalars['Boolean']['input']>;
+  in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
 };
 
 export type BlogBodyImageGalleryImagesFilter = {
@@ -420,54 +576,32 @@ export type BlogBodyImageGalleryImagesFilter = {
 export type BlogBodyImageGalleryFilter = {
   caption?: InputMaybe<StringFilter>;
   layout?: InputMaybe<StringFilter>;
+  autoplay?: InputMaybe<BooleanFilter>;
+  autoplaySpeed?: InputMaybe<NumberFilter>;
   images?: InputMaybe<BlogBodyImageGalleryImagesFilter>;
 };
 
-export type BlogBodyCodeBlockFilter = {
-  language?: InputMaybe<StringFilter>;
-  filename?: InputMaybe<StringFilter>;
-  code?: InputMaybe<StringFilter>;
-};
-
-export type BlogBodyQuoteFilter = {
-  quote?: InputMaybe<StringFilter>;
-  author?: InputMaybe<StringFilter>;
-  role?: InputMaybe<StringFilter>;
-};
-
-export type BlogBodyNewsletterFilter = {
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
-};
-
-export type BlogBodyTwoColumnLayoutFilter = {
-  leftContent?: InputMaybe<RichTextFilter>;
-  rightContent?: InputMaybe<RichTextFilter>;
-};
-
-export type BlogBodyVideoEmbedFilter = {
-  url?: InputMaybe<StringFilter>;
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
-};
-
 export type BlogBodyFilter = {
-  callout?: InputMaybe<BlogBodyCalloutFilter>;
+  Newsletter?: InputMaybe<BlogBodyNewsletterFilter>;
   ImageBlock?: InputMaybe<BlogBodyImageBlockFilter>;
-  ImageGallery?: InputMaybe<BlogBodyImageGalleryFilter>;
-  codeBlock?: InputMaybe<BlogBodyCodeBlockFilter>;
-  quote?: InputMaybe<BlogBodyQuoteFilter>;
-  newsletter?: InputMaybe<BlogBodyNewsletterFilter>;
+  VideoBlock?: InputMaybe<BlogBodyVideoBlockFilter>;
+  Callout?: InputMaybe<BlogBodyCalloutFilter>;
+  CodeBlock?: InputMaybe<BlogBodyCodeBlockFilter>;
+  Quote?: InputMaybe<BlogBodyQuoteFilter>;
+  ButtonBlock?: InputMaybe<BlogBodyButtonBlockFilter>;
+  TableBlock?: InputMaybe<BlogBodyTableBlockFilter>;
   TwoColumnLayout?: InputMaybe<BlogBodyTwoColumnLayoutFilter>;
-  VideoEmbed?: InputMaybe<BlogBodyVideoEmbedFilter>;
+  ImageGallery?: InputMaybe<BlogBodyImageGalleryFilter>;
 };
 
 export type BlogFilter = {
+  editorial?: InputMaybe<BlogEditorialFilter>;
   title?: InputMaybe<StringFilter>;
   excerpt?: InputMaybe<StringFilter>;
   pubDate?: InputMaybe<DatetimeFilter>;
   updatedDate?: InputMaybe<DatetimeFilter>;
   authorInfo?: InputMaybe<BlogAuthorInfoFilter>;
+  heroImage?: InputMaybe<BlogHeroImageFilter>;
   image?: InputMaybe<ImageFilter>;
   imageAlt?: InputMaybe<StringFilter>;
   category?: InputMaybe<StringFilter>;
@@ -477,6 +611,7 @@ export type BlogFilter = {
   trending?: InputMaybe<BooleanFilter>;
   draft?: InputMaybe<BooleanFilter>;
   readTime?: InputMaybe<StringFilter>;
+  hasAudio?: InputMaybe<BooleanFilter>;
   audioUrl?: InputMaybe<StringFilter>;
   audioDuration?: InputMaybe<StringFilter>;
   audioTranscript?: InputMaybe<StringFilter>;
@@ -497,10 +632,629 @@ export type BlogConnection = Connection & {
   edges?: Maybe<Array<Maybe<BlogConnectionEdges>>>;
 };
 
-export type CategoriesSeo = {
-  __typename?: 'CategoriesSeo';
+export type NewsletterHighlights = {
+  __typename?: 'NewsletterHighlights';
+  title: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  link?: Maybe<Scalars['String']['output']>;
+};
+
+export type NewsletterStats = {
+  __typename?: 'NewsletterStats';
+  subscribers?: Maybe<Scalars['Float']['output']>;
+  openRate?: Maybe<Scalars['Float']['output']>;
+  clickRate?: Maybe<Scalars['Float']['output']>;
+};
+
+export type NewsletterSeo = {
+  __typename?: 'NewsletterSeo';
   title?: Maybe<Scalars['String']['output']>;
   description?: Maybe<Scalars['String']['output']>;
+};
+
+export type Newsletter = Node & Document & {
+  __typename?: 'Newsletter';
+  title: Scalars['String']['output'];
+  issueNumber: Scalars['Float']['output'];
+  newsletterType: Scalars['String']['output'];
+  excerpt: Scalars['String']['output'];
+  subscriberOnly?: Maybe<Scalars['Boolean']['output']>;
+  previewContent?: Maybe<Scalars['String']['output']>;
+  publishDate: Scalars['String']['output'];
+  status?: Maybe<Scalars['String']['output']>;
+  featured?: Maybe<Scalars['Boolean']['output']>;
+  coverImage?: Maybe<Scalars['String']['output']>;
+  highlights?: Maybe<Array<Maybe<NewsletterHighlights>>>;
+  trackStats?: Maybe<Scalars['Boolean']['output']>;
+  stats?: Maybe<NewsletterStats>;
+  tags?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  seo?: Maybe<NewsletterSeo>;
+  body?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['ID']['output'];
+  _sys: SystemInfo;
+  _values: Scalars['JSON']['output'];
+};
+
+export type NewsletterHighlightsFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  link?: InputMaybe<StringFilter>;
+};
+
+export type NewsletterStatsFilter = {
+  subscribers?: InputMaybe<NumberFilter>;
+  openRate?: InputMaybe<NumberFilter>;
+  clickRate?: InputMaybe<NumberFilter>;
+};
+
+export type NewsletterSeoFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+};
+
+export type NewsletterBodyNewsletterSectionFilter = {
+  title?: InputMaybe<StringFilter>;
+  icon?: InputMaybe<StringFilter>;
+  content?: InputMaybe<RichTextFilter>;
+};
+
+export type NewsletterBodyArticleHighlightFilter = {
+  title?: InputMaybe<StringFilter>;
+  url?: InputMaybe<StringFilter>;
+  excerpt?: InputMaybe<StringFilter>;
+  author?: InputMaybe<StringFilter>;
+  readTime?: InputMaybe<StringFilter>;
+};
+
+export type NewsletterBodyFilter = {
+  NewsletterSection?: InputMaybe<NewsletterBodyNewsletterSectionFilter>;
+  ArticleHighlight?: InputMaybe<NewsletterBodyArticleHighlightFilter>;
+};
+
+export type NewsletterFilter = {
+  title?: InputMaybe<StringFilter>;
+  issueNumber?: InputMaybe<NumberFilter>;
+  newsletterType?: InputMaybe<StringFilter>;
+  excerpt?: InputMaybe<StringFilter>;
+  subscriberOnly?: InputMaybe<BooleanFilter>;
+  previewContent?: InputMaybe<StringFilter>;
+  publishDate?: InputMaybe<DatetimeFilter>;
+  status?: InputMaybe<StringFilter>;
+  featured?: InputMaybe<BooleanFilter>;
+  coverImage?: InputMaybe<ImageFilter>;
+  highlights?: InputMaybe<NewsletterHighlightsFilter>;
+  trackStats?: InputMaybe<BooleanFilter>;
+  stats?: InputMaybe<NewsletterStatsFilter>;
+  tags?: InputMaybe<StringFilter>;
+  seo?: InputMaybe<NewsletterSeoFilter>;
+  body?: InputMaybe<NewsletterBodyFilter>;
+};
+
+export type NewsletterConnectionEdges = {
+  __typename?: 'NewsletterConnectionEdges';
+  cursor: Scalars['String']['output'];
+  node?: Maybe<Newsletter>;
+};
+
+export type NewsletterConnection = Connection & {
+  __typename?: 'NewsletterConnection';
+  pageInfo: PageInfo;
+  totalCount: Scalars['Float']['output'];
+  edges?: Maybe<Array<Maybe<NewsletterConnectionEdges>>>;
+};
+
+export type AllTopicsPageHero = {
+  __typename?: 'AllTopicsPageHero';
+  badgeText: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+  titleAccent: Scalars['String']['output'];
+  subtitle: Scalars['String']['output'];
+};
+
+export type AllTopicsPageTopics = {
+  __typename?: 'AllTopicsPageTopics';
+  name: Scalars['String']['output'];
+  href: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  audience: Scalars['String']['output'];
+};
+
+export type AllTopicsPageStats = {
+  __typename?: 'AllTopicsPageStats';
+  topicCount?: Maybe<Scalars['Float']['output']>;
+  articleCount?: Maybe<Scalars['String']['output']>;
+  storiesLabel?: Maybe<Scalars['String']['output']>;
+};
+
+export type AllTopicsPageCta = {
+  __typename?: 'AllTopicsPageCta';
+  title: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  primaryButtonText: Scalars['String']['output'];
+  primaryButtonLink: Scalars['String']['output'];
+  secondaryButtonText: Scalars['String']['output'];
+  secondaryButtonLink: Scalars['String']['output'];
+};
+
+export type AllTopicsPage = Node & Document & {
+  __typename?: 'AllTopicsPage';
+  hero?: Maybe<AllTopicsPageHero>;
+  topics?: Maybe<Array<Maybe<AllTopicsPageTopics>>>;
+  stats?: Maybe<AllTopicsPageStats>;
+  cta?: Maybe<AllTopicsPageCta>;
+  id: Scalars['ID']['output'];
+  _sys: SystemInfo;
+  _values: Scalars['JSON']['output'];
+};
+
+export type AllTopicsPageHeroFilter = {
+  badgeText?: InputMaybe<StringFilter>;
+  title?: InputMaybe<StringFilter>;
+  titleAccent?: InputMaybe<StringFilter>;
+  subtitle?: InputMaybe<StringFilter>;
+};
+
+export type AllTopicsPageTopicsFilter = {
+  name?: InputMaybe<StringFilter>;
+  href?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  audience?: InputMaybe<StringFilter>;
+};
+
+export type AllTopicsPageStatsFilter = {
+  topicCount?: InputMaybe<NumberFilter>;
+  articleCount?: InputMaybe<StringFilter>;
+  storiesLabel?: InputMaybe<StringFilter>;
+};
+
+export type AllTopicsPageCtaFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  primaryButtonText?: InputMaybe<StringFilter>;
+  primaryButtonLink?: InputMaybe<StringFilter>;
+  secondaryButtonText?: InputMaybe<StringFilter>;
+  secondaryButtonLink?: InputMaybe<StringFilter>;
+};
+
+export type AllTopicsPageFilter = {
+  hero?: InputMaybe<AllTopicsPageHeroFilter>;
+  topics?: InputMaybe<AllTopicsPageTopicsFilter>;
+  stats?: InputMaybe<AllTopicsPageStatsFilter>;
+  cta?: InputMaybe<AllTopicsPageCtaFilter>;
+};
+
+export type AllTopicsPageConnectionEdges = {
+  __typename?: 'AllTopicsPageConnectionEdges';
+  cursor: Scalars['String']['output'];
+  node?: Maybe<AllTopicsPage>;
+};
+
+export type AllTopicsPageConnection = Connection & {
+  __typename?: 'AllTopicsPageConnection';
+  pageInfo: PageInfo;
+  totalCount: Scalars['Float']['output'];
+  edges?: Maybe<Array<Maybe<AllTopicsPageConnectionEdges>>>;
+};
+
+export type PodcastGuestsSocial = {
+  __typename?: 'PodcastGuestsSocial';
+  twitter?: Maybe<Scalars['String']['output']>;
+  linkedin?: Maybe<Scalars['String']['output']>;
+};
+
+export type PodcastGuests = {
+  __typename?: 'PodcastGuests';
+  name: Scalars['String']['output'];
+  role?: Maybe<Scalars['String']['output']>;
+  company?: Maybe<Scalars['String']['output']>;
+  bio?: Maybe<Scalars['String']['output']>;
+  photo?: Maybe<Scalars['String']['output']>;
+  social?: Maybe<PodcastGuestsSocial>;
+};
+
+export type PodcastSeo = {
+  __typename?: 'PodcastSeo';
+  title?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  canonical?: Maybe<Scalars['String']['output']>;
+};
+
+export type Podcast = Node & Document & {
+  __typename?: 'Podcast';
+  title: Scalars['String']['output'];
+  episode: Scalars['Float']['output'];
+  description: Scalars['String']['output'];
+  pubDate: Scalars['String']['output'];
+  status?: Maybe<Scalars['String']['output']>;
+  duration: Scalars['String']['output'];
+  audioUrl?: Maybe<Scalars['String']['output']>;
+  downloadable?: Maybe<Scalars['Boolean']['output']>;
+  image?: Maybe<Scalars['String']['output']>;
+  guests?: Maybe<Array<Maybe<PodcastGuests>>>;
+  tags?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  featured?: Maybe<Scalars['Boolean']['output']>;
+  transcript?: Maybe<Scalars['String']['output']>;
+  seo?: Maybe<PodcastSeo>;
+  body?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['ID']['output'];
+  _sys: SystemInfo;
+  _values: Scalars['JSON']['output'];
+};
+
+export type PodcastGuestsSocialFilter = {
+  twitter?: InputMaybe<StringFilter>;
+  linkedin?: InputMaybe<StringFilter>;
+};
+
+export type PodcastGuestsFilter = {
+  name?: InputMaybe<StringFilter>;
+  role?: InputMaybe<StringFilter>;
+  company?: InputMaybe<StringFilter>;
+  bio?: InputMaybe<StringFilter>;
+  photo?: InputMaybe<ImageFilter>;
+  social?: InputMaybe<PodcastGuestsSocialFilter>;
+};
+
+export type PodcastSeoFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  canonical?: InputMaybe<StringFilter>;
+};
+
+export type PodcastFilter = {
+  title?: InputMaybe<StringFilter>;
+  episode?: InputMaybe<NumberFilter>;
+  description?: InputMaybe<StringFilter>;
+  pubDate?: InputMaybe<DatetimeFilter>;
+  status?: InputMaybe<StringFilter>;
+  duration?: InputMaybe<StringFilter>;
+  audioUrl?: InputMaybe<StringFilter>;
+  downloadable?: InputMaybe<BooleanFilter>;
+  image?: InputMaybe<ImageFilter>;
+  guests?: InputMaybe<PodcastGuestsFilter>;
+  tags?: InputMaybe<StringFilter>;
+  featured?: InputMaybe<BooleanFilter>;
+  transcript?: InputMaybe<StringFilter>;
+  seo?: InputMaybe<PodcastSeoFilter>;
+  body?: InputMaybe<RichTextFilter>;
+};
+
+export type PodcastConnectionEdges = {
+  __typename?: 'PodcastConnectionEdges';
+  cursor: Scalars['String']['output'];
+  node?: Maybe<Podcast>;
+};
+
+export type PodcastConnection = Connection & {
+  __typename?: 'PodcastConnection';
+  pageInfo: PageInfo;
+  totalCount: Scalars['Float']['output'];
+  edges?: Maybe<Array<Maybe<PodcastConnectionEdges>>>;
+};
+
+export type ContactHero = {
+  __typename?: 'ContactHero';
+  title?: Maybe<Scalars['String']['output']>;
+  titleAccent?: Maybe<Scalars['String']['output']>;
+  subtitle?: Maybe<Scalars['String']['output']>;
+  responseTime?: Maybe<Scalars['String']['output']>;
+  badgeText?: Maybe<Scalars['String']['output']>;
+};
+
+export type ContactContactMethods = {
+  __typename?: 'ContactContactMethods';
+  title: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  email: Scalars['String']['output'];
+  icon?: Maybe<Scalars['String']['output']>;
+  color?: Maybe<Scalars['String']['output']>;
+  featured?: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type ContactSocialLinks = {
+  __typename?: 'ContactSocialLinks';
+  name: Scalars['String']['output'];
+  url: Scalars['String']['output'];
+  icon?: Maybe<Scalars['String']['output']>;
+  color?: Maybe<Scalars['String']['output']>;
+  showInContact?: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type ContactFaqItems = {
+  __typename?: 'ContactFaqItems';
+  question: Scalars['String']['output'];
+  answer: Scalars['JSON']['output'];
+  category?: Maybe<Scalars['String']['output']>;
+  featured?: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type ContactFaq = {
+  __typename?: 'ContactFaq';
+  enabled?: Maybe<Scalars['Boolean']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+  titleAccent?: Maybe<Scalars['String']['output']>;
+  subtitle?: Maybe<Scalars['String']['output']>;
+  items?: Maybe<Array<Maybe<ContactFaqItems>>>;
+};
+
+export type ContactCtaPrimaryButton = {
+  __typename?: 'ContactCtaPrimaryButton';
+  text?: Maybe<Scalars['String']['output']>;
+  link?: Maybe<Scalars['String']['output']>;
+};
+
+export type ContactCtaSecondaryButton = {
+  __typename?: 'ContactCtaSecondaryButton';
+  text?: Maybe<Scalars['String']['output']>;
+  link?: Maybe<Scalars['String']['output']>;
+};
+
+export type ContactCta = {
+  __typename?: 'ContactCta';
+  title?: Maybe<Scalars['String']['output']>;
+  titleAccent?: Maybe<Scalars['String']['output']>;
+  subtitle?: Maybe<Scalars['String']['output']>;
+  primaryButton?: Maybe<ContactCtaPrimaryButton>;
+  secondaryButton?: Maybe<ContactCtaSecondaryButton>;
+};
+
+export type ContactSeo = {
+  __typename?: 'ContactSeo';
+  title?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  canonical?: Maybe<Scalars['String']['output']>;
+  noindex?: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type Contact = Node & Document & {
+  __typename?: 'Contact';
+  title: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  pubDate?: Maybe<Scalars['String']['output']>;
+  hero?: Maybe<ContactHero>;
+  contactMethods?: Maybe<Array<Maybe<ContactContactMethods>>>;
+  socialLinks?: Maybe<Array<Maybe<ContactSocialLinks>>>;
+  faq?: Maybe<ContactFaq>;
+  cta?: Maybe<ContactCta>;
+  seo?: Maybe<ContactSeo>;
+  body?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['ID']['output'];
+  _sys: SystemInfo;
+  _values: Scalars['JSON']['output'];
+};
+
+export type ContactHeroFilter = {
+  title?: InputMaybe<StringFilter>;
+  titleAccent?: InputMaybe<StringFilter>;
+  subtitle?: InputMaybe<StringFilter>;
+  responseTime?: InputMaybe<StringFilter>;
+  badgeText?: InputMaybe<StringFilter>;
+};
+
+export type ContactContactMethodsFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  email?: InputMaybe<StringFilter>;
+  icon?: InputMaybe<StringFilter>;
+  color?: InputMaybe<StringFilter>;
+  featured?: InputMaybe<BooleanFilter>;
+};
+
+export type ContactSocialLinksFilter = {
+  name?: InputMaybe<StringFilter>;
+  url?: InputMaybe<StringFilter>;
+  icon?: InputMaybe<StringFilter>;
+  color?: InputMaybe<StringFilter>;
+  showInContact?: InputMaybe<BooleanFilter>;
+};
+
+export type ContactFaqItemsAnswerLinkFilter = {
+  url?: InputMaybe<StringFilter>;
+  text?: InputMaybe<StringFilter>;
+};
+
+export type ContactFaqItemsAnswerFilter = {
+  link?: InputMaybe<ContactFaqItemsAnswerLinkFilter>;
+};
+
+export type ContactFaqItemsFilter = {
+  question?: InputMaybe<StringFilter>;
+  answer?: InputMaybe<ContactFaqItemsAnswerFilter>;
+  category?: InputMaybe<StringFilter>;
+  featured?: InputMaybe<BooleanFilter>;
+};
+
+export type ContactFaqFilter = {
+  enabled?: InputMaybe<BooleanFilter>;
+  title?: InputMaybe<StringFilter>;
+  titleAccent?: InputMaybe<StringFilter>;
+  subtitle?: InputMaybe<StringFilter>;
+  items?: InputMaybe<ContactFaqItemsFilter>;
+};
+
+export type ContactCtaPrimaryButtonFilter = {
+  text?: InputMaybe<StringFilter>;
+  link?: InputMaybe<StringFilter>;
+};
+
+export type ContactCtaSecondaryButtonFilter = {
+  text?: InputMaybe<StringFilter>;
+  link?: InputMaybe<StringFilter>;
+};
+
+export type ContactCtaFilter = {
+  title?: InputMaybe<StringFilter>;
+  titleAccent?: InputMaybe<StringFilter>;
+  subtitle?: InputMaybe<StringFilter>;
+  primaryButton?: InputMaybe<ContactCtaPrimaryButtonFilter>;
+  secondaryButton?: InputMaybe<ContactCtaSecondaryButtonFilter>;
+};
+
+export type ContactSeoFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  canonical?: InputMaybe<StringFilter>;
+  noindex?: InputMaybe<BooleanFilter>;
+};
+
+export type ContactFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  pubDate?: InputMaybe<DatetimeFilter>;
+  hero?: InputMaybe<ContactHeroFilter>;
+  contactMethods?: InputMaybe<ContactContactMethodsFilter>;
+  socialLinks?: InputMaybe<ContactSocialLinksFilter>;
+  faq?: InputMaybe<ContactFaqFilter>;
+  cta?: InputMaybe<ContactCtaFilter>;
+  seo?: InputMaybe<ContactSeoFilter>;
+  body?: InputMaybe<RichTextFilter>;
+};
+
+export type ContactConnectionEdges = {
+  __typename?: 'ContactConnectionEdges';
+  cursor: Scalars['String']['output'];
+  node?: Maybe<Contact>;
+};
+
+export type ContactConnection = Connection & {
+  __typename?: 'ContactConnection';
+  pageInfo: PageInfo;
+  totalCount: Scalars['Float']['output'];
+  edges?: Maybe<Array<Maybe<ContactConnectionEdges>>>;
+};
+
+export type LegalContact = {
+  __typename?: 'LegalContact';
+  email?: Maybe<Scalars['String']['output']>;
+  address?: Maybe<Scalars['String']['output']>;
+  phone?: Maybe<Scalars['String']['output']>;
+};
+
+export type LegalSeo = {
+  __typename?: 'LegalSeo';
+  title?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  noindex?: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type Legal = Node & Document & {
+  __typename?: 'Legal';
+  title: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  pubDate: Scalars['String']['output'];
+  updatedDate?: Maybe<Scalars['String']['output']>;
+  effectiveDate?: Maybe<Scalars['String']['output']>;
+  pageType?: Maybe<Scalars['String']['output']>;
+  contact?: Maybe<LegalContact>;
+  seo?: Maybe<LegalSeo>;
+  body?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['ID']['output'];
+  _sys: SystemInfo;
+  _values: Scalars['JSON']['output'];
+};
+
+export type LegalContactFilter = {
+  email?: InputMaybe<StringFilter>;
+  address?: InputMaybe<StringFilter>;
+  phone?: InputMaybe<StringFilter>;
+};
+
+export type LegalSeoFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  noindex?: InputMaybe<BooleanFilter>;
+};
+
+export type LegalFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  pubDate?: InputMaybe<DatetimeFilter>;
+  updatedDate?: InputMaybe<DatetimeFilter>;
+  effectiveDate?: InputMaybe<StringFilter>;
+  pageType?: InputMaybe<StringFilter>;
+  contact?: InputMaybe<LegalContactFilter>;
+  seo?: InputMaybe<LegalSeoFilter>;
+  body?: InputMaybe<RichTextFilter>;
+};
+
+export type LegalConnectionEdges = {
+  __typename?: 'LegalConnectionEdges';
+  cursor: Scalars['String']['output'];
+  node?: Maybe<Legal>;
+};
+
+export type LegalConnection = Connection & {
+  __typename?: 'LegalConnection';
+  pageInfo: PageInfo;
+  totalCount: Scalars['Float']['output'];
+  edges?: Maybe<Array<Maybe<LegalConnectionEdges>>>;
+};
+
+export type PagesHero = {
+  __typename?: 'PagesHero';
+  title?: Maybe<Scalars['String']['output']>;
+  subtitle?: Maybe<Scalars['String']['output']>;
+  image?: Maybe<Scalars['String']['output']>;
+};
+
+export type PagesSeo = {
+  __typename?: 'PagesSeo';
+  title?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  canonical?: Maybe<Scalars['String']['output']>;
+  noindex?: Maybe<Scalars['Boolean']['output']>;
+};
+
+export type Pages = Node & Document & {
+  __typename?: 'Pages';
+  title: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  pubDate: Scalars['String']['output'];
+  updatedDate?: Maybe<Scalars['String']['output']>;
+  layout?: Maybe<Scalars['String']['output']>;
+  hero?: Maybe<PagesHero>;
+  seo?: Maybe<PagesSeo>;
+  body?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['ID']['output'];
+  _sys: SystemInfo;
+  _values: Scalars['JSON']['output'];
+};
+
+export type PagesHeroFilter = {
+  title?: InputMaybe<StringFilter>;
+  subtitle?: InputMaybe<StringFilter>;
+  image?: InputMaybe<ImageFilter>;
+};
+
+export type PagesSeoFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  canonical?: InputMaybe<StringFilter>;
+  noindex?: InputMaybe<BooleanFilter>;
+};
+
+export type PagesFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+  pubDate?: InputMaybe<DatetimeFilter>;
+  updatedDate?: InputMaybe<DatetimeFilter>;
+  layout?: InputMaybe<StringFilter>;
+  hero?: InputMaybe<PagesHeroFilter>;
+  seo?: InputMaybe<PagesSeoFilter>;
+  body?: InputMaybe<RichTextFilter>;
+};
+
+export type PagesConnectionEdges = {
+  __typename?: 'PagesConnectionEdges';
+  cursor: Scalars['String']['output'];
+  node?: Maybe<Pages>;
+};
+
+export type PagesConnection = Connection & {
+  __typename?: 'PagesConnection';
+  pageInfo: PageInfo;
+  totalCount: Scalars['Float']['output'];
+  edges?: Maybe<Array<Maybe<PagesConnectionEdges>>>;
 };
 
 export type Categories = Node & Document & {
@@ -510,16 +1264,10 @@ export type Categories = Node & Document & {
   icon: Scalars['String']['output'];
   color: Scalars['String']['output'];
   featured?: Maybe<Scalars['Boolean']['output']>;
-  seo?: Maybe<CategoriesSeo>;
   body?: Maybe<Scalars['JSON']['output']>;
   id: Scalars['ID']['output'];
   _sys: SystemInfo;
   _values: Scalars['JSON']['output'];
-};
-
-export type CategoriesSeoFilter = {
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
 };
 
 export type CategoriesFilter = {
@@ -528,7 +1276,6 @@ export type CategoriesFilter = {
   icon?: InputMaybe<StringFilter>;
   color?: InputMaybe<StringFilter>;
   featured?: InputMaybe<BooleanFilter>;
-  seo?: InputMaybe<CategoriesSeoFilter>;
   body?: InputMaybe<RichTextFilter>;
 };
 
@@ -599,325 +1346,6 @@ export type AuthorsConnection = Connection & {
   pageInfo: PageInfo;
   totalCount: Scalars['Float']['output'];
   edges?: Maybe<Array<Maybe<AuthorsConnectionEdges>>>;
-};
-
-export type PodcastSeo = {
-  __typename?: 'PodcastSeo';
-  title?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  canonical?: Maybe<Scalars['String']['output']>;
-};
-
-export type Podcast = Node & Document & {
-  __typename?: 'Podcast';
-  title: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  pubDate: Scalars['String']['output'];
-  duration: Scalars['String']['output'];
-  audioUrl: Scalars['String']['output'];
-  image?: Maybe<Scalars['String']['output']>;
-  guests?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
-  transcript?: Maybe<Scalars['String']['output']>;
-  season?: Maybe<Scalars['Float']['output']>;
-  episode: Scalars['Float']['output'];
-  featured?: Maybe<Scalars['Boolean']['output']>;
-  seo?: Maybe<PodcastSeo>;
-  body?: Maybe<Scalars['JSON']['output']>;
-  id: Scalars['ID']['output'];
-  _sys: SystemInfo;
-  _values: Scalars['JSON']['output'];
-};
-
-export type NumberFilter = {
-  lt?: InputMaybe<Scalars['Float']['input']>;
-  lte?: InputMaybe<Scalars['Float']['input']>;
-  gte?: InputMaybe<Scalars['Float']['input']>;
-  gt?: InputMaybe<Scalars['Float']['input']>;
-  eq?: InputMaybe<Scalars['Float']['input']>;
-  exists?: InputMaybe<Scalars['Boolean']['input']>;
-  in?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
-};
-
-export type PodcastSeoFilter = {
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
-  canonical?: InputMaybe<StringFilter>;
-};
-
-export type PodcastFilter = {
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
-  pubDate?: InputMaybe<DatetimeFilter>;
-  duration?: InputMaybe<StringFilter>;
-  audioUrl?: InputMaybe<StringFilter>;
-  image?: InputMaybe<ImageFilter>;
-  guests?: InputMaybe<StringFilter>;
-  transcript?: InputMaybe<StringFilter>;
-  season?: InputMaybe<NumberFilter>;
-  episode?: InputMaybe<NumberFilter>;
-  featured?: InputMaybe<BooleanFilter>;
-  seo?: InputMaybe<PodcastSeoFilter>;
-  body?: InputMaybe<RichTextFilter>;
-};
-
-export type PodcastConnectionEdges = {
-  __typename?: 'PodcastConnectionEdges';
-  cursor: Scalars['String']['output'];
-  node?: Maybe<Podcast>;
-};
-
-export type PodcastConnection = Connection & {
-  __typename?: 'PodcastConnection';
-  pageInfo: PageInfo;
-  totalCount: Scalars['Float']['output'];
-  edges?: Maybe<Array<Maybe<PodcastConnectionEdges>>>;
-};
-
-export type Newsletter = Node & Document & {
-  __typename?: 'Newsletter';
-  title: Scalars['String']['output'];
-  excerpt: Scalars['String']['output'];
-  pubDate: Scalars['String']['output'];
-  issue: Scalars['Float']['output'];
-  featured?: Maybe<Scalars['Boolean']['output']>;
-  body?: Maybe<Scalars['JSON']['output']>;
-  id: Scalars['ID']['output'];
-  _sys: SystemInfo;
-  _values: Scalars['JSON']['output'];
-};
-
-export type NewsletterFilter = {
-  title?: InputMaybe<StringFilter>;
-  excerpt?: InputMaybe<StringFilter>;
-  pubDate?: InputMaybe<DatetimeFilter>;
-  issue?: InputMaybe<NumberFilter>;
-  featured?: InputMaybe<BooleanFilter>;
-  body?: InputMaybe<RichTextFilter>;
-};
-
-export type NewsletterConnectionEdges = {
-  __typename?: 'NewsletterConnectionEdges';
-  cursor: Scalars['String']['output'];
-  node?: Maybe<Newsletter>;
-};
-
-export type NewsletterConnection = Connection & {
-  __typename?: 'NewsletterConnection';
-  pageInfo: PageInfo;
-  totalCount: Scalars['Float']['output'];
-  edges?: Maybe<Array<Maybe<NewsletterConnectionEdges>>>;
-};
-
-export type PagesSeo = {
-  __typename?: 'PagesSeo';
-  title?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  canonical?: Maybe<Scalars['String']['output']>;
-  noindex?: Maybe<Scalars['Boolean']['output']>;
-};
-
-export type Pages = Node & Document & {
-  __typename?: 'Pages';
-  title: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  pubDate?: Maybe<Scalars['String']['output']>;
-  updatedDate?: Maybe<Scalars['String']['output']>;
-  layout?: Maybe<Scalars['String']['output']>;
-  seo?: Maybe<PagesSeo>;
-  body?: Maybe<Scalars['JSON']['output']>;
-  id: Scalars['ID']['output'];
-  _sys: SystemInfo;
-  _values: Scalars['JSON']['output'];
-};
-
-export type PagesSeoFilter = {
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
-  canonical?: InputMaybe<StringFilter>;
-  noindex?: InputMaybe<BooleanFilter>;
-};
-
-export type PagesBodyHeroCtaFilter = {
-  text?: InputMaybe<StringFilter>;
-  url?: InputMaybe<StringFilter>;
-};
-
-export type PagesBodyHeroFilter = {
-  title?: InputMaybe<StringFilter>;
-  subtitle?: InputMaybe<StringFilter>;
-  backgroundImage?: InputMaybe<ImageFilter>;
-  cta?: InputMaybe<PagesBodyHeroCtaFilter>;
-};
-
-export type PagesBodyContentBlockFilter = {
-  content?: InputMaybe<RichTextFilter>;
-};
-
-export type PagesBodyImageBlockFilter = {
-  src?: InputMaybe<ImageFilter>;
-  alt?: InputMaybe<StringFilter>;
-  caption?: InputMaybe<StringFilter>;
-  layout?: InputMaybe<StringFilter>;
-};
-
-export type PagesBodyCalloutBoxFilter = {
-  type?: InputMaybe<StringFilter>;
-  title?: InputMaybe<StringFilter>;
-  content?: InputMaybe<RichTextFilter>;
-};
-
-export type PagesBodyCodeBlockFilter = {
-  language?: InputMaybe<StringFilter>;
-  filename?: InputMaybe<StringFilter>;
-  code?: InputMaybe<StringFilter>;
-};
-
-export type PagesBodyQuoteFilter = {
-  quote?: InputMaybe<StringFilter>;
-  author?: InputMaybe<StringFilter>;
-  role?: InputMaybe<StringFilter>;
-};
-
-export type PagesBodyNewsletterFilter = {
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
-};
-
-export type PagesBodyFilter = {
-  Hero?: InputMaybe<PagesBodyHeroFilter>;
-  ContentBlock?: InputMaybe<PagesBodyContentBlockFilter>;
-  ImageBlock?: InputMaybe<PagesBodyImageBlockFilter>;
-  CalloutBox?: InputMaybe<PagesBodyCalloutBoxFilter>;
-  codeBlock?: InputMaybe<PagesBodyCodeBlockFilter>;
-  quote?: InputMaybe<PagesBodyQuoteFilter>;
-  newsletter?: InputMaybe<PagesBodyNewsletterFilter>;
-};
-
-export type PagesFilter = {
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
-  pubDate?: InputMaybe<DatetimeFilter>;
-  updatedDate?: InputMaybe<DatetimeFilter>;
-  layout?: InputMaybe<StringFilter>;
-  seo?: InputMaybe<PagesSeoFilter>;
-  body?: InputMaybe<PagesBodyFilter>;
-};
-
-export type PagesConnectionEdges = {
-  __typename?: 'PagesConnectionEdges';
-  cursor: Scalars['String']['output'];
-  node?: Maybe<Pages>;
-};
-
-export type PagesConnection = Connection & {
-  __typename?: 'PagesConnection';
-  pageInfo: PageInfo;
-  totalCount: Scalars['Float']['output'];
-  edges?: Maybe<Array<Maybe<PagesConnectionEdges>>>;
-};
-
-export type LegalPagesContact = {
-  __typename?: 'LegalPagesContact';
-  email?: Maybe<Scalars['String']['output']>;
-  address?: Maybe<Scalars['String']['output']>;
-  phone?: Maybe<Scalars['String']['output']>;
-};
-
-export type LegalPagesSeo = {
-  __typename?: 'LegalPagesSeo';
-  title?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  noindex?: Maybe<Scalars['Boolean']['output']>;
-};
-
-export type LegalPages = Node & Document & {
-  __typename?: 'LegalPages';
-  title: Scalars['String']['output'];
-  description: Scalars['String']['output'];
-  pubDate: Scalars['String']['output'];
-  updatedDate?: Maybe<Scalars['String']['output']>;
-  pageType?: Maybe<Scalars['String']['output']>;
-  effectiveDate?: Maybe<Scalars['String']['output']>;
-  contact?: Maybe<LegalPagesContact>;
-  seo?: Maybe<LegalPagesSeo>;
-  body?: Maybe<Scalars['JSON']['output']>;
-  id: Scalars['ID']['output'];
-  _sys: SystemInfo;
-  _values: Scalars['JSON']['output'];
-};
-
-export type LegalPagesContactFilter = {
-  email?: InputMaybe<StringFilter>;
-  address?: InputMaybe<StringFilter>;
-  phone?: InputMaybe<StringFilter>;
-};
-
-export type LegalPagesSeoFilter = {
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
-  noindex?: InputMaybe<BooleanFilter>;
-};
-
-export type LegalPagesBodyLegalSectionFilter = {
-  title?: InputMaybe<StringFilter>;
-  number?: InputMaybe<StringFilter>;
-  content?: InputMaybe<RichTextFilter>;
-};
-
-export type LegalPagesBodyLegalListFilter = {
-  title?: InputMaybe<StringFilter>;
-  items?: InputMaybe<StringFilter>;
-  listType?: InputMaybe<StringFilter>;
-};
-
-export type LegalPagesBodyContactInfoContactMethodsFilter = {
-  type?: InputMaybe<StringFilter>;
-  value?: InputMaybe<StringFilter>;
-  label?: InputMaybe<StringFilter>;
-};
-
-export type LegalPagesBodyContactInfoFilter = {
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
-  contactMethods?: InputMaybe<LegalPagesBodyContactInfoContactMethodsFilter>;
-};
-
-export type LegalPagesBodyDisclaimerFilter = {
-  type?: InputMaybe<StringFilter>;
-  title?: InputMaybe<StringFilter>;
-  content?: InputMaybe<RichTextFilter>;
-};
-
-export type LegalPagesBodyFilter = {
-  legalSection?: InputMaybe<LegalPagesBodyLegalSectionFilter>;
-  legalList?: InputMaybe<LegalPagesBodyLegalListFilter>;
-  contactInfo?: InputMaybe<LegalPagesBodyContactInfoFilter>;
-  disclaimer?: InputMaybe<LegalPagesBodyDisclaimerFilter>;
-};
-
-export type LegalPagesFilter = {
-  title?: InputMaybe<StringFilter>;
-  description?: InputMaybe<StringFilter>;
-  pubDate?: InputMaybe<DatetimeFilter>;
-  updatedDate?: InputMaybe<DatetimeFilter>;
-  pageType?: InputMaybe<StringFilter>;
-  effectiveDate?: InputMaybe<StringFilter>;
-  contact?: InputMaybe<LegalPagesContactFilter>;
-  seo?: InputMaybe<LegalPagesSeoFilter>;
-  body?: InputMaybe<LegalPagesBodyFilter>;
-};
-
-export type LegalPagesConnectionEdges = {
-  __typename?: 'LegalPagesConnectionEdges';
-  cursor: Scalars['String']['output'];
-  node?: Maybe<LegalPages>;
-};
-
-export type LegalPagesConnection = Connection & {
-  __typename?: 'LegalPagesConnection';
-  pageInfo: PageInfo;
-  totalCount: Scalars['Float']['output'];
-  edges?: Maybe<Array<Maybe<LegalPagesConnectionEdges>>>;
 };
 
 export type SettingsSiteGiscus = {
@@ -1274,18 +1702,22 @@ export type Mutation = {
   createFolder: DocumentNode;
   updateBlog: Blog;
   createBlog: Blog;
+  updateNewsletter: Newsletter;
+  createNewsletter: Newsletter;
+  updateAllTopicsPage: AllTopicsPage;
+  createAllTopicsPage: AllTopicsPage;
+  updatePodcast: Podcast;
+  createPodcast: Podcast;
+  updateContact: Contact;
+  createContact: Contact;
+  updateLegal: Legal;
+  createLegal: Legal;
+  updatePages: Pages;
+  createPages: Pages;
   updateCategories: Categories;
   createCategories: Categories;
   updateAuthors: Authors;
   createAuthors: Authors;
-  updatePodcast: Podcast;
-  createPodcast: Podcast;
-  updateNewsletter: Newsletter;
-  createNewsletter: Newsletter;
-  updatePages: Pages;
-  createPages: Pages;
-  updateLegalPages: LegalPages;
-  createLegalPages: LegalPages;
   updateSettings: Settings;
   createSettings: Settings;
 };
@@ -1336,6 +1768,78 @@ export type MutationCreateBlogArgs = {
 };
 
 
+export type MutationUpdateNewsletterArgs = {
+  relativePath: Scalars['String']['input'];
+  params: NewsletterMutation;
+};
+
+
+export type MutationCreateNewsletterArgs = {
+  relativePath: Scalars['String']['input'];
+  params: NewsletterMutation;
+};
+
+
+export type MutationUpdateAllTopicsPageArgs = {
+  relativePath: Scalars['String']['input'];
+  params: AllTopicsPageMutation;
+};
+
+
+export type MutationCreateAllTopicsPageArgs = {
+  relativePath: Scalars['String']['input'];
+  params: AllTopicsPageMutation;
+};
+
+
+export type MutationUpdatePodcastArgs = {
+  relativePath: Scalars['String']['input'];
+  params: PodcastMutation;
+};
+
+
+export type MutationCreatePodcastArgs = {
+  relativePath: Scalars['String']['input'];
+  params: PodcastMutation;
+};
+
+
+export type MutationUpdateContactArgs = {
+  relativePath: Scalars['String']['input'];
+  params: ContactMutation;
+};
+
+
+export type MutationCreateContactArgs = {
+  relativePath: Scalars['String']['input'];
+  params: ContactMutation;
+};
+
+
+export type MutationUpdateLegalArgs = {
+  relativePath: Scalars['String']['input'];
+  params: LegalMutation;
+};
+
+
+export type MutationCreateLegalArgs = {
+  relativePath: Scalars['String']['input'];
+  params: LegalMutation;
+};
+
+
+export type MutationUpdatePagesArgs = {
+  relativePath: Scalars['String']['input'];
+  params: PagesMutation;
+};
+
+
+export type MutationCreatePagesArgs = {
+  relativePath: Scalars['String']['input'];
+  params: PagesMutation;
+};
+
+
 export type MutationUpdateCategoriesArgs = {
   relativePath: Scalars['String']['input'];
   params: CategoriesMutation;
@@ -1360,54 +1864,6 @@ export type MutationCreateAuthorsArgs = {
 };
 
 
-export type MutationUpdatePodcastArgs = {
-  relativePath: Scalars['String']['input'];
-  params: PodcastMutation;
-};
-
-
-export type MutationCreatePodcastArgs = {
-  relativePath: Scalars['String']['input'];
-  params: PodcastMutation;
-};
-
-
-export type MutationUpdateNewsletterArgs = {
-  relativePath: Scalars['String']['input'];
-  params: NewsletterMutation;
-};
-
-
-export type MutationCreateNewsletterArgs = {
-  relativePath: Scalars['String']['input'];
-  params: NewsletterMutation;
-};
-
-
-export type MutationUpdatePagesArgs = {
-  relativePath: Scalars['String']['input'];
-  params: PagesMutation;
-};
-
-
-export type MutationCreatePagesArgs = {
-  relativePath: Scalars['String']['input'];
-  params: PagesMutation;
-};
-
-
-export type MutationUpdateLegalPagesArgs = {
-  relativePath: Scalars['String']['input'];
-  params: LegalPagesMutation;
-};
-
-
-export type MutationCreateLegalPagesArgs = {
-  relativePath: Scalars['String']['input'];
-  params: LegalPagesMutation;
-};
-
-
 export type MutationUpdateSettingsArgs = {
   relativePath: Scalars['String']['input'];
   params: SettingsMutation;
@@ -1421,25 +1877,35 @@ export type MutationCreateSettingsArgs = {
 
 export type DocumentUpdateMutation = {
   blog?: InputMaybe<BlogMutation>;
+  newsletter?: InputMaybe<NewsletterMutation>;
+  allTopicsPage?: InputMaybe<AllTopicsPageMutation>;
+  podcast?: InputMaybe<PodcastMutation>;
+  contact?: InputMaybe<ContactMutation>;
+  legal?: InputMaybe<LegalMutation>;
+  pages?: InputMaybe<PagesMutation>;
   categories?: InputMaybe<CategoriesMutation>;
   authors?: InputMaybe<AuthorsMutation>;
-  podcast?: InputMaybe<PodcastMutation>;
-  newsletter?: InputMaybe<NewsletterMutation>;
-  pages?: InputMaybe<PagesMutation>;
-  legalPages?: InputMaybe<LegalPagesMutation>;
   settings?: InputMaybe<SettingsMutation>;
   relativePath?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type DocumentMutation = {
   blog?: InputMaybe<BlogMutation>;
+  newsletter?: InputMaybe<NewsletterMutation>;
+  allTopicsPage?: InputMaybe<AllTopicsPageMutation>;
+  podcast?: InputMaybe<PodcastMutation>;
+  contact?: InputMaybe<ContactMutation>;
+  legal?: InputMaybe<LegalMutation>;
+  pages?: InputMaybe<PagesMutation>;
   categories?: InputMaybe<CategoriesMutation>;
   authors?: InputMaybe<AuthorsMutation>;
-  podcast?: InputMaybe<PodcastMutation>;
-  newsletter?: InputMaybe<NewsletterMutation>;
-  pages?: InputMaybe<PagesMutation>;
-  legalPages?: InputMaybe<LegalPagesMutation>;
   settings?: InputMaybe<SettingsMutation>;
+};
+
+export type BlogEditorialMutation = {
+  status?: InputMaybe<Scalars['String']['input']>;
+  assignedEditor?: InputMaybe<Scalars['String']['input']>;
+  editorNotes?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type BlogAuthorInfoSocialMutation = {
@@ -1457,7 +1923,16 @@ export type BlogAuthorInfoMutation = {
   social?: InputMaybe<BlogAuthorInfoSocialMutation>;
 };
 
+export type BlogHeroImageMutation = {
+  imageType?: InputMaybe<Scalars['String']['input']>;
+  uploadedImage?: InputMaybe<Scalars['String']['input']>;
+  externalUrl?: InputMaybe<Scalars['String']['input']>;
+  alt?: InputMaybe<Scalars['String']['input']>;
+  caption?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type BlogSeoMutation = {
+  customSEO?: InputMaybe<Scalars['Boolean']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   canonical?: InputMaybe<Scalars['String']['input']>;
@@ -1465,11 +1940,13 @@ export type BlogSeoMutation = {
 };
 
 export type BlogMutation = {
+  editorial?: InputMaybe<BlogEditorialMutation>;
   title?: InputMaybe<Scalars['String']['input']>;
   excerpt?: InputMaybe<Scalars['String']['input']>;
   pubDate?: InputMaybe<Scalars['String']['input']>;
   updatedDate?: InputMaybe<Scalars['String']['input']>;
   authorInfo?: InputMaybe<BlogAuthorInfoMutation>;
+  heroImage?: InputMaybe<BlogHeroImageMutation>;
   image?: InputMaybe<Scalars['String']['input']>;
   imageAlt?: InputMaybe<Scalars['String']['input']>;
   category?: InputMaybe<Scalars['String']['input']>;
@@ -1479,6 +1956,7 @@ export type BlogMutation = {
   trending?: InputMaybe<Scalars['Boolean']['input']>;
   draft?: InputMaybe<Scalars['Boolean']['input']>;
   readTime?: InputMaybe<Scalars['String']['input']>;
+  hasAudio?: InputMaybe<Scalars['Boolean']['input']>;
   audioUrl?: InputMaybe<Scalars['String']['input']>;
   audioDuration?: InputMaybe<Scalars['String']['input']>;
   audioTranscript?: InputMaybe<Scalars['String']['input']>;
@@ -1486,9 +1964,240 @@ export type BlogMutation = {
   body?: InputMaybe<Scalars['JSON']['input']>;
 };
 
-export type CategoriesSeoMutation = {
+export type NewsletterHighlightsMutation = {
   title?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  link?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type NewsletterStatsMutation = {
+  subscribers?: InputMaybe<Scalars['Float']['input']>;
+  openRate?: InputMaybe<Scalars['Float']['input']>;
+  clickRate?: InputMaybe<Scalars['Float']['input']>;
+};
+
+export type NewsletterSeoMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type NewsletterMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  issueNumber?: InputMaybe<Scalars['Float']['input']>;
+  newsletterType?: InputMaybe<Scalars['String']['input']>;
+  excerpt?: InputMaybe<Scalars['String']['input']>;
+  subscriberOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  previewContent?: InputMaybe<Scalars['String']['input']>;
+  publishDate?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  featured?: InputMaybe<Scalars['Boolean']['input']>;
+  coverImage?: InputMaybe<Scalars['String']['input']>;
+  highlights?: InputMaybe<Array<InputMaybe<NewsletterHighlightsMutation>>>;
+  trackStats?: InputMaybe<Scalars['Boolean']['input']>;
+  stats?: InputMaybe<NewsletterStatsMutation>;
+  tags?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  seo?: InputMaybe<NewsletterSeoMutation>;
+  body?: InputMaybe<Scalars['JSON']['input']>;
+};
+
+export type AllTopicsPageHeroMutation = {
+  badgeText?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  titleAccent?: InputMaybe<Scalars['String']['input']>;
+  subtitle?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AllTopicsPageTopicsMutation = {
+  name?: InputMaybe<Scalars['String']['input']>;
+  href?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  audience?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AllTopicsPageStatsMutation = {
+  topicCount?: InputMaybe<Scalars['Float']['input']>;
+  articleCount?: InputMaybe<Scalars['String']['input']>;
+  storiesLabel?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AllTopicsPageCtaMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  primaryButtonText?: InputMaybe<Scalars['String']['input']>;
+  primaryButtonLink?: InputMaybe<Scalars['String']['input']>;
+  secondaryButtonText?: InputMaybe<Scalars['String']['input']>;
+  secondaryButtonLink?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AllTopicsPageMutation = {
+  hero?: InputMaybe<AllTopicsPageHeroMutation>;
+  topics?: InputMaybe<Array<InputMaybe<AllTopicsPageTopicsMutation>>>;
+  stats?: InputMaybe<AllTopicsPageStatsMutation>;
+  cta?: InputMaybe<AllTopicsPageCtaMutation>;
+};
+
+export type PodcastGuestsSocialMutation = {
+  twitter?: InputMaybe<Scalars['String']['input']>;
+  linkedin?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type PodcastGuestsMutation = {
+  name?: InputMaybe<Scalars['String']['input']>;
+  role?: InputMaybe<Scalars['String']['input']>;
+  company?: InputMaybe<Scalars['String']['input']>;
+  bio?: InputMaybe<Scalars['String']['input']>;
+  photo?: InputMaybe<Scalars['String']['input']>;
+  social?: InputMaybe<PodcastGuestsSocialMutation>;
+};
+
+export type PodcastSeoMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  canonical?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type PodcastMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  episode?: InputMaybe<Scalars['Float']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  pubDate?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  duration?: InputMaybe<Scalars['String']['input']>;
+  audioUrl?: InputMaybe<Scalars['String']['input']>;
+  downloadable?: InputMaybe<Scalars['Boolean']['input']>;
+  image?: InputMaybe<Scalars['String']['input']>;
+  guests?: InputMaybe<Array<InputMaybe<PodcastGuestsMutation>>>;
+  tags?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  featured?: InputMaybe<Scalars['Boolean']['input']>;
+  transcript?: InputMaybe<Scalars['String']['input']>;
+  seo?: InputMaybe<PodcastSeoMutation>;
+  body?: InputMaybe<Scalars['JSON']['input']>;
+};
+
+export type ContactHeroMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  titleAccent?: InputMaybe<Scalars['String']['input']>;
+  subtitle?: InputMaybe<Scalars['String']['input']>;
+  responseTime?: InputMaybe<Scalars['String']['input']>;
+  badgeText?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ContactContactMethodsMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+  icon?: InputMaybe<Scalars['String']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
+  featured?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type ContactSocialLinksMutation = {
+  name?: InputMaybe<Scalars['String']['input']>;
+  url?: InputMaybe<Scalars['String']['input']>;
+  icon?: InputMaybe<Scalars['String']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
+  showInContact?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type ContactFaqItemsMutation = {
+  question?: InputMaybe<Scalars['String']['input']>;
+  answer?: InputMaybe<Scalars['JSON']['input']>;
+  category?: InputMaybe<Scalars['String']['input']>;
+  featured?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type ContactFaqMutation = {
+  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+  titleAccent?: InputMaybe<Scalars['String']['input']>;
+  subtitle?: InputMaybe<Scalars['String']['input']>;
+  items?: InputMaybe<Array<InputMaybe<ContactFaqItemsMutation>>>;
+};
+
+export type ContactCtaPrimaryButtonMutation = {
+  text?: InputMaybe<Scalars['String']['input']>;
+  link?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ContactCtaSecondaryButtonMutation = {
+  text?: InputMaybe<Scalars['String']['input']>;
+  link?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ContactCtaMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  titleAccent?: InputMaybe<Scalars['String']['input']>;
+  subtitle?: InputMaybe<Scalars['String']['input']>;
+  primaryButton?: InputMaybe<ContactCtaPrimaryButtonMutation>;
+  secondaryButton?: InputMaybe<ContactCtaSecondaryButtonMutation>;
+};
+
+export type ContactSeoMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  canonical?: InputMaybe<Scalars['String']['input']>;
+  noindex?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type ContactMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  pubDate?: InputMaybe<Scalars['String']['input']>;
+  hero?: InputMaybe<ContactHeroMutation>;
+  contactMethods?: InputMaybe<Array<InputMaybe<ContactContactMethodsMutation>>>;
+  socialLinks?: InputMaybe<Array<InputMaybe<ContactSocialLinksMutation>>>;
+  faq?: InputMaybe<ContactFaqMutation>;
+  cta?: InputMaybe<ContactCtaMutation>;
+  seo?: InputMaybe<ContactSeoMutation>;
+  body?: InputMaybe<Scalars['JSON']['input']>;
+};
+
+export type LegalContactMutation = {
+  email?: InputMaybe<Scalars['String']['input']>;
+  address?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type LegalSeoMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  noindex?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type LegalMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  pubDate?: InputMaybe<Scalars['String']['input']>;
+  updatedDate?: InputMaybe<Scalars['String']['input']>;
+  effectiveDate?: InputMaybe<Scalars['String']['input']>;
+  pageType?: InputMaybe<Scalars['String']['input']>;
+  contact?: InputMaybe<LegalContactMutation>;
+  seo?: InputMaybe<LegalSeoMutation>;
+  body?: InputMaybe<Scalars['JSON']['input']>;
+};
+
+export type PagesHeroMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  subtitle?: InputMaybe<Scalars['String']['input']>;
+  image?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type PagesSeoMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  canonical?: InputMaybe<Scalars['String']['input']>;
+  noindex?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type PagesMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  pubDate?: InputMaybe<Scalars['String']['input']>;
+  updatedDate?: InputMaybe<Scalars['String']['input']>;
+  layout?: InputMaybe<Scalars['String']['input']>;
+  hero?: InputMaybe<PagesHeroMutation>;
+  seo?: InputMaybe<PagesSeoMutation>;
+  body?: InputMaybe<Scalars['JSON']['input']>;
 };
 
 export type CategoriesMutation = {
@@ -1497,7 +2206,6 @@ export type CategoriesMutation = {
   icon?: InputMaybe<Scalars['String']['input']>;
   color?: InputMaybe<Scalars['String']['input']>;
   featured?: InputMaybe<Scalars['Boolean']['input']>;
-  seo?: InputMaybe<CategoriesSeoMutation>;
   body?: InputMaybe<Scalars['JSON']['input']>;
 };
 
@@ -1517,78 +2225,6 @@ export type AuthorsMutation = {
   email?: InputMaybe<Scalars['String']['input']>;
   social?: InputMaybe<AuthorsSocialMutation>;
   featured?: InputMaybe<Scalars['Boolean']['input']>;
-  body?: InputMaybe<Scalars['JSON']['input']>;
-};
-
-export type PodcastSeoMutation = {
-  title?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  canonical?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type PodcastMutation = {
-  title?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  pubDate?: InputMaybe<Scalars['String']['input']>;
-  duration?: InputMaybe<Scalars['String']['input']>;
-  audioUrl?: InputMaybe<Scalars['String']['input']>;
-  image?: InputMaybe<Scalars['String']['input']>;
-  guests?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  transcript?: InputMaybe<Scalars['String']['input']>;
-  season?: InputMaybe<Scalars['Float']['input']>;
-  episode?: InputMaybe<Scalars['Float']['input']>;
-  featured?: InputMaybe<Scalars['Boolean']['input']>;
-  seo?: InputMaybe<PodcastSeoMutation>;
-  body?: InputMaybe<Scalars['JSON']['input']>;
-};
-
-export type NewsletterMutation = {
-  title?: InputMaybe<Scalars['String']['input']>;
-  excerpt?: InputMaybe<Scalars['String']['input']>;
-  pubDate?: InputMaybe<Scalars['String']['input']>;
-  issue?: InputMaybe<Scalars['Float']['input']>;
-  featured?: InputMaybe<Scalars['Boolean']['input']>;
-  body?: InputMaybe<Scalars['JSON']['input']>;
-};
-
-export type PagesSeoMutation = {
-  title?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  canonical?: InputMaybe<Scalars['String']['input']>;
-  noindex?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-export type PagesMutation = {
-  title?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  pubDate?: InputMaybe<Scalars['String']['input']>;
-  updatedDate?: InputMaybe<Scalars['String']['input']>;
-  layout?: InputMaybe<Scalars['String']['input']>;
-  seo?: InputMaybe<PagesSeoMutation>;
-  body?: InputMaybe<Scalars['JSON']['input']>;
-};
-
-export type LegalPagesContactMutation = {
-  email?: InputMaybe<Scalars['String']['input']>;
-  address?: InputMaybe<Scalars['String']['input']>;
-  phone?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type LegalPagesSeoMutation = {
-  title?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  noindex?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-export type LegalPagesMutation = {
-  title?: InputMaybe<Scalars['String']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  pubDate?: InputMaybe<Scalars['String']['input']>;
-  updatedDate?: InputMaybe<Scalars['String']['input']>;
-  pageType?: InputMaybe<Scalars['String']['input']>;
-  effectiveDate?: InputMaybe<Scalars['String']['input']>;
-  contact?: InputMaybe<LegalPagesContactMutation>;
-  seo?: InputMaybe<LegalPagesSeoMutation>;
   body?: InputMaybe<Scalars['JSON']['input']>;
 };
 
@@ -1748,19 +2384,23 @@ export type SettingsMutation = {
   performance?: InputMaybe<SettingsPerformanceMutation>;
 };
 
-export type BlogPartsFragment = { __typename: 'Blog', title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, seo?: { __typename: 'BlogSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null };
+export type BlogPartsFragment = { __typename: 'Blog', title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, hasAudio?: boolean | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, editorial?: { __typename: 'BlogEditorial', status?: string | null, assignedEditor?: string | null, editorNotes?: string | null } | null, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, heroImage?: { __typename: 'BlogHeroImage', imageType: string, uploadedImage?: string | null, externalUrl?: string | null, alt: string, caption?: string | null } | null, seo?: { __typename: 'BlogSeo', customSEO?: boolean | null, title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null };
 
-export type CategoriesPartsFragment = { __typename: 'Categories', name: string, description: string, icon: string, color: string, featured?: boolean | null, body?: any | null, seo?: { __typename: 'CategoriesSeo', title?: string | null, description?: string | null } | null };
+export type NewsletterPartsFragment = { __typename: 'Newsletter', title: string, issueNumber: number, newsletterType: string, excerpt: string, subscriberOnly?: boolean | null, previewContent?: string | null, publishDate: string, status?: string | null, featured?: boolean | null, coverImage?: string | null, trackStats?: boolean | null, tags?: Array<string | null> | null, body?: any | null, highlights?: Array<{ __typename: 'NewsletterHighlights', title: string, description?: string | null, link?: string | null } | null> | null, stats?: { __typename: 'NewsletterStats', subscribers?: number | null, openRate?: number | null, clickRate?: number | null } | null, seo?: { __typename: 'NewsletterSeo', title?: string | null, description?: string | null } | null };
+
+export type AllTopicsPagePartsFragment = { __typename: 'AllTopicsPage', hero?: { __typename: 'AllTopicsPageHero', badgeText: string, title: string, titleAccent: string, subtitle: string } | null, topics?: Array<{ __typename: 'AllTopicsPageTopics', name: string, href: string, description: string, audience: string } | null> | null, stats?: { __typename: 'AllTopicsPageStats', topicCount?: number | null, articleCount?: string | null, storiesLabel?: string | null } | null, cta?: { __typename: 'AllTopicsPageCta', title: string, description: string, primaryButtonText: string, primaryButtonLink: string, secondaryButtonText: string, secondaryButtonLink: string } | null };
+
+export type PodcastPartsFragment = { __typename: 'Podcast', title: string, episode: number, description: string, pubDate: string, status?: string | null, duration: string, audioUrl?: string | null, downloadable?: boolean | null, image?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, transcript?: string | null, body?: any | null, guests?: Array<{ __typename: 'PodcastGuests', name: string, role?: string | null, company?: string | null, bio?: string | null, photo?: string | null, social?: { __typename: 'PodcastGuestsSocial', twitter?: string | null, linkedin?: string | null } | null } | null> | null, seo?: { __typename: 'PodcastSeo', title?: string | null, description?: string | null, canonical?: string | null } | null };
+
+export type ContactPartsFragment = { __typename: 'Contact', title: string, description?: string | null, pubDate?: string | null, body?: any | null, hero?: { __typename: 'ContactHero', title?: string | null, titleAccent?: string | null, subtitle?: string | null, responseTime?: string | null, badgeText?: string | null } | null, contactMethods?: Array<{ __typename: 'ContactContactMethods', title: string, description?: string | null, email: string, icon?: string | null, color?: string | null, featured?: boolean | null } | null> | null, socialLinks?: Array<{ __typename: 'ContactSocialLinks', name: string, url: string, icon?: string | null, color?: string | null, showInContact?: boolean | null } | null> | null, faq?: { __typename: 'ContactFaq', enabled?: boolean | null, title?: string | null, titleAccent?: string | null, subtitle?: string | null, items?: Array<{ __typename: 'ContactFaqItems', question: string, answer: any, category?: string | null, featured?: boolean | null } | null> | null } | null, cta?: { __typename: 'ContactCta', title?: string | null, titleAccent?: string | null, subtitle?: string | null, primaryButton?: { __typename: 'ContactCtaPrimaryButton', text?: string | null, link?: string | null } | null, secondaryButton?: { __typename: 'ContactCtaSecondaryButton', text?: string | null, link?: string | null } | null } | null, seo?: { __typename: 'ContactSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null };
+
+export type LegalPartsFragment = { __typename: 'Legal', title: string, description: string, pubDate: string, updatedDate?: string | null, effectiveDate?: string | null, pageType?: string | null, body?: any | null, contact?: { __typename: 'LegalContact', email?: string | null, address?: string | null, phone?: string | null } | null, seo?: { __typename: 'LegalSeo', title?: string | null, description?: string | null, noindex?: boolean | null } | null };
+
+export type PagesPartsFragment = { __typename: 'Pages', title: string, description: string, pubDate: string, updatedDate?: string | null, layout?: string | null, body?: any | null, hero?: { __typename: 'PagesHero', title?: string | null, subtitle?: string | null, image?: string | null } | null, seo?: { __typename: 'PagesSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null };
+
+export type CategoriesPartsFragment = { __typename: 'Categories', name: string, description: string, icon: string, color: string, featured?: boolean | null, body?: any | null };
 
 export type AuthorsPartsFragment = { __typename: 'Authors', name: string, bio?: string | null, avatar?: string | null, role?: string | null, company?: string | null, email?: string | null, featured?: boolean | null, body?: any | null, social?: { __typename: 'AuthorsSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null };
-
-export type PodcastPartsFragment = { __typename: 'Podcast', title: string, description: string, pubDate: string, duration: string, audioUrl: string, image?: string | null, guests?: Array<string | null> | null, transcript?: string | null, season?: number | null, episode: number, featured?: boolean | null, body?: any | null, seo?: { __typename: 'PodcastSeo', title?: string | null, description?: string | null, canonical?: string | null } | null };
-
-export type NewsletterPartsFragment = { __typename: 'Newsletter', title: string, excerpt: string, pubDate: string, issue: number, featured?: boolean | null, body?: any | null };
-
-export type PagesPartsFragment = { __typename: 'Pages', title: string, description: string, pubDate?: string | null, updatedDate?: string | null, layout?: string | null, body?: any | null, seo?: { __typename: 'PagesSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null };
-
-export type LegalPagesPartsFragment = { __typename: 'LegalPages', title: string, description: string, pubDate: string, updatedDate?: string | null, pageType?: string | null, effectiveDate?: string | null, body?: any | null, contact?: { __typename: 'LegalPagesContact', email?: string | null, address?: string | null, phone?: string | null } | null, seo?: { __typename: 'LegalPagesSeo', title?: string | null, description?: string | null, noindex?: boolean | null } | null };
 
 export type SettingsPartsFragment = { __typename: 'Settings', title: string, description?: string | null, site?: { __typename: 'SettingsSite', name: string, description?: string | null, url?: string | null, logo?: string | null, giscus?: { __typename: 'SettingsSiteGiscus', repo?: string | null, repoId?: string | null, category?: string | null, categoryId?: string | null, mapping?: string | null, reactionsEnabled?: boolean | null, emitMetadata?: boolean | null, inputPosition?: string | null, lang?: string | null, loading?: string | null } | null } | null, categories?: { __typename: 'SettingsCategories', defaultColor?: string | null, categoryMappings?: Array<{ __typename: 'SettingsCategoriesCategoryMappings', name?: string | null, slug?: string | null, color?: string | null, description?: string | null } | null> | null } | null, uiText?: { __typename: 'SettingsUiText', audioAvailableLabel?: string | null, audioTitle?: string | null, audioSubtitle?: string | null, noAudioText?: string | null, byAuthorPrefix?: string | null, aboutAuthorTitle?: string | null, shareLabel?: string | null, shareArticleTitle?: string | null, continueReadingTitle?: string | null, continueReadingSubtitle?: string | null, previousArticleLabel?: string | null, nextArticleLabel?: string | null, reachedBeginningText?: string | null, readAllText?: string | null, browseAllArticlesText?: string | null, tocTitle?: string | null, topicsTitle?: string | null, readingProgressTitle?: string | null, imageCreditText?: string | null, readingTimePrefix?: string | null, defaultCategoryLabel?: string | null, discussionTitle?: string | null, discussionSubtitle?: string | null, relatedTitle?: string | null, relatedSubtitle?: string | null } | null, community?: { __typename: 'SettingsCommunity', stats?: Array<{ __typename: 'SettingsCommunityStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, platforms?: Array<{ __typename: 'SettingsCommunityPlatforms', name?: string | null, description?: string | null, icon?: string | null, link?: string | null, members?: string | null, activity?: string | null, color?: string | null } | null> | null } | null, research?: { __typename: 'SettingsResearch', stats?: Array<{ __typename: 'SettingsResearchStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, reports?: Array<{ __typename: 'SettingsResearchReports', title?: string | null, description?: string | null, date?: string | null, type?: string | null, pages?: number | null, downloads?: string | null, downloadUrl?: string | null, coverImage?: string | null, featured?: boolean | null, tags?: Array<string | null> | null } | null> | null } | null, newsletter?: { __typename: 'SettingsNewsletter', title?: string | null, subtitle?: string | null, frequency?: string | null, subscriberCount?: string | null, signupFormId?: string | null, confirmationMessage?: string | null } | null, social?: { __typename: 'SettingsSocial', defaultShareText?: string | null, platforms?: Array<{ __typename: 'SettingsSocialPlatforms', name?: string | null, url?: string | null, username?: string | null, showInFooter?: boolean | null, enableSharing?: boolean | null } | null> | null } | null, analytics?: { __typename: 'SettingsAnalytics', googleAnalyticsId?: string | null, googleTagManagerId?: string | null, enableCookieConsent?: boolean | null, cookieConsentMessage?: string | null } | null, performance?: { __typename: 'SettingsPerformance', enableImageOptimization?: boolean | null, enableLazyLoading?: boolean | null, enableServiceWorker?: boolean | null, cacheMaxAge?: number | null } | null };
 
@@ -1769,7 +2409,7 @@ export type BlogQueryVariables = Exact<{
 }>;
 
 
-export type BlogQuery = { __typename?: 'Query', blog: { __typename: 'Blog', id: string, title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, seo?: { __typename: 'BlogSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } };
+export type BlogQuery = { __typename?: 'Query', blog: { __typename: 'Blog', id: string, title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, hasAudio?: boolean | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, editorial?: { __typename: 'BlogEditorial', status?: string | null, assignedEditor?: string | null, editorNotes?: string | null } | null, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, heroImage?: { __typename: 'BlogHeroImage', imageType: string, uploadedImage?: string | null, externalUrl?: string | null, alt: string, caption?: string | null } | null, seo?: { __typename: 'BlogSeo', customSEO?: boolean | null, title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } };
 
 export type BlogConnectionQueryVariables = Exact<{
   before?: InputMaybe<Scalars['String']['input']>;
@@ -1781,14 +2421,128 @@ export type BlogConnectionQueryVariables = Exact<{
 }>;
 
 
-export type BlogConnectionQuery = { __typename?: 'Query', blogConnection: { __typename?: 'BlogConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'BlogConnectionEdges', cursor: string, node?: { __typename: 'Blog', id: string, title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, seo?: { __typename: 'BlogSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } | null } | null> | null } };
+export type BlogConnectionQuery = { __typename?: 'Query', blogConnection: { __typename?: 'BlogConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'BlogConnectionEdges', cursor: string, node?: { __typename: 'Blog', id: string, title: string, excerpt: string, pubDate: string, updatedDate?: string | null, image?: string | null, imageAlt?: string | null, category: string, storyType?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, trending?: boolean | null, draft?: boolean | null, readTime?: string | null, hasAudio?: boolean | null, audioUrl?: string | null, audioDuration?: string | null, audioTranscript?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, editorial?: { __typename: 'BlogEditorial', status?: string | null, assignedEditor?: string | null, editorNotes?: string | null } | null, authorInfo?: { __typename: 'BlogAuthorInfo', name: string, bio?: string | null, avatar?: string | null, role?: string | null, social?: { __typename: 'BlogAuthorInfoSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null, heroImage?: { __typename: 'BlogHeroImage', imageType: string, uploadedImage?: string | null, externalUrl?: string | null, alt: string, caption?: string | null } | null, seo?: { __typename: 'BlogSeo', customSEO?: boolean | null, title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } | null } | null> | null } };
+
+export type NewsletterQueryVariables = Exact<{
+  relativePath: Scalars['String']['input'];
+}>;
+
+
+export type NewsletterQuery = { __typename?: 'Query', newsletter: { __typename: 'Newsletter', id: string, title: string, issueNumber: number, newsletterType: string, excerpt: string, subscriberOnly?: boolean | null, previewContent?: string | null, publishDate: string, status?: string | null, featured?: boolean | null, coverImage?: string | null, trackStats?: boolean | null, tags?: Array<string | null> | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, highlights?: Array<{ __typename: 'NewsletterHighlights', title: string, description?: string | null, link?: string | null } | null> | null, stats?: { __typename: 'NewsletterStats', subscribers?: number | null, openRate?: number | null, clickRate?: number | null } | null, seo?: { __typename: 'NewsletterSeo', title?: string | null, description?: string | null } | null } };
+
+export type NewsletterConnectionQueryVariables = Exact<{
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<NewsletterFilter>;
+}>;
+
+
+export type NewsletterConnectionQuery = { __typename?: 'Query', newsletterConnection: { __typename?: 'NewsletterConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'NewsletterConnectionEdges', cursor: string, node?: { __typename: 'Newsletter', id: string, title: string, issueNumber: number, newsletterType: string, excerpt: string, subscriberOnly?: boolean | null, previewContent?: string | null, publishDate: string, status?: string | null, featured?: boolean | null, coverImage?: string | null, trackStats?: boolean | null, tags?: Array<string | null> | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, highlights?: Array<{ __typename: 'NewsletterHighlights', title: string, description?: string | null, link?: string | null } | null> | null, stats?: { __typename: 'NewsletterStats', subscribers?: number | null, openRate?: number | null, clickRate?: number | null } | null, seo?: { __typename: 'NewsletterSeo', title?: string | null, description?: string | null } | null } | null } | null> | null } };
+
+export type AllTopicsPageQueryVariables = Exact<{
+  relativePath: Scalars['String']['input'];
+}>;
+
+
+export type AllTopicsPageQuery = { __typename?: 'Query', allTopicsPage: { __typename: 'AllTopicsPage', id: string, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, hero?: { __typename: 'AllTopicsPageHero', badgeText: string, title: string, titleAccent: string, subtitle: string } | null, topics?: Array<{ __typename: 'AllTopicsPageTopics', name: string, href: string, description: string, audience: string } | null> | null, stats?: { __typename: 'AllTopicsPageStats', topicCount?: number | null, articleCount?: string | null, storiesLabel?: string | null } | null, cta?: { __typename: 'AllTopicsPageCta', title: string, description: string, primaryButtonText: string, primaryButtonLink: string, secondaryButtonText: string, secondaryButtonLink: string } | null } };
+
+export type AllTopicsPageConnectionQueryVariables = Exact<{
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<AllTopicsPageFilter>;
+}>;
+
+
+export type AllTopicsPageConnectionQuery = { __typename?: 'Query', allTopicsPageConnection: { __typename?: 'AllTopicsPageConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'AllTopicsPageConnectionEdges', cursor: string, node?: { __typename: 'AllTopicsPage', id: string, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, hero?: { __typename: 'AllTopicsPageHero', badgeText: string, title: string, titleAccent: string, subtitle: string } | null, topics?: Array<{ __typename: 'AllTopicsPageTopics', name: string, href: string, description: string, audience: string } | null> | null, stats?: { __typename: 'AllTopicsPageStats', topicCount?: number | null, articleCount?: string | null, storiesLabel?: string | null } | null, cta?: { __typename: 'AllTopicsPageCta', title: string, description: string, primaryButtonText: string, primaryButtonLink: string, secondaryButtonText: string, secondaryButtonLink: string } | null } | null } | null> | null } };
+
+export type PodcastQueryVariables = Exact<{
+  relativePath: Scalars['String']['input'];
+}>;
+
+
+export type PodcastQuery = { __typename?: 'Query', podcast: { __typename: 'Podcast', id: string, title: string, episode: number, description: string, pubDate: string, status?: string | null, duration: string, audioUrl?: string | null, downloadable?: boolean | null, image?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, transcript?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, guests?: Array<{ __typename: 'PodcastGuests', name: string, role?: string | null, company?: string | null, bio?: string | null, photo?: string | null, social?: { __typename: 'PodcastGuestsSocial', twitter?: string | null, linkedin?: string | null } | null } | null> | null, seo?: { __typename: 'PodcastSeo', title?: string | null, description?: string | null, canonical?: string | null } | null } };
+
+export type PodcastConnectionQueryVariables = Exact<{
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<PodcastFilter>;
+}>;
+
+
+export type PodcastConnectionQuery = { __typename?: 'Query', podcastConnection: { __typename?: 'PodcastConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'PodcastConnectionEdges', cursor: string, node?: { __typename: 'Podcast', id: string, title: string, episode: number, description: string, pubDate: string, status?: string | null, duration: string, audioUrl?: string | null, downloadable?: boolean | null, image?: string | null, tags?: Array<string | null> | null, featured?: boolean | null, transcript?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, guests?: Array<{ __typename: 'PodcastGuests', name: string, role?: string | null, company?: string | null, bio?: string | null, photo?: string | null, social?: { __typename: 'PodcastGuestsSocial', twitter?: string | null, linkedin?: string | null } | null } | null> | null, seo?: { __typename: 'PodcastSeo', title?: string | null, description?: string | null, canonical?: string | null } | null } | null } | null> | null } };
+
+export type ContactQueryVariables = Exact<{
+  relativePath: Scalars['String']['input'];
+}>;
+
+
+export type ContactQuery = { __typename?: 'Query', contact: { __typename: 'Contact', id: string, title: string, description?: string | null, pubDate?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, hero?: { __typename: 'ContactHero', title?: string | null, titleAccent?: string | null, subtitle?: string | null, responseTime?: string | null, badgeText?: string | null } | null, contactMethods?: Array<{ __typename: 'ContactContactMethods', title: string, description?: string | null, email: string, icon?: string | null, color?: string | null, featured?: boolean | null } | null> | null, socialLinks?: Array<{ __typename: 'ContactSocialLinks', name: string, url: string, icon?: string | null, color?: string | null, showInContact?: boolean | null } | null> | null, faq?: { __typename: 'ContactFaq', enabled?: boolean | null, title?: string | null, titleAccent?: string | null, subtitle?: string | null, items?: Array<{ __typename: 'ContactFaqItems', question: string, answer: any, category?: string | null, featured?: boolean | null } | null> | null } | null, cta?: { __typename: 'ContactCta', title?: string | null, titleAccent?: string | null, subtitle?: string | null, primaryButton?: { __typename: 'ContactCtaPrimaryButton', text?: string | null, link?: string | null } | null, secondaryButton?: { __typename: 'ContactCtaSecondaryButton', text?: string | null, link?: string | null } | null } | null, seo?: { __typename: 'ContactSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } };
+
+export type ContactConnectionQueryVariables = Exact<{
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<ContactFilter>;
+}>;
+
+
+export type ContactConnectionQuery = { __typename?: 'Query', contactConnection: { __typename?: 'ContactConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'ContactConnectionEdges', cursor: string, node?: { __typename: 'Contact', id: string, title: string, description?: string | null, pubDate?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, hero?: { __typename: 'ContactHero', title?: string | null, titleAccent?: string | null, subtitle?: string | null, responseTime?: string | null, badgeText?: string | null } | null, contactMethods?: Array<{ __typename: 'ContactContactMethods', title: string, description?: string | null, email: string, icon?: string | null, color?: string | null, featured?: boolean | null } | null> | null, socialLinks?: Array<{ __typename: 'ContactSocialLinks', name: string, url: string, icon?: string | null, color?: string | null, showInContact?: boolean | null } | null> | null, faq?: { __typename: 'ContactFaq', enabled?: boolean | null, title?: string | null, titleAccent?: string | null, subtitle?: string | null, items?: Array<{ __typename: 'ContactFaqItems', question: string, answer: any, category?: string | null, featured?: boolean | null } | null> | null } | null, cta?: { __typename: 'ContactCta', title?: string | null, titleAccent?: string | null, subtitle?: string | null, primaryButton?: { __typename: 'ContactCtaPrimaryButton', text?: string | null, link?: string | null } | null, secondaryButton?: { __typename: 'ContactCtaSecondaryButton', text?: string | null, link?: string | null } | null } | null, seo?: { __typename: 'ContactSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } | null } | null> | null } };
+
+export type LegalQueryVariables = Exact<{
+  relativePath: Scalars['String']['input'];
+}>;
+
+
+export type LegalQuery = { __typename?: 'Query', legal: { __typename: 'Legal', id: string, title: string, description: string, pubDate: string, updatedDate?: string | null, effectiveDate?: string | null, pageType?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, contact?: { __typename: 'LegalContact', email?: string | null, address?: string | null, phone?: string | null } | null, seo?: { __typename: 'LegalSeo', title?: string | null, description?: string | null, noindex?: boolean | null } | null } };
+
+export type LegalConnectionQueryVariables = Exact<{
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<LegalFilter>;
+}>;
+
+
+export type LegalConnectionQuery = { __typename?: 'Query', legalConnection: { __typename?: 'LegalConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'LegalConnectionEdges', cursor: string, node?: { __typename: 'Legal', id: string, title: string, description: string, pubDate: string, updatedDate?: string | null, effectiveDate?: string | null, pageType?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, contact?: { __typename: 'LegalContact', email?: string | null, address?: string | null, phone?: string | null } | null, seo?: { __typename: 'LegalSeo', title?: string | null, description?: string | null, noindex?: boolean | null } | null } | null } | null> | null } };
+
+export type PagesQueryVariables = Exact<{
+  relativePath: Scalars['String']['input'];
+}>;
+
+
+export type PagesQuery = { __typename?: 'Query', pages: { __typename: 'Pages', id: string, title: string, description: string, pubDate: string, updatedDate?: string | null, layout?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, hero?: { __typename: 'PagesHero', title?: string | null, subtitle?: string | null, image?: string | null } | null, seo?: { __typename: 'PagesSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } };
+
+export type PagesConnectionQueryVariables = Exact<{
+  before?: InputMaybe<Scalars['String']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Float']['input']>;
+  last?: InputMaybe<Scalars['Float']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<PagesFilter>;
+}>;
+
+
+export type PagesConnectionQuery = { __typename?: 'Query', pagesConnection: { __typename?: 'PagesConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'PagesConnectionEdges', cursor: string, node?: { __typename: 'Pages', id: string, title: string, description: string, pubDate: string, updatedDate?: string | null, layout?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, hero?: { __typename: 'PagesHero', title?: string | null, subtitle?: string | null, image?: string | null } | null, seo?: { __typename: 'PagesSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } | null } | null> | null } };
 
 export type CategoriesQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
 }>;
 
 
-export type CategoriesQuery = { __typename?: 'Query', categories: { __typename: 'Categories', id: string, name: string, description: string, icon: string, color: string, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, seo?: { __typename: 'CategoriesSeo', title?: string | null, description?: string | null } | null } };
+export type CategoriesQuery = { __typename?: 'Query', categories: { __typename: 'Categories', id: string, name: string, description: string, icon: string, color: string, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } };
 
 export type CategoriesConnectionQueryVariables = Exact<{
   before?: InputMaybe<Scalars['String']['input']>;
@@ -1800,7 +2554,7 @@ export type CategoriesConnectionQueryVariables = Exact<{
 }>;
 
 
-export type CategoriesConnectionQuery = { __typename?: 'Query', categoriesConnection: { __typename?: 'CategoriesConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'CategoriesConnectionEdges', cursor: string, node?: { __typename: 'Categories', id: string, name: string, description: string, icon: string, color: string, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, seo?: { __typename: 'CategoriesSeo', title?: string | null, description?: string | null } | null } | null } | null> | null } };
+export type CategoriesConnectionQuery = { __typename?: 'Query', categoriesConnection: { __typename?: 'CategoriesConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'CategoriesConnectionEdges', cursor: string, node?: { __typename: 'Categories', id: string, name: string, description: string, icon: string, color: string, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } | null } | null> | null } };
 
 export type AuthorsQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
@@ -1820,82 +2574,6 @@ export type AuthorsConnectionQueryVariables = Exact<{
 
 
 export type AuthorsConnectionQuery = { __typename?: 'Query', authorsConnection: { __typename?: 'AuthorsConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'AuthorsConnectionEdges', cursor: string, node?: { __typename: 'Authors', id: string, name: string, bio?: string | null, avatar?: string | null, role?: string | null, company?: string | null, email?: string | null, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, social?: { __typename: 'AuthorsSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null } | null } | null> | null } };
-
-export type PodcastQueryVariables = Exact<{
-  relativePath: Scalars['String']['input'];
-}>;
-
-
-export type PodcastQuery = { __typename?: 'Query', podcast: { __typename: 'Podcast', id: string, title: string, description: string, pubDate: string, duration: string, audioUrl: string, image?: string | null, guests?: Array<string | null> | null, transcript?: string | null, season?: number | null, episode: number, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, seo?: { __typename: 'PodcastSeo', title?: string | null, description?: string | null, canonical?: string | null } | null } };
-
-export type PodcastConnectionQueryVariables = Exact<{
-  before?: InputMaybe<Scalars['String']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Float']['input']>;
-  last?: InputMaybe<Scalars['Float']['input']>;
-  sort?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<PodcastFilter>;
-}>;
-
-
-export type PodcastConnectionQuery = { __typename?: 'Query', podcastConnection: { __typename?: 'PodcastConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'PodcastConnectionEdges', cursor: string, node?: { __typename: 'Podcast', id: string, title: string, description: string, pubDate: string, duration: string, audioUrl: string, image?: string | null, guests?: Array<string | null> | null, transcript?: string | null, season?: number | null, episode: number, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, seo?: { __typename: 'PodcastSeo', title?: string | null, description?: string | null, canonical?: string | null } | null } | null } | null> | null } };
-
-export type NewsletterQueryVariables = Exact<{
-  relativePath: Scalars['String']['input'];
-}>;
-
-
-export type NewsletterQuery = { __typename?: 'Query', newsletter: { __typename: 'Newsletter', id: string, title: string, excerpt: string, pubDate: string, issue: number, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } };
-
-export type NewsletterConnectionQueryVariables = Exact<{
-  before?: InputMaybe<Scalars['String']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Float']['input']>;
-  last?: InputMaybe<Scalars['Float']['input']>;
-  sort?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<NewsletterFilter>;
-}>;
-
-
-export type NewsletterConnectionQuery = { __typename?: 'Query', newsletterConnection: { __typename?: 'NewsletterConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'NewsletterConnectionEdges', cursor: string, node?: { __typename: 'Newsletter', id: string, title: string, excerpt: string, pubDate: string, issue: number, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } | null } | null> | null } };
-
-export type PagesQueryVariables = Exact<{
-  relativePath: Scalars['String']['input'];
-}>;
-
-
-export type PagesQuery = { __typename?: 'Query', pages: { __typename: 'Pages', id: string, title: string, description: string, pubDate?: string | null, updatedDate?: string | null, layout?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, seo?: { __typename: 'PagesSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } };
-
-export type PagesConnectionQueryVariables = Exact<{
-  before?: InputMaybe<Scalars['String']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Float']['input']>;
-  last?: InputMaybe<Scalars['Float']['input']>;
-  sort?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<PagesFilter>;
-}>;
-
-
-export type PagesConnectionQuery = { __typename?: 'Query', pagesConnection: { __typename?: 'PagesConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'PagesConnectionEdges', cursor: string, node?: { __typename: 'Pages', id: string, title: string, description: string, pubDate?: string | null, updatedDate?: string | null, layout?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, seo?: { __typename: 'PagesSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null } | null } | null> | null } };
-
-export type LegalPagesQueryVariables = Exact<{
-  relativePath: Scalars['String']['input'];
-}>;
-
-
-export type LegalPagesQuery = { __typename?: 'Query', legalPages: { __typename: 'LegalPages', id: string, title: string, description: string, pubDate: string, updatedDate?: string | null, pageType?: string | null, effectiveDate?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, contact?: { __typename: 'LegalPagesContact', email?: string | null, address?: string | null, phone?: string | null } | null, seo?: { __typename: 'LegalPagesSeo', title?: string | null, description?: string | null, noindex?: boolean | null } | null } };
-
-export type LegalPagesConnectionQueryVariables = Exact<{
-  before?: InputMaybe<Scalars['String']['input']>;
-  after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Float']['input']>;
-  last?: InputMaybe<Scalars['Float']['input']>;
-  sort?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<LegalPagesFilter>;
-}>;
-
-
-export type LegalPagesConnectionQuery = { __typename?: 'Query', legalPagesConnection: { __typename?: 'LegalPagesConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'LegalPagesConnectionEdges', cursor: string, node?: { __typename: 'LegalPages', id: string, title: string, description: string, pubDate: string, updatedDate?: string | null, pageType?: string | null, effectiveDate?: string | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, contact?: { __typename: 'LegalPagesContact', email?: string | null, address?: string | null, phone?: string | null } | null, seo?: { __typename: 'LegalPagesSeo', title?: string | null, description?: string | null, noindex?: boolean | null } | null } | null } | null> | null } };
 
 export type SettingsQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
@@ -1919,6 +2597,12 @@ export type SettingsConnectionQuery = { __typename?: 'Query', settingsConnection
 export const BlogPartsFragmentDoc = gql`
     fragment BlogParts on Blog {
   __typename
+  editorial {
+    __typename
+    status
+    assignedEditor
+    editorNotes
+  }
   title
   excerpt
   pubDate
@@ -1937,6 +2621,14 @@ export const BlogPartsFragmentDoc = gql`
       website
     }
   }
+  heroImage {
+    __typename
+    imageType
+    uploadedImage
+    externalUrl
+    alt
+    caption
+  }
   image
   imageAlt
   category
@@ -1946,9 +2638,236 @@ export const BlogPartsFragmentDoc = gql`
   trending
   draft
   readTime
+  hasAudio
   audioUrl
   audioDuration
   audioTranscript
+  seo {
+    __typename
+    customSEO
+    title
+    description
+    canonical
+    noindex
+  }
+  body
+}
+    `;
+export const NewsletterPartsFragmentDoc = gql`
+    fragment NewsletterParts on Newsletter {
+  __typename
+  title
+  issueNumber
+  newsletterType
+  excerpt
+  subscriberOnly
+  previewContent
+  publishDate
+  status
+  featured
+  coverImage
+  highlights {
+    __typename
+    title
+    description
+    link
+  }
+  trackStats
+  stats {
+    __typename
+    subscribers
+    openRate
+    clickRate
+  }
+  tags
+  seo {
+    __typename
+    title
+    description
+  }
+  body
+}
+    `;
+export const AllTopicsPagePartsFragmentDoc = gql`
+    fragment AllTopicsPageParts on AllTopicsPage {
+  __typename
+  hero {
+    __typename
+    badgeText
+    title
+    titleAccent
+    subtitle
+  }
+  topics {
+    __typename
+    name
+    href
+    description
+    audience
+  }
+  stats {
+    __typename
+    topicCount
+    articleCount
+    storiesLabel
+  }
+  cta {
+    __typename
+    title
+    description
+    primaryButtonText
+    primaryButtonLink
+    secondaryButtonText
+    secondaryButtonLink
+  }
+}
+    `;
+export const PodcastPartsFragmentDoc = gql`
+    fragment PodcastParts on Podcast {
+  __typename
+  title
+  episode
+  description
+  pubDate
+  status
+  duration
+  audioUrl
+  downloadable
+  image
+  guests {
+    __typename
+    name
+    role
+    company
+    bio
+    photo
+    social {
+      __typename
+      twitter
+      linkedin
+    }
+  }
+  tags
+  featured
+  transcript
+  seo {
+    __typename
+    title
+    description
+    canonical
+  }
+  body
+}
+    `;
+export const ContactPartsFragmentDoc = gql`
+    fragment ContactParts on Contact {
+  __typename
+  title
+  description
+  pubDate
+  hero {
+    __typename
+    title
+    titleAccent
+    subtitle
+    responseTime
+    badgeText
+  }
+  contactMethods {
+    __typename
+    title
+    description
+    email
+    icon
+    color
+    featured
+  }
+  socialLinks {
+    __typename
+    name
+    url
+    icon
+    color
+    showInContact
+  }
+  faq {
+    __typename
+    enabled
+    title
+    titleAccent
+    subtitle
+    items {
+      __typename
+      question
+      answer
+      category
+      featured
+    }
+  }
+  cta {
+    __typename
+    title
+    titleAccent
+    subtitle
+    primaryButton {
+      __typename
+      text
+      link
+    }
+    secondaryButton {
+      __typename
+      text
+      link
+    }
+  }
+  seo {
+    __typename
+    title
+    description
+    canonical
+    noindex
+  }
+  body
+}
+    `;
+export const LegalPartsFragmentDoc = gql`
+    fragment LegalParts on Legal {
+  __typename
+  title
+  description
+  pubDate
+  updatedDate
+  effectiveDate
+  pageType
+  contact {
+    __typename
+    email
+    address
+    phone
+  }
+  seo {
+    __typename
+    title
+    description
+    noindex
+  }
+  body
+}
+    `;
+export const PagesPartsFragmentDoc = gql`
+    fragment PagesParts on Pages {
+  __typename
+  title
+  description
+  pubDate
+  updatedDate
+  layout
+  hero {
+    __typename
+    title
+    subtitle
+    image
+  }
   seo {
     __typename
     title
@@ -1967,11 +2886,6 @@ export const CategoriesPartsFragmentDoc = gql`
   icon
   color
   featured
-  seo {
-    __typename
-    title
-    description
-  }
   body
 }
     `;
@@ -1992,82 +2906,6 @@ export const AuthorsPartsFragmentDoc = gql`
     website
   }
   featured
-  body
-}
-    `;
-export const PodcastPartsFragmentDoc = gql`
-    fragment PodcastParts on Podcast {
-  __typename
-  title
-  description
-  pubDate
-  duration
-  audioUrl
-  image
-  guests
-  transcript
-  season
-  episode
-  featured
-  seo {
-    __typename
-    title
-    description
-    canonical
-  }
-  body
-}
-    `;
-export const NewsletterPartsFragmentDoc = gql`
-    fragment NewsletterParts on Newsletter {
-  __typename
-  title
-  excerpt
-  pubDate
-  issue
-  featured
-  body
-}
-    `;
-export const PagesPartsFragmentDoc = gql`
-    fragment PagesParts on Pages {
-  __typename
-  title
-  description
-  pubDate
-  updatedDate
-  layout
-  seo {
-    __typename
-    title
-    description
-    canonical
-    noindex
-  }
-  body
-}
-    `;
-export const LegalPagesPartsFragmentDoc = gql`
-    fragment LegalPagesParts on LegalPages {
-  __typename
-  title
-  description
-  pubDate
-  updatedDate
-  pageType
-  effectiveDate
-  contact {
-    __typename
-    email
-    address
-    phone
-  }
-  seo {
-    __typename
-    title
-    description
-    noindex
-  }
   body
 }
     `;
@@ -2270,6 +3108,348 @@ export const BlogConnectionDocument = gql`
   }
 }
     ${BlogPartsFragmentDoc}`;
+export const NewsletterDocument = gql`
+    query newsletter($relativePath: String!) {
+  newsletter(relativePath: $relativePath) {
+    ... on Document {
+      _sys {
+        filename
+        basename
+        hasReferences
+        breadcrumbs
+        path
+        relativePath
+        extension
+      }
+      id
+    }
+    ...NewsletterParts
+  }
+}
+    ${NewsletterPartsFragmentDoc}`;
+export const NewsletterConnectionDocument = gql`
+    query newsletterConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: NewsletterFilter) {
+  newsletterConnection(
+    before: $before
+    after: $after
+    first: $first
+    last: $last
+    sort: $sort
+    filter: $filter
+  ) {
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        ... on Document {
+          _sys {
+            filename
+            basename
+            hasReferences
+            breadcrumbs
+            path
+            relativePath
+            extension
+          }
+          id
+        }
+        ...NewsletterParts
+      }
+    }
+  }
+}
+    ${NewsletterPartsFragmentDoc}`;
+export const AllTopicsPageDocument = gql`
+    query allTopicsPage($relativePath: String!) {
+  allTopicsPage(relativePath: $relativePath) {
+    ... on Document {
+      _sys {
+        filename
+        basename
+        hasReferences
+        breadcrumbs
+        path
+        relativePath
+        extension
+      }
+      id
+    }
+    ...AllTopicsPageParts
+  }
+}
+    ${AllTopicsPagePartsFragmentDoc}`;
+export const AllTopicsPageConnectionDocument = gql`
+    query allTopicsPageConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: AllTopicsPageFilter) {
+  allTopicsPageConnection(
+    before: $before
+    after: $after
+    first: $first
+    last: $last
+    sort: $sort
+    filter: $filter
+  ) {
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        ... on Document {
+          _sys {
+            filename
+            basename
+            hasReferences
+            breadcrumbs
+            path
+            relativePath
+            extension
+          }
+          id
+        }
+        ...AllTopicsPageParts
+      }
+    }
+  }
+}
+    ${AllTopicsPagePartsFragmentDoc}`;
+export const PodcastDocument = gql`
+    query podcast($relativePath: String!) {
+  podcast(relativePath: $relativePath) {
+    ... on Document {
+      _sys {
+        filename
+        basename
+        hasReferences
+        breadcrumbs
+        path
+        relativePath
+        extension
+      }
+      id
+    }
+    ...PodcastParts
+  }
+}
+    ${PodcastPartsFragmentDoc}`;
+export const PodcastConnectionDocument = gql`
+    query podcastConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: PodcastFilter) {
+  podcastConnection(
+    before: $before
+    after: $after
+    first: $first
+    last: $last
+    sort: $sort
+    filter: $filter
+  ) {
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        ... on Document {
+          _sys {
+            filename
+            basename
+            hasReferences
+            breadcrumbs
+            path
+            relativePath
+            extension
+          }
+          id
+        }
+        ...PodcastParts
+      }
+    }
+  }
+}
+    ${PodcastPartsFragmentDoc}`;
+export const ContactDocument = gql`
+    query contact($relativePath: String!) {
+  contact(relativePath: $relativePath) {
+    ... on Document {
+      _sys {
+        filename
+        basename
+        hasReferences
+        breadcrumbs
+        path
+        relativePath
+        extension
+      }
+      id
+    }
+    ...ContactParts
+  }
+}
+    ${ContactPartsFragmentDoc}`;
+export const ContactConnectionDocument = gql`
+    query contactConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: ContactFilter) {
+  contactConnection(
+    before: $before
+    after: $after
+    first: $first
+    last: $last
+    sort: $sort
+    filter: $filter
+  ) {
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        ... on Document {
+          _sys {
+            filename
+            basename
+            hasReferences
+            breadcrumbs
+            path
+            relativePath
+            extension
+          }
+          id
+        }
+        ...ContactParts
+      }
+    }
+  }
+}
+    ${ContactPartsFragmentDoc}`;
+export const LegalDocument = gql`
+    query legal($relativePath: String!) {
+  legal(relativePath: $relativePath) {
+    ... on Document {
+      _sys {
+        filename
+        basename
+        hasReferences
+        breadcrumbs
+        path
+        relativePath
+        extension
+      }
+      id
+    }
+    ...LegalParts
+  }
+}
+    ${LegalPartsFragmentDoc}`;
+export const LegalConnectionDocument = gql`
+    query legalConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: LegalFilter) {
+  legalConnection(
+    before: $before
+    after: $after
+    first: $first
+    last: $last
+    sort: $sort
+    filter: $filter
+  ) {
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        ... on Document {
+          _sys {
+            filename
+            basename
+            hasReferences
+            breadcrumbs
+            path
+            relativePath
+            extension
+          }
+          id
+        }
+        ...LegalParts
+      }
+    }
+  }
+}
+    ${LegalPartsFragmentDoc}`;
+export const PagesDocument = gql`
+    query pages($relativePath: String!) {
+  pages(relativePath: $relativePath) {
+    ... on Document {
+      _sys {
+        filename
+        basename
+        hasReferences
+        breadcrumbs
+        path
+        relativePath
+        extension
+      }
+      id
+    }
+    ...PagesParts
+  }
+}
+    ${PagesPartsFragmentDoc}`;
+export const PagesConnectionDocument = gql`
+    query pagesConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: PagesFilter) {
+  pagesConnection(
+    before: $before
+    after: $after
+    first: $first
+    last: $last
+    sort: $sort
+    filter: $filter
+  ) {
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        ... on Document {
+          _sys {
+            filename
+            basename
+            hasReferences
+            breadcrumbs
+            path
+            relativePath
+            extension
+          }
+          id
+        }
+        ...PagesParts
+      }
+    }
+  }
+}
+    ${PagesPartsFragmentDoc}`;
 export const CategoriesDocument = gql`
     query categories($relativePath: String!) {
   categories(relativePath: $relativePath) {
@@ -2384,234 +3564,6 @@ export const AuthorsConnectionDocument = gql`
   }
 }
     ${AuthorsPartsFragmentDoc}`;
-export const PodcastDocument = gql`
-    query podcast($relativePath: String!) {
-  podcast(relativePath: $relativePath) {
-    ... on Document {
-      _sys {
-        filename
-        basename
-        hasReferences
-        breadcrumbs
-        path
-        relativePath
-        extension
-      }
-      id
-    }
-    ...PodcastParts
-  }
-}
-    ${PodcastPartsFragmentDoc}`;
-export const PodcastConnectionDocument = gql`
-    query podcastConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: PodcastFilter) {
-  podcastConnection(
-    before: $before
-    after: $after
-    first: $first
-    last: $last
-    sort: $sort
-    filter: $filter
-  ) {
-    pageInfo {
-      hasPreviousPage
-      hasNextPage
-      startCursor
-      endCursor
-    }
-    totalCount
-    edges {
-      cursor
-      node {
-        ... on Document {
-          _sys {
-            filename
-            basename
-            hasReferences
-            breadcrumbs
-            path
-            relativePath
-            extension
-          }
-          id
-        }
-        ...PodcastParts
-      }
-    }
-  }
-}
-    ${PodcastPartsFragmentDoc}`;
-export const NewsletterDocument = gql`
-    query newsletter($relativePath: String!) {
-  newsletter(relativePath: $relativePath) {
-    ... on Document {
-      _sys {
-        filename
-        basename
-        hasReferences
-        breadcrumbs
-        path
-        relativePath
-        extension
-      }
-      id
-    }
-    ...NewsletterParts
-  }
-}
-    ${NewsletterPartsFragmentDoc}`;
-export const NewsletterConnectionDocument = gql`
-    query newsletterConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: NewsletterFilter) {
-  newsletterConnection(
-    before: $before
-    after: $after
-    first: $first
-    last: $last
-    sort: $sort
-    filter: $filter
-  ) {
-    pageInfo {
-      hasPreviousPage
-      hasNextPage
-      startCursor
-      endCursor
-    }
-    totalCount
-    edges {
-      cursor
-      node {
-        ... on Document {
-          _sys {
-            filename
-            basename
-            hasReferences
-            breadcrumbs
-            path
-            relativePath
-            extension
-          }
-          id
-        }
-        ...NewsletterParts
-      }
-    }
-  }
-}
-    ${NewsletterPartsFragmentDoc}`;
-export const PagesDocument = gql`
-    query pages($relativePath: String!) {
-  pages(relativePath: $relativePath) {
-    ... on Document {
-      _sys {
-        filename
-        basename
-        hasReferences
-        breadcrumbs
-        path
-        relativePath
-        extension
-      }
-      id
-    }
-    ...PagesParts
-  }
-}
-    ${PagesPartsFragmentDoc}`;
-export const PagesConnectionDocument = gql`
-    query pagesConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: PagesFilter) {
-  pagesConnection(
-    before: $before
-    after: $after
-    first: $first
-    last: $last
-    sort: $sort
-    filter: $filter
-  ) {
-    pageInfo {
-      hasPreviousPage
-      hasNextPage
-      startCursor
-      endCursor
-    }
-    totalCount
-    edges {
-      cursor
-      node {
-        ... on Document {
-          _sys {
-            filename
-            basename
-            hasReferences
-            breadcrumbs
-            path
-            relativePath
-            extension
-          }
-          id
-        }
-        ...PagesParts
-      }
-    }
-  }
-}
-    ${PagesPartsFragmentDoc}`;
-export const LegalPagesDocument = gql`
-    query legalPages($relativePath: String!) {
-  legalPages(relativePath: $relativePath) {
-    ... on Document {
-      _sys {
-        filename
-        basename
-        hasReferences
-        breadcrumbs
-        path
-        relativePath
-        extension
-      }
-      id
-    }
-    ...LegalPagesParts
-  }
-}
-    ${LegalPagesPartsFragmentDoc}`;
-export const LegalPagesConnectionDocument = gql`
-    query legalPagesConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: LegalPagesFilter) {
-  legalPagesConnection(
-    before: $before
-    after: $after
-    first: $first
-    last: $last
-    sort: $sort
-    filter: $filter
-  ) {
-    pageInfo {
-      hasPreviousPage
-      hasNextPage
-      startCursor
-      endCursor
-    }
-    totalCount
-    edges {
-      cursor
-      node {
-        ... on Document {
-          _sys {
-            filename
-            basename
-            hasReferences
-            breadcrumbs
-            path
-            relativePath
-            extension
-          }
-          id
-        }
-        ...LegalPagesParts
-      }
-    }
-  }
-}
-    ${LegalPagesPartsFragmentDoc}`;
 export const SettingsDocument = gql`
     query settings($relativePath: String!) {
   settings(relativePath: $relativePath) {
@@ -2678,6 +3630,42 @@ export type Requester<C= {}> = <R, V>(doc: DocumentNode, vars?: V, options?: C) 
     blogConnection(variables?: BlogConnectionQueryVariables, options?: C): Promise<{data: BlogConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: BlogConnectionQueryVariables, query: string}> {
         return requester<{data: BlogConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: BlogConnectionQueryVariables, query: string}, BlogConnectionQueryVariables>(BlogConnectionDocument, variables, options);
       },
+    newsletter(variables: NewsletterQueryVariables, options?: C): Promise<{data: NewsletterQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: NewsletterQueryVariables, query: string}> {
+        return requester<{data: NewsletterQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: NewsletterQueryVariables, query: string}, NewsletterQueryVariables>(NewsletterDocument, variables, options);
+      },
+    newsletterConnection(variables?: NewsletterConnectionQueryVariables, options?: C): Promise<{data: NewsletterConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: NewsletterConnectionQueryVariables, query: string}> {
+        return requester<{data: NewsletterConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: NewsletterConnectionQueryVariables, query: string}, NewsletterConnectionQueryVariables>(NewsletterConnectionDocument, variables, options);
+      },
+    allTopicsPage(variables: AllTopicsPageQueryVariables, options?: C): Promise<{data: AllTopicsPageQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: AllTopicsPageQueryVariables, query: string}> {
+        return requester<{data: AllTopicsPageQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: AllTopicsPageQueryVariables, query: string}, AllTopicsPageQueryVariables>(AllTopicsPageDocument, variables, options);
+      },
+    allTopicsPageConnection(variables?: AllTopicsPageConnectionQueryVariables, options?: C): Promise<{data: AllTopicsPageConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: AllTopicsPageConnectionQueryVariables, query: string}> {
+        return requester<{data: AllTopicsPageConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: AllTopicsPageConnectionQueryVariables, query: string}, AllTopicsPageConnectionQueryVariables>(AllTopicsPageConnectionDocument, variables, options);
+      },
+    podcast(variables: PodcastQueryVariables, options?: C): Promise<{data: PodcastQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PodcastQueryVariables, query: string}> {
+        return requester<{data: PodcastQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PodcastQueryVariables, query: string}, PodcastQueryVariables>(PodcastDocument, variables, options);
+      },
+    podcastConnection(variables?: PodcastConnectionQueryVariables, options?: C): Promise<{data: PodcastConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PodcastConnectionQueryVariables, query: string}> {
+        return requester<{data: PodcastConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PodcastConnectionQueryVariables, query: string}, PodcastConnectionQueryVariables>(PodcastConnectionDocument, variables, options);
+      },
+    contact(variables: ContactQueryVariables, options?: C): Promise<{data: ContactQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: ContactQueryVariables, query: string}> {
+        return requester<{data: ContactQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: ContactQueryVariables, query: string}, ContactQueryVariables>(ContactDocument, variables, options);
+      },
+    contactConnection(variables?: ContactConnectionQueryVariables, options?: C): Promise<{data: ContactConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: ContactConnectionQueryVariables, query: string}> {
+        return requester<{data: ContactConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: ContactConnectionQueryVariables, query: string}, ContactConnectionQueryVariables>(ContactConnectionDocument, variables, options);
+      },
+    legal(variables: LegalQueryVariables, options?: C): Promise<{data: LegalQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: LegalQueryVariables, query: string}> {
+        return requester<{data: LegalQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: LegalQueryVariables, query: string}, LegalQueryVariables>(LegalDocument, variables, options);
+      },
+    legalConnection(variables?: LegalConnectionQueryVariables, options?: C): Promise<{data: LegalConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: LegalConnectionQueryVariables, query: string}> {
+        return requester<{data: LegalConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: LegalConnectionQueryVariables, query: string}, LegalConnectionQueryVariables>(LegalConnectionDocument, variables, options);
+      },
+    pages(variables: PagesQueryVariables, options?: C): Promise<{data: PagesQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PagesQueryVariables, query: string}> {
+        return requester<{data: PagesQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PagesQueryVariables, query: string}, PagesQueryVariables>(PagesDocument, variables, options);
+      },
+    pagesConnection(variables?: PagesConnectionQueryVariables, options?: C): Promise<{data: PagesConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PagesConnectionQueryVariables, query: string}> {
+        return requester<{data: PagesConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PagesConnectionQueryVariables, query: string}, PagesConnectionQueryVariables>(PagesConnectionDocument, variables, options);
+      },
     categories(variables: CategoriesQueryVariables, options?: C): Promise<{data: CategoriesQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: CategoriesQueryVariables, query: string}> {
         return requester<{data: CategoriesQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: CategoriesQueryVariables, query: string}, CategoriesQueryVariables>(CategoriesDocument, variables, options);
       },
@@ -2689,30 +3677,6 @@ export type Requester<C= {}> = <R, V>(doc: DocumentNode, vars?: V, options?: C) 
       },
     authorsConnection(variables?: AuthorsConnectionQueryVariables, options?: C): Promise<{data: AuthorsConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: AuthorsConnectionQueryVariables, query: string}> {
         return requester<{data: AuthorsConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: AuthorsConnectionQueryVariables, query: string}, AuthorsConnectionQueryVariables>(AuthorsConnectionDocument, variables, options);
-      },
-    podcast(variables: PodcastQueryVariables, options?: C): Promise<{data: PodcastQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PodcastQueryVariables, query: string}> {
-        return requester<{data: PodcastQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PodcastQueryVariables, query: string}, PodcastQueryVariables>(PodcastDocument, variables, options);
-      },
-    podcastConnection(variables?: PodcastConnectionQueryVariables, options?: C): Promise<{data: PodcastConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PodcastConnectionQueryVariables, query: string}> {
-        return requester<{data: PodcastConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PodcastConnectionQueryVariables, query: string}, PodcastConnectionQueryVariables>(PodcastConnectionDocument, variables, options);
-      },
-    newsletter(variables: NewsletterQueryVariables, options?: C): Promise<{data: NewsletterQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: NewsletterQueryVariables, query: string}> {
-        return requester<{data: NewsletterQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: NewsletterQueryVariables, query: string}, NewsletterQueryVariables>(NewsletterDocument, variables, options);
-      },
-    newsletterConnection(variables?: NewsletterConnectionQueryVariables, options?: C): Promise<{data: NewsletterConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: NewsletterConnectionQueryVariables, query: string}> {
-        return requester<{data: NewsletterConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: NewsletterConnectionQueryVariables, query: string}, NewsletterConnectionQueryVariables>(NewsletterConnectionDocument, variables, options);
-      },
-    pages(variables: PagesQueryVariables, options?: C): Promise<{data: PagesQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PagesQueryVariables, query: string}> {
-        return requester<{data: PagesQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PagesQueryVariables, query: string}, PagesQueryVariables>(PagesDocument, variables, options);
-      },
-    pagesConnection(variables?: PagesConnectionQueryVariables, options?: C): Promise<{data: PagesConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PagesConnectionQueryVariables, query: string}> {
-        return requester<{data: PagesConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: PagesConnectionQueryVariables, query: string}, PagesConnectionQueryVariables>(PagesConnectionDocument, variables, options);
-      },
-    legalPages(variables: LegalPagesQueryVariables, options?: C): Promise<{data: LegalPagesQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: LegalPagesQueryVariables, query: string}> {
-        return requester<{data: LegalPagesQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: LegalPagesQueryVariables, query: string}, LegalPagesQueryVariables>(LegalPagesDocument, variables, options);
-      },
-    legalPagesConnection(variables?: LegalPagesConnectionQueryVariables, options?: C): Promise<{data: LegalPagesConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: LegalPagesConnectionQueryVariables, query: string}> {
-        return requester<{data: LegalPagesConnectionQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: LegalPagesConnectionQueryVariables, query: string}, LegalPagesConnectionQueryVariables>(LegalPagesConnectionDocument, variables, options);
       },
     settings(variables: SettingsQueryVariables, options?: C): Promise<{data: SettingsQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: SettingsQueryVariables, query: string}> {
         return requester<{data: SettingsQuery, errors?: { message: string, locations: { line: number, column: number }[], path: string[] }[], variables: SettingsQueryVariables, query: string}, SettingsQueryVariables>(SettingsDocument, variables, options);

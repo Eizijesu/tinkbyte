@@ -1,0 +1,988 @@
+---
+// src/pages/newsletter/archive.astro - Newsletter-specific archive with filtering
+import Layout from "../../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
+
+// Get all published newsletters
+const allNewsletters = await getCollection("newsletter", ({ data }) => 
+  data.status === "published"
+);
+
+// Sort by date (newest first)
+const sortedNewsletters = allNewsletters.sort(
+  (a, b) => new Date(b.data.publishDate).getTime() - new Date(a.data.publishDate).getTime()
+);
+
+// Group by year
+const newslettersByYear = sortedNewsletters.reduce(
+  (acc, newsletter) => {
+    const year = new Date(newsletter.data.publishDate).getFullYear();
+    if (!acc[year]) {
+      acc[year] = [];
+    }
+    acc[year].push(newsletter);
+    return acc;
+  },
+  {} as Record<number, typeof sortedNewsletters>
+);
+
+const years = Object.keys(newslettersByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
+
+// Newsletter type counts and info
+const newsletterTypes = {
+  'tinkbyte-weekly': { 
+    name: 'TinkByte Weekly', 
+    color: 'blue', 
+    icon: 'fas fa-newspaper',
+    description: 'Product, AI, tools, strategy, and market signals'
+  },
+  'build-sheet': { 
+    name: 'Build Sheet', 
+    color: 'purple', 
+    icon: 'fas fa-hammer',
+    description: 'What we\'re shipping, fixing, and learning in real-time'
+  },
+  'stackdown': { 
+    name: 'Stackdown', 
+    color: 'green', 
+    icon: 'fas fa-layer-group',
+    description: 'Toolkits, stacks, and workflow breakdowns that work'
+  },
+  'signal-drop': { 
+    name: 'Signal Drop', 
+    color: 'orange', 
+    icon: 'fas fa-signal',
+    description: 'Launches, AI updates, and fast insights for busy builders'
+  },
+  'system-signal': { 
+    name: 'System Signal', 
+    color: 'red', 
+    icon: 'fas fa-cogs',
+    description: 'Logic, systems, automation, algorithms, ML, and robotics'
+  },
+  'the-real-build': { 
+    name: 'The Real Build', 
+    color: 'indigo', 
+    icon: 'fas fa-rocket',
+    description: 'Deep product journey from idea to launch with honest insights'
+  },
+  'the-loop': { 
+    name: 'The Loop', 
+    color: 'pink', 
+    icon: 'fas fa-sync',
+    description: 'Recurring patterns across tech, design, and product development'
+  },
+  'data-slice': { 
+    name: 'Data Slice', 
+    color: 'teal', 
+    icon: 'fas fa-chart-bar',
+    description: 'One useful insight from data, behavior, and experiments made practical'
+  },
+  'the-mirror': { 
+    name: 'The Mirror', 
+    color: 'gray', 
+    icon: 'fas fa-mirror',
+    description: 'Tech culture, ethics, and people impact discussions'
+  },
+  'community-code': { 
+    name: 'Community Code', 
+    color: 'lime', 
+    icon: 'fas fa-users',
+    description: 'Builder stories, creator projects, and community learnings'
+  },
+  'future-tech': { 
+    name: 'Future Tech', 
+    color: 'cyan', 
+    icon: 'fas fa-atom',
+    description: 'Basics on AI, blockchain, XR, systems for newcomers'
+  }
+};
+
+// Count newsletters by type
+const typeCounts = sortedNewsletters.reduce((acc, newsletter) => {
+  const type = newsletter.data.newsletterType;
+  acc[type] = (acc[type] || 0) + 1;
+  return acc;
+}, {} as Record<string, number>);
+
+// Statistics
+const totalNewsletters = sortedNewsletters.length;
+const totalSubscribers = Math.max(...sortedNewsletters.map(n => n.data.stats?.subscribers || 0));
+const avgOpenRate = Math.round(
+  sortedNewsletters
+    .filter(n => n.data.stats?.openRate)
+    .reduce((sum, n) => sum + (n.data.stats?.openRate || 0), 0) / 
+  sortedNewsletters.filter(n => n.data.stats?.openRate).length
+);
+const featuredCount = sortedNewsletters.filter(n => n.data.featured).length;
+
+// Helper function to get newsletter type display info
+const getNewsletterTypeDisplay = (newsletterType: string) => {
+  return newsletterTypes[newsletterType as keyof typeof newsletterTypes] || {
+    name: 'Newsletter',
+    color: 'gray',
+    icon: 'fas fa-envelope',
+    description: 'Newsletter content'
+  };
+};
+---
+
+<Layout
+  title="Newsletter Archive | TinkByte - All Issues"
+  description={`Browse all ${totalNewsletters} newsletter issues including TinkByte Weekly, Build Sheet, Stackdown and more. Complete archive organized by year and newsletter type.`}
+>
+  <!-- Enhanced Newsletter Archive Header -->
+  <section class="relative py-16 lg:py-24 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-10"></div>
+    
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="max-w-4xl mx-auto text-center">
+        <!-- Breadcrumb -->
+        <nav class="mb-8">
+          <div class="flex items-center justify-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <a href="/newsletter" class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide font-semibold">
+              Newsletter
+            </a>
+            <i class="fas fa-chevron-right text-xs mx-2"></i>
+            <span class="text-zinc-700 dark:text-zinc-300 uppercase tracking-wide font-semibold">
+              Archive
+            </span>
+          </div>
+        </nav>
+
+        <h1 class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6">
+          Newsletter
+          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Archive
+          </span>
+        </h1>
+        
+        <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12">
+          Browse our complete collection of {totalNewsletters} newsletter issues across all series. Preview content and subscribe to get full access delivered to your inbox.
+        </p>
+
+        <!-- Enhanced Statistics Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          <div class="text-center">
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+              {totalNewsletters}
+            </div>
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              Total Issues
+            </div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+              {Object.keys(newsletterTypes).length}
+            </div>
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              Newsletter Series
+            </div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+              {totalSubscribers.toLocaleString()}+
+            </div>
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              Subscribers
+            </div>
+          </div>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-zinc-900 dark:text-white mb-1">
+              {avgOpenRate || 45}%
+            </div>
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+              Avg Open Rate
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter Type Filter Tabs -->
+  <section class="py-8 px-4 border-b border-zinc-200 dark:border-zinc-700">
+    <div class="container mx-auto">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex flex-wrap justify-center gap-4 mb-6">
+          <button class="filter-tab active" data-filter="all">
+            All Issues ({totalNewsletters})
+          </button>
+          {Object.entries(newsletterTypes).map(([type, info]) => {
+            const count = typeCounts[type] || 0;
+            return count > 0 ? (
+              <button class="filter-tab" data-filter={type}>
+                <i class={`${info.icon} mr-1`}></i>
+                {info.name} ({count})
+              </button>
+            ) : null;
+          })}
+          <button class="filter-tab" data-filter="featured">
+            <i class="fas fa-star mr-1"></i>
+            Featured ({featuredCount})
+          </button>
+        </div>
+
+        <!-- Newsletter Type Legend -->
+        <div class="newsletter-legend">
+          <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 text-center">
+            Newsletter Series
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(newsletterTypes).map(([type, info]) => {
+              const count = typeCounts[type] || 0;
+              return count > 0 ? (
+                <div class={`legend-item newsletter-type-${info.color}`}>
+                  <div class="legend-icon">
+                    <i class={info.icon}></i>
+                  </div>
+                  <div class="legend-content">
+                    <h4 class="legend-title">{info.name}</h4>
+                    <p class="legend-description">{info.description}</p>
+                    <span class="legend-count">{count} issues</span>
+                  </div>
+                </div>
+              ) : null;
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter Archive by Year -->
+  <section class="py-16 px-4">
+    <div class="container mx-auto">
+      <div class="max-w-6xl mx-auto">
+        {years.map(year => (
+          <div class="year-section mb-16" data-year={year}>
+            <div class="flex items-center gap-4 mb-8">
+              <h2 class="text-3xl font-bold text-zinc-900 dark:text-white">
+                {year}
+              </h2>
+              <div class="flex-1 h-px bg-zinc-200 dark:bg-zinc-700"></div>
+              <span class="text-sm text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full">
+                {newslettersByYear[year].length} issues
+              </span>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {newslettersByYear[year].map(newsletter => {
+                const typeDisplay = getNewsletterTypeDisplay(newsletter.data.newsletterType);
+                return (
+                  <article 
+                    class="newsletter-card group bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-lg transition-all duration-300"
+                    data-newsletter-type={newsletter.data.newsletterType}
+                    data-featured={newsletter.data.featured ? "true" : "false"}
+                  >
+                    {newsletter.data.coverImage && (
+                      <div class="aspect-video overflow-hidden">
+                        <Image
+                          src={newsletter.data.coverImage}
+                          alt={newsletter.data.title}
+                          width={400}
+                          height={225}
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    
+                    <div class="p-6">
+                      <div class="flex items-center gap-2 mb-3 flex-wrap">
+                        <span class={`newsletter-type-badge ${newsletter.data.newsletterType}`}>
+                          <i class={`${typeDisplay.icon} mr-1`}></i>
+                          {typeDisplay.name}
+                        </span>
+                        <span class="text-xs font-semibold px-2 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded uppercase tracking-wide">
+                          Issue #{newsletter.data.issueNumber}
+                        </span>
+                        <time class="text-xs text-zinc-500 dark:text-zinc-400" datetime={new Date(newsletter.data.publishDate).toISOString()}>
+                          {new Date(newsletter.data.publishDate).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </time>
+                        {newsletter.data.featured && (
+                          <span class="text-xs font-semibold px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded uppercase tracking-wide">
+                            <i class="fas fa-star mr-1"></i>
+                            Featured
+                          </span>
+                        )}
+                        <span class="text-xs font-semibold px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded uppercase tracking-wide">
+                          <i class="fas fa-eye mr-1"></i>
+                          Preview
+                        </span>
+                      </div>
+                      
+                      <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-2 leading-tight">
+                        <a href={`/newsletter/${newsletter.slug}`} class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                          {newsletter.data.title}
+                        </a>
+                      </h3>
+                      
+                      <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-3">
+                        {newsletter.data.excerpt}
+                      </p>
+
+                      <!-- Newsletter Highlights Preview -->
+                      {newsletter.data.highlights && newsletter.data.highlights.length > 0 && (
+                        <div class="highlights-mini mb-4">
+                          <div class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
+                            What's Inside:
+                          </div>
+                          <div class="space-y-1">
+                            {newsletter.data.highlights.slice(0, 2).map(highlight => (
+                              <div class="text-xs text-zinc-600 dark:text-zinc-400 flex items-start gap-1">
+                                <span class="text-blue-500 mt-0.5">•</span>
+                                <span class="line-clamp-1">{highlight.title}</span>
+                              </div>
+                            ))}
+                            {newsletter.data.highlights.length > 2 && (
+                              <div class="text-xs text-zinc-500 dark:text-zinc-500 italic">
+                                +{newsletter.data.highlights.length - 2} more topics
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                          <span>TinkByte Team</span>
+                          <span>•</span>
+                          <span>{newsletter.data.readingTime || 5} min read</span>
+                          {newsletter.data.stats?.subscribers && (
+                            <>
+                              <span>•</span>
+                              <span>{newsletter.data.stats.subscribers.toLocaleString()} subscribers</span>
+                            </>
+                          )}
+                        </div>
+                        
+                        <a 
+                          href={`/newsletter/${newsletter.slug}`}
+                          class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-semibold transition-colors inline-flex items-center gap-1"
+                        >
+                          Preview
+                          <i class="fas fa-arrow-right text-xs"></i>
+                        </a>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter Subscription CTA -->
+  <section class="py-16 px-4 bg-zinc-50 dark:bg-zinc-900/50">
+    <div class="container mx-auto">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="mb-8">
+          <div class="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-sm flex items-center justify-center mx-auto mb-6">
+            <i class="fas fa-envelope-open text-3xl text-blue-600 dark:text-blue-400"></i>
+          </div>
+          
+          <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-4">
+            Get Full Newsletter Access
+          </h2>
+          
+          <p class="text-xl text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
+            These are just previews. Subscribe to get complete newsletters with full insights, analysis, and actionable advice delivered to your inbox.
+          </p>
+          
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a 
+              href="/newsletter"
+              class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-sm font-semibold transition-all duration-200 text-lg"
+            >
+              <i class="fas fa-envelope mr-2"></i>
+              Subscribe Now - Free
+            </a>
+            <a 
+              href="/newsletter#newsletter-types"
+              class="inline-flex items-center gap-2 px-8 py-4 border-2 border-zinc-300 dark:border-zinc-600 hover:border-blue-600 dark:hover:border-blue-400 text-zinc-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 rounded-sm font-semibold transition-all duration-200 text-lg"
+            >
+              <i class="fas fa-list mr-2"></i>
+              Browse Newsletter Types
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Empty State -->
+  {totalNewsletters === 0 && (
+    <section class="py-32 px-4">
+      <div class="container mx-auto">
+        <div class="max-w-2xl mx-auto text-center">
+          <div class="w-24 h-24 bg-zinc-100 dark:bg-zinc-800 rounded-sm flex items-center justify-center mx-auto mb-8">
+            <i class="fas fa-envelope text-3xl text-zinc-400"></i>
+          </div>
+          
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">
+            No Newsletter Issues Yet
+          </h2>
+          
+          <p class="text-zinc-600 dark:text-zinc-400 mb-8">
+            We're working on bringing you great newsletter content. Check back soon!
+          </p>
+          
+          <a 
+            href="/newsletter"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-sm font-semibold transition-all duration-200"
+          >
+            <i class="fas fa-envelope mr-2"></i>
+            Subscribe for Updates
+          </a>
+        </div>
+      </div>
+    </section>
+  )}
+</Layout>
+
+<style>
+  .newsletter-card {
+    /* Applied directly in HTML with group class */
+  }
+
+  .newsletter-type-badge {
+    @apply px-2 py-1 rounded text-xs font-bold uppercase tracking-wide;
+  }
+
+  /* Newsletter type color variants */
+  .newsletter-type-badge.tinkbyte-weekly {
+    @apply bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300;
+  }
+
+  .newsletter-type-badge.build-sheet {
+    @apply bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300;
+  }
+
+  .newsletter-type-badge.stackdown {
+    @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300;
+  }
+
+  .newsletter-type-badge.signal-drop {
+    @apply bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300;
+  }
+
+  .newsletter-type-badge.system-signal {
+    @apply bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300;
+  }
+
+  .newsletter-type-badge.the-real-build {
+    @apply bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300;
+  }
+
+  .newsletter-type-badge.the-loop {
+    @apply bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300;
+  }
+
+  .newsletter-type-badge.data-slice {
+    @apply bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300;
+  }
+
+  .newsletter-type-badge.the-mirror {
+    @apply bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300;
+  }
+
+  .newsletter-type-badge.community-code {
+    @apply bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300;
+  }
+
+  .newsletter-type-badge.future-tech {
+    @apply bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300;
+  }
+
+  .filter-tab {
+    @apply px-4 py-2 rounded-sm border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-200 text-sm font-medium;
+  }
+
+  .filter-tab.active {
+    @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700;
+  }
+
+  /* Newsletter Legend */
+  .newsletter-legend {
+    background: var(--color-bg-secondary, #f8fafc);
+    border: 1px solid var(--color-border, #e2e8f0);
+    padding: 2rem;
+    margin-top: 2rem;
+  }
+
+  :global(.dark) .newsletter-legend {
+    background: var(--color-bg-secondary, #1e293b);
+    border-color: var(--color-border, #334155);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border: 1px solid var(--color-border, #e2e8f0);
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .legend-item {
+    background: var(--color-bg-primary, #0f172a);
+    border-color: var(--color-border, #334155);
+  }
+
+  .legend-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  :global(.dark) .legend-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .legend-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+  }
+
+  .newsletter-type-blue .legend-icon { @apply bg-blue-100 text-blue-600; }
+  .newsletter-type-purple .legend-icon { @apply bg-purple-100 text-purple-600; }
+  .newsletter-type-green .legend-icon { @apply bg-green-100 text-green-600; }
+  .newsletter-type-orange .legend-icon { @apply bg-orange-100 text-orange-600; }
+  .newsletter-type-red .legend-icon { @apply bg-red-100 text-red-600; }
+  .newsletter-type-indigo .legend-icon { @apply bg-indigo-100 text-indigo-600; }
+  .newsletter-type-pink .legend-icon { @apply bg-pink-100 text-pink-600; }
+  .newsletter-type-teal .legend-icon { @apply bg-teal-100 text-teal-600; }
+  .newsletter-type-gray .legend-icon { @apply bg-gray-100 text-gray-600; }
+  .newsletter-type-lime .legend-icon { @apply bg-lime-100 text-lime-600; }
+  .newsletter-type-cyan .legend-icon { @apply bg-cyan-100 text-cyan-600; }
+
+  :global(.dark) .newsletter-type-blue .legend-icon { @apply bg-blue-900/30 text-blue-400; }
+  :global(.dark) .newsletter-type-purple .legend-icon { @apply bg-purple-900/30 text-purple-400; }
+  :global(.dark) .newsletter-type-green .legend-icon { @apply bg-green-900/30 text-green-400; }
+  :global(.dark) .newsletter-type-orange .legend-icon { @apply bg-orange-900/30 text-orange-400; }
+  :global(.dark) .newsletter-type-red .legend-icon { @apply bg-red-900/30 text-red-400; }
+  :global(.dark) .newsletter-type-indigo .legend-icon { @apply bg-indigo-900/30 text-indigo-400; }
+  :global(.dark) .newsletter-type-pink .legend-icon { @apply bg-pink-900/30 text-pink-400; }
+  :global(.dark) .newsletter-type-teal .legend-icon { @apply bg-teal-900/30 text-teal-400; }
+  :global(.dark) .newsletter-type-gray .legend-icon { @apply bg-gray-900/30 text-gray-400; }
+  :global(.dark) .newsletter-type-lime .legend-icon { @apply bg-lime-900/30 text-lime-400; }
+  :global(.dark) .newsletter-type-cyan .legend-icon { @apply bg-cyan-900/30 text-cyan-400; }
+
+  .legend-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .legend-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .legend-description {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    margin-bottom: 0.25rem;
+  }
+
+  .legend-count {
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .highlights-mini {
+    background: var(--color-bg-secondary, #f8fafc);
+    border: 1px solid var(--color-border, #e2e8f0);
+    padding: 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  :global(.dark) .highlights-mini {
+    background: var(--color-bg-secondary, #1e293b);
+    border-color: var(--color-border, #334155);
+  }
+
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .newsletter-card.hidden {
+    display: none;
+  }
+
+  .year-section.hidden {
+    display: none;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .newsletter-legend {
+      padding: 1rem;
+    }
+    
+    .legend-item {
+      flex-direction: column;
+      text-align: center;
+      gap: 0.75rem;
+    }
+    
+    .filter-tab {
+      font-size: 0.75rem;
+      padding: 0.5rem 0.75rem;
+    }
+  }
+
+  /* Gradient text animation for hero */
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .bg-gradient-to-r.bg-clip-text {
+    background-size: 200% 200%;
+    animation: gradient 3s ease-in-out infinite;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Get all filter tabs and newsletter cards
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const newsletterCards = document.querySelectorAll('.newsletter-card');
+    const yearSections = document.querySelectorAll('.year-section');
+
+    // Filter functionality
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const filter = tab.getAttribute('data-filter');
+        
+        // Update active tab
+        filterTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Filter newsletter cards
+        newsletterCards.forEach(card => {
+          const newsletterType = card.getAttribute('data-newsletter-type');
+          const isFeatured = card.getAttribute('data-featured') === 'true';
+          
+          let shouldShow = false;
+          
+          switch (filter) {
+            case 'all':
+              shouldShow = true;
+              break;
+            case 'featured':
+              shouldShow = isFeatured;
+              break;
+            default:
+              shouldShow = newsletterType === filter;
+          }
+          
+          if (shouldShow) {
+            card.classList.remove('hidden');
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+
+        // Show/hide year sections based on visible content
+        yearSections.forEach(yearSection => {
+          const visibleItems = yearSection.querySelectorAll('.newsletter-card:not(.hidden)');
+          if (visibleItems.length > 0) {
+            yearSection.classList.remove('hidden');
+          } else {
+            yearSection.classList.add('hidden');
+          }
+        });
+
+        // Update URL hash for bookmarking
+        if (filter !== 'all') {
+          window.history.replaceState(null, null, `#${filter}`);
+        } else {
+          window.history.replaceState(null, null, window.location.pathname);
+        }
+      });
+    });
+
+    // Handle initial filter from URL hash
+    const initialFilter = window.location.hash.slice(1);
+    if (initialFilter) {
+      const targetTab = document.querySelector(`[data-filter="${initialFilter}"]`);
+      if (targetTab) {
+        targetTab.click();
+      }
+    }
+
+    // Newsletter card hover effects
+    newsletterCards.forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        card.style.transform = 'translateY(-4px)';
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'translateY(0)';
+      });
+    });
+
+    // Intersection Observer for fade-in animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px',
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    // Add fade-in animation to newsletter cards and legend items
+    newsletterCards.forEach((card, index) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+      observer.observe(card);
+    });
+
+    // Get legend items and add animations + interactions
+    const legendItems = document.querySelectorAll('.legend-item');
+    legendItems.forEach((item, index) => {
+      // Add fade-in animation
+      item.style.opacity = '0';
+      item.style.transform = 'translateY(20px)';
+      item.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+      observer.observe(item);
+
+      // Add click functionality
+      item.addEventListener('click', () => {
+        // Extract newsletter type from classes
+        const classList = Array.from(item.classList);
+        const typeClass = classList.find(cls => cls.startsWith('newsletter-type-'));
+        if (typeClass) {
+          const color = typeClass.replace('newsletter-type-', '');
+          // Find corresponding filter tab
+          const filterTab = Array.from(filterTabs).find(tab => {
+            const filterType = tab.getAttribute('data-filter');
+            const typeInfo = getNewsletterTypeDisplay(filterType);
+            return typeInfo && typeInfo.color === color;
+          });
+          if (filterTab) {
+            filterTab.click();
+            // Scroll to filtered content
+            setTimeout(() => {
+              const firstVisibleCard = document.querySelector('.newsletter-card:not(.hidden)');
+              if (firstVisibleCard) {
+                firstVisibleCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }, 100);
+          }
+        }
+      });
+
+      // Add hover effect
+      item.style.cursor = 'pointer';
+      item.setAttribute('title', 'Click to filter by this newsletter type');
+    });
+
+    // Helper function to get newsletter type display info
+    function getNewsletterTypeDisplay(newsletterType) {
+      const types = {
+        'tinkbyte-weekly': { name: 'TinkByte Weekly', color: 'blue', icon: 'fas fa-newspaper' },
+        'build-sheet': { name: 'Build Sheet', color: 'purple', icon: 'fas fa-hammer' },
+        'stackdown': { name: 'Stackdown', color: 'green', icon: 'fas fa-layer-group' },
+        'signal-drop': { name: 'Signal Drop', color: 'orange', icon: 'fas fa-signal' },
+        'system-signal': { name: 'System Signal', color: 'red', icon: 'fas fa-cogs' },
+        'the-real-build': { name: 'The Real Build', color: 'indigo', icon: 'fas fa-rocket' },
+        'the-loop': { name: 'The Loop', color: 'pink', icon: 'fas fa-sync' },
+        'data-slice': { name: 'Data Slice', color: 'teal', icon: 'fas fa-chart-bar' },
+        'the-mirror': { name: 'The Mirror', color: 'gray', icon: 'fas fa-mirror' },
+        'community-code': { name: 'Community Code', color: 'lime', icon: 'fas fa-users' },
+        'future-tech': { name: 'Future Tech', color: 'cyan', icon: 'fas fa-atom' }
+      };
+      return types[newsletterType] || { name: 'Newsletter', color: 'gray', icon: 'fas fa-envelope' };
+    }
+
+    // Search functionality (if you want to add search later)
+    function addSearchFunctionality() {
+      const searchInput = document.getElementById('newsletter-search');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          
+          newsletterCards.forEach(card => {
+            const title = card.querySelector('h3').textContent.toLowerCase();
+            const excerpt = card.querySelector('p').textContent.toLowerCase();
+            const newsletterType = card.getAttribute('data-newsletter-type');
+            const typeDisplay = getNewsletterTypeDisplay(newsletterType);
+            
+            const matches = title.includes(searchTerm) || 
+                          excerpt.includes(searchTerm) || 
+                          typeDisplay.name.toLowerCase().includes(searchTerm);
+            
+            if (matches) {
+              card.classList.remove('hidden');
+            } else {
+              card.classList.add('hidden');
+            }
+          });
+
+          // Update year sections visibility
+          yearSections.forEach(yearSection => {
+            const visibleItems = yearSection.querySelectorAll('.newsletter-card:not(.hidden)');
+            if (visibleItems.length > 0) {
+              yearSection.classList.remove('hidden');
+            } else {
+              yearSection.classList.add('hidden');
+            }
+          });
+        });
+      }
+    }
+
+    // Analytics tracking
+    function trackNewsletterArchiveInteraction(action, newsletterType = null, issueNumber = null) {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'newsletter_archive_interaction', {
+          action: action,
+          newsletter_type: newsletterType,
+          issue_number: issueNumber,
+          timestamp: Date.now()
+        });
+      }
+      console.log('Newsletter archive interaction:', { action, newsletterType, issueNumber });
+    }
+
+    // Track filter usage
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const filter = tab.getAttribute('data-filter');
+        trackNewsletterArchiveInteraction('filter', filter);
+      });
+    });
+
+    // Track newsletter preview clicks
+    newsletterCards.forEach(card => {
+      const previewLink = card.querySelector('a[href*="/newsletter/"]');
+      if (previewLink) {
+        previewLink.addEventListener('click', () => {
+          const newsletterType = card.getAttribute('data-newsletter-type');
+          const issueNumber = card.querySelector('[class*="Issue"]')?.textContent?.match(/\d+/)?.[0];
+          trackNewsletterArchiveInteraction('preview_click', newsletterType, issueNumber);
+        });
+      }
+    });
+
+    // Track subscription CTA clicks
+    const subscriptionCTAs = document.querySelectorAll('a[href="/newsletter"]');
+    subscriptionCTAs.forEach(cta => {
+      cta.addEventListener('click', () => {
+        trackNewsletterArchiveInteraction('subscription_cta_click');
+      });
+    });
+
+    // Keyboard navigation support
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const focusedTab = document.activeElement;
+        if (focusedTab.classList.contains('filter-tab')) {
+          e.preventDefault();
+          focusedTab.click();
+        }
+      }
+    });
+
+    // Add keyboard focus support to filter tabs
+    filterTabs.forEach(tab => {
+      tab.setAttribute('tabindex', '0');
+      tab.setAttribute('role', 'button');
+      tab.setAttribute('aria-pressed', tab.classList.contains('active') ? 'true' : 'false');
+    });
+
+    // Update aria-pressed when tabs change
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        filterTabs.forEach(t => t.setAttribute('aria-pressed', 'false'));
+        tab.setAttribute('aria-pressed', 'true');
+      });
+    });
+
+    // Performance optimization: Lazy load images
+    const imageObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          if (img.dataset.src) {
+            img.src = img.dataset.src;
+            img.removeAttribute('data-src');
+            imageObserver.unobserve(img);
+          }
+        }
+      });
+    });
+
+    // Apply lazy loading to images (if you want to implement it)
+    const images = document.querySelectorAll('img[data-src]');
+    images.forEach(img => imageObserver.observe(img));
+
+    // Smooth scroll to sections
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Initialize additional functionality
+    addSearchFunctionality();
+  });
+</script>

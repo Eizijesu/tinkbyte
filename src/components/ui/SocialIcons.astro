@@ -1,0 +1,86 @@
+<!-- src/components/ui/SocialIcons.astro -->
+---
+interface Props {
+  platforms: Record<string, string>;
+  showLabels?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}
+
+const { platforms, showLabels = false, size = 'md', className = '' } = Astro.props;
+
+// Filter out empty/undefined social links
+const activePlatforms = Object.entries(platforms).filter(([_, url]) => url && url.trim() !== '');
+
+const getSocialIcon = (platform: string) => {
+  const icons: Record<string, string> = {
+    twitter: 'fab fa-twitter',
+    linkedin: 'fab fa-linkedin',
+    github: 'fab fa-github',
+    discord: 'fab fa-discord',
+    instagram: 'fab fa-instagram',
+    youtube: 'fab fa-youtube',
+    substack: 'fas fa-newspaper',
+    medium: 'fab fa-medium',
+    devto: 'fab fa-dev',
+    hashnode: 'fas fa-blog',
+    reddit: 'fab fa-reddit',
+    threads: 'fab fa-threads',
+    mastodon: 'fab fa-mastodon',
+    facebook: 'fab fa-facebook',
+    tiktok: 'fab fa-tiktok',
+    website: 'fas fa-globe',
+    email: 'fas fa-envelope',
+  };
+  return icons[platform] || 'fas fa-link';
+};
+
+const getSocialColor = (platform: string) => {
+  const colors: Record<string, string> = {
+    twitter: 'hover:text-blue-400',
+    linkedin: 'hover:text-blue-600',
+    github: 'hover:text-gray-600 dark:hover:text-gray-300',
+    discord: 'hover:text-purple-500',
+    instagram: 'hover:text-pink-500',
+    youtube: 'hover:text-red-500',
+    substack: 'hover:text-orange-500',
+    medium: 'hover:text-green-500',
+    devto: 'hover:text-gray-800 dark:hover:text-white',
+    reddit: 'hover:text-orange-600',
+    threads: 'hover:text-gray-800 dark:hover:text-white',
+    mastodon: 'hover:text-purple-600',
+    facebook: 'hover:text-blue-600',
+    email: 'hover:text-blue-500',
+  };
+  return colors[platform] || 'hover:text-blue-500';
+};
+
+const sizeClasses = {
+  sm: 'text-sm',
+  md: 'text-base',
+  lg: 'text-lg',
+};
+---
+
+{activePlatforms.length > 0 && (
+  <div class={`social-icons flex items-center gap-3 ${className}`}>
+    {activePlatforms.map(([platform, url]) => (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`follow on ${platform}`}
+        class={`
+          text-zinc-400 transition-colors duration-200
+          ${getSocialColor(platform)}
+          ${sizeClasses[size]}
+        `}
+      >
+        <i class={getSocialIcon(platform)}></i>
+        {showLabels && (
+          <span class="ml-1 text-sm lowercase">{platform}</span>
+        )}
+      </a>
+    ))}
+  </div>
+)}

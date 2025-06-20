@@ -1,0 +1,55 @@
+---
+// src/components/MDXProvider.astro
+import ImageBlock from "./tina/ImageBlock.astro";
+import VideoBlock from "./tina/VideoBlock.astro";
+import CalloutBox from "./tina/CalloutBox.astro";
+import ButtonBlock from "./tina/ButtonBlock.astro";
+import CodeBlock from "./tina/CodeBlock.astro";
+import Quote from "./tina/Quote.astro";
+import TableBlock from "./tina/TableBlock.astro";
+import ImageGallery from "./tina/ImageGallery.astro";
+import Newsletter from "./tina/Newsletter.astro";
+import TwoColumnLayout from "./tina/TwoColumnLayout.astro";
+
+export interface Props {
+  children: any;
+}
+
+// Global component registration for MDX
+if (typeof globalThis !== "undefined") {
+  Object.assign(globalThis, {
+    ImageBlock,
+    VideoBlock,
+    Callout: CalloutBox,
+    ButtonBlock,
+    CodeBlock: CodeBlock,
+    Quote: Quote,
+    TableBlock,
+    ImageGallery,
+    Newsletter: Newsletter,
+    TwoColumnLayout,
+  });
+}
+---
+
+<div class="mdx-provider">
+  <slot />
+</div>
+
+<script is:inline>
+  // Ensure components are available in browser
+  if (typeof window !== "undefined") {
+    window.TinaCMSComponents = {
+      ImageBlock: "ImageBlock",
+      VideoBlock: "VideoBlock",
+      Callout: "CalloutBox",
+      ButtonBlock: "ButtonBlock",
+      CodeBlock: "CodeBlock",
+      Quote: "Quote",
+      TableBlock: "TableBlock",
+      ImageGallery: "ImageGallery",
+      Newsletter: "Newsletter",
+      TwoColumnLayout: "TwoColumnLayout",
+    };
+  }
+</script>

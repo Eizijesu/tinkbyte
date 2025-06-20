@@ -70,9 +70,17 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
         </svg>
       </button>
       <div class="volume-slider-container">
+        <!-- Custom Volume Slider -->
+        <div class="custom-volume-slider" data-volume="75">
+          <div class="volume-track">
+            <div class="volume-fill"></div>
+            <div class="volume-thumb"></div>
+          </div>
+        </div>
+        <!-- Hidden native slider for fallback -->
         <input
           type="range"
-          class="volume-slider"
+          class="volume-slider hidden"
           min="0"
           max="100"
           value="75"
@@ -290,7 +298,7 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
     opacity: 0.8;
   }
 
-  /* Volume Control */
+  /* Volume Control - Custom Implementation */
   .volume-control {
     display: flex;
     align-items: center;
@@ -335,41 +343,68 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
     transform: scaleX(1);
   }
 
-  .volume-slider {
+  /* Custom Volume Slider */
+  .custom-volume-slider {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .volume-track {
+    position: relative;
     width: 100%;
     height: 4px;
     background: #e5e7eb;
     border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-    -webkit-appearance: none;
-    appearance: none;
   }
 
-  :global(.dark) .volume-slider {
-    background: rgb(75, 85, 99);
+  :global(.dark) .volume-track {
+    background: rgb(55, 65, 81);
   }
 
-  .volume-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
+  .volume-fill {
+    height: 100%;
+    width: 75%;
+    background: rgb(36, 55, 136);
+    border-radius: 2px;
+    transition: width 0.1s ease;
+  }
+
+  :global(.dark) .volume-fill {
+    background: rgb(147, 197, 253);
+  }
+
+  .volume-thumb {
+    position: absolute;
+    top: 50%;
+    left: 75%;
+    transform: translate(-50%, -50%);
     width: 12px;
     height: 12px;
     background: rgb(36, 55, 136);
     border-radius: 50%;
-    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(36, 55, 136, 0.3);
+    transition: all 0.1s ease;
   }
 
-  .volume-slider::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
-    background: rgb(36, 55, 136);
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
+  :global(.dark) .volume-thumb {
+    background: rgb(147, 197, 253);
+    box-shadow: 0 2px 4px rgba(147, 197, 253, 0.3);
   }
 
-  /* Settings Control */
+  .custom-volume-slider:hover .volume-thumb {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+
+  /* Hide native slider */
+  .volume-slider.hidden {
+    display: none;
+  }
+
+  /* Settings Control - IMPROVED Mobile Responsiveness */
   .settings-control {
     position: relative;
   }
@@ -408,7 +443,7 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     padding: 1rem;
     min-width: 200px;
-    z-index: 10;
+    z-index: 1000;
     margin-top: 0.5rem;
   }
 
@@ -668,28 +703,143 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
     }
   }
 
-  /* Responsive Design */
+  /* Mobile Responsive */
   @media (max-width: 768px) {
     .audio-controls {
       flex-wrap: wrap;
       gap: 0.75rem;
     }
 
+    .audio-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Volume control mobile layout */
     .volume-control {
       order: 3;
       flex-basis: 100%;
+      justify-content: flex-start;
+      margin-top: 0.5rem;
     }
 
     .volume-slider-container {
-      opacity: 1;
-      transform: scaleX(1);
+      opacity: 1 !important;
+      transform: scaleX(1) !important;
       width: 100%;
+      max-width: 200px;
+    }
+
+    .volume-track {
+      height: 6px;
+    }
+
+    .volume-thumb {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Settings dropdown for mobile */
+    .settings-dropdown {
+      min-width: 250px;
+      max-width: calc(100vw - 2rem);
+    }
+
+    /* Better mobile spacing */
+    .settings-option {
+      margin-bottom: 1.25rem;
+    }
+
+    .skip-controls {
+      gap: 0.75rem;
+    }
+
+    .skip-button {
+      padding: 0.75rem 0.5rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  /* Extra small screens */
+  @media (max-width: 480px) {
+    .audio-player {
+      padding: 1rem;
+    }
+
+    .audio-controls {
+      gap: 0.5rem;
     }
 
     .settings-dropdown {
-      right: auto;
-      left: 0;
-      min-width: 100%;
+      min-width: calc(100vw - 2rem);
+      padding: 1.25rem;
+    }
+
+    .audio-title {
+      font-size: 0.875rem;
+    }
+
+    .audio-meta {
+      font-size: 0.8125rem;
+    }
+
+    /* Mobile-specific settings dropdown */
+    @media (max-width: 768px) {
+      .settings-dropdown {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        bottom: auto;
+        transform: translate(-50%, -50%);
+        min-width: 300px;
+        max-width: calc(100vw - 2rem);
+        max-height: calc(100vh - 4rem);
+        overflow-y: auto;
+        margin: 0;
+        border-radius: 12px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        z-index: 9999;
+      }
+
+      :global(.dark) .settings-dropdown {
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Add backdrop blur effect for mobile */
+      .settings-dropdown::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: -1;
+      }
+
+      :global(.dark) .settings-dropdown::before {
+        background: rgba(0, 0, 0, 0.7);
+      }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 480px) {
+      .settings-dropdown {
+        min-width: calc(100vw - 2rem);
+        padding: 1.5rem;
+      }
+    }
+    /* Mobile dropdown state */
+    .settings-dropdown.mobile-dropdown {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      right: auto !important;
+      bottom: auto !important;
+      transform: translate(-50%, -50%) !important;
+      margin: 0 !important;
     }
   }
 </style>
@@ -735,6 +885,13 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
         ".volume-muted"
       ) as HTMLElement;
 
+      // Custom volume slider elements
+      const customVolumeSlider = player.querySelector(
+        ".custom-volume-slider"
+      ) as HTMLElement;
+      const volumeFill = player.querySelector(".volume-fill") as HTMLElement;
+      const volumeThumb = player.querySelector(".volume-thumb") as HTMLElement;
+
       // Settings controls
       const settingsButton = player.querySelector(
         ".settings-button"
@@ -770,24 +927,19 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
         return `${mins}:${secs.toString().padStart(2, "0")}`;
       };
 
-      // Update progress bar helper - FIXED
+      // Update progress bar helper
       const updateProgressBar = (
         currentTime: number,
         totalDuration: number
       ) => {
-        console.log("Updating progress:", currentTime, "/", totalDuration); // Debug log
-
         if (totalDuration > 0 && !isNaN(currentTime) && !isNaN(totalDuration)) {
           const progress = Math.max(
             0,
             Math.min(100, (currentTime / totalDuration) * 100)
           );
 
-          console.log("Progress percentage:", progress); // Debug log
-
           if (progressFill) {
             progressFill.style.width = `${progress}%`;
-            console.log("Set progress fill width to:", `${progress}%`); // Debug log
           }
           if (progressHandle) {
             progressHandle.style.left = `${progress}%`;
@@ -809,9 +961,31 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
         }
       };
 
+      // Helper function to update volume icons
+      const updateVolumeIcons = (volume: number) => {
+        if (volume === 0) {
+          if (volumeUpIcon) volumeUpIcon.classList.add("hidden");
+          if (volumeMutedIcon) volumeMutedIcon.classList.remove("hidden");
+        } else {
+          if (volumeUpIcon) volumeUpIcon.classList.remove("hidden");
+          if (volumeMutedIcon) volumeMutedIcon.classList.add("hidden");
+          previousVolume = volume;
+        }
+      };
+
+      // Update custom volume slider
+      const updateCustomSlider = (percentage: number) => {
+        if (volumeFill && volumeThumb && customVolumeSlider) {
+          volumeFill.style.width = `${percentage}%`;
+          volumeThumb.style.left = `${percentage}%`;
+          customVolumeSlider.setAttribute("data-volume", percentage.toString());
+        }
+      };
+
       // Initialize volume
       audioElement.volume = 0.75;
       if (volumeSlider) volumeSlider.value = "75";
+      updateCustomSlider(75);
 
       // Set audio source
       audioElement.src = audioUrl;
@@ -819,34 +993,24 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
       // Audio event listeners
       audioElement.addEventListener("loadedmetadata", () => {
         duration = audioElement.duration;
-        console.log("Audio loaded, duration:", duration); // Debug log
         if (totalTimeEl) totalTimeEl.textContent = formatTime(duration);
         updateStatus("Ready to play", audioElement.playbackRate);
         (player as HTMLElement).classList.remove("loading");
       });
 
       audioElement.addEventListener("loadeddata", () => {
-        console.log("Audio data loaded"); // Debug log
         duration = audioElement.duration;
         if (totalTimeEl) totalTimeEl.textContent = formatTime(duration);
       });
 
       audioElement.addEventListener("canplay", () => {
-        console.log("Audio can play"); // Debug log
         duration = audioElement.duration;
       });
 
-      // FIXED: More frequent progress updates
       audioElement.addEventListener("timeupdate", () => {
         if (!isDragging && duration > 0) {
-          console.log("Time update:", audioElement.currentTime, "/", duration); // Debug log
           updateProgressBar(audioElement.currentTime, duration);
         }
-      });
-
-      // Additional progress tracking
-      audioElement.addEventListener("progress", () => {
-        console.log("Audio progress event"); // Debug log
       });
 
       audioElement.addEventListener("ended", () => {
@@ -892,7 +1056,7 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
         });
       }
 
-      // Progress bar interaction - FIXED
+      // Progress bar interaction
       if (progressBar) {
         const handleProgressInteraction = (e: MouseEvent | TouchEvent) => {
           if (duration > 0) {
@@ -909,8 +1073,6 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
             const clickPercent = Math.max(0, Math.min(1, clickX / rect.width));
             const seekTime = clickPercent * duration;
 
-            console.log("Seeking to:", seekTime, "seconds"); // Debug log
-
             audioElement.currentTime = seekTime;
             updateProgressBar(seekTime, duration);
           }
@@ -918,7 +1080,6 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
 
         // Mouse events
         progressBar.addEventListener("click", (e) => {
-          console.log("Progress bar clicked"); // Debug log
           handleProgressInteraction(e);
         });
 
@@ -961,97 +1122,220 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
         });
       }
 
-      // Volume controls
+      // Volume button functionality
       if (volumeButton) {
         volumeButton.addEventListener("click", () => {
           if (audioElement.volume > 0) {
             previousVolume = audioElement.volume;
             audioElement.volume = 0;
             if (volumeSlider) volumeSlider.value = "0";
-            if (volumeUpIcon) volumeUpIcon.classList.add("hidden");
-            if (volumeMutedIcon) volumeMutedIcon.classList.remove("hidden");
+            updateCustomSlider(0);
+            updateVolumeIcons(0);
           } else {
             audioElement.volume = previousVolume;
             if (volumeSlider)
               volumeSlider.value = (previousVolume * 100).toString();
-            if (volumeUpIcon) volumeUpIcon.classList.remove("hidden");
-            if (volumeMutedIcon) volumeMutedIcon.classList.add("hidden");
+            updateCustomSlider(previousVolume * 100);
+            updateVolumeIcons(previousVolume);
           }
         });
       }
 
+      // Custom volume slider functionality
+      if (customVolumeSlider && volumeFill && volumeThumb) {
+        const handleCustomSliderInteraction = (e: MouseEvent | TouchEvent) => {
+          const rect = customVolumeSlider.getBoundingClientRect();
+          let clientX: number;
+
+          if (e instanceof MouseEvent) {
+            clientX = e.clientX;
+          } else {
+            clientX = e.touches[0].clientX;
+          }
+
+          const clickX = clientX - rect.left;
+          const percentage = Math.max(
+            0,
+            Math.min(100, (clickX / rect.width) * 100)
+          );
+          const volume = percentage / 100;
+
+          audioElement.volume = volume;
+          updateCustomSlider(percentage);
+          updateVolumeIcons(volume);
+
+          // Update hidden native slider for consistency
+          if (volumeSlider) volumeSlider.value = percentage.toString();
+        };
+
+        // Mouse events
+        customVolumeSlider.addEventListener(
+          "click",
+          handleCustomSliderInteraction
+        );
+
+        let isVolumeMouseDown = false;
+
+        customVolumeSlider.addEventListener("mousedown", (e) => {
+          isVolumeMouseDown = true;
+          handleCustomSliderInteraction(e);
+          e.preventDefault();
+        });
+
+        document.addEventListener("mousemove", (e) => {
+          if (isVolumeMouseDown) {
+            handleCustomSliderInteraction(e);
+          }
+        });
+
+        document.addEventListener("mouseup", () => {
+          isVolumeMouseDown = false;
+        });
+
+        // Touch events
+        customVolumeSlider.addEventListener("touchstart", (e) => {
+          isVolumeMouseDown = true;
+          handleCustomSliderInteraction(e);
+          e.preventDefault();
+        });
+
+        customVolumeSlider.addEventListener("touchmove", (e) => {
+          if (isVolumeMouseDown) {
+            handleCustomSliderInteraction(e);
+            e.preventDefault();
+          }
+        });
+
+        customVolumeSlider.addEventListener("touchend", () => {
+          isVolumeMouseDown = false;
+        });
+      }
+
+      // Native volume slider fallback
       if (volumeSlider) {
         volumeSlider.addEventListener("input", (e: Event) => {
           const target = e.target as HTMLInputElement;
           const volume = parseInt(target.value) / 100;
           audioElement.volume = volume;
-
-          if (volume === 0) {
-            if (volumeUpIcon) volumeUpIcon.classList.add("hidden");
-            if (volumeMutedIcon) volumeMutedIcon.classList.remove("hidden");
-          } else {
-            if (volumeUpIcon) volumeUpIcon.classList.remove("hidden");
-            if (volumeMutedIcon) volumeMutedIcon.classList.add("hidden");
-            previousVolume = volume;
-          }
+          updateCustomSlider(parseInt(target.value));
+          updateVolumeIcons(volume);
         });
       }
 
-      // Settings dropdown - FIXED: Removed auto-close for speed selector
+      // IMPROVED Settings dropdown functionality
       if (settingsButton && settingsDropdown) {
         settingsButton.addEventListener("click", (e) => {
           e.stopPropagation();
-          settingsDropdown.classList.toggle("hidden");
+
+          const isHidden = settingsDropdown.classList.contains("hidden");
+          const isMobile = window.innerWidth <= 768;
+
+          if (isHidden) {
+            // Show dropdown
+            settingsDropdown.classList.remove("hidden");
+
+            if (isMobile) {
+              // Add mobile class for styling
+              settingsDropdown.classList.add("mobile-dropdown");
+
+              // Prevent body scroll when dropdown is open
+              document.body.style.overflow = "hidden";
+            } else {
+              // Desktop positioning logic
+              const rect = settingsButton.getBoundingClientRect();
+              const spaceBelow = window.innerHeight - rect.bottom;
+              const spaceAbove = rect.top;
+              const dropdownHeight = 300;
+
+              if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
+                // Position above if more space
+                settingsDropdown.style.top = "auto";
+                settingsDropdown.style.bottom = "100%";
+                settingsDropdown.style.marginTop = "0";
+                settingsDropdown.style.marginBottom = "0.5rem";
+              }
+            }
+          } else {
+            // Hide dropdown
+            settingsDropdown.classList.add("hidden");
+            settingsDropdown.classList.remove("mobile-dropdown");
+
+            // Restore body scroll
+            document.body.style.overflow = "";
+
+            // Reset positioning styles
+            settingsDropdown.style.top = "";
+            settingsDropdown.style.bottom = "";
+            settingsDropdown.style.marginTop = "";
+            settingsDropdown.style.marginBottom = "";
+          }
         });
 
-        // Close dropdown when clicking outside ONLY
+        // Enhanced outside click detection
         document.addEventListener("click", (e) => {
           if (
             !settingsDropdown.contains(e.target as Node) &&
             !settingsButton.contains(e.target as Node)
           ) {
             settingsDropdown.classList.add("hidden");
+            settingsDropdown.classList.remove("mobile-dropdown");
+            document.body.style.overflow = "";
+
+            // Reset positioning styles
+            settingsDropdown.style.top = "";
+            settingsDropdown.style.bottom = "";
+            settingsDropdown.style.marginTop = "";
+            settingsDropdown.style.marginBottom = "";
           }
         });
 
-        // REMOVED: Auto-close behavior for speed selector and other controls
-        // Only close for specific actions that should close the dropdown
-        settingsDropdown.addEventListener("click", (e) => {
-          const target = e.target as HTMLElement;
-          // Only close for transcript toggle and download button
+        // Handle escape key to close dropdown
+        document.addEventListener("keydown", (e) => {
           if (
-            target.classList.contains("transcript-toggle") ||
-            target.classList.contains("download-button")
+            e.key === "Escape" &&
+            !settingsDropdown.classList.contains("hidden")
           ) {
-            setTimeout(() => {
-              settingsDropdown.classList.add("hidden");
-            }, 100);
+            settingsDropdown.classList.add("hidden");
+            settingsDropdown.classList.remove("mobile-dropdown");
+            document.body.style.overflow = "";
+
+            // Reset positioning styles
+            settingsDropdown.style.top = "";
+            settingsDropdown.style.bottom = "";
+            settingsDropdown.style.marginTop = "";
+            settingsDropdown.style.marginBottom = "";
           }
+        });
+
+        // Handle orientation change
+        window.addEventListener("orientationchange", () => {
+          setTimeout(() => {
+            if (!settingsDropdown.classList.contains("hidden")) {
+              settingsDropdown.classList.add("hidden");
+              settingsDropdown.classList.remove("mobile-dropdown");
+              document.body.style.overflow = "";
+            }
+          }, 100);
         });
       }
-
-      // Playback speed control - FIXED: No auto-close
+      
+      // Playback speed control
       if (speedSelector) {
         speedSelector.addEventListener("change", (e: Event) => {
           const target = e.target as HTMLSelectElement;
           const speed = parseFloat(target.value);
           audioElement.playbackRate = speed;
 
-          console.log("Playback speed changed to:", speed); // Debug log
-
-          // Update status immediately
           const currentStatus = isPlaying
             ? "Playing"
             : audioElement.ended
               ? "Finished"
               : "Paused";
           updateStatus(currentStatus, speed);
-
-          // DO NOT auto-close dropdown - let user keep it open
         });
       }
 
-      // Skip controls - FIXED: Better seeking
+      // Skip controls
       skipButtons.forEach((button) => {
         button.addEventListener("click", () => {
           const skipAmount = parseInt(button.getAttribute("data-skip") || "0");
@@ -1060,15 +1344,8 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
             Math.min(duration, audioElement.currentTime + skipAmount)
           );
 
-          console.log("Skipping from", audioElement.currentTime, "to", newTime); // Debug log
-
           audioElement.currentTime = newTime;
           updateProgressBar(newTime, duration);
-
-          // Close dropdown after skip action
-          setTimeout(() => {
-            if (settingsDropdown) settingsDropdown.classList.add("hidden");
-          }, 100);
         });
       });
 
@@ -1084,15 +1361,10 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
             : `<svg fill="currentColor" viewBox="0 0 24 24" width="16" height="16">
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                </svg>Hide Transcript`;
-
-          // Close dropdown after action
-          setTimeout(() => {
-            if (settingsDropdown) settingsDropdown.classList.add("hidden");
-          }, 100);
         });
       }
 
-      // Keyboard shortcuts - FIXED: Better seeking
+      // Keyboard shortcuts
       const handleKeydown = (e: KeyboardEvent) => {
         if (
           document.activeElement?.tagName === "INPUT" ||
@@ -1117,7 +1389,6 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
           case "j":
             e.preventDefault();
             const backTime = Math.max(0, audioElement.currentTime - 10);
-            console.log("Keyboard: seeking back to", backTime); // Debug log
             audioElement.currentTime = backTime;
             updateProgressBar(backTime, duration);
             break;
@@ -1128,7 +1399,6 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
               duration,
               audioElement.currentTime + 10
             );
-            console.log("Keyboard: seeking forward to", forwardTime); // Debug log
             audioElement.currentTime = forwardTime;
             updateProgressBar(forwardTime, duration);
             break;
@@ -1138,6 +1408,7 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
             audioElement.volume = newVolumeUp;
             if (volumeSlider)
               volumeSlider.value = (newVolumeUp * 100).toString();
+            updateCustomSlider(newVolumeUp * 100);
             updateVolumeIcons(newVolumeUp);
             break;
           case "ArrowDown":
@@ -1146,63 +1417,17 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
             audioElement.volume = newVolumeDown;
             if (volumeSlider)
               volumeSlider.value = (newVolumeDown * 100).toString();
+            updateCustomSlider(newVolumeDown * 100);
             updateVolumeIcons(newVolumeDown);
             break;
           case "m":
             e.preventDefault();
             volumeButton?.click();
             break;
-          case "f":
-            e.preventDefault();
-            const fastTime = Math.min(duration, audioElement.currentTime + 30);
-            audioElement.currentTime = fastTime;
-            updateProgressBar(fastTime, duration);
-            break;
-          case "b":
-            e.preventDefault();
-            const rewindTime = Math.max(0, audioElement.currentTime - 15);
-            audioElement.currentTime = rewindTime;
-            updateProgressBar(rewindTime, duration);
-            break;
-          case "0":
-          case "Home":
-            e.preventDefault();
-            audioElement.currentTime = 0;
-            updateProgressBar(0, duration);
-            break;
-          case "End":
-            e.preventDefault();
-            const endTime = Math.max(0, duration - 1);
-            audioElement.currentTime = endTime;
-            updateProgressBar(endTime, duration);
-            break;
-        }
-      };
-
-      // Helper function to update volume icons
-      const updateVolumeIcons = (volume: number) => {
-        if (volume === 0) {
-          if (volumeUpIcon) volumeUpIcon.classList.add("hidden");
-          if (volumeMutedIcon) volumeMutedIcon.classList.remove("hidden");
-        } else {
-          if (volumeUpIcon) volumeUpIcon.classList.remove("hidden");
-          if (volumeMutedIcon) volumeMutedIcon.classList.add("hidden");
-          previousVolume = volume;
         }
       };
 
       document.addEventListener("keydown", handleKeydown);
-
-      // Force initial progress update after a short delay
-      setTimeout(() => {
-        if (audioElement.currentTime > 0) {
-          console.log("Force updating progress on load"); // Debug log
-          updateProgressBar(
-            audioElement.currentTime,
-            duration || audioElement.duration
-          );
-        }
-      }, 500);
 
       // Auto-save volume preference
       const saveVolumePreference = (volume: number) => {
@@ -1226,6 +1451,7 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
       const savedVolume = loadVolumePreference();
       audioElement.volume = savedVolume;
       if (volumeSlider) volumeSlider.value = (savedVolume * 100).toString();
+      updateCustomSlider(savedVolume * 100);
       updateVolumeIcons(savedVolume);
 
       // Save volume changes

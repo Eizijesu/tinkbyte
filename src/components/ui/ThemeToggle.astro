@@ -1,5 +1,5 @@
 ---
-// src/components/ui/ThemeToggle.astro - Enhanced
+// src/components/ui/ThemeToggle.astro - Smooth Transitions Fixed
 ---
 
 <button
@@ -29,18 +29,19 @@
 <style>
   .theme-toggle {
     background: none;
-    border: none;
+    border: 2px solid transparent;
     cursor: pointer;
     padding: 0.5rem;
-    border-radius: 4px;
+    border-radius: 0; /* Square corners for TinkByte design */
     color: #6b7280;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     width: 2.5rem;
     height: 2.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: "Space Grotesk", sans-serif;
   }
 
   :global(.dark) .theme-toggle {
@@ -48,18 +49,32 @@
   }
 
   .theme-toggle:hover {
-    background: #f3f4f6;
+    background: #f8fafc;
+    color: #243788;
+    border-color: #243788;
+    transform: translateY(-1px);
   }
 
   :global(.dark) .theme-toggle:hover {
-    background: rgb(55, 65, 81);
+    background: #334155;
+    color: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  .theme-toggle:focus-visible {
+    outline: 3px solid #243788;
+    outline-offset: 2px;
+  }
+
+  :global(.dark) .theme-toggle:focus-visible {
+    outline-color: #b4bce1;
   }
 
   .theme-toggle svg {
     width: 1.25rem;
     height: 1.25rem;
     position: absolute;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .sun-icon {
@@ -74,55 +89,100 @@
 
   :global(.dark) .sun-icon {
     opacity: 0;
-    transform: rotate(90deg) scale(0.8);
+    transform: rotate(-90deg) scale(0.8);
   }
 
   :global(.dark) .moon-icon {
     opacity: 1;
     transform: rotate(0deg) scale(1);
   }
+
+  /* Enhanced transition synchronization */
+  :global(.theme-transitioning) .theme-toggle,
+  :global(.theme-transitioning) .theme-toggle svg {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
 </style>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const themeToggle = document.querySelector("[data-theme-toggle]");
+    const themeToggle = document.querySelector("[data-theme-toggle]") as HTMLButtonElement | null;
 
-    if (themeToggle) {
-      // Initialize theme
-      const savedTheme = localStorage.getItem("theme");
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
+    if (!themeToggle) return;
 
-      if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
-        document.documentElement.classList.add("dark");
+    // Function to apply theme with smooth transition
+    const applyTheme = (theme: string, withTransition = true) => {
+      const root = document.documentElement;
+      
+      if (withTransition) {
+        // Use the global transition manager if available
+        if (window.themeTransitionManager) {
+          window.themeTransitionManager.startTransition();
+        } else {
+          // Fallback: Add transition class to coordinate all theme changes
+          root.classList.add("theme-transitioning");
+          
+          // Remove transition class after animation completes
+          setTimeout(() => {
+            root.classList.remove("theme-transitioning");
+          }, 300);
+        }
       }
 
-      // Toggle theme
-      themeToggle.addEventListener("click", () => {
-        const isDark = document.documentElement.classList.contains("dark");
-
-        if (isDark) {
-          document.documentElement.classList.remove("dark");
-          localStorage.setItem("theme", "light");
+      // Small delay to ensure transition starts before theme change
+      setTimeout(() => {
+        if (theme === "dark") {
+          root.classList.add("dark");
         } else {
-          document.documentElement.classList.add("dark");
-          localStorage.setItem("theme", "dark");
+          root.classList.remove("dark");
         }
-      });
-    }
+
+        localStorage.setItem("theme", theme);
+      }, withTransition ? 10 : 0);
+    };
+
+    // Initialize theme without transition on page load
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
+    
+    applyTheme(initialTheme, false);
+
+    // Toggle theme with smooth transition
+    themeToggle.addEventListener("click", () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      const newTheme = isDark ? "light" : "dark";
+      applyTheme(newTheme, true);
+    });
 
     // Listen for system theme changes
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", (e) => {
         if (!localStorage.getItem("theme")) {
-          if (e.matches) {
-            document.documentElement.classList.add("dark");
-          } else {
-            document.documentElement.classList.remove("dark");
-          }
+          applyTheme(e.matches ? "dark" : "light", true);
         }
       });
+
+    // Expose toggle function globally for compatibility
+    window.toggleTheme = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      const newTheme = isDark ? "light" : "dark";
+      applyTheme(newTheme, true);
+    };
   });
+</script>
+
+<script is:inline>
+  // Type declaration for global objects
+  declare global {
+    interface Window {
+      themeTransitionManager?: {
+        startTransition: () => void;
+        endTransition: () => void;
+        isTransitioning: boolean;
+      };
+      toggleTheme?: () => void;
+    }
+  }
 </script>

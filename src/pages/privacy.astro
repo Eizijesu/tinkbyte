@@ -1,10 +1,12 @@
 ---
-// src/pages/privacy.astro
+// src/pages/privacy.astro - Fixed with TinaCMS integration and squared design
 import Layout from "../layouts/Layout.astro";
 import { getEntry } from "astro:content";
 
 // Get privacy content from TinaCMS
-const privacyPage = await getEntry("pages", "privacy-policy");
+const privacyPage = await getEntry("legal", "privacy-policy");
+const { Content } = privacyPage ? await privacyPage.render() : { Content: null };
+
 const lastUpdated = privacyPage?.data.updatedDate 
   ? new Date(privacyPage.data.updatedDate).toLocaleDateString("en-US", {
       year: "numeric",
@@ -12,12 +14,12 @@ const lastUpdated = privacyPage?.data.updatedDate
       day: "numeric",
     })
   : "January 15, 2024";
+
+const pageTitle = privacyPage?.data.seo?.title || privacyPage?.data.title || "Privacy Policy | TinkByte";
+const pageDescription = privacyPage?.data.seo?.description || privacyPage?.data.description || "TinkByte's privacy policy. Learn how we collect, use, and protect your personal information.";
 ---
 
-<Layout 
-  title="Privacy Policy | TinkByte" 
-  description="TinkByte's privacy policy. Learn how we collect, use, and protect your personal information."
->
+<Layout title={pageTitle} description={pageDescription}>
   <div class="legal-page-container">
     <div class="max-w-4xl mx-auto py-12 lg:py-16 px-4 sm:px-6">
       <!-- Enhanced Header -->
@@ -33,7 +35,7 @@ const lastUpdated = privacyPage?.data.updatedDate
           <span class="title-icon">
             <i class="fas fa-user-shield"></i>
           </span>
-          Privacy Policy
+          {privacyPage?.data.title || "Privacy Policy"}
         </h1>
         
         <div class="last-updated-badge">
@@ -42,16 +44,18 @@ const lastUpdated = privacyPage?.data.updatedDate
         </div>
         
         <p class="legal-page-subtitle">
-          Your privacy matters. Here's how we protect and respect your data.
+          {privacyPage?.data.description || "Your privacy matters. Here's how we protect and respect your data."}
         </p>
       </header>
 
       <!-- Content -->
       <div class="legal-content">
-        {privacyPage ? (
-          <div class="prose-content" set:html={privacyPage.body} />
+        {Content ? (
+          <div class="prose-content">
+            <Content />
+          </div>
         ) : (
-          <!-- Fallback content -->
+          <!-- Fallback content if no TinaCMS content -->
           <div class="prose-content">
             <section class="content-section">
               <h2 class="section-title">
@@ -163,12 +167,14 @@ const lastUpdated = privacyPage?.data.updatedDate
               <div class="contact-info">
                 <div class="contact-item">
                   <i class="fas fa-envelope"></i>
-                  <span>privacy@tinkbyte.com</span>
+                  <span>{privacyPage?.data.contact?.email || "privacy@tinkbyte.com"}</span>
                 </div>
-                <div class="contact-item">
-                  <i class="fas fa-map-marker-alt"></i>
-                  <span>TinkByte, San Francisco, CA</span>
-                </div>
+                {privacyPage?.data.contact?.address && (
+                  <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{privacyPage.data.contact.address}</span>
+                  </div>
+                )}
               </div>
             </section>
           </div>
@@ -187,22 +193,13 @@ const lastUpdated = privacyPage?.data.updatedDate
 </Layout>
 
 <style>
-  /* Reuse the same styles as terms.astro with privacy-specific modifications */
-  
-  .privacy-circle {
-    background: linear-gradient(135deg, #10b981, #059669);
-  }
-
-  /* All other styles remain the same as terms.astro */
-  /* Enhanced Legal Page Styles */
+  /* Legal Page Styles - Fixed with squared design */
   .legal-page-container {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    font-family: "Space Grotesk", sans-serif;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
     min-height: 100vh;
     transition: all 0.3s ease;
-  }
-
-  :global(.dark) .legal-page-container {
-    background: linear-gradient(135deg, rgb(17, 24, 39) 0%, rgb(30, 41, 59) 100%);
   }
 
   /* Enhanced Header */
@@ -221,7 +218,6 @@ const lastUpdated = privacyPage?.data.updatedDate
     width: 80px;
     height: 80px;
     background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    border-radius: 50%;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -229,106 +225,195 @@ const lastUpdated = privacyPage?.data.updatedDate
     box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
   }
 
+  .privacy-circle {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+
   .decoration-line {
     width: 100px;
     height: 2px;
-    background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+    background: linear-gradient(90deg, transparent, #243788, transparent);
     margin: 1rem auto 0;
   }
 
   .legal-page-title {
-    font-family: "Space Grotesk", sans-serif;
     font-size: clamp(2.5rem, 5vw, 4rem);
     font-weight: 800;
-    color: rgb(15, 23, 42);
+    color: var(--color-text-primary);
     margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, rgb(15, 23, 42) 0%, rgb(30, 58, 138) 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 1rem;
-  }
-
-  :global(.dark) .legal-page-title {
-    background: linear-gradient(135deg, rgb(248, 250, 252) 0%, rgb(147, 197, 253) 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .title-icon {
     font-size: 0.8em;
-    color: #3b82f6;
+    color: #243788;
   }
 
   .last-updated-badge {
     display: inline-flex;
     align-items: center;
     padding: 0.75rem 1.5rem;
-    background: white;
-    border: 2px solid #e2e8f0;
-    border-radius: 2px;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
     font-size: 0.875rem;
     font-weight: 600;
-    color: #64748b;
+    color: var(--color-text-secondary);
     margin-bottom: 1.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   :global(.dark) .last-updated-badge {
-    background: rgb(30, 41, 59);
-    border-color: rgb(71, 85, 105);
-    color: rgb(148, 163, 184);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   .legal-page-subtitle {
     font-size: 1.25rem;
-    color: #64748b;
+    color: var(--color-text-secondary);
     max-width: 600px;
     margin: 0 auto;
     line-height: 1.6;
     transition: color 0.3s ease;
   }
 
-  :global(.dark) .legal-page-subtitle {
-    color: rgb(148, 163, 184);
-  }
-
   /* Enhanced Content Styling */
   .legal-content {
-    background: white;
-    border-radius: var(--tinkbyte-radius-card, 8px);
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
     padding: 3rem;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    border: 2px solid #e2e8f0;
     transition: all 0.3s ease;
   }
 
   :global(.dark) .legal-content {
-    background: rgb(30, 41, 59);
-    border-color: rgb(71, 85, 105);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   }
 
   .prose-content {
     font-size: 1.125rem;
     line-height: 1.7;
-    color: #374151;
+    color: var(--color-text-primary);
     transition: color 0.3s ease;
   }
 
-  :global(.dark) .prose-content {
-    color: rgb(209, 213, 219);
+  /* TinaCMS Content Styling */
+  .prose-content :global(h1),
+  .prose-content :global(h2),
+  .prose-content :global(h3),
+  .prose-content :global(h4) {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
   }
 
+  .prose-content :global(h1) {
+    font-size: 2.5rem;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 1rem;
+  }
+
+  .prose-content :global(h2) {
+    font-size: 1.75rem;
+    color: #243788;
+  }
+
+  .prose-content :global(h3) {
+    font-size: 1.25rem;
+  }
+
+  .prose-content :global(p) {
+    margin-bottom: 1.5rem;
+    line-height: 1.7;
+  }
+
+  .prose-content :global(ul),
+  .prose-content :global(ol) {
+    margin: 1.5rem 0;
+    padding-left: 2rem;
+  }
+
+  .prose-content :global(li) {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+  }
+
+  .prose-content :global(strong) {
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  .prose-content :global(a) {
+    color: #243788;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+  }
+
+  .prose-content :global(a:hover) {
+    color: #1e40af;
+  }
+
+  .prose-content :global(blockquote) {
+    border-left: 4px solid #243788;
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    font-style: italic;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-secondary);
+    padding: 1.5rem;
+  }
+
+  .prose-content :global(code) {
+    background: var(--color-bg-secondary);
+    padding: 0.25rem 0.5rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    border: 1px solid var(--color-border);
+  }
+
+  .prose-content :global(pre) {
+    background: var(--color-bg-secondary);
+    padding: 1.5rem;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    margin: 1.5rem 0;
+  }
+
+  .prose-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+  }
+
+  .prose-content :global(th),
+  .prose-content :global(td) {
+    border: 1px solid var(--color-border);
+    padding: 0.75rem;
+    text-align: left;
+  }
+
+  .prose-content :global(th) {
+    background: var(--color-bg-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Fallback Content Styling */
   .content-section {
     margin-bottom: 3rem;
     padding-bottom: 2rem;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--color-border);
     position: relative;
   }
 
@@ -337,24 +422,17 @@ const lastUpdated = privacyPage?.data.updatedDate
     margin-bottom: 0;
   }
 
-  :global(.dark) .content-section {
-    border-bottom-color: rgb(51, 65, 85);
-  }
-
   .section-title {
-    font-family: "Space Grotesk", sans-serif;
     font-size: 1.75rem;
     font-weight: 700;
-    color: rgb(30, 58, 138);
+    color: #243788;
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
     transition: color 0.3s ease;
-  }
-
-  :global(.dark) .section-title {
-    color: rgb(147, 197, 253);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .section-number {
@@ -363,9 +441,8 @@ const lastUpdated = privacyPage?.data.updatedDate
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    background: #243788;
     color: white;
-    border-radius: 50%;
     font-size: 0.875rem;
     font-weight: 800;
     flex-shrink: 0;
@@ -374,27 +451,19 @@ const lastUpdated = privacyPage?.data.updatedDate
   .subsection {
     margin: 2rem 0;
     padding: 1.5rem;
-    background: #f8fafc;
-    border-radius: var(--tinkbyte-radius, 6px);
-    border-left: 4px solid #3b82f6;
+    background: var(--color-bg-secondary);
+    border-left: 4px solid #243788;
     transition: all 0.3s ease;
-  }
-
-  :global(.dark) .subsection {
-    background: rgb(51, 65, 85);
-    border-left-color: rgb(147, 197, 253);
   }
 
   .subsection-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: rgb(51, 65, 85);
+    color: var(--color-text-primary);
     margin-bottom: 0.75rem;
     transition: color 0.3s ease;
-  }
-
-  :global(.dark) .subsection-title {
-    color: rgb(203, 213, 225);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
   .enhanced-list {
@@ -407,7 +476,6 @@ const lastUpdated = privacyPage?.data.updatedDate
     position: relative;
     padding: 0.75rem 0 0.75rem 2rem;
     margin-bottom: 0.5rem;
-    border-radius: var(--tinkbyte-radius, 4px);
     transition: all 0.3s ease;
   }
 
@@ -416,27 +484,21 @@ const lastUpdated = privacyPage?.data.updatedDate
     position: absolute;
     left: 0;
     top: 0.75rem;
-    color: #3b82f6;
+    color: #243788;
     font-weight: bold;
     font-size: 1.2em;
   }
 
   .enhanced-list li:hover {
-    background: rgba(59, 130, 246, 0.05);
+    background: rgba(36, 55, 136, 0.05);
     transform: translateX(4px);
   }
 
   .contact-section {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-radius: var(--tinkbyte-radius-card, 8px);
+    background: var(--color-bg-secondary);
     padding: 2rem;
-    border: 2px solid #0ea5e9;
+    border: 2px solid #243788;
     margin-top: 2rem;
-  }
-
-  :global(.dark) .contact-section {
-    background: linear-gradient(135deg, rgb(12, 74, 110) 0%, rgb(15, 118, 110) 100%);
-    border-color: rgb(34, 197, 94);
   }
 
   .contact-info {
@@ -451,14 +513,10 @@ const lastUpdated = privacyPage?.data.updatedDate
     align-items: center;
     gap: 0.75rem;
     padding: 1rem;
-    background: white;
-    border-radius: var(--tinkbyte-radius, 6px);
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
-  }
-
-  :global(.dark) .contact-item {
-    background: rgb(30, 41, 59);
   }
 
   .contact-item:hover {
@@ -467,7 +525,7 @@ const lastUpdated = privacyPage?.data.updatedDate
   }
 
   .contact-item i {
-    color: #3b82f6;
+    color: #243788;
     font-size: 1.2em;
   }
 
@@ -482,19 +540,23 @@ const lastUpdated = privacyPage?.data.updatedDate
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    background: #243788;
     color: white;
-    border: none;
-    border-radius: 2px;
+    border: 2px solid #243788;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(36, 55, 136, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: inherit;
   }
 
   .back-to-top-btn:hover {
+    background: white;
+    color: #243788;
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 8px 24px rgba(36, 55, 136, 0.4);
   }
 
   /* Mobile Responsiveness */
