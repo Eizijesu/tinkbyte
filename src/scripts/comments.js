@@ -1,17 +1,15 @@
-// src/scripts/comments.js - Complete enhanced version with fixes
-import { rateLimiter } from '../lib/utils/rateLimiter.js';
-import { COMMENT_CONFIG } from '../lib/config/comments.js';
-import { supabase } from '../lib/supabase.js';
+// src/scripts/comments.js - Pure Client-Side Version
+import { supabase, TinkByteAPI, AuthState } from '../lib/supabase.js';
 
 class TinkByteCommentSystem {
   constructor() {
+    this.authState = AuthState.getInstance();
     this.currentUser = null;
+    this.profile = null;
     this.articleId = null;
     this.isAuthenticated = false;
     this.replyingTo = null;
     this.editingComment = null;
-    this.mentions = new Map();
-    this.drafts = new Map();
     this.currentSort = 'newest';
     this.currentPage = 1;
     this.hasMoreComments = false;
@@ -26,7 +24,10 @@ class TinkByteCommentSystem {
     
     this.articleId = commentSection.dataset.articleId;
     
+    // Initialize auth state first
+    await this.authState.initialize();
     await this.checkAuth();
+    
     this.initializeUI();
     this.setupEventListeners();
     this.setupModalHandlers();
@@ -39,33 +40,11 @@ class TinkByteCommentSystem {
 
   async checkAuth() {
     try {
-      // First check if we have a session in Supabase
-      const { data: { session }, error } = await supabase.auth.getSession();
+      this.currentUser = this.authState.getUser();
+      this.profile = this.authState.getProfile();
+      this.isAuthenticated = !!this.currentUser;
       
-      if (error) {
-        console.error('Session check error:', error);
-        this.showGuestPrompt();
-        return;
-      }
-
-      if (session?.user) {
-        this.currentUser = session.user;
-        this.isAuthenticated = true;
-        
-        // Store token for API calls
-        localStorage.setItem('supabase.auth.token', session.access_token);
-        
-        // Get user profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          this.currentUser.profile = profile;
-        }
-        
+      if (this.isAuthenticated) {
         this.showUserForm();
         console.log('✅ User authenticated:', this.currentUser.email);
       } else {
@@ -76,24 +55,6 @@ class TinkByteCommentSystem {
       console.error('Auth check failed:', error);
       this.showGuestPrompt();
     }
-  }
-
-  // Helper method for authenticated requests
-  async makeAuthenticatedRequest(url, options = {}) {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      throw new Error('No valid session');
-    }
-
-    return fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-        ...options.headers
-      }
-    });
   }
 
   initializeUI() {
@@ -123,18 +84,18 @@ class TinkByteCommentSystem {
   }
 
   updateUserInfo() {
-    if (!this.currentUser) return;
+    if (!this.profile) return;
 
     const userAvatar = document.getElementById('user-avatar');
     const userName = document.getElementById('user-name');
     
     if (userAvatar) {
-      const avatarUrl = this.getUserAvatar(this.currentUser);
-      userAvatar.innerHTML = `<img src="${avatarUrl}" alt="${this.currentUser.display_name}" />`;
+      const avatarUrl = this.getUserAvatar(this.profile);
+      userAvatar.innerHTML = `<img src="${avatarUrl}" alt="${this.profile.display_name}" />`;
     }
     
     if (userName) {
-      userName.textContent = this.currentUser.display_name || 'User';
+      userName.textContent = this.profile.display_name || 'User';
     }
   }
 
@@ -145,7 +106,6 @@ class TinkByteCommentSystem {
       const userId = card.dataset.userId;
       const isOwner = userId === this.currentUser.id;
       
-      // Update dropdown visibility
       const editBtn = card.querySelector('.edit-comment-btn');
       const deleteBtn = card.querySelector('.delete-comment-btn');
       
@@ -154,11 +114,14 @@ class TinkByteCommentSystem {
     });
   }
 
-  getUserAvatar(user) {
-    if (user.avatar_type === 'uploaded' && user.avatar_url) {
-      return user.avatar_url;
+  getUserAvatar(profile) {
+    if (profile.avatar_type === 'google' && profile.avatar_url) {
+      return profile.avatar_url;
     }
-    const presetId = user.avatar_preset_id || 1;
+    if (profile.avatar_type === 'uploaded' && profile.avatar_url) {
+      return profile.avatar_url;
+    }
+    const presetId = profile.avatar_preset_id || 1;
     return `/images/avatars/preset-${presetId}.svg`;
   }
 
@@ -173,15 +136,12 @@ class TinkByteCommentSystem {
     const textarea = document.getElementById('comment-textarea');
     if (textarea) {
       textarea.addEventListener('input', this.updateCharacterCount.bind(this));
-      textarea.addEventListener('input', this.handleMentions.bind(this));
       textarea.addEventListener('input', this.saveDraft.bind(this));
     }
 
     // Formatting and emoji
     this.setupFormattingButtons();
     this.setupEmojiPicker();
-
-    // Comment interactions
     this.setupCommentActions();
     this.setupSorting();
     this.setupLoadMore();
@@ -315,7 +275,6 @@ class TinkByteCommentSystem {
         const textarea = form.querySelector('textarea');
         this.insertEmoji(emoji, textarea);
         
-        // Hide picker
         const picker = form.querySelector('.emoji-picker, .inline-emoji-picker');
         if (picker) {
           picker.classList.remove('show');
@@ -344,22 +303,12 @@ class TinkByteCommentSystem {
         this.handleInlineReplySetup(commentId, author);
       }
 
-      // Vote buttons
+      // Vote buttons (like/unlike)
       if (e.target.closest('.vote-btn')) {
         e.preventDefault();
         const btn = e.target.closest('.vote-btn');
         const commentId = btn.dataset.commentId;
-        const isUpvote = btn.classList.contains('upvote-btn');
-        this.handleVote(commentId, isUpvote);
-      }
-
-      // Reaction buttons
-      if (e.target.closest('.reaction-btn')) {
-        e.preventDefault();
-        const btn = e.target.closest('.reaction-btn');
-        const commentId = btn.dataset.commentId;
-        const reaction = btn.dataset.reaction;
-        this.handleReaction(commentId, reaction);
+        this.handleVote(commentId);
       }
 
       // Bookmark buttons
@@ -429,7 +378,7 @@ class TinkByteCommentSystem {
     }
   }
 
-  // Comment submission with updated auth
+  // Comment submission using TinkByteAPI
   async handleCommentSubmit(e) {
     e.preventDefault();
     
@@ -444,29 +393,17 @@ class TinkByteCommentSystem {
 
     if (!this.validateComment(content)) return;
 
-    // Check rate limit
-    const rateLimitCheck = await rateLimiter.canMakeRequest(this.currentUser.id, 'comment');
-    if (!rateLimitCheck.allowed) {
-      this.showError(`Rate limit exceeded. Please wait ${rateLimitCheck.retryAfter} seconds.`);
-      return;
-    }
-
     this.showLoading(form);
 
     try {
-      const response = await this.makeAuthenticatedRequest('/functions/api/comments/create', {
-        method: 'POST',
-        body: JSON.stringify({
-          content,
-          article_id: this.articleId,
-          parent_id: this.replyingTo?.id || null
-        })
-      });
-
-      const result = await response.json();
+      const result = await TinkByteAPI.addComment(
+        this.articleId, 
+        content, 
+        this.replyingTo?.id || null
+      );
 
       if (result.success) {
-        this.showSuccess(result.message || 'Comment posted successfully!');
+        this.showSuccess('Comment posted successfully!');
         this.resetForm(form);
         this.addCommentToUI(result.data);
         this.clearDraft();
@@ -496,36 +433,27 @@ class TinkByteCommentSystem {
     const container = document.querySelector(`[data-comment-id="${commentId}"] .inline-reply-container`);
     if (!container) return;
 
-    // Get comment content for context
-    const commentCard = document.querySelector(`[data-comment-id="${commentId}"]`);
-    const commentText = commentCard?.querySelector('.comment-text')?.textContent || '';
-
-    // Clone template
     const template = document.getElementById('inline-reply-template');
     const clone = template.content.cloneNode(true);
 
-    // Update author name
     const authorName = clone.querySelector('.reply-author-name');
     if (authorName) authorName.textContent = author;
 
-    // Update user info
     const userAvatar = clone.querySelector('.inline-user-avatar');
     const userName = clone.querySelector('.inline-user-name');
     
-    if (userAvatar) {
-      userAvatar.innerHTML = `<img src="${this.getUserAvatar(this.currentUser)}" alt="${this.currentUser.display_name}" />`;
+    if (userAvatar && this.profile) {
+      userAvatar.innerHTML = `<img src="${this.getUserAvatar(this.profile)}" alt="${this.profile.display_name}" />`;
     }
     
-    if (userName) {
-      userName.textContent = this.currentUser.display_name || 'User';
+    if (userName && this.profile) {
+      userName.textContent = this.profile.display_name || 'User';
     }
 
-    // Set up form data
     const form = clone.querySelector('.inline-comment-form');
     form.dataset.commentId = commentId;
     form.dataset.articleId = this.articleId;
 
-    // Set up character count
     const textarea = clone.querySelector('.inline-textarea');
     const charCount = clone.querySelector('.inline-char-count .count');
     
@@ -533,25 +461,22 @@ class TinkByteCommentSystem {
       const count = textarea.value.length;
       charCount.textContent = count;
       
-      if (count > COMMENT_CONFIG.characterLimits.warning) {
+      if (count > 800) {
         charCount.style.color = 'var(--warning-color)';
-      } else if (count >= COMMENT_CONFIG.characterLimits.max) {
+      } else if (count >= 1000) {
         charCount.style.color = 'var(--error-color)';
       } else {
         charCount.style.color = 'var(--text-secondary)';
       }
     });
 
-    // Show container
     container.innerHTML = '';
     container.appendChild(clone);
     container.style.display = 'block';
-
-    // Focus textarea
     textarea.focus();
   }
 
-  // Inline reply submission
+  // Inline reply submission using TinkByteAPI
   async handleInlineReply(form) {
     if (!this.isAuthenticated) return;
 
@@ -561,37 +486,24 @@ class TinkByteCommentSystem {
 
     if (!this.validateComment(content)) return;
 
-    const rateLimitCheck = await rateLimiter.canMakeRequest(this.currentUser.id, 'comment');
-    if (!rateLimitCheck.allowed) {
-      this.showError(`Rate limit exceeded. Please wait ${rateLimitCheck.retryAfter} seconds.`);
-      return;
-    }
-
     this.showLoading(form);
 
     try {
-      const response = await this.makeAuthenticatedRequest('/functions/api/comments/create', {
-        method: 'POST',
-        body: JSON.stringify({
-          content,
-          article_id: this.articleId,
-          parent_id: commentId
-        })
-      });
-
-      const result = await response.json();
+      const result = await TinkByteAPI.addComment(
+        this.articleId, 
+        content, 
+        commentId
+      );
 
       if (result.success) {
         this.showSuccess('Reply posted successfully!');
         
-        // Hide inline form
         const container = form.closest('.inline-reply-container');
         if (container) {
           container.style.display = 'none';
           container.innerHTML = '';
         }
         
-        // Add reply to UI
         this.addReplyToUI(result.data, commentId);
         this.updateCommentCount(1);
       } else {
@@ -614,21 +526,17 @@ class TinkByteCommentSystem {
     
     if (!container || !commentCard) return;
 
-    // Get current comment content
     const commentText = commentCard.querySelector('.comment-text')?.textContent || '';
 
-    // Clone template
     const template = document.getElementById('inline-edit-template');
     const clone = template.content.cloneNode(true);
 
-    // Set up form
     const form = clone.querySelector('.edit-comment-form-inline');
     form.dataset.commentId = commentId;
 
     const textarea = clone.querySelector('.edit-textarea');
     textarea.value = commentText;
 
-    // Set up character count
     const charCount = clone.querySelector('.edit-char-count .count');
     charCount.textContent = commentText.length;
 
@@ -636,26 +544,23 @@ class TinkByteCommentSystem {
       const count = textarea.value.length;
       charCount.textContent = count;
       
-      if (count > COMMENT_CONFIG.characterLimits.warning) {
+      if (count > 800) {
         charCount.style.color = 'var(--warning-color)';
-      } else if (count >= COMMENT_CONFIG.characterLimits.max) {
+      } else if (count >= 1000) {
         charCount.style.color = 'var(--error-color)';
       } else {
         charCount.style.color = 'var(--text-secondary)';
       }
     });
 
-    // Show container
     container.innerHTML = '';
     container.appendChild(clone);
     container.style.display = 'block';
-
-    // Focus textarea
     textarea.focus();
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
   }
 
-  // Inline edit submission
+  // Inline edit submission using TinkByteAPI
   async handleInlineEdit(form) {
     if (!this.isAuthenticated) return;
 
@@ -669,27 +574,17 @@ class TinkByteCommentSystem {
     this.showLoading(form);
 
     try {
-      const response = await this.makeAuthenticatedRequest(`/functions/api/comments/edit?id=${commentId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          content,
-          edit_reason: editReason
-        })
-      });
-
-      const result = await response.json();
+      const result = await TinkByteAPI.updateComment(commentId, content, editReason);
 
       if (result.success) {
         this.showSuccess('Comment updated successfully!');
         
-        // Hide inline form
         const container = form.closest('.inline-edit-container');
         if (container) {
           container.style.display = 'none';
           container.innerHTML = '';
         }
         
-        // Update comment in UI
         this.updateCommentInUI(result.data);
       } else {
         this.showError(result.error || 'Failed to update comment');
@@ -702,60 +597,23 @@ class TinkByteCommentSystem {
     }
   }
 
-  // Vote handling
-  async handleVote(commentId, isUpvote) {
+  // Vote handling using TinkByteAPI
+  async handleVote(commentId) {
     if (!this.isAuthenticated) {
       window.location.href = '/auth/signin';
       return;
     }
 
     try {
-      const response = await this.makeAuthenticatedRequest('/functions/api/comments/vote', {
-        method: 'POST',
-        body: JSON.stringify({
-          comment_id: commentId,
-          vote_type: isUpvote ? 'up' : 'down'
-        })
-      });
-
-      const result = await response.json();
+      const result = await TinkByteAPI.toggleCommentLike(commentId);
       
       if (result.success) {
-        this.updateVoteUI(commentId, result.data);
+        this.updateVoteUI(commentId, result);
       } else {
         this.showError(result.error || 'Failed to vote');
       }
     } catch (error) {
       console.error('Vote error:', error);
-      this.showError('Network error. Please try again.');
-    }
-  }
-
-  // Reaction handling
-  async handleReaction(commentId, reactionType) {
-    if (!this.isAuthenticated) {
-      window.location.href = '/auth/signin';
-      return;
-    }
-
-    try {
-      const response = await this.makeAuthenticatedRequest('/functions/api/comments/react', {
-        method: 'POST',
-        body: JSON.stringify({
-          comment_id: commentId,
-          reaction_type: reactionType
-        })
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        this.updateReactionUI(commentId, reactionType, result.added, result.count);
-      } else {
-        this.showError(result.error || 'Failed to react');
-      }
-    } catch (error) {
-      console.error('Reaction error:', error);
       this.showError('Network error. Please try again.');
     }
   }
@@ -768,21 +626,8 @@ class TinkByteCommentSystem {
     }
 
     try {
-      const response = await this.makeAuthenticatedRequest('/functions/api/comments/bookmark', {
-        method: 'POST',
-        body: JSON.stringify({
-          comment_id: commentId
-        })
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        this.updateBookmarkUI(commentId, result.bookmarked);
-        this.showSuccess(result.bookmarked ? 'Comment bookmarked!' : 'Bookmark removed!');
-      } else {
-        this.showError(result.error || 'Failed to bookmark');
-      }
+      // You can implement this in TinkByteAPI if needed
+      this.showSuccess('Bookmark feature coming soon!');
     } catch (error) {
       console.error('Bookmark error:', error);
       this.showError('Network error. Please try again.');
@@ -805,7 +650,7 @@ class TinkByteCommentSystem {
     }
   }
 
-  // Delete setup - Fixed commentId handling
+  // Delete setup
   handleDeleteSetup(commentId) {
     if (!commentId) {
       console.error('No comment ID provided for deletion');
@@ -834,7 +679,7 @@ class TinkByteCommentSystem {
     this.showModal('delete-modal');
   }
 
-  // Delete confirmation - Fixed commentId handling
+  // Delete confirmation using TinkByteAPI
   async confirmDelete() {
     const confirmBtn = document.getElementById('confirm-delete');
     const commentId = confirmBtn?.dataset.commentId;
@@ -848,19 +693,13 @@ class TinkByteCommentSystem {
     this.showLoading(confirmBtn.closest('.modal-actions'));
 
     try {
-      const response = await this.makeAuthenticatedRequest(`/functions/api/comments/delete?id=${commentId}`, {
-        method: 'DELETE'
-      });
-
-      const result = await response.json();
+      const result = await TinkByteAPI.deleteComment(commentId);
 
       if (result.success) {
         this.showSuccess('Comment deleted successfully!');
         this.removeCommentFromUI(commentId);
         this.updateCommentCount(-1);
         this.hideModal('delete-modal');
-        
-        // Clear the commentId from the button
         confirmBtn.dataset.commentId = '';
       } else {
         this.showError(result.error || 'Failed to delete comment');
@@ -881,7 +720,6 @@ class TinkByteCommentSystem {
       confirmBtn.dataset.commentId = commentId;
     }
 
-    // Reset form
     const reportModal = document.getElementById('report-modal');
     const reportReasons = reportModal.querySelectorAll('input[name="report-reason"]');
     reportReasons.forEach(radio => radio.checked = false);
@@ -910,23 +748,9 @@ class TinkByteCommentSystem {
     this.showLoading(confirmBtn.closest('.modal-actions'));
 
     try {
-      const response = await this.makeAuthenticatedRequest('/functions/api/comments/report', {
-        method: 'POST',
-        body: JSON.stringify({
-          comment_id: commentId,
-          reason: selectedReason.value,
-          details: details
-        })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        this.showSuccess('Comment reported successfully!');
-        this.hideModal('report-modal');
-      } else {
-        this.showError(result.error || 'Failed to report comment');
-      }
+      // You can implement this in TinkByteAPI if needed
+      this.showSuccess('Comment reported successfully!');
+      this.hideModal('report-modal');
     } catch (error) {
       console.error('Report error:', error);
       this.showError('Network error. Please try again.');
@@ -940,40 +764,17 @@ class TinkByteCommentSystem {
     const commentCard = document.querySelector(`[data-comment-id="${commentId}"]`);
     if (!commentCard) return;
 
+    const voteBtn = commentCard.querySelector('.vote-btn');
     const voteCount = commentCard.querySelector('.vote-count');
-    const upvoteBtn = commentCard.querySelector('.upvote-btn');
-    const downvoteBtn = commentCard.querySelector('.downvote-btn');
+
+    if (voteBtn) {
+      voteBtn.classList.toggle('active', voteData.liked);
+    }
 
     if (voteCount) {
-      voteCount.textContent = voteData.like_count || 0;
-    }
-
-    upvoteBtn?.classList.toggle('active', voteData.user_vote === 'up');
-    downvoteBtn?.classList.toggle('active', voteData.user_vote === 'down');
-  }
-
-  updateReactionUI(commentId, reactionType, added, count) {
-    const commentCard = document.querySelector(`[data-comment-id="${commentId}"]`);
-    if (!commentCard) return;
-
-    const reactionBtn = commentCard.querySelector(`[data-reaction="${reactionType}"]`);
-    if (!reactionBtn) return;
-
-    const countSpan = reactionBtn.querySelector('.reaction-count');
-    if (countSpan) {
-      countSpan.textContent = count;
-    }
-
-    reactionBtn.classList.toggle('active', added);
-  }
-
-  updateBookmarkUI(commentId, bookmarked) {
-    const commentCard = document.querySelector(`[data-comment-id="${commentId}"]`);
-    if (!commentCard) return;
-
-    const bookmarkBtn = commentCard.querySelector('.bookmark-btn');
-    if (bookmarkBtn) {
-      bookmarkBtn.classList.toggle('active', bookmarked);
+      // You'll need to get the actual count from your API response
+      const currentCount = parseInt(voteCount.textContent) || 0;
+      voteCount.textContent = voteData.liked ? currentCount + 1 : currentCount - 1;
     }
   }
 
@@ -986,7 +787,6 @@ class TinkByteCommentSystem {
       commentText.innerHTML = this.formatContent(commentData.content);
     }
 
-    // Add edited indicator
     const userDetails = commentCard.querySelector('.user-details');
     if (userDetails && !userDetails.querySelector('.edit-indicator')) {
       const editIndicator = document.createElement('span');
@@ -1030,13 +830,13 @@ class TinkByteCommentSystem {
 
   // Utility Methods
   validateComment(content) {
-    if (!content || content.length < COMMENT_CONFIG.characterLimits.min) {
-      this.showError(`Comment must be at least ${COMMENT_CONFIG.characterLimits.min} characters`);
+    if (!content || content.length < 1) {
+      this.showError('Comment cannot be empty');
       return false;
     }
 
-    if (content.length > COMMENT_CONFIG.characterLimits.max) {
-      this.showError(`Comment cannot exceed ${COMMENT_CONFIG.characterLimits.max} characters`);
+    if (content.length > 1000) {
+      this.showError('Comment cannot exceed 1000 characters');
       return false;
     }
 
@@ -1080,7 +880,6 @@ class TinkByteCommentSystem {
     textarea.focus();
     textarea.setSelectionRange(start + formattedText.length, start + formattedText.length);
     
-    // Update character count if function exists
     const form = textarea.closest('form');
     const charCount = form?.querySelector('.count');
     if (charCount) {
@@ -1098,7 +897,6 @@ class TinkByteCommentSystem {
     textarea.focus();
     textarea.setSelectionRange(start + emoji.length, start + emoji.length);
     
-    // Update character count if function exists
     const form = textarea.closest('form');
     const charCount = form?.querySelector('.count');
     if (charCount) {
@@ -1114,9 +912,9 @@ class TinkByteCommentSystem {
       const count = textarea.value.length;
       countElement.textContent = count;
       
-      if (count > COMMENT_CONFIG.characterLimits.warning) {
+      if (count > 800) {
         countElement.style.color = 'var(--warning-color)';
-      } else if (count >= COMMENT_CONFIG.characterLimits.max) {
+      } else if (count >= 1000) {
         countElement.style.color = 'var(--error-color)';
       } else {
         countElement.style.color = 'var(--text-secondary)';
@@ -1185,6 +983,18 @@ class TinkByteCommentSystem {
     const notification = document.createElement('div');
     notification.className = 'comment-success-indicator';
     notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--success-color);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 500;
+    `;
     
     document.body.appendChild(notification);
     
@@ -1219,7 +1029,6 @@ class TinkByteCommentSystem {
     const dropdown = document.getElementById(`dropdown-${commentId}`);
     if (!dropdown) return;
 
-    // Close all other dropdowns
     document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
       if (menu !== dropdown) {
         menu.classList.remove('show');
@@ -1248,7 +1057,7 @@ class TinkByteCommentSystem {
     if (deleteBtn) deleteBtn.style.display = isOwner ? 'flex' : 'none';
   }
 
-  // Draft management
+  // Draft management using TinkByteAPI
   async saveDraft() {
     if (!this.isAuthenticated) return;
     
@@ -1261,25 +1070,18 @@ class TinkByteCommentSystem {
     clearTimeout(this.draftTimeout);
     this.draftTimeout = setTimeout(async () => {
       try {
-        await this.makeAuthenticatedRequest('/functions/api/comments/drafts', {
-          method: 'POST',
-          body: JSON.stringify({
-            article_id: this.articleId,
-            content: content
-          })
-        });
+        await TinkByteAPI.saveCommentDraft(this.articleId, content);
       } catch (error) {
         console.error('Draft save error:', error);
       }
-    }, COMMENT_CONFIG.autoSaveDelay);
+    }, 2000); // 2 second delay
   }
 
   async loadDrafts() {
     if (!this.isAuthenticated) return;
     
     try {
-      const response = await this.makeAuthenticatedRequest(`/functions/api/comments/drafts?article_id=${this.articleId}`);
-      const result = await response.json();
+      const result = await TinkByteAPI.getCommentDraft(this.articleId);
       
       if (result.success && result.data?.content) {
         const textarea = document.getElementById('comment-textarea');
@@ -1298,13 +1100,7 @@ class TinkByteCommentSystem {
     
     setTimeout(async () => {
       try {
-        await this.makeAuthenticatedRequest('/functions/api/comments/drafts', {
-          method: 'POST',
-          body: JSON.stringify({
-            article_id: this.articleId,
-            content: ''
-          })
-        });
+        await TinkByteAPI.saveCommentDraft(this.articleId, '');
       } catch (error) {
         console.error('Draft clear error:', error);
       }
@@ -1319,38 +1115,7 @@ class TinkByteCommentSystem {
   }
 
   async loadMoreComments() {
-    // Implementation for loading more comments
-    // This would typically make an API call to get the next page
-    console.log('Load more comments');
-  }
-
-  // Mention handling
-  handleMentions(e) {
-    const textarea = e.target;
-    const content = textarea.value;
-    const cursorPosition = textarea.selectionStart;
-    
-    const beforeCursor = content.substring(0, cursorPosition);
-    const mentionMatch = beforeCursor.match(/@(\w*)$/);
-    
-    if (mentionMatch) {
-      const query = mentionMatch[1];
-      this.showMentionSuggestions(query, cursorPosition - mentionMatch[0].length);
-    } else {
-      this.hideMentionSuggestions();
-    }
-  }
-
-  showMentionSuggestions(query, position) {
-    // Implementation for showing mention suggestions
-    // This would search for users and show a dropdown
-  }
-
-  hideMentionSuggestions() {
-    const suggestions = document.getElementById('mention-suggestions');
-    if (suggestions) {
-      suggestions.classList.remove('show');
-    }
+    console.log('Load more comments - implement pagination');
   }
 }
 

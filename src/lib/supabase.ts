@@ -1,37 +1,14 @@
 // src/lib/supabase.ts
 import { createClient } from '@supabase/supabase-js';
 
+const environment = (import.meta as any).env.PUBLIC_ENVIRONMENT || 'development';
+const isProduction = environment === 'production';
 const supabaseUrl = (import.meta as any).env.PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = (import.meta as any).env.PUBLIC_SUPABASE_ANON_KEY as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
-
-// Add these exports before the default export
-export const db = {
-  profiles: () => supabase.from('profiles'),
-  comments: () => supabase.from('comments'),
-  commentLikes: () => supabase.from('comment_likes'),
-  commentModeration: () => supabase.from('comment_moderation'),
-  articles: () => supabase.from('articles'),
-  articleLikes: () => supabase.from('article_likes'),
-  userRateLimits: () => supabase.from('user_rate_limits'),
-  moderationRules: () => supabase.from('moderation_rules'),
-  commentReactions: () => supabase.from('comment_reactions'),
-  commentBookmarks: () => supabase.from('comment_bookmarks'),
-  commentReports: () => supabase.from('comment_reports'),
-  commentDrafts: () => supabase.from('comment_drafts'),
-  commentEditHistory: () => supabase.from('comment_edit_history'),
-  commentNotifications: () => supabase.from('comment_notifications'),
-};
-
-// Utility for RPC calls
-export const rpc = (fn: string, params: object) => 
-  supabase.rpc(fn, params);
-
-// Add this type for better type safety
-export type TableName = keyof typeof db;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -40,10 +17,113 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    storageKey: 'tinkbyte-auth-token',
-    debug: false
+    storageKey: `tinkbyte-auth-token-${environment}`,
+    debug: !isProduction
+  },
+  global: {
+    headers: {
+      'X-Environment': environment,
+      'X-Client-Info': `tinkbyte-web-${environment}`
+    }
   }
 });
+
+// db helper with environment filtering
+export const db = {
+  profiles: () => supabase.from('profiles'),
+  comments: () => supabase.from('comments'),
+  commentLikes: () => supabase.from('comment_likes'),
+  commentModeration: () => supabase.from('comment_moderation'),
+  commentReactions: () => supabase.from('comment_reactions'),
+  commentBookmarks: () => supabase.from('comment_bookmarks'),
+  commentDrafts: () => supabase.from('comment_drafts'),
+  commentEditHistory: () => supabase.from('comment_edit_history'),
+  commentNotifications: () => supabase.from('comment_notifications'),
+  userRateLimits: () => supabase.from('user_rate_limits'),
+  newsletterSubscriptions: () => supabase.from('newsletter_subscriptions'),
+  
+  // These tables might be shared across environments
+  articles: () => supabase.from('articles'),
+  articleLikes: () => supabase.from('article_likes'),
+  moderationRules: () => supabase.from('moderation_rules'),
+  categories: () => supabase.from('categories'),
+  authors: () => supabase.from('authors'),
+  podcasts: () => supabase.from('podcasts'),
+  threads: () => supabase.from('threads'),
+  userFollows: () => supabase.from('user_follows'),
+  userPreferences: () => supabase.from('user_preferences'),
+};
+
+// Environment-aware query helpers
+export const envDb = {
+  profiles: {
+    select: (columns = '*') => db.profiles().select(columns).eq('environment', environment),
+    insert: (data: any) => db.profiles().insert({ ...data, environment }),
+    update: (data: any) => db.profiles().update({ ...data, environment }),
+    delete: () => db.profiles().delete().eq('environment', environment),
+  },
+  comments: {
+    select: (columns = '*') => db.comments().select(columns).eq('environment', environment),
+    insert: (data: any) => db.comments().insert({ ...data, environment }),
+    update: (data: any) => db.comments().update({ ...data, environment }),
+    delete: () => db.comments().delete().eq('environment', environment),
+  },
+  commentLikes: {
+    select: (columns = '*') => db.commentLikes().select(columns).eq('environment', environment),
+    insert: (data: any) => db.commentLikes().insert({ ...data, environment }),
+    update: (data: any) => db.commentLikes().update({ ...data, environment }),
+    delete: () => db.commentLikes().delete().eq('environment', environment),
+  },
+  commentModeration: {
+    select: (columns = '*') => db.commentModeration().select(columns).eq('environment', environment),
+    insert: (data: any) => db.commentModeration().insert({ ...data, environment }),
+    update: (data: any) => db.commentModeration().update({ ...data, environment }),
+    delete: () => db.commentModeration().delete().eq('environment', environment),
+  },
+  commentReactions: {
+    select: (columns = '*') => db.commentReactions().select(columns).eq('environment', environment),
+    insert: (data: any) => db.commentReactions().insert({ ...data, environment }),
+    update: (data: any) => db.commentReactions().update({ ...data, environment }),
+    delete: () => db.commentReactions().delete().eq('environment', environment),
+  },
+  commentBookmarks: {
+    select: (columns = '*') => db.commentBookmarks().select(columns).eq('environment', environment),
+    insert: (data: any) => db.commentBookmarks().insert({ ...data, environment }),
+    update: (data: any) => db.commentBookmarks().update({ ...data, environment }),
+    delete: () => db.commentBookmarks().delete().eq('environment', environment),
+  },
+  commentDrafts: {
+    select: (columns = '*') => db.commentDrafts().select(columns).eq('environment', environment),
+    insert: (data: any) => db.commentDrafts().insert({ ...data, environment }),
+    update: (data: any) => db.commentDrafts().update({ ...data, environment }),
+    delete: () => db.commentDrafts().delete().eq('environment', environment),
+  },
+  commentNotifications: {
+    select: (columns = '*') => db.commentNotifications().select(columns).eq('environment', environment),
+    insert: (data: any) => db.commentNotifications().insert({ ...data, environment }),
+    update: (data: any) => db.commentNotifications().update({ ...data, environment }),
+    delete: () => db.commentNotifications().delete().eq('environment', environment),
+  },
+  userRateLimits: {
+    select: (columns = '*') => db.userRateLimits().select(columns).eq('environment', environment),
+    insert: (data: any) => db.userRateLimits().insert({ ...data, environment }),
+    update: (data: any) => db.userRateLimits().update({ ...data, environment }),
+    delete: () => db.userRateLimits().delete().eq('environment', environment),
+  },
+  newsletterSubscriptions: {
+    select: (columns = '*') => db.newsletterSubscriptions().select(columns).eq('environment', environment),
+    insert: (data: any) => db.newsletterSubscriptions().insert({ ...data, environment }),
+    update: (data: any) => db.newsletterSubscriptions().update({ ...data, environment }),
+    delete: () => db.newsletterSubscriptions().delete().eq('environment', environment),
+  },
+};
+
+// Utility for RPC calls
+export const rpc = (fn: string, params: object) => 
+  supabase.rpc(fn, params);
+
+// Add this type for better type safety
+export type TableName = keyof typeof db;
 
 // Type definitions
 export interface User {
@@ -92,11 +172,11 @@ export interface Profile {
   membership_type: 'free' | 'premium' | 'enterprise';
   is_admin: boolean;
   email?: string;
+  environment?: string;
   created_at: string;
   updated_at: string;
 }
 
-// Additional types for your TinkByte site
 export interface Article {
   id: string;
   title: string;
@@ -118,6 +198,7 @@ export interface Article {
   published_at?: string;
   created_at: string;
   updated_at: string;
+  environment?: string;
   // Relations
   author?: Profile;
   category?: Category;
@@ -135,6 +216,7 @@ export interface Category {
   sort_order: number;
   article_count: number;
   is_active: boolean;
+  environment?: string;
   created_at: string;
   updated_at: string;
 }
@@ -142,12 +224,12 @@ export interface Category {
 export interface Comment {
   id: string;
   content: string;
-  author_id: string;
+  user_id: string;
   article_id: string;
   parent_id?: string;
-  is_approved: boolean;
-  is_flagged: boolean;
+  moderation_status: 'pending' | 'approved' | 'flagged' | 'hidden' | 'auto_approved';
   like_count: number;
+  environment?: string;
   created_at: string;
   updated_at: string;
   // Relations
@@ -181,6 +263,7 @@ export interface CommentLike {
   id: string;
   user_id: string;
   comment_id: string;
+  environment?: string;
   created_at: string;
 }
 
@@ -205,6 +288,7 @@ export interface Newsletter {
     new_articles: boolean;
     featured_content: boolean;
   };
+  environment?: string;
   created_at: string;
   updated_at: string;
 }
@@ -274,6 +358,7 @@ export class AuthState {
         .from('profiles')
         .select('*')
         .eq('id', this.user.id)
+        .eq('environment', environment)
         .single();
 
       if (error && error.code === 'PGRST116') {
@@ -290,138 +375,50 @@ export class AuthState {
     }
   }
 
-private async createProfile() {
-  if (!this.user) return;
+  private async createProfile() {
+    if (!this.user) return;
 
-  try {
-    const displayName = this.user.user_metadata?.display_name || 
-                       this.user.user_metadata?.full_name || 
-                       this.user.user_metadata?.name ||
-                       this.user.email?.split('@')[0] || 
-                       'TBMember';
-
-    // Enhanced Google profile detection
-    const googleAvatar = this.user.user_metadata?.avatar_url || this.user.user_metadata?.picture;
-    const isGoogleProvider = this.user.app_metadata?.provider === 'google' || 
-                            this.user.app_metadata?.providers?.includes('google');
-    
-    // More robust Google avatar detection
-    const isGoogleAvatar = googleAvatar && (
-      googleAvatar.includes('googleusercontent.com') || 
-      googleAvatar.includes('lh3.googleusercontent.com') ||
-      googleAvatar.includes('lh4.googleusercontent.com') ||
-      googleAvatar.includes('lh5.googleusercontent.com') ||
-      googleAvatar.includes('lh6.googleusercontent.com') ||
-      (isGoogleProvider && googleAvatar.startsWith('https://'))
-    );
-
-    console.log('🔍 Profile Creation Debug:', {
-      googleAvatar,
-      isGoogleProvider,
-      isGoogleAvatar,
-      userMetadata: this.user.user_metadata,
-      appMetadata: this.user.app_metadata
-    });
-
-    // Prepare profile data
-    const profileData = {
-      id: this.user.id,
-      display_name: displayName,
-      first_name: this.user.user_metadata?.given_name || null,
-      last_name: this.user.user_metadata?.family_name || null,
-      avatar_url: googleAvatar || null,
-      avatar_type: isGoogleAvatar ? 'google' : 
-                  googleAvatar ? 'uploaded' : 'preset',
-      avatar_preset_id: isGoogleAvatar || googleAvatar ? null : 1, // FIXED: null for any avatar URL
-      bio: null,
-      website: null,
-      twitter_handle: null,
-      linkedin_url: null,
-      github_username: null,
-      location: null,
-      job_title: null,
-      company: null,
-      total_reads: 0,
-      total_comments: 0,
-      total_articles: 0,
-      reputation_score: 0,
-      following_count: 0,
-      followers_count: 0,
-      is_public: true,
-      membership_type: 'free',
-      is_admin: this.user.email === 'tinkbytehq@gmail.com',
-      email: this.user.email,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    console.log('📝 Creating profile with data:', profileData);
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert(profileData)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('❌ Profile creation error:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
-      
-      // If it's a constraint error, try with preset avatar as fallback
-      if (error.code === '23514' || error.message.includes('constraint')) {
-        console.log('🔄 Retrying with preset avatar...');
-        
-        const fallbackData = {
-          ...profileData,
-          avatar_type: 'preset',
-          avatar_preset_id: 1,
-          avatar_url: null
-        };
-        
-        const { data: fallbackResult, error: fallbackError } = await supabase
-          .from('profiles')
-          .insert(fallbackData)
-          .select()
-          .single();
-          
-        if (fallbackError) {
-          console.error('❌ Fallback profile creation also failed:', fallbackError);
-          throw fallbackError;
-        } else {
-          this.profile = fallbackResult as Profile;
-          console.log('✅ Profile created with fallback data:', this.profile.display_name);
-        }
-      } else {
-        throw error;
-      }
-    } else {
-      this.profile = data as Profile;
-      console.log('✅ Profile created with Google data:', {
-        displayName: this.profile.display_name,
-        avatarType: this.profile.avatar_type,
-        avatarUrl: this.profile.avatar_url
-      });
-    }
-  } catch (error) {
-    console.error('❌ Profile creation error:', error);
-    
-    // Last resort: create minimal profile
     try {
-      console.log('🔄 Creating minimal profile as last resort...');
+      const displayName = this.user.user_metadata?.display_name || 
+                         this.user.user_metadata?.full_name || 
+                         this.user.user_metadata?.name ||
+                         this.user.email?.split('@')[0] || 
+                         'TBMember';
+
+      // Enhanced Google profile detection
+      const googleAvatar = this.user.user_metadata?.avatar_url || this.user.user_metadata?.picture;
+      const isGoogleProvider = this.user.app_metadata?.provider === 'google' || 
+                              this.user.app_metadata?.providers?.includes('google');
       
-      const minimalData = {
+      // More robust Google avatar detection
+      const isGoogleAvatar = googleAvatar && (
+        googleAvatar.includes('googleusercontent.com') || 
+        googleAvatar.includes('lh3.googleusercontent.com') ||
+        googleAvatar.includes('lh4.googleusercontent.com') ||
+        googleAvatar.includes('lh5.googleusercontent.com') ||
+        googleAvatar.includes('lh6.googleusercontent.com') ||
+        (isGoogleProvider && googleAvatar.startsWith('https://'))
+      );
+
+      console.log('🔍 Profile Creation Debug:', {
+        googleAvatar,
+        isGoogleProvider,
+        isGoogleAvatar,
+        environment,
+        userMetadata: this.user.user_metadata,
+        appMetadata: this.user.app_metadata
+      });
+
+      // Prepare profile data with environment
+      const profileData = {
         id: this.user.id,
-        display_name: this.user.email?.split('@')[0] || 'TBMember',
-        first_name: null,
-        last_name: null,
-        avatar_type: 'preset',
-        avatar_preset_id: 1,
-        avatar_url: null,
+        display_name: displayName,
+        first_name: this.user.user_metadata?.given_name || null,
+        last_name: this.user.user_metadata?.family_name || null,
+        avatar_url: googleAvatar || null,
+        avatar_type: isGoogleAvatar ? 'google' : 
+                    googleAvatar ? 'uploaded' : 'preset',
+        avatar_preset_id: isGoogleAvatar || googleAvatar ? null : 1,
         bio: null,
         website: null,
         twitter_handle: null,
@@ -438,29 +435,121 @@ private async createProfile() {
         followers_count: 0,
         is_public: true,
         membership_type: 'free',
-        is_admin: false,
+        is_admin: this.user.email === 'tinkbytehq@gmail.com',
         email: this.user.email,
+        environment: environment, // Add environment context
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      
-      const { data: minimalResult, error: minimalError } = await supabase
+
+      console.log('📝 Creating profile with data:', profileData);
+
+      const { data, error } = await supabase
         .from('profiles')
-        .insert(minimalData)
+        .insert(profileData)
         .select()
         .single();
+
+      if (error) {
+        console.error('❌ Profile creation error:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         
-      if (minimalError) {
-        console.error('❌ Even minimal profile creation failed:', minimalError);
+        // If it's a constraint error, try with preset avatar as fallback
+        if (error.code === '23514' || error.message.includes('constraint')) {
+          console.log('🔄 Retrying with preset avatar...');
+          
+          const fallbackData = {
+            ...profileData,
+            avatar_type: 'preset',
+            avatar_preset_id: 1,
+            avatar_url: null
+          };
+          
+          const { data: fallbackResult, error: fallbackError } = await supabase
+            .from('profiles')
+            .insert(fallbackData)
+            .select()
+            .single();
+            
+          if (fallbackError) {
+            console.error('❌ Fallback profile creation also failed:', fallbackError);
+            throw fallbackError;
+          } else {
+            this.profile = fallbackResult as Profile;
+            console.log('✅ Profile created with fallback data:', this.profile.display_name);
+          }
+        } else {
+          throw error;
+        }
       } else {
-        this.profile = minimalResult as Profile;
-        console.log('✅ Minimal profile created successfully');
+        this.profile = data as Profile;
+        console.log('✅ Profile created with Google data:', {
+          displayName: this.profile.display_name,
+          avatarType: this.profile.avatar_type,
+          avatarUrl: this.profile.avatar_url,
+          environment: this.profile.environment
+        });
       }
-    } catch (finalError) {
-      console.error('❌ Final profile creation attempt failed:', finalError);
+    } catch (error) {
+      console.error('❌ Profile creation error:', error);
+      
+      // Last resort: create minimal profile
+      try {
+        console.log('🔄 Creating minimal profile as last resort...');
+        
+        const minimalData = {
+          id: this.user.id,
+          display_name: this.user.email?.split('@')[0] || 'TBMember',
+          first_name: null,
+          last_name: null,
+          avatar_type: 'preset',
+          avatar_preset_id: 1,
+          avatar_url: null,
+          bio: null,
+          website: null,
+          twitter_handle: null,
+          linkedin_url: null,
+          github_username: null,
+          location: null,
+          job_title: null,
+          company: null,
+          total_reads: 0,
+          total_comments: 0,
+          total_articles: 0,
+          reputation_score: 0,
+          following_count: 0,
+          followers_count: 0,
+          is_public: true,
+          membership_type: 'free',
+          is_admin: false,
+          email: this.user.email,
+          environment: environment, // Add environment to minimal profile too
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        const { data: minimalResult, error: minimalError } = await supabase
+          .from('profiles')
+          .insert(minimalData)
+          .select()
+          .single();
+          
+        if (minimalError) {
+          console.error('❌ Even minimal profile creation failed:', minimalError);
+        } else {
+          this.profile = minimalResult as Profile;
+          console.log('✅ Minimal profile created successfully');
+        }
+      } catch (finalError) {
+        console.error('❌ Final profile creation attempt failed:', finalError);
+      }
     }
   }
-}
 
   async signOut() {
     try {
@@ -522,6 +611,7 @@ private async createProfile() {
           updated_at: new Date().toISOString()
         })
         .eq('id', this.user.id)
+        .eq('environment', environment)
         .select()
         .single();
 
@@ -541,7 +631,7 @@ private async createProfile() {
 }
 
 // Helper function for retry logic
-export async function withRetry(operation, maxRetries = 3) {
+export async function withRetry(operation: () => Promise<any>, maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await operation();
@@ -553,14 +643,15 @@ export async function withRetry(operation, maxRetries = 3) {
   throw new Error('Max retries exceeded');
 }
 
-// Database query helpers with retry
+// Database query helpers with retry and environment awareness
 export const dbWithRetry = {
-  async getProfile(userId) {
+  async getProfile(userId: string) {
     return withRetry(async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
+        .eq("environment", environment)
         .single();
       
       if (error) throw error;
@@ -568,12 +659,13 @@ export const dbWithRetry = {
     });
   },
 
-  async updateProfile(userId, updates) {
+  async updateProfile(userId: string, updates: Partial<Profile>) {
     return withRetry(async () => {
       const { data, error } = await supabase
         .from("profiles")
         .update(updates)
         .eq("id", userId)
+        .eq("environment", environment)
         .select()
         .single();
       
@@ -583,9 +675,9 @@ export const dbWithRetry = {
   }
 };
 
-// Utility functions for your TinkByte site
+// Updated TinkByteAPI with environment awareness
 export class TinkByteAPI {
-  // Article operations
+  // Article operations (articles might be shared across environments)
   static async getArticles(options: {
     limit?: number;
     offset?: number;
@@ -600,9 +692,8 @@ export class TinkByteAPI {
         .from('articles')
         .select(`
           *,
-          author:profiles(*),
-          category:categories(*),
-          comments:comments(count)
+          author:authors!articles_author_id_fkey(*),
+          category:categories!articles_category_slug_fkey(*)
         `)
         .order('published_at', { ascending: false });
 
@@ -615,7 +706,7 @@ export class TinkByteAPI {
       }
 
       if (options.category) {
-        query = query.eq('category_id', options.category);
+        query = query.eq('category_slug', options.category);
       }
 
       if (options.author) {
@@ -651,12 +742,8 @@ export class TinkByteAPI {
         .from('articles')
         .select(`
           *,
-          author:profiles(*),
-          category:categories(*),
-          comments:comments(
-            *,
-            author:profiles(*)
-          )
+          author:authors!articles_author_id_fkey(*),
+          category:categories!articles_category_slug_fkey(*)
         `)
         .eq('slug', slug)
         .eq('is_published', true)
@@ -677,25 +764,30 @@ export class TinkByteAPI {
     }
   }
 
-  // Category operations
-  static async getCategories() {
+  // Get comments for an article with environment filtering
+  static async getComments(articleId: string) {
     try {
       const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
+        .from('comments')
+        .select(`
+          *,
+          author:profiles!comments_user_id_fkey(*)
+        `)
+        .eq('article_id', articleId)
+        .eq('environment', environment)
+        .in('moderation_status', ['approved', 'auto_approved'])
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      return { success: true, data: data as Category[] };
+      return { success: true, data: data as Comment[] };
     } catch (error: any) {
-      console.error('Error fetching categories:', error);
+      console.error('Error fetching comments:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // Comment operations
+  // Updated comment operations with environment context
   static async addComment(articleId: string, content: string, parentId?: string) {
     try {
       const authState = AuthState.getInstance();
@@ -709,18 +801,19 @@ export class TinkByteAPI {
         .from('comments')
         .insert({
           content,
-          author_id: user.id,
+          raw_content: content,
+          user_id: user.id,
           article_id: articleId,
           parent_id: parentId || null,
-          is_approved: true, // Auto-approve for now
-          is_flagged: false,
+          moderation_status: 'pending',
           like_count: 0,
+          environment: environment, // Add environment context
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .select(`
           *,
-          author:profiles(*)
+          author:profiles!comments_user_id_fkey(*)
         `)
         .single();
 
@@ -733,7 +826,212 @@ export class TinkByteAPI {
     }
   }
 
-  // User interactions
+  // Update comment with environment awareness
+    static async updateComment(commentId: string, content: string, editReason?: string) {
+      try {
+        const authState = AuthState.getInstance();
+        const user = authState.getUser();
+
+        if (!user) {
+          throw new Error('Must be logged in to update comment');
+        }
+
+        const { data, error } = await supabase
+          .from('comments')
+          .update({
+            content,
+            raw_content: content,
+            edit_reason: editReason || null,
+            is_edited: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', commentId)
+          .eq('user_id', user.id)
+          .eq('environment', environment)
+          .select(`
+            *,
+            author:profiles!comments_user_id_fkey(*)
+          `)
+          .single();
+
+        if (error) throw error;
+
+        return { success: true, data: data as Comment };
+      } catch (error: any) {
+        console.error('Error updating comment:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+
+  // Delete comment with environment awareness
+  static async deleteComment(commentId: string) {
+    try {
+      const authState = AuthState.getInstance();
+      const user = authState.getUser();
+
+      if (!user) {
+        throw new Error('Must be logged in to delete comment');
+      }
+
+      const { error } = await supabase
+        .from('comments')
+        .update({
+          is_deleted: true,
+          deleted_at: new Date().toISOString(),
+          deleted_by: user.id
+        })
+        .eq('id', commentId)
+        .eq('user_id', user.id)
+        .eq('environment', environment);
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error deleting comment:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Toggle comment like with environment awareness
+    static async toggleCommentLike(commentId: string) {
+      try {
+        const authState = AuthState.getInstance();
+        const user = authState.getUser();
+
+        if (!user) {
+          throw new Error('Must be logged in to like comments');
+        }
+
+        // Check if already liked
+        const { data: existingLike } = await supabase
+          .from('comment_likes')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('comment_id', commentId)
+          .eq('environment', environment)
+          .single();
+
+        if (existingLike) {
+          // Remove like
+          await supabase
+            .from('comment_likes')
+            .delete()
+            .eq('id', existingLike.id)
+            .eq('environment', environment);
+
+          // Decrement like count using RPC
+          await supabase.rpc('decrement_comment_likes', {
+            comment_id_param: commentId,
+            env: environment
+          });
+
+          return { success: true, liked: false };
+        } else {
+          // Add like
+          await supabase
+            .from('comment_likes')
+            .insert({
+              user_id: user.id,
+              comment_id: commentId,
+              environment: environment,
+              created_at: new Date().toISOString()
+            });
+
+          // Increment like count using RPC
+          await supabase.rpc('increment_comment_likes', {
+            comment_id_param: commentId,
+            env: environment
+          });
+
+          return { success: true, liked: true };
+        }
+      } catch (error: any) {
+        console.error('Error toggling comment like:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    
+  // Save comment draft with environment awareness
+    static async saveCommentDraft(articleId: string, content: string, draftKey?: string) {
+      try {
+        const authState = AuthState.getInstance();
+        const user = authState.getUser();
+
+        if (!user) {
+          throw new Error('Must be logged in to save draft');
+        }
+
+        const { data, error } = await supabase
+          .from('comment_drafts')
+          .upsert({
+            user_id: user.id,
+            article_id: articleId,
+            content,
+            draft_key: draftKey || `${user.id}-${articleId}`,
+            environment: environment,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        return { success: true, data };
+      } catch (error: any) {
+        console.error('Error saving comment draft:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+
+    // Get comment draft with environment awareness
+    static async getCommentDraft(articleId: string, draftKey?: string) {
+      try {
+        const authState = AuthState.getInstance();
+        const user = authState.getUser();
+
+        if (!user) {
+          return { success: false, error: 'Must be logged in to get draft' };
+        }
+
+        const { data, error } = await supabase
+          .from('comment_drafts')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('article_id', articleId)
+          .eq('environment', environment)
+          .eq('draft_key', draftKey || `${user.id}-${articleId}`)
+          .single();
+
+        if (error && error.code !== 'PGRST116') throw error;
+
+        return { success: true, data };
+      } catch (error: any) {
+        console.error('Error getting comment draft:', error);
+        return { success: false, error: error.message };
+      }
+    }
+  // Category operations (shared across environments)
+  static async getCategories() {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('sort_order');
+
+      if (error) throw error;
+
+      return { success: true, data: data as Category[] };
+    } catch (error: any) {
+      console.error('Error fetching categories:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // User interactions (articles might be shared, but user actions are environment-specific)
   static async toggleArticleLike(articleId: string) {
     try {
       const authState = AuthState.getInstance();
@@ -758,9 +1056,6 @@ export class TinkByteAPI {
           .delete()
           .eq('id', existingLike.id);
 
-        // Decrement like count
-        await supabase.rpc('decrement_article_likes', { article_id: articleId });
-
         return { success: true, liked: false };
       } else {
         // Add like
@@ -772,9 +1067,6 @@ export class TinkByteAPI {
             created_at: new Date().toISOString()
           });
 
-        // Increment like count
-        await supabase.rpc('increment_article_likes', { article_id: articleId });
-
         return { success: true, liked: true };
       }
     } catch (error: any) {
@@ -783,6 +1075,7 @@ export class TinkByteAPI {
     }
   }
 
+  // Follow/Unfollow operations
   static async followUser(userId: string) {
     try {
       const authState = AuthState.getInstance();
@@ -839,23 +1132,21 @@ export class TinkByteAPI {
     }
   }
 
-  // Newsletter operations
+  // Updated newsletter operations with environment context
   static async subscribeToNewsletter(email: string, name?: string) {
     try {
+      const authState = AuthState.getInstance();
+      const user = authState.getUser();
+
       const { data, error } = await supabase
-        .from('newsletter')
+        .from('newsletter_subscriptions')
         .upsert({
           email,
-          name: name || null,
-          is_subscribed: true,
-          subscription_source: 'website',
-          preferences: {
-            weekly_digest: true,
-            new_articles: true,
-            featured_content: true
-          },
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          user_id: user?.id || null,
+          newsletter_type: 'weekly',
+          is_active: true,
+          environment: environment, // Add environment context
+          subscribed_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -869,7 +1160,33 @@ export class TinkByteAPI {
     }
   }
 
-  // Search operations
+  // Get user's newsletter subscriptions with environment filtering
+  static async getUserNewsletterSubscriptions() {
+    try {
+      const authState = AuthState.getInstance();
+      const user = authState.getUser();
+
+      if (!user) {
+        return { success: false, error: 'Must be logged in to get subscriptions' };
+      }
+
+      const { data, error } = await supabase
+        .from('newsletter_subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('environment', environment)
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error fetching newsletter subscriptions:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Search operations with environment filtering
   static async searchContent(query: string, type: 'articles' | 'users' | 'all' = 'all') {
     try {
       const results: any = {};
@@ -879,8 +1196,8 @@ export class TinkByteAPI {
           .from('articles')
           .select(`
             *,
-            author:profiles(*),
-            category:categories(*)
+            author:authors!articles_author_id_fkey(*),
+            category:categories!articles_category_slug_fkey(*)
           `)
           .or(`title.ilike.%${query}%,content.ilike.%${query}%,excerpt.ilike.%${query}%`)
           .eq('is_published', true)
@@ -895,6 +1212,7 @@ export class TinkByteAPI {
           .select('*')
           .or(`display_name.ilike.%${query}%,bio.ilike.%${query}%`)
           .eq('is_public', true)
+          .eq('environment', environment)
           .limit(10);
 
         results.users = users || [];
@@ -906,6 +1224,76 @@ export class TinkByteAPI {
       return { success: false, error: error.message };
     }
   }
+
+  // Get user activity with environment filtering
+  static async getUserActivity(userId: string, limit = 20) {
+    try {
+      const { data, error } = await supabase
+        .from('user_activities')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error fetching user activity:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Admin operations with environment awareness
+  static async moderateComment(commentId: string, action: 'approve' | 'flag' | 'hide' | 'delete', reason?: string) {
+    try {
+      const authState = AuthState.getInstance();
+      const user = authState.getUser();
+      const profile = authState.getProfile();
+
+      if (!user || !profile?.is_admin) {
+        throw new Error('Must be admin to moderate comments');
+      }
+
+      // Update comment status
+      const { error: commentError } = await supabase
+        .from('comments')
+        .update({
+          moderation_status: action === 'approve' ? 'approved' : 
+                           action === 'flag' ? 'flagged' : 
+                           action === 'hide' ? 'hidden' : 'hidden',
+          moderation_reason: reason || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', commentId)
+        .eq('environment', environment);
+
+      if (commentError) throw commentError;
+
+      // Log moderation action
+      const { error: logError } = await supabase
+        .from('comment_moderation')
+        .insert({
+          comment_id: commentId,
+          moderator_id: user.id,
+          action,
+          reason: reason || null,
+          environment: environment,
+          created_at: new Date().toISOString()
+        });
+
+      if (logError) throw logError;
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error moderating comment:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
+
+// Environment helper functions
+export const getEnvironment = () => environment;
+export const isProductionEnvironment = () => isProduction;
 
 export default supabase;
