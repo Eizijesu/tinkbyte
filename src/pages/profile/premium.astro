@@ -1,0 +1,775 @@
+---
+// src/pages/profile/premium.astro - CLEAN VERSION
+import ProfileLayout from "../../layouts/ProfileLayout.astro";
+---
+
+<ProfileLayout
+  title="Premium Membership | TinkByte"
+  description="Upgrade to TinkByte Premium for exclusive content and features"
+>
+  <div class="premium-page">
+    <!-- Current Status -->
+    <div class="status-section" id="premium-status">
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading membership status...</p>
+      </div>
+    </div>
+
+    <!-- Premium Features -->
+    <div class="section">
+      <h2 class="section-title">
+        <i class="fas fa-crown"></i>
+        Premium Features
+      </h2>
+
+      <div class="features-grid">
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-lock-open"></i>
+          </div>
+          <div class="feature-content">
+            <h3 class="feature-name">Exclusive Content</h3>
+            <p class="feature-description">
+              Premium articles and deep-dive analyses
+            </p>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-rocket"></i>
+          </div>
+          <div class="feature-content">
+            <h3 class="feature-name">Early Access</h3>
+            <p class="feature-description">Be the first to try new features</p>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-ban"></i>
+          </div>
+          <div class="feature-content">
+            <h3 class="feature-name">Ad-Free Experience</h3>
+            <p class="feature-description">Distraction-free reading</p>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">
+            <i class="fas fa-headset"></i>
+          </div>
+          <div class="feature-content">
+            <h3 class="feature-name">Priority Support</h3>
+            <p class="feature-description">Faster response times</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing Plans -->
+    <div class="section" id="pricing-section">
+      <h2 class="section-title">
+        <i class="fas fa-credit-card"></i>
+        Choose Your Plan
+      </h2>
+
+      <div class="pricing-container">
+        <div class="pricing-card">
+          <div class="plan-header">
+            <h3 class="plan-name">Monthly</h3>
+            <div class="plan-price">
+              <span class="currency">$</span>
+              <span class="amount">5</span>
+              <span class="period">/month</span>
+            </div>
+          </div>
+
+          <div class="plan-features">
+            <div class="feature-check">
+              <i class="fas fa-check"></i>
+              <span>All premium features</span>
+            </div>
+            <div class="feature-check">
+              <i class="fas fa-check"></i>
+              <span>Cancel anytime</span>
+            </div>
+          </div>
+
+          <button type="button" class="plan-button" data-plan="monthly">
+            <i class="fas fa-credit-card"></i>
+            Start Monthly Plan
+          </button>
+        </div>
+
+        <div class="pricing-card popular">
+          <div class="popular-badge">
+            <i class="fas fa-star"></i>
+            Most Popular
+          </div>
+
+          <div class="plan-header">
+            <h3 class="plan-name">Annual</h3>
+            <div class="plan-price">
+              <span class="currency">$</span>
+              <span class="amount">49</span>
+              <span class="period">/year</span>
+            </div>
+            <div class="plan-savings">Save $11 per year</div>
+          </div>
+
+          <div class="plan-features">
+            <div class="feature-check">
+              <i class="fas fa-check"></i>
+              <span>All premium features</span>
+            </div>
+            <div class="feature-check">
+              <i class="fas fa-check"></i>
+              <span>2 months free</span>
+            </div>
+          </div>
+
+          <button type="button" class="plan-button primary" data-plan="annual">
+            <i class="fas fa-crown"></i>
+            Start Annual Plan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ProfileLayout>
+
+<style>
+  .premium-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem;
+  }
+
+  .section {
+    background: white;
+    border: 2px solid #e2e8f0;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  html.dark .section {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  html.dark .section-title {
+    color: #f1f5f9;
+  }
+
+  /* Status Section */
+  .status-section {
+    background: white;
+    border: 2px solid #e2e8f0;
+    padding: 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  html.dark .status-section {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .status-premium {
+    background: linear-gradient(135deg, #243788 0%, #1e2d6b 100%);
+    color: white;
+    border-color: #243788;
+  }
+
+  html.dark .status-premium {
+    background: linear-gradient(135deg, #b4bce1 0%, #94a3b8 100%);
+    color: #0f172a;
+    border-color: #b4bce1;
+  }
+
+  .status-icon {
+    width: 60px;
+    height: 60px;
+    background: #64748b;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .status-premium .status-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+
+  html.dark .status-premium .status-icon {
+    background: rgba(15, 23, 42, 0.2);
+    color: #0f172a;
+  }
+
+  .status-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .status-description {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.875rem;
+    max-width: 400px;
+  }
+
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+
+  html.dark .loading-state {
+    color: #94a3b8;
+  }
+
+  .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e2e8f0;
+    border-top: 2px solid #243788;
+    animation: spin 1s linear infinite;
+  }
+
+  html.dark .loading-spinner {
+    border-color: #334155;
+    border-top-color: #b4bce1;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Features Grid */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+  }
+
+  .feature-item:hover {
+    border-color: #243788;
+    transform: translateY(-2px);
+  }
+
+  html.dark .feature-item {
+    background: #0f172a;
+    border-color: #334155;
+  }
+
+  html.dark .feature-item:hover {
+    border-color: #b4bce1;
+  }
+
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+    background: #243788;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+  }
+
+  html.dark .feature-icon {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  .feature-content {
+    flex: 1;
+  }
+
+  .feature-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 0.5rem 0;
+  }
+
+  html.dark .feature-name {
+    color: #f1f5f9;
+  }
+
+  .feature-description {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  html.dark .feature-description {
+    color: #94a3b8;
+  }
+
+  /* Pricing Container */
+  .pricing-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .pricing-card {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  html.dark .pricing-card {
+    background: #0f172a;
+    border-color: #334155;
+  }
+
+  .pricing-card:hover {
+    transform: translateY(-4px);
+    border-color: #243788;
+  }
+
+  html.dark .pricing-card:hover {
+    border-color: #b4bce1;
+  }
+
+  .pricing-card.popular {
+    border-color: #243788;
+    background: rgba(36, 55, 136, 0.05);
+    transform: scale(1.05);
+  }
+
+  html.dark .pricing-card.popular {
+    border-color: #b4bce1;
+    background: rgba(180, 188, 225, 0.05);
+  }
+
+  .popular-badge {
+    position: absolute;
+    top: -1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #243788;
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  html.dark .popular-badge {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  .plan-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .plan-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+  }
+
+  html.dark .plan-name {
+    color: #f1f5f9;
+  }
+
+  .plan-price {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .currency {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #243788;
+  }
+
+  html.dark .currency {
+    color: #b4bce1;
+  }
+
+  .amount {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1;
+  }
+
+  html.dark .amount {
+    color: #f1f5f9;
+  }
+
+  .period {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  html.dark .period {
+    color: #94a3b8;
+  }
+
+  .plan-savings {
+    font-size: 0.75rem;
+    color: #10b981;
+    font-weight: 600;
+    background: rgba(16, 185, 129, 0.1);
+    padding: 0.25rem 0.5rem;
+    display: inline-block;
+  }
+
+  .plan-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+  }
+
+  .feature-check {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+
+  html.dark .feature-check {
+    color: #94a3b8;
+  }
+
+  .feature-check i {
+    color: #10b981;
+    font-size: 0.875rem;
+    width: 16px;
+    flex-shrink: 0;
+  }
+
+  .plan-button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    color: #243788;
+    border: 2px solid #243788;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+  }
+
+  .plan-button:hover {
+    background: #243788;
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  .plan-button.primary {
+    background: #243788;
+    color: white;
+  }
+
+  .plan-button.primary:hover {
+    background: #1e2d6b;
+    transform: translateY(-2px);
+  }
+
+  .plan-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  html.dark .plan-button {
+    color: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  html.dark .plan-button:hover {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  html.dark .plan-button.primary {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  html.dark .plan-button.primary:hover {
+    background: #94a3b8;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .premium-page {
+      padding: 1rem;
+    }
+
+    .pricing-container {
+      grid-template-columns: 1fr;
+    }
+
+    .features-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .feature-item {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .pricing-card.popular {
+      transform: none;
+    }
+
+    .plan-price {
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .amount {
+      font-size: 2.5rem;
+    }
+  }
+</style>
+
+<script>
+  import { supabase } from "../../lib/supabase.js";
+  import { authStore } from "../../lib/auth-store.js";
+
+  let currentUser: any = null;
+  let subscription: any = null;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    await loadPremiumStatus();
+    setupEventListeners();
+  });
+
+  async function loadPremiumStatus() {
+    try {
+      // Get instant data from cache
+      if (authStore.hasInstantData()) {
+        console.log("⚡ Premium: Using instant cached data");
+
+        currentUser = authStore.getUser();
+
+        if (!currentUser) {
+          window.location.href = "/auth/signin";
+          return;
+        }
+
+        // Show initial state
+        subscription = null;
+        updateStatusSection();
+
+        // Load subscription data in background
+        loadBackgroundData();
+        return;
+      }
+
+      // No instant data, need to initialize
+      console.log("🔄 Premium: Initializing auth...");
+      await authStore.initialize();
+
+      currentUser = authStore.getUser();
+
+      if (!currentUser) {
+        window.location.href = "/auth/signin";
+        return;
+      }
+
+      subscription = null;
+      updateStatusSection();
+      loadBackgroundData();
+    } catch (error) {
+      console.error("Error loading premium status:", error);
+      updateStatusSection();
+    }
+  }
+
+  async function loadBackgroundData() {
+    try {
+      // Here you would load actual subscription data
+      // For now, assume free user
+      subscription = null;
+      updateStatusSection();
+    } catch (error) {
+      console.error("Error loading background data:", error);
+    }
+  }
+
+  function updateStatusSection() {
+    const statusSection = document.getElementById(
+      "premium-status"
+    ) as HTMLElement;
+    if (!statusSection) return;
+
+    if (subscription) {
+      statusSection.className = "status-section status-premium";
+      statusSection.innerHTML = `
+        <div class="status-icon">
+          <i class="fas fa-crown"></i>
+        </div>
+        <h2 class="status-title">Premium Active</h2>
+        <p class="status-description">
+          Your premium membership is active
+        </p>
+      `;
+
+      const pricingSection = document.getElementById("pricing-section");
+      if (pricingSection) {
+        pricingSection.style.display = "none";
+      }
+    } else {
+      statusSection.className = "status-section";
+      statusSection.innerHTML = `
+        <div class="status-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <h2 class="status-title">Free Member</h2>
+        <p class="status-description">
+          Upgrade to Premium for exclusive content and features
+        </p>
+      `;
+    }
+  }
+
+  function setupEventListeners() {
+    const planButtons = document.querySelectorAll(".plan-button[data-plan]");
+    planButtons.forEach((button) => {
+      button.addEventListener("click", handlePlanSelection);
+    });
+  }
+
+  async function handlePlanSelection(event: Event) {
+    const button = event.currentTarget as HTMLButtonElement;
+    const plan = button.getAttribute("data-plan");
+
+    if (!currentUser) {
+      showToast("Please sign in to subscribe", "error");
+      return;
+    }
+
+    const originalContent = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      showToast("Payment integration coming soon!", "success");
+    } catch (error) {
+      console.error("Subscription error:", error);
+      showToast("Failed to process subscription", "error");
+    } finally {
+      button.disabled = false;
+      button.innerHTML = originalContent;
+    }
+  }
+
+  function showToast(message: string, type: "success" | "error" = "success") {
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      background: ${type === "success" ? "#10b981" : "#ef4444"};
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+      z-index: 10000;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    `;
+
+    toast.innerHTML = `
+      <i class="fas fa-${type === "success" ? "check-circle" : "exclamation-triangle"}"></i>
+      ${message}
+    `;
+
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "1";
+      toast.style.transform = "translateX(0)";
+    }, 100);
+
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateX(100%)";
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+</script>

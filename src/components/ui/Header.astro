@@ -1,5 +1,5 @@
 ---
-// src/components/ui/Header.astro - Fixed Version
+// src/components/ui/Header.astro - SIMPLIFIED AUTH FIX
 import Logo from "./Logo.astro";
 import ThemeToggle from "./ThemeToggle.astro";
 import { SITE } from "../../config/site";
@@ -111,7 +111,7 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                           <path d="M2 4H14M2 8H14M2 12H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         </svg>
-                        View All 14 Topics
+                        View All 21 Topics
                       </a>
                       <a href="/community" class="community-link">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -140,6 +140,37 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
             </svg>
           </button>
           <ThemeToggle />
+          
+          <!-- Dynamic Auth Button - Will be updated by JavaScript -->
+          <div class="auth-button-container">
+            <!-- Sign In Button (Default) -->
+            <a href="/auth/signin" class="signin-button" id="signin-btn">Sign In</a>
+            
+            <!-- Account Dropdown (Hidden by default) -->
+            <div class="account-dropdown" id="account-dropdown" style="display: none;">
+              <div class="account-trigger-wrapper">
+                <a href="/profile" class="account-name-link" id="account-name-link">
+                  <span class="account-name" id="account-name">Account</span>
+                </a>
+                <button class="account-dropdown-btn" id="account-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                  <svg class="account-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div class="account-menu" id="account-menu" role="menu">
+                <div class="account-menu-content">
+                  <button class="account-menu-link signout-btn" id="signout-btn" role="menuitem">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Subscribe Button -->
           <a href="/subscribe" class="subscribe-button">Subscribe</a>
         </div>
 
@@ -173,9 +204,31 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
             </div>
           </div>
 
-          <!-- Mobile Subscribe Button -->
-          <div class="mobile-subscribe">
-            <a href="/subscribe" class="mobile-subscribe-button">Subscribe to Newsletter</a>
+          <!-- Mobile Auth Section - Dynamic -->
+          <div class="mobile-auth-section" id="mobile-auth-section">
+            <!-- Sign In (Default) -->
+            <div class="mobile-signin-section" id="mobile-signin-section">
+              <a href="/auth/signin" class="mobile-signin-button">Sign In</a>
+              <a href="/subscribe" class="mobile-subscribe-button">Subscribe to Newsletter</a>
+            </div>
+            
+            <!-- Account Menu (Hidden by default) -->
+            <div class="mobile-account-section" id="mobile-account-section" style="display: none;">
+              <div class="mobile-account-header">
+                <a href="/profile" class="mobile-account-name-link">
+                  <span class="mobile-account-name" id="mobile-account-name">User Name</span>
+                </a>
+              </div>
+              
+              <div class="mobile-account-links">
+                <button class="mobile-account-link mobile-signout-btn" id="mobile-signout-btn">
+                  <i class="fas fa-sign-out-alt"></i>
+                  Sign Out
+                </button>
+              </div>
+              
+              <a href="/subscribe" class="mobile-subscribe-button">Subscribe to Newsletter</a>
+            </div>
           </div>
         </div>
       </div>
@@ -184,7 +237,7 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
 </header>
 
 <style>
-  /* TinkByte Header Design System - Fixed Version */
+  /* TinkByte Header Design System */
   .tinkbyte-header {
     position: sticky;
     top: 0;
@@ -552,6 +605,321 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
     border-color: #b4bce1;
   }
 
+  /* Sign In Button */
+  .signin-button {
+    font-family: "Space Grotesk", sans-serif;
+    background: transparent;
+    color: #243788;
+    text-decoration: none;
+    padding: 0.75rem 1.25rem;
+    border: 2px solid #243788;
+    border-radius: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .signin-button:hover {
+    background: #243788;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(36, 55, 136, 0.25);
+  }
+
+  :global(.dark) .signin-button {
+    color: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .signin-button:hover {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  /* Account Dropdown Styles - Simplified */
+  .auth-button-container {
+    position: relative;
+  }
+
+  .account-dropdown {
+    position: relative;
+  }
+
+  .account-trigger-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 2px solid #243788;
+    border-radius: 0;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.3s ease;
+  }
+
+  .account-trigger-wrapper:hover {
+    background: #243788;
+    transform: translateY(-1px);
+  }
+
+  .account-trigger-wrapper:hover .account-name-link {
+    color: white;
+  }
+
+  .account-trigger-wrapper:hover .account-dropdown-btn {
+    color: white;
+  }
+
+  :global(.dark) .account-trigger-wrapper {
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .account-trigger-wrapper:hover {
+    background: #b4bce1;
+  }
+
+  :global(.dark) .account-trigger-wrapper:hover .account-name-link {
+    color: #0f172a;
+  }
+
+  :global(.dark) .account-trigger-wrapper:hover .account-dropdown-btn {
+    color: #0f172a;
+  }
+
+  .account-name-link {
+    color: #243788;
+    text-decoration: none;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .account-name-link {
+    color: #b4bce1;
+  }
+
+  .account-name {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .account-dropdown-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #243788;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s ease;
+  }
+
+  :global(.dark) .account-dropdown-btn {
+    color: #b4bce1;
+  }
+
+  .account-arrow {
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .account-dropdown:hover .account-arrow {
+    transform: rotate(180deg);
+  }
+
+  /* Account Menu - Simplified */
+  .account-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 2px solid #243788;
+    border-radius: 0;
+    box-shadow: 0 20px 40px rgba(36, 55, 136, 0.15);
+    padding: 0;
+    width: 160px;
+    display: none;
+    transition: all 0.3s ease;
+    z-index: 100;
+  }
+
+  :global(.dark) .account-menu {
+    background: #0f172a;
+    border-color: #475569;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .account-dropdown:hover .account-menu {
+    display: block;
+    animation: fadeInUp 0.3s ease;
+  }
+
+  .account-menu-content {
+    padding: 1rem;
+  }
+
+  .account-menu-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    color: #1e293b;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    background: none;
+    border-radius: 0;
+    cursor: pointer;
+    font-family: inherit;
+    width: 100%;
+    text-align: left;
+  }
+
+  .account-menu-link:hover {
+    background: #f8fafc;
+    border-color: #243788;
+    color: #243788;
+  }
+
+  :global(.dark) .account-menu-link {
+    color: #e2e8f0;
+  }
+
+  :global(.dark) .account-menu-link:hover {
+    background: #334155;
+    border-color: #b4bce1;
+    color: #b4bce1;
+  }
+
+  .account-menu-link i {
+    width: 16px;
+    text-align: center;
+  }
+
+  .signout-btn:hover {
+    background: #fef2f2 !important;
+    border-color: #ef4444 !important;
+    color: #ef4444 !important;
+  }
+
+  :global(.dark) .signout-btn:hover {
+    background: #450a0a !important;
+    border-color: #f87171 !important;
+    color: #f87171 !important;
+  }
+
+  /* Mobile Account Styles - Simplified */
+  .mobile-account-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .mobile-account-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+  }
+
+  :global(.dark) .mobile-account-header {
+    background: #334155;
+    border-color: #475569;
+  }
+
+  .mobile-account-name-link {
+    color: #1e293b;
+    text-decoration: none;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    transition: color 0.3s ease;
+  }
+
+  .mobile-account-name-link:hover {
+    color: #243788;
+  }
+
+  :global(.dark) .mobile-account-name-link {
+    color: #f1f5f9;
+  }
+
+  :global(.dark) .mobile-account-name-link:hover {
+    color: #b4bce1;
+  }
+
+  .mobile-account-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mobile-account-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    color: #1e293b;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+    border-radius: 0;
+    cursor: pointer;
+    font-family: inherit;
+    width: 100%;
+    text-align: left;
+  }
+
+  .mobile-account-link:hover {
+    background: white;
+    border-color: #243788;
+    color: #243788;
+  }
+
+  :global(.dark) .mobile-account-link {
+    color: #e2e8f0;
+    background: #334155;
+    border-color: #475569;
+  }
+
+  :global(.dark) .mobile-account-link:hover {
+    background: #475569;
+    border-color: #b4bce1;
+    color: #b4bce1;
+  }
+
+  .mobile-signout-btn:hover {
+    background: #fef2f2 !important;
+    border-color: #ef4444 !important;
+    color: #ef4444 !important;
+  }
+
+  :global(.dark) .mobile-signout-btn:hover {
+    background: #450a0a !important;
+    border-color: #f87171 !important;
+    color: #f87171 !important;
+  }
+
   /* Subscribe Button */
   .subscribe-button {
     font-family: "Space Grotesk", sans-serif;
@@ -591,6 +959,102 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
     color: #243788;
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(36, 55, 136, 0.3);
+  }
+
+  :global(.dark) .subscribe-button {
+    background: #b4bce1;
+    color: #0f172a;
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .subscribe-button:hover {
+    background: transparent;
+    color: #b4bce1;
+  }
+
+  /* Mobile Auth Section */
+  .mobile-auth-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  :global(.dark) .mobile-auth-section {
+    border-top-color: #334155;
+  }
+
+  .mobile-signin-button {
+    font-family: "Space Grotesk", sans-serif;
+    display: block;
+    width: 100%;
+    background: transparent;
+    color: #243788;
+    text-decoration: none;
+    padding: 1rem 1.5rem;
+    border: 2px solid #243788;
+    border-radius: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .mobile-signin-button:hover {
+    background: #243788;
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  :global(.dark) .mobile-signin-button {
+    color: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .mobile-signin-button:hover {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  .mobile-subscribe-button {
+    font-family: "Space Grotesk", sans-serif;
+    display: block;
+    width: 100%;
+    background: #243788;
+    color: white;
+    text-decoration: none;
+    padding: 1rem 1.5rem;
+    border: 2px solid #243788;
+    border-radius: 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(36, 55, 136, 0.2);
+  }
+
+  .mobile-subscribe-button:hover {
+    background: white;
+    color: #243788;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(36, 55, 136, 0.3);
+  }
+
+  :global(.dark) .mobile-subscribe-button {
+    background: #b4bce1;
+    color: #0f172a;
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .mobile-subscribe-button:hover {
+    background: transparent;
+    color: #b4bce1;
   }
 
   /* Mobile Menu Button */
@@ -813,43 +1277,6 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
     color: #1e293b;
   }
 
-  /* Mobile Subscribe */
-  .mobile-subscribe {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid #e2e8f0;
-  }
-
-  :global(.dark) .mobile-subscribe {
-    border-top-color: #334155;
-  }
-
-  .mobile-subscribe-button {
-    font-family: "Space Grotesk", sans-serif;
-    display: block;
-    width: 100%;
-    background: #243788;
-    color: white;
-    text-decoration: none;
-    padding: 1rem 1.5rem;
-    border: 2px solid #243788;
-    border-radius: 0;
-    font-size: 0.875rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    text-align: center;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(36, 55, 136, 0.2);
-  }
-
-  .mobile-subscribe-button:hover {
-    background: white;
-    color: #243788;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(36, 55, 136, 0.3);
-  }
-
   .hidden {
     display: none;
   }
@@ -924,7 +1351,9 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
   .nav-link:focus,
   .search-toggle:focus,
   .subscribe-button:focus,
-  .mobile-menu-button:focus {
+  .mobile-menu-button:focus,
+  .account-name-link:focus,
+  .account-dropdown-btn:focus {
     outline: 3px solid #243788;
     outline-offset: 2px;
   }
@@ -932,170 +1361,259 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
   :global(.dark) .nav-link:focus,
   :global(.dark) .search-toggle:focus,
   :global(.dark) .subscribe-button:focus,
-  :global(.dark) .mobile-menu-button:focus {
+  :global(.dark) .mobile-menu-button:focus,
+  :global(.dark) .account-name-link:focus,
+  :global(.dark) .account-dropdown-btn:focus {
     outline-color: #b4bce1;
   }
 </style>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // Mobile menu toggle
-    const mobileMenuButton = document.querySelector(".mobile-menu-button") as HTMLButtonElement;
-    const mobileMenu = document.querySelector(".mobile-menu") as HTMLElement;
+  import { auth } from "../../lib/auth.js";
 
-    if (mobileMenuButton && mobileMenu) {
-      mobileMenuButton.addEventListener("click", () => {
-        mobileMenu.classList.toggle("hidden");
-        const isExpanded = !mobileMenu.classList.contains("hidden");
-        mobileMenuButton.setAttribute("aria-expanded", isExpanded.toString());
-
-        const icon = mobileMenuButton.querySelector("svg") as SVGElement;
-        if (icon) {
-          if (isExpanded) {
-            icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>`;
-          } else {
-            icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>`;
-          }
+  document.addEventListener("DOMContentLoaded", async () => {
+    console.log("🔄 Header: Initializing auth state...");
+    
+    try {
+      // Initialize auth first
+      await auth.initialize();
+      
+      // Set up auth state listener with better error handling
+      const unsubscribe = auth.onAuthChange((user, profile) => {
+        try {
+          updateAuthUI(user, profile);
+        } catch (error) {
+          console.error("❌ Header: Error updating auth UI:", error);
         }
       });
+
+      // Cleanup on page unload
+      window.addEventListener("beforeunload", () => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error("❌ Header: Error during cleanup:", error);
+        }
+      });
+
+    } catch (error) {
+      console.error("❌ Header: Auth initialization failed:", error);
+      // Show signin button as fallback
+      showSigninButton();
     }
 
-    // Compact dropdown functionality
-    const dropdownTrigger = document.querySelector(".dropdown-trigger") as HTMLButtonElement;
-    const dropdownMenu = document.querySelector(".dropdown-menu-compact") as HTMLElement;
-    const navDropdown = document.querySelector(".nav-dropdown") as HTMLElement;
+    function updateAuthUI(user: any, profile: any) {
+      const signinBtn = document.getElementById('signin-btn');
+      const accountDropdown = document.getElementById('account-dropdown');
+      const mobileSigninSection = document.getElementById('mobile-signin-section');
+      const mobileAccountSection = document.getElementById('mobile-account-section');
 
-    if (dropdownTrigger && dropdownMenu && navDropdown) {
-      let hoverTimeout: NodeJS.Timeout;
+      if (user) {
+        console.log('✅ Header: User signed in:', user.email);
+        
+        // Hide sign in button, show account dropdown
+        if (signinBtn) signinBtn.style.display = 'none';
+        if (accountDropdown) accountDropdown.style.display = 'block';
+        if (mobileSigninSection) mobileSigninSection.style.display = 'none';
+        if (mobileAccountSection) mobileAccountSection.style.display = 'flex';
+        
+        // Update account info
+        updateAccountInfo(user, profile);
+      } else {
+        console.log('❌ Header: User not signed in');
+        showSigninButton();
+      }
+    }
 
-      const showDropdown = () => {
-        clearTimeout(hoverTimeout);
-        dropdownMenu.style.display = "block";
-        dropdownTrigger.setAttribute("aria-expanded", "true");
+    function showSigninButton() {
+      const signinBtn = document.getElementById('signin-btn');
+      const accountDropdown = document.getElementById('account-dropdown');
+      const mobileSigninSection = document.getElementById('mobile-signin-section');
+      const mobileAccountSection = document.getElementById('mobile-account-section');
+
+      // Show sign in button, hide account dropdown
+      if (signinBtn) signinBtn.style.display = 'inline-flex';
+      if (accountDropdown) accountDropdown.style.display = 'none';
+      if (mobileSigninSection) mobileSigninSection.style.display = 'flex';
+      if (mobileAccountSection) mobileAccountSection.style.display = 'none';
+    }
+
+    function updateAccountInfo(user: any, profile: any) {
+      try {
+        const displayName = auth.getDisplayName();
+
+        // Update desktop dropdown
+        const accountName = document.getElementById('account-name');
+        if (accountName) {
+          accountName.textContent = displayName.length > 6 ? displayName.substring(0, 6) + '...' : displayName;
+        }
+
+        // Update mobile dropdown
+        const mobileAccountName = document.getElementById('mobile-account-name');
+        if (mobileAccountName) {
+          mobileAccountName.textContent = displayName;
+        }
+      } catch (error) {
+        console.error("❌ Header: Error updating account info:", error);
+      }
+    }
+
+    // Setup event listeners
+    setupEventListeners();
+  });
+
+  function setupEventListeners() {
+    try {
+      // Account dropdown functionality
+      const accountDropdownBtn = document.getElementById('account-dropdown-btn');
+      const accountMenu = document.getElementById('account-menu');
+      const accountDropdown = document.getElementById('account-dropdown');
+
+      if (accountDropdownBtn && accountMenu && accountDropdown) {
+        let hoverTimeout: NodeJS.Timeout;
+
+        const showAccountMenu = () => {
+          clearTimeout(hoverTimeout);
+          accountMenu.style.display = 'block';
+          accountDropdownBtn.setAttribute('aria-expanded', 'true');
+        };
+
+        const hideAccountMenu = () => {
+          hoverTimeout = setTimeout(() => {
+            accountMenu.style.display = 'none';
+            accountDropdownBtn.setAttribute('aria-expanded', 'false');
+          }, 300);
+        };
+
+        accountDropdown.addEventListener('mouseenter', showAccountMenu);
+        accountDropdown.addEventListener('mouseleave', hideAccountMenu);
+      }
+
+      // Sign out functionality with better error handling
+      const signoutBtn = document.getElementById('signout-btn');
+      const mobileSignoutBtn = document.getElementById('mobile-signout-btn');
+
+      const handleSignout = async (button: HTMLElement) => {
+        try {
+          // Show loading state
+          const originalText = button.textContent;
+          button.textContent = 'Signing out...';
+          button.setAttribute('disabled', 'true');
+
+          const result = await auth.signOut();
+          
+          if (result.success) {
+            console.log('✅ Header: User signed out successfully');
+            // Force immediate redirect
+            window.location.href = '/';
+          } else {
+            console.error('❌ Header: Sign out failed:', result.error);
+            // Force redirect anyway
+            window.location.href = '/';
+          }
+        } catch (error) {
+          console.error('❌ Header: Error signing out:', error);
+          // Force redirect anyway
+          window.location.href = '/';
+        }
       };
 
-const hideDropdown = () => {
-  hoverTimeout = setTimeout(() => {
-    dropdownMenu.style.display = "none";
-    dropdownTrigger.setAttribute("aria-expanded", "false");
-  }, 300);
-};
+      signoutBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleSignout(signoutBtn);
+      });
 
-navDropdown.addEventListener("mouseenter", showDropdown);
-navDropdown.addEventListener("mouseleave", hideDropdown);
+      mobileSignoutBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleSignout(mobileSignoutBtn);
+      });
 
-// Keyboard navigation
-dropdownTrigger.addEventListener("keydown", (e: KeyboardEvent) => {
-  if (e.key === "Enter" || e.key === " ") {
-    e.preventDefault();
-    const isVisible = dropdownMenu.style.display === "block";
-    
-    if (isVisible) {
-      dropdownMenu.style.display = "none";
-      dropdownTrigger.setAttribute("aria-expanded", "false");
-    } else {
-      dropdownMenu.style.display = "block";
-      dropdownTrigger.setAttribute("aria-expanded", "true");
-      const firstLink = dropdownMenu.querySelector("a") as HTMLAnchorElement;
-      firstLink?.focus();
+      // Close account menu when clicking outside
+      document.addEventListener('click', (e) => {
+        const target = e.target as Node;
+        if (accountMenu && accountDropdown && !accountDropdown.contains(target)) {
+          accountMenu.style.display = 'none';
+          accountDropdownBtn?.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Setup existing mobile menu and dropdown functionality
+      setupExistingEventListeners();
+
+    } catch (error) {
+      console.error("❌ Header: Error setting up event listeners:", error);
     }
   }
-  
-  if (e.key === "Escape") {
-    dropdownMenu.style.display = "none";
-    dropdownTrigger.setAttribute("aria-expanded", "false");
-    dropdownTrigger.focus();
+
+  function setupExistingEventListeners() {
+    try {
+      // Mobile menu toggle
+      const mobileMenuButton = document.querySelector(".mobile-menu-button") as HTMLButtonElement;
+      const mobileMenu = document.querySelector(".mobile-menu") as HTMLElement;
+
+      if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener("click", () => {
+          mobileMenu.classList.toggle("hidden");
+          const isExpanded = !mobileMenu.classList.contains("hidden");
+          mobileMenuButton.setAttribute("aria-expanded", isExpanded.toString());
+
+          const icon = mobileMenuButton.querySelector("svg") as SVGElement;
+          if (icon) {
+            if (isExpanded) {
+              icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>`;
+            } else {
+              icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>`;
+            }
+          }
+        });
+      }
+
+      // Topics dropdown functionality
+      const dropdownTrigger = document.querySelector(".dropdown-trigger") as HTMLButtonElement;
+      const dropdownMenu = document.querySelector(".dropdown-menu-compact") as HTMLElement;
+      const navDropdown = document.querySelector(".nav-dropdown") as HTMLElement;
+
+      if (dropdownTrigger && dropdownMenu && navDropdown) {
+        let hoverTimeout: NodeJS.Timeout;
+
+        const showDropdown = () => {
+          clearTimeout(hoverTimeout);
+          dropdownMenu.style.display = "block";
+          dropdownTrigger.setAttribute("aria-expanded", "true");
+        };
+
+        const hideDropdown = () => {
+          hoverTimeout = setTimeout(() => {
+            dropdownMenu.style.display = "none";
+            dropdownTrigger.setAttribute("aria-expanded", "false");
+          }, 300);
+        };
+
+        navDropdown.addEventListener("mouseenter", showDropdown);
+        navDropdown.addEventListener("mouseleave", hideDropdown);
+      }
+
+      // Search functionality
+      const searchToggle = document.querySelector(".search-toggle");
+      if (searchToggle) {
+        searchToggle.addEventListener("click", () => {
+          window.location.href = "/search";
+        });
+      }
+
+      // Add active state to current page navigation
+      const currentPath = window.location.pathname;
+      const navLinks = document.querySelectorAll(".nav-link, .mobile-nav-link");
+
+      navLinks.forEach((link) => {
+        const href = link.getAttribute("href");
+        if (href && currentPath.startsWith(href) && href !== "/" && href !== "#") {
+          link.classList.add("active");
+        }
+      });
+
+    } catch (error) {
+      console.error("❌ Header: Error setting up existing event listeners:", error);
+    }
   }
-});
-
-// Handle arrow key navigation within dropdown
-dropdownMenu.addEventListener("keydown", (e: KeyboardEvent) => {
-  const focusableElements = dropdownMenu.querySelectorAll("a");
-  const currentIndex = Array.from(focusableElements).indexOf(document.activeElement as HTMLAnchorElement);
-
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    const nextIndex = currentIndex < focusableElements.length - 1 ? currentIndex + 1 : 0;
-    (focusableElements[nextIndex] as HTMLElement).focus();
-  }
-  
-  if (e.key === "ArrowUp") {
-    e.preventDefault();
-    const prevIndex = currentIndex > 0 ? currentIndex - 1 : focusableElements.length - 1;
-    (focusableElements[prevIndex] as HTMLElement).focus();
-  }
-  
-  if (e.key === "Escape") {
-    dropdownMenu.style.display = "none";
-    dropdownTrigger.setAttribute("aria-expanded", "false");
-    dropdownTrigger.focus();
-  }
-});
-}
-
-// Close dropdown when clicking outside
-document.addEventListener("click", (e) => {
-const target = e.target as Node;
-if (dropdownMenu && navDropdown && !navDropdown.contains(target)) {
-  dropdownMenu.style.display = "none";
-  dropdownTrigger?.setAttribute("aria-expanded", "false");
-}
-});
-
-// Close mobile menu when clicking outside
-document.addEventListener("click", (e) => {
-const target = e.target as Node;
-if (
-  mobileMenu &&
-  target &&
-  !mobileMenu.contains(target) &&
-  !mobileMenuButton?.contains(target) &&
-  !mobileMenu.classList.contains("hidden")
-) {
-  mobileMenu.classList.add("hidden");
-  mobileMenuButton?.setAttribute("aria-expanded", "false");
-  const icon = mobileMenuButton?.querySelector("svg") as SVGElement;
-  if (icon) {
-    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>`;
-  }
-}
-});
-
-// Close mobile menu on escape key
-document.addEventListener("keydown", (e: KeyboardEvent) => {
-if (e.key === "Escape" && mobileMenu && !mobileMenu.classList.contains("hidden")) {
-  mobileMenu.classList.add("hidden");
-  mobileMenuButton?.setAttribute("aria-expanded", "false");
-  mobileMenuButton?.focus();
-}
-});
-
-// Search functionality
-const searchToggle = document.querySelector(".search-toggle");
-if (searchToggle) {
-searchToggle.addEventListener("click", () => {
-  window.location.href = "/search";
-});
-}
-
-// Add active state to current page navigation
-const currentPath = window.location.pathname;
-const navLinks = document.querySelectorAll(".nav-link, .mobile-nav-link");
-
-navLinks.forEach((link) => {
-const href = link.getAttribute("href");
-if (href && currentPath.startsWith(href) && href !== "/" && href !== "#") {
-  link.classList.add("active");
-}
-});
-
-// Highlight current topic in dropdown
-const topicLinks = document.querySelectorAll(".topic-link-compact, .mobile-topic-compact");
-topicLinks.forEach((link) => {
-const href = link.getAttribute("href");
-if (href && currentPath.startsWith(href)) {
-  link.classList.add("active-topic");
-}
-});
-});
 </script>

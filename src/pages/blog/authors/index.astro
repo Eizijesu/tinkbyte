@@ -518,7 +518,7 @@ const pageDescription = `Meet our ${totalAuthors} contributors who share insight
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     // Staggered animation for author cards
-    const authorCards = document.querySelectorAll('.author-card');
+    const authorCards = document.querySelectorAll('.author-card') as NodeListOf<HTMLElement>;
     
     authorCards.forEach((card, index) => {
       card.style.setProperty('--animation-delay', `${index * 0.1}s`);
@@ -533,8 +533,9 @@ const pageDescription = `Meet our ${totalAuthors} contributors who share insight
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+          const element = entry.target as HTMLElement;
+          element.style.opacity = '1';
+          element.style.transform = 'translateY(0)';
           observer.unobserve(entry.target);
         }
       });

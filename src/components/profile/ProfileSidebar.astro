@@ -1,0 +1,346 @@
+---
+// src/components/profile/ProfileSidebar.astro - Enhanced sidebar with proper styling
+---
+
+<aside class="profile-sidebar">
+  <div class="sidebar-header">
+    <div class="user-avatar-mini">
+      <img
+        id="sidebar-avatar"
+        src="/images/default-avatar.svg"
+        alt="User Avatar"
+      />
+    </div>
+    <div class="user-info-mini">
+      <span class="username" id="sidebar-username">Loading...</span>
+      <span class="user-status" id="sidebar-status">Free Member</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="/profile" class="sidebar-link" data-page="overview">
+      <i class="fas fa-home"></i>
+      My Profile
+    </a>
+
+    <a href="/profile/following" class="sidebar-link" data-page="following">
+      <i class="fas fa-heart"></i>
+      Following
+    </a>
+
+    <a href="/profile/account" class="sidebar-link" data-page="account">
+      <i class="fas fa-user-cog"></i>
+      Account
+    </a>
+
+    <a href="/profile/preferences" class="sidebar-link" data-page="preferences">
+      <i class="fas fa-cog"></i>
+      Preferences
+    </a>
+
+    <a href="/profile/premium" class="sidebar-link premium" data-page="premium">
+      <i class="fas fa-star"></i>
+      Premium
+      <span class="premium-badge" id="premium-badge">Upgrade</span>
+    </a>
+
+    <div class="sidebar-divider"></div>
+
+    <button class="sidebar-link logout-button" id="logout-btn">
+      <i class="fas fa-sign-out-alt"></i>
+      Logout
+    </button>
+  </nav>
+</aside>
+
+<style>
+  .profile-sidebar {
+    width: 280px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 0;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  .dark .profile-sidebar {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+  }
+
+  .sidebar-header {
+    padding: 2rem;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .dark .sidebar-header {
+    border-bottom-color: rgb(51, 65, 85);
+  }
+
+  .user-avatar-mini {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+
+  .user-avatar-mini img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 2px solid #243788;
+    border-radius: 0;
+  }
+
+  .dark .user-avatar-mini img {
+    border-color: #b4bce1;
+  }
+
+  .user-info-mini {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .username {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .dark .username {
+    color: rgb(248, 250, 252);
+  }
+
+  .user-status {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .dark .user-status {
+    color: rgb(148, 163, 184);
+  }
+
+  .sidebar-nav {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 2px solid transparent;
+    border-radius: 0;
+    transition: all 0.3s ease;
+    position: relative;
+    background: none;
+    cursor: pointer;
+    font-family: "Space Grotesk", sans-serif;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .sidebar-link:hover {
+    background: #f8fafc;
+    color: #243788;
+    border-color: #243788;
+    transform: translateX(4px);
+  }
+
+  .sidebar-link.active {
+    background: #f8fafc;
+    color: #243788;
+    border-color: #243788;
+  }
+
+  .sidebar-link.premium {
+    color: #f59e0b;
+  }
+
+  .sidebar-link.premium:hover {
+    color: #d97706;
+    border-color: #f59e0b;
+    background: #fef3c7;
+  }
+
+  .dark .sidebar-link {
+    color: rgb(148, 163, 184);
+  }
+
+  .dark .sidebar-link:hover {
+    background: rgb(30, 41, 59);
+    color: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  .dark .sidebar-link.active {
+    background: rgb(30, 41, 59);
+    color: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  .premium-badge {
+    margin-left: auto;
+    background: #f59e0b;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 0;
+  }
+
+  .sidebar-divider {
+    height: 2px;
+    background: #e2e8f0;
+    margin: 1rem 0;
+  }
+
+  .dark .sidebar-divider {
+    background: rgb(51, 65, 85);
+  }
+
+  .logout-button {
+    color: #dc2626 !important;
+    border-color: transparent !important;
+  }
+
+  .logout-button:hover {
+    background: rgba(220, 38, 38, 0.1) !important;
+    border-color: #dc2626 !important;
+    transform: translateX(4px) !important;
+  }
+
+  @media (max-width: 1024px) {
+    .profile-sidebar {
+      width: 100%;
+      position: static;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar-nav {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .sidebar-divider {
+      grid-column: 1 / -1;
+    }
+
+    .logout-button {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .sidebar-nav {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  import { supabase } from "../../lib/supabase.js";
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Load user data for sidebar
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+
+        // Update sidebar info
+        const sidebarUsername = document.getElementById("sidebar-username");
+        const sidebarStatus = document.getElementById("sidebar-status");
+        const sidebarAvatar = document.getElementById(
+          "sidebar-avatar"
+        ) as HTMLImageElement;
+        const premiumBadge = document.getElementById("premium-badge");
+
+        if (sidebarUsername) {
+          sidebarUsername.textContent =
+            profile?.display_name || user.email?.split("@")[0] || "User";
+        }
+
+        if (sidebarStatus) {
+          const status =
+            profile?.membership_type === "premium"
+              ? "Premium Member"
+              : "Free Member";
+          sidebarStatus.textContent = status;
+        }
+
+        if (sidebarAvatar) {
+          if (profile?.avatar_type === "uploaded" && profile?.avatar_url) {
+            sidebarAvatar.src = profile.avatar_url;
+          } else {
+            sidebarAvatar.src = `/images/avatars/preset-${profile?.avatar_preset_id || 1}.svg`;
+          }
+        }
+
+        if (premiumBadge && profile?.membership_type === "premium") {
+          premiumBadge.style.display = "none";
+        }
+      }
+    } catch (error) {
+      console.error("Error loading sidebar data:", error);
+    }
+
+    // Handle active states
+    const currentPath = window.location.pathname;
+    const sidebarLinks = document.querySelectorAll(".sidebar-link[data-page]");
+
+    sidebarLinks.forEach((link) => {
+      const href = link.getAttribute("href");
+      if (
+        href &&
+        (currentPath === href ||
+          (href !== "/profile" && currentPath.startsWith(href)))
+      ) {
+        link.classList.add("active");
+      }
+    });
+
+    // Logout functionality
+    const logoutBtn = document.getElementById("logout-btn");
+    logoutBtn?.addEventListener("click", async () => {
+      if (confirm("Are you sure you want to logout?")) {
+        try {
+          await supabase.auth.signOut();
+          window.location.href = "/";
+        } catch (error) {
+          console.error("Logout error:", error);
+        }
+      }
+    });
+  });
+</script>

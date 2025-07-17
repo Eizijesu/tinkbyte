@@ -1,0 +1,1584 @@
+---
+// src/pages/admin/analytics.astro - COMPLETE WORKING VERSION
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { supabase } from "../../lib/supabase";
+
+// TypeScript interfaces
+interface AnalyticsData {
+  totalComments: number;
+  weeklyComments: number;
+  monthlyComments: number;
+  pendingComments: number;
+  flaggedComments: number;
+  approvedComments: number;
+  totalUsers: number;
+  activeUsers: number;
+  newUsersThisWeek: number;
+  newUsersThisMonth: number;
+  moderationEfficiency: number;
+  averageResponseTime: number;
+}
+
+interface UserStat {
+  id: string;
+  display_name: string;
+  total_comments: number;
+  total_reads: number;
+  reputation_score: number;
+  created_at: string;
+}
+
+interface RecentActivity {
+  id: string;
+  activity_type: string;
+  description: string;
+  created_at: string;
+  user_id: string;
+  metadata: any;
+}
+
+interface CommentTrend {
+  date: string;
+  count: number;
+}
+
+// Calculate date ranges
+const now = new Date();
+const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+const last90Days = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+// Get comment statistics
+const { data: allComments } = await supabase
+  .from("comments")
+  .select("id, created_at, moderation_status, user_id")
+  .eq("is_deleted", false);
+
+const { data: weeklyComments } = await supabase
+  .from("comments")
+  .select("id, created_at")
+  .eq("is_deleted", false)
+  .gte("created_at", lastWeek.toISOString());
+
+const { data: monthlyComments } = await supabase
+  .from("comments")
+  .select("id, created_at")
+  .eq("is_deleted", false)
+  .gte("created_at", lastMonth.toISOString());
+
+const { data: pendingComments } = await supabase
+  .from("comments")
+  .select("id, created_at")
+  .eq("moderation_status", "pending")
+  .eq("is_deleted", false);
+
+const { data: flaggedComments } = await supabase
+  .from("comments")
+  .select("id, created_at")
+  .eq("moderation_status", "flagged")
+  .eq("is_deleted", false);
+
+const { data: approvedComments } = await supabase
+  .from("comments")
+  .select("id, created_at")
+  .eq("moderation_status", "approved")
+  .eq("is_deleted", false);
+
+// Get user statistics with proper joins
+const { data: allUsers } = await supabase
+  .from("profiles")
+  .select(
+    "id, display_name, total_comments, total_reads, reputation_score, created_at"
+  )
+  .order("total_comments", { ascending: false });
+
+const { data: newUsersWeek } = await supabase
+  .from("profiles")
+  .select("id, created_at")
+  .gte("created_at", lastWeek.toISOString());
+
+const { data: newUsersMonth } = await supabase
+  .from("profiles")
+  .select("id, created_at")
+  .gte("created_at", lastMonth.toISOString());
+
+// Get active users (users who commented in the last 30 days)
+const { data: activeUsers } = await supabase
+  .from("comments")
+  .select("user_id")
+  .eq("is_deleted", false)
+  .gte("created_at", lastMonth.toISOString())
+  .not("user_id", "is", null);
+
+const uniqueActiveUsers = [
+  ...new Set(activeUsers?.map((c) => c.user_id) || []),
+];
+
+// Get top contributors with names
+const { data: topContributors } = await supabase
+  .from("profiles")
+  .select("id, display_name, total_comments, total_reads, reputation_score")
+  .gt("total_comments", 0)
+  .order("total_comments", { ascending: false })
+  .limit(10);
+
+// Get recent activity
+const { data: recentActivity } = await supabase
+  .from("user_activities")
+  .select("*")
+  .order("created_at", { ascending: false })
+  .limit(20);
+
+// Get moderation actions for efficiency calculation
+const { data: moderationActions } = await supabase
+  .from("comment_moderation")
+  .select("action, created_at, resolved_at")
+  .gte("created_at", lastMonth.toISOString());
+
+// Calculate metrics
+const totalComments = allComments?.length || 0;
+const weeklyGrowth = weeklyComments?.length || 0;
+const monthlyGrowth = monthlyComments?.length || 0;
+const pendingCount = pendingComments?.length || 0;
+const flaggedCount = flaggedComments?.length || 0;
+const approvedCount = approvedComments?.length || 0;
+
+// Calculate moderation efficiency
+const totalModerationActions = moderationActions?.length || 0;
+const resolvedActions =
+  moderationActions?.filter((a) => a.resolved_at)?.length || 0;
+const moderationEfficiency =
+  totalModerationActions > 0
+    ? Math.round((resolvedActions / totalModerationActions) * 100)
+    : 0;
+
+// Calculate average response time (in hours)
+const avgResponseTime =
+  moderationActions?.reduce((acc, action) => {
+    if (action.resolved_at) {
+      const responseTime =
+        new Date(action.resolved_at).getTime() -
+        new Date(action.created_at).getTime();
+      return acc + responseTime / (1000 * 60 * 60); // Convert to hours
+    }
+    return acc;
+  }, 0) || 0;
+
+const averageResponseTime =
+  totalModerationActions > 0
+    ? Math.round(avgResponseTime / totalModerationActions)
+    : 0;
+
+// Generate chart data for the last 7 days
+const chartData: CommentTrend[] = [];
+for (let i = 6; i >= 0; i--) {
+  const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+  const dateStr = date.toISOString().split("T")[0];
+  const dayComments =
+    allComments?.filter((c) => c.created_at.startsWith(dateStr))?.length || 0;
+
+  chartData.push({
+    date: date.toLocaleDateString("en-US", { weekday: "short" }),
+    count: dayComments,
+  });
+}
+
+// Compile analytics data
+const analyticsData: AnalyticsData = {
+  totalComments,
+  weeklyComments: weeklyGrowth,
+  monthlyComments: monthlyGrowth,
+  pendingComments: pendingCount,
+  flaggedComments: flaggedCount,
+  approvedComments: approvedCount,
+  totalUsers: allUsers?.length || 0,
+  activeUsers: uniqueActiveUsers.length,
+  newUsersThisWeek: newUsersWeek?.length || 0,
+  newUsersThisMonth: newUsersMonth?.length || 0,
+  moderationEfficiency,
+  averageResponseTime,
+};
+
+// Calculate growth percentages
+const weeklyGrowthPercent =
+  monthlyGrowth > 0 ? Math.round((weeklyGrowth / monthlyGrowth) * 100) : 0;
+const userGrowthPercent =
+  allUsers && allUsers.length > 0
+    ? Math.round((analyticsData.newUsersThisMonth / allUsers.length) * 100)
+    : 0;
+
+console.log("Analytics Debug:", {
+  totalComments,
+  weeklyGrowth,
+  monthlyGrowth,
+  pendingCount,
+  flaggedCount,
+  topContributors: topContributors?.length,
+  recentActivity: recentActivity?.length,
+  analyticsData,
+});
+---
+
+<AdminLayout title="Analytics Dashboard - TinkByte Admin">
+  <div class="analytics-dashboard">
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div class="header-content">
+        <h1>Analytics Dashboard</h1>
+        <p>Community engagement and moderation insights</p>
+      </div>
+      <div class="header-actions">
+        <a href="/admin/dashboard" class="nav-button">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7"></path>
+          </svg>
+          Back to Dashboard
+        </a>
+        <button class="export-button" id="export-btn">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7,10 12,15 17,10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Export Data
+        </button>
+      </div>
+    </div>
+
+    <!-- Time Range Selector -->
+    <div class="time-range-selector">
+      <div class="range-buttons">
+        <button class="range-btn active" data-range="7d">7 Days</button>
+        <button class="range-btn" data-range="30d">30 Days</button>
+        <button class="range-btn" data-range="90d">90 Days</button>
+      </div>
+      <div class="last-updated">
+        Last updated: {new Date().toLocaleString()}
+      </div>
+    </div>
+
+    <!-- Key Metrics Grid -->
+    <div class="metrics-grid">
+      <div class="metric-card primary">
+        <div class="metric-header">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+            ></path>
+          </svg>
+          <h3>Total Comments</h3>
+        </div>
+        <div class="metric-value">{analyticsData.totalComments}</div>
+        <div class="metric-change positive">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+            <polyline points="17,6 23,6 23,12"></polyline>
+          </svg>
+          +{weeklyGrowthPercent}% this week ({analyticsData.weeklyComments} new)
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 6v6l4 2"></path>
+          </svg>
+          <h3>Pending Moderation</h3>
+        </div>
+        <div class="metric-value">{analyticsData.pendingComments}</div>
+        <div class="metric-change neutral">
+          Avg response: {analyticsData.averageResponseTime}h
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+          <h3>Moderation Efficiency</h3>
+        </div>
+        <div class="metric-value">{analyticsData.moderationEfficiency}%</div>
+        <div class="metric-change positive">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+            <polyline points="17,6 23,6 23,12"></polyline>
+          </svg>
+          {analyticsData.flaggedComments} flagged
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <h3>Active Users</h3>
+        </div>
+        <div class="metric-value">{analyticsData.activeUsers}</div>
+        <div class="metric-change positive">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+            <polyline points="17,6 23,6 23,12"></polyline>
+          </svg>
+          +{userGrowthPercent}% this month ({analyticsData.newUsersThisMonth} new)
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+            ></path>
+            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+          </svg>
+          <h3>Total Users</h3>
+        </div>
+        <div class="metric-value">{analyticsData.totalUsers}</div>
+        <div class="metric-change positive">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+            <polyline points="17,6 23,6 23,12"></polyline>
+          </svg>
+          +{analyticsData.newUsersThisWeek} this week
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Comment Activity Trend</h3>
+          <div class="chart-controls">
+            <button class="chart-btn active" data-chart="comments"
+              >Comments</button
+            >
+            <button class="chart-btn" data-chart="moderation">Moderation</button
+            >
+          </div>
+        </div>
+        <div class="chart-placeholder" id="activity-chart">
+          <div class="chart-mock">
+            <div class="chart-bars">
+              {
+                chartData.map((day, index) => {
+                  const maxCount = Math.max(...chartData.map((d) => d.count));
+                  const height =
+                    maxCount > 0 ? (day.count / maxCount) * 100 : 20;
+                  return (
+                    <div
+                      class="bar"
+                      style={`height: ${height}%`}
+                      title={`${day.date}: ${day.count} comments`}
+                    />
+                  );
+                })
+              }
+            </div>
+            <div class="chart-labels">
+              {chartData.map((day) => <span>{day.date}</span>)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Moderation Status</h3>
+        </div>
+        <div class="chart-placeholder" id="moderation-chart">
+          <div class="moderation-stats">
+            <div class="stat-item">
+              <div class="stat-color approved"></div>
+              <span class="stat-label">Approved</span>
+              <span class="stat-value">{analyticsData.approvedComments}</span>
+            </div>
+            <div class="stat-item">
+              <div class="stat-color pending"></div>
+              <span class="stat-label">Pending</span>
+              <span class="stat-value">{analyticsData.pendingComments}</span>
+            </div>
+            <div class="stat-item">
+              <div class="stat-color flagged"></div>
+              <span class="stat-label">Flagged</span>
+              <span class="stat-value">{analyticsData.flaggedComments}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="activity-section">
+      <div class="activity-header">
+        <h3>Recent Activity</h3>
+        <a href="/admin/moderation" class="view-all-link">View All</a>
+      </div>
+      <div class="activity-list">
+        {
+          recentActivity && recentActivity.length > 0 ? (
+            recentActivity.slice(0, 10).map((activity) => (
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 6v6l4 2" />
+                  </svg>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-description">{activity.description}</div>
+                  <div class="activity-time">
+                    {new Date(activity.created_at).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div class="empty-activity">
+              <p>No recent activity found</p>
+            </div>
+          )
+        }
+      </div>
+    </div>
+
+    <!-- Top Contributors -->
+    <div class="contributors-section">
+      <div class="contributors-header">
+        <h3>Top Contributors</h3>
+        <a href="/admin/users" class="view-all-link">View All Users</a>
+      </div>
+      <div class="contributors-list">
+        {
+          topContributors && topContributors.length > 0 ? (
+            topContributors.map((user, index) => (
+              <div class="contributor-item">
+                <div class="contributor-rank">#{index + 1}</div>
+                <div class="contributor-info">
+                  <div class="contributor-name">
+                    {user.display_name || `User ${index + 1}`}
+                  </div>
+                  <div class="contributor-stats">
+                    {user.total_comments || 0} comments •{" "}
+                    {user.reputation_score || 0} reputation
+                  </div>
+                </div>
+                <div class="contributor-badge">
+                  {user.total_reads || 0} reads
+                </div>
+              </div>
+            ))
+          ) : (
+            <div class="empty-contributors">
+              <p>No contributors found</p>
+            </div>
+          )
+        }
+      </div>
+    </div>
+
+    <!-- Engagement Insights -->
+    <div class="insights-section">
+      <div class="insights-header">
+        <h3>Engagement Insights</h3>
+      </div>
+      <div class="insights-grid">
+        <div class="insight-card">
+          <div class="insight-icon">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M9 19c-5 0-8-1-8-6V9c0-5 3-6 8-6s8 1 8 6v4c0 5-3 6-8 6z"
+              ></path>
+              <path d="M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <div class="insight-content">
+            <div class="insight-title">Community Health</div>
+            <div class="insight-value">
+              {
+                analyticsData.moderationEfficiency > 80
+                  ? "Excellent"
+                  : analyticsData.moderationEfficiency > 60
+                    ? "Good"
+                    : analyticsData.moderationEfficiency > 40
+                      ? "Fair"
+                      : "Needs Attention"
+              }
+            </div>
+            <div class="insight-description">
+              Based on moderation efficiency and response time
+            </div>
+          </div>
+        </div>
+
+        <div class="insight-card">
+          <div class="insight-icon">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 20V10"></path>
+              <path d="M12 20V4"></path>
+              <path d="M6 20v-6"></path>
+            </svg>
+          </div>
+          <div class="insight-content">
+            <div class="insight-title">Growth Trend</div>
+            <div class="insight-value">
+              {
+                weeklyGrowthPercent > 20
+                  ? "📈 High Growth"
+                  : weeklyGrowthPercent > 10
+                    ? "📊 Steady Growth"
+                    : weeklyGrowthPercent > 0
+                      ? "📉 Slow Growth"
+                      : "📉 No Growth"
+              }
+            </div>
+            <div class="insight-description">
+              Weekly comment growth: {weeklyGrowthPercent}%
+            </div>
+          </div>
+        </div>
+
+        <div class="insight-card">
+          <div class="insight-icon">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+              ></path>
+            </svg>
+          </div>
+          <div class="insight-content">
+            <div class="insight-title">Engagement Rate</div>
+            <div class="insight-value">
+              {
+                analyticsData.totalUsers > 0
+                  ? Math.round(
+                      (analyticsData.activeUsers / analyticsData.totalUsers) *
+                        100
+                    ) + "%"
+                  : "0%"
+              }
+            </div>
+            <div class="insight-description">Active users vs total users</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+    .analytics-dashboard {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #0d1117;
+      min-height: 100vh;
+      color: #f0f6fc;
+    }
+  
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #21262d;
+    }
+  
+    .header-content h1 {
+      color: #f0f6fc;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem 0;
+    }
+  
+    .header-content p {
+      color: #8b949e;
+      margin: 0;
+    }
+  
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+    }
+  
+    .nav-button,
+    .export-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #f0f6fc;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+  
+    .nav-button:hover,
+    .export-button:hover {
+      background: #30363d;
+      border-color: #4285f4;
+    }
+  
+    .time-range-selector {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: #161b22;
+      border: 1px solid #21262d;
+    }
+  
+    .range-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+  
+    .range-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+  
+    .range-btn.active {
+      background: #4285f4;
+      border-color: #4285f4;
+      color: white;
+    }
+  
+    .range-btn:hover:not(.active) {
+      background: #21262d;
+      color: #f0f6fc;
+    }
+  
+    .last-updated {
+      font-size: 0.875rem;
+      color: #8b949e;
+    }
+  
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+  
+    .metric-card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+    }
+  
+    .metric-card.primary {
+      border-color: #4285f4;
+      background: linear-gradient(135deg, #161b22 0%, #1a1f2e 100%);
+    }
+  
+    .metric-card:hover {
+      border-color: #4285f4;
+      transform: translateY(-2px);
+    }
+  
+    .metric-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+  
+    .metric-header svg {
+      color: #4285f4;
+    }
+  
+    .metric-header h3 {
+      color: #f0f6fc;
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0;
+    }
+  
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #f0f6fc;
+      margin-bottom: 0.5rem;
+    }
+  
+    .metric-change {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+  
+    .metric-change.positive {
+      color: #238636;
+    }
+  
+    .metric-change.negative {
+      color: #da3633;
+    }
+  
+    .metric-change.neutral {
+      color: #8b949e;
+    }
+  
+    .charts-section {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+  
+    .chart-container {
+      background: #161b22;
+      border: 1px solid #21262d;
+      padding: 1.5rem;
+    }
+  
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+  
+    .chart-header h3 {
+      color: #f0f6fc;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+    }
+  
+    .chart-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+  
+    .chart-btn {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+  
+    .chart-btn.active {
+      background: #4285f4;
+      border-color: #4285f4;
+      color: white;
+    }
+  
+    .chart-placeholder {
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  
+    .chart-mock {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+  
+    .chart-bars {
+      display: flex;
+      align-items: end;
+      gap: 1rem;
+      height: 250px;
+      padding: 1rem 0;
+    }
+  
+    .bar {
+      flex: 1;
+      background: linear-gradient(to top, #4285f4, #64b5f6);
+      min-height: 20px;
+      transition: all 0.3s ease;
+    }
+  
+    .bar:hover {
+      background: linear-gradient(to top, #3367d6, #4285f4);
+    }
+  
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      color: #8b949e;
+      padding: 0 0.5rem;
+    }
+  
+    .moderation-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+    }
+  
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: #21262d;
+      border: 1px solid #30363d;
+    }
+  
+    .stat-color {
+      width: 16px;
+      height: 16px;
+    }
+  
+    .stat-color.approved {
+      background: #238636;
+    }
+  
+    .stat-color.flagged {
+      background: #da3633;
+    }
+  
+    .stat-color.hidden {
+      background: #8b949e;
+    }
+  
+    .stat-label {
+      flex: 1;
+      color: #f0f6fc;
+      font-weight: 500;
+    }
+  
+    .stat-value {
+      color: #4285f4;
+      font-weight: 700;
+    }
+  
+    .activity-section,
+    .contributors-section {
+      background: #161b22;
+      border: 1px solid #21262d;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+  
+    .activity-header,
+    .contributors-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+  
+    .activity-header h3,
+    .contributors-header h3 {
+      color: #f0f6fc;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+    }
+  
+    .view-all-link {
+      color: #4285f4;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+  
+    .view-all-link:hover {
+      color: #64b5f6;
+    }
+  
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+  
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: #21262d;
+      border: 1px solid #30363d;
+    }
+  
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      background: #4285f4;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+  
+    .activity-content {
+      flex: 1;
+    }
+  
+    .activity-description {
+      color: #f0f6fc;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+  
+    .activity-time {
+      color: #8b949e;
+      font-size: 0.875rem;
+    }
+  
+    .contributors-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+  
+    .contributor-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: #21262d;
+      border: 1px solid #30363d;
+    }
+  
+    .contributor-rank {
+      width: 40px;
+      height: 40px;
+      background: #4285f4;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+  
+    .contributor-info {
+      flex: 1;
+    }
+  
+    .contributor-name {
+      color: #f0f6fc;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+  
+    .contributor-stats {
+      color: #8b949e;
+      font-size: 0.875rem;
+    }
+  
+    .contributor-badge {
+      background: #64b5f6;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+  
+    .empty-activity,
+    .empty-contributors {
+      text-align: center;
+      color: #8b949e;
+      padding: 2rem;
+    }
+  
+    .insights-section {
+      background: #161b22;
+      border: 1px solid #21262d;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+  
+    .insights-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+  
+    .insights-header h3 {
+      color: #f0f6fc;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+    }
+  
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+  
+    .insight-card {
+      background: #21262d;
+      border: 1px solid #30363d;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: all 0.2s ease;
+    }
+  
+    .insight-card:hover {
+      border-color: #4285f4;
+      transform: translateY(-2px);
+    }
+  
+    .insight-icon {
+      width: 40px;
+      height: 40px;
+      background: #4285f4;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+  
+    .insight-content {
+      flex: 1;
+    }
+  
+    .insight-title {
+      color: #f0f6fc;
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 0.25rem 0;
+    }
+  
+    .insight-value {
+      color: #64b5f6;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+  
+    .insight-description {
+      color: #8b949e;
+      font-size: 0.875rem;
+    }
+  
+    /* Light mode styles */
+    :global(.light) .analytics-dashboard {
+      background: white;
+      color: #374151;
+    }
+  
+    :global(.light) .dashboard-header {
+      border-bottom-color: #e2e8f0;
+    }
+  
+    :global(.light) .header-content h1 {
+      color: #374151;
+    }
+  
+    :global(.light) .header-content p {
+      color: #6b7280;
+    }
+  
+    :global(.light) .nav-button,
+    :global(.light) .export-button {
+      background: white;
+      border-color: #d1d5db;
+      color: #374151;
+    }
+  
+    :global(.light) .nav-button:hover,
+    :global(.light) .export-button:hover {
+      background: #f9fafb;
+      border-color: #243788;
+    }
+  
+    :global(.light) .time-range-selector {
+      background: #f8f9fa;
+      border-color: #e2e8f0;
+    }
+  
+    :global(.light) .range-btn {
+      border-color: #d1d5db;
+      color: #6b7280;
+    }
+  
+    :global(.light) .range-btn.active {
+      background: #243788;
+      border-color: #243788;
+    }
+  
+    :global(.light) .range-btn:hover:not(.active) {
+      background: #e2e8f0;
+      color: #374151;
+    }
+  
+    :global(.light) .last-updated {
+      color: #6b7280;
+    }
+  
+    :global(.light) .metric-card {
+      background: white;
+      border-color: #e2e8f0;
+    }
+  
+    :global(.light) .metric-card.primary {
+      border-color: #243788;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    }
+  
+    :global(.light) .metric-card:hover {
+      border-color: #243788;
+    }
+  
+    :global(.light) .metric-header svg {
+      color: #243788;
+    }
+  
+    :global(.light) .metric-header h3 {
+      color: #374151;
+    }
+  
+    :global(.light) .metric-value {
+      color: #374151;
+    }
+  
+    :global(.light) .chart-container {
+      background: white;
+      border-color: #e2e8f0;
+    }
+  
+    :global(.light) .chart-header h3 {
+      color: #374151;
+    }
+  
+    :global(.light) .chart-btn {
+      border-color: #d1d5db;
+      color: #6b7280;
+    }
+  
+    :global(.light) .chart-btn.active {
+      background: #243788;
+      border-color: #243788;
+    }
+  
+    :global(.light) .bar {
+      background: linear-gradient(to top, #243788, #4285f4);
+    }
+  
+    :global(.light) .bar:hover {
+      background: linear-gradient(to top, #1e293b, #243788);
+    }
+  
+    :global(.light) .chart-labels {
+      color: #6b7280;
+    }
+  
+    :global(.light) .stat-item {
+      background: #f9fafb;
+      border-color: #e2e8f0;
+    }
+  
+    :global(.light) .stat-label {
+      color: #374151;
+    }
+  
+    :global(.light) .stat-value {
+      color: #243788;
+    }
+  
+    :global(.light) .activity-section,
+    :global(.light) .contributors-section {
+      background: white;
+      border-color: #e2e8f0;
+    }
+  
+    :global(.light) .activity-header h3,
+    :global(.light) .contributors-header h3 {
+      color: #374151;
+    }
+  
+    :global(.light) .view-all-link {
+      color: #243788;
+    }
+  
+    :global(.light) .view-all-link:hover {
+      color: #1e293b;
+    }
+  
+    :global(.light) .activity-item,
+    :global(.light) .contributor-item {
+      background: #f9fafb;
+      border-color: #e2e8f0;
+    }
+  
+    :global(.light) .activity-icon,
+    :global(.light) .contributor-rank {
+      background: #243788;
+    }
+  
+    :global(.light) .activity-description,
+    :global(.light) .contributor-name {
+      color: #374151;
+    }
+  
+    :global(.light) .activity-time,
+    :global(.light) .contributor-stats {
+      color: #6b7280;
+    }
+  
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .analytics-dashboard {
+        padding: 1rem;
+      }
+  
+      .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+  
+      .header-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+      }
+  
+      .nav-button,
+      .export-button {
+        width: 100%;
+        justify-content: center;
+      }
+  
+      .time-range-selector {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+  
+      .range-buttons {
+        width: 100%;
+        justify-content: center;
+      }
+  
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+  
+      .charts-section {
+        grid-template-columns: 1fr;
+      }
+  
+      .chart-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+  
+      .activity-header,
+      .contributors-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+    }
+  </style>
+
+<script>
+  // Fixed TypeScript interfaces
+  interface RangeButtonElement extends HTMLButtonElement {
+    dataset: DOMStringMap;
+  }
+
+  interface ChartButtonElement extends HTMLButtonElement {
+    dataset: DOMStringMap;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // Time range selector with proper typing
+    const rangeButtons = document.querySelectorAll(
+      ".range-btn"
+    ) as NodeListOf<RangeButtonElement>;
+    rangeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        rangeButtons.forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
+
+        const range = button.dataset.range;
+        if (range) {
+          loadDataForRange(range);
+        }
+      });
+    });
+
+    // Chart controls with proper typing
+    const chartButtons = document.querySelectorAll(
+      ".chart-btn"
+    ) as NodeListOf<ChartButtonElement>;
+    chartButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        chartButtons.forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
+
+        const chartType = button.dataset.chart;
+        if (chartType) {
+          updateChart(chartType);
+        }
+      });
+    });
+
+    // Export functionality
+    const exportBtn = document.getElementById("export-btn");
+    exportBtn?.addEventListener("click", () => {
+      exportAnalyticsData();
+    });
+
+    // Auto-refresh data every 5 minutes
+    setInterval(
+      () => {
+        refreshData();
+      },
+      5 * 60 * 1000
+    );
+  });
+
+  async function loadDataForRange(range: string) {
+    try {
+      const response = await fetch(`/api/admin/analytics?range=${range}`);
+      const data = await response.json();
+
+      if (data.success) {
+        updateMetrics(data.metrics);
+        updateCharts(data.charts);
+      }
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
+  }
+
+  function updateChart(chartType: string) {
+    const chartPlaceholder = document.getElementById("activity-chart");
+    if (!chartPlaceholder) return;
+
+    // Chart update logic here
+    console.log(`Updating chart to show: ${chartType}`);
+  }
+
+  function updateMetrics(metrics: any) {
+    console.log("Updating metrics:", metrics);
+  }
+
+  function updateCharts(charts: any) {
+    console.log("Updating charts:", charts);
+  }
+
+  async function exportAnalyticsData() {
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch("/api/admin/analytics/export", {
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `analytics-${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        showNotification("Analytics data exported successfully", "success");
+      } else {
+        throw new Error("Failed to export data");
+      }
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      showNotification("Failed to export analytics data", "error");
+    }
+  }
+
+  async function refreshData() {
+    const activeRange = document.querySelector(
+      ".range-btn.active"
+    ) as RangeButtonElement;
+    const range = activeRange?.dataset.range || "7d";
+    await loadDataForRange(range);
+  }
+
+  function showNotification(
+    message: string,
+    type: "success" | "error" = "success"
+  ) {
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        background: ${type === "success" ? "#238636" : "#da3633"};
+        animation: slideIn 0.3s ease;
+      `;
+
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  }
+
+  // Add animation styles
+  if (!document.getElementById("analytics-animations")) {
+    const style = document.createElement("style");
+    style.id = "analytics-animations";
+    style.textContent = `
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `;
+    document.head.appendChild(style);
+  }
+</script>

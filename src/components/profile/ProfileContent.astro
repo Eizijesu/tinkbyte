@@ -1,0 +1,920 @@
+---
+// src/components/profile/ProfileContent.astro
+export interface Props {
+  user?: any;
+  isOwnProfile?: boolean;
+}
+
+const { user, isOwnProfile = false } = Astro.props;
+
+// Mock data for now - will be replaced with real Supabase data
+const profileData = {
+  id: user?.id || "MQ302516",
+  displayName: user?.display_name || "TinkByte User",
+  email: user?.email || "user@example.com",
+  memberSince: user?.created_at || "June, 2025",
+  isPremium: user?.membership_type === "premium" || false,
+  avatar: user?.avatar_url || null,
+  bio: user?.bio || null,
+
+  // Stats
+  followers: 0,
+  following: 0,
+  stories: 0,
+  topics: 12,
+  authors: 8,
+  users: 5,
+  threads: 0,
+  posts: 24,
+  totalReads: 156,
+  totalComments: 24,
+  reputation: 420,
+};
+---
+
+<div class="profile-content">
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="profile-avatar-section">
+      <div class="avatar-container">
+        {
+          profileData.avatar ? (
+            <img
+              src={profileData.avatar}
+              alt={`${profileData.displayName} avatar`}
+              class="user-avatar"
+            />
+          ) : (
+            <div class="default-avatar">
+              <svg
+                width="80"
+                height="80"
+                viewBox="0 0 80 80"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect width="80" height="80" fill="#f1f5f9" />
+                <circle cx="40" cy="30" r="12" fill="#64748b" />
+                <path
+                  d="M20 65c0-11.046 8.954-20 20-20s20 8.954 20 20v5H20v-5z"
+                  fill="#64748b"
+                />
+              </svg>
+            </div>
+          )
+        }
+        {
+          profileData.isPremium && (
+            <div class="premium-badge">
+              <span class="badge-text">PRO</span>
+            </div>
+          )
+        }
+      </div>
+
+      <div class="profile-info">
+        <h1 class="profile-name">{profileData.displayName}</h1>
+        <p class="profile-id">#{profileData.id}</p>
+        <p class="member-since">Member since {profileData.memberSince}</p>
+
+        {profileData.bio && <p class="profile-bio">{profileData.bio}</p>}
+
+        {
+          isOwnProfile && (
+            <a href="/profile/settings" class="edit-profile-btn">
+              Edit Profile
+            </a>
+          )
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-number">{profileData.followers}</span>
+      <span class="stat-label">Followers</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-number">{profileData.following}</span>
+      <span class="stat-label">Following</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-number">{profileData.totalReads}</span>
+      <span class="stat-label">Total Reads</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-number">{profileData.totalComments}</span>
+      <span class="stat-label">Comments</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-number">{profileData.reputation}</span>
+      <span class="stat-label">Reputation</span>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="profile-nav">
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="following">Following</button>
+      <button class="nav-tab" data-tab="activity">Activity</button>
+      <button class="nav-tab" data-tab="contributions">Contributions</button>
+      {
+        isOwnProfile && (
+          <button class="nav-tab" data-tab="settings">
+            Settings
+          </button>
+        )
+      }
+    </nav>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    <!-- Following Tab -->
+    <div class="tab-pane active" id="following-tab">
+      <div class="following-grid">
+        <div class="following-section">
+          <h3 class="section-title">Stories</h3>
+          <div class="count-display">{profileData.stories}</div>
+          <p class="section-description">Articles bookmarked</p>
+        </div>
+
+        <div class="following-section">
+          <h3 class="section-title">Topics</h3>
+          <div class="count-display">{profileData.topics}</div>
+          <p class="section-description">Topics followed</p>
+          {
+            isOwnProfile && (
+              <a href="/profile/settings/preferences" class="manage-link">
+                Manage
+              </a>
+            )
+          }
+        </div>
+
+        <div class="following-section">
+          <h3 class="section-title">Authors</h3>
+          <div class="count-display">{profileData.authors}</div>
+          <p class="section-description">Authors followed</p>
+          {
+            isOwnProfile && (
+              <a href="/following/authors" class="manage-link">
+                View All
+              </a>
+            )
+          }
+        </div>
+
+        <div class="following-section">
+          <h3 class="section-title">Users</h3>
+          <div class="count-display">{profileData.users}</div>
+          <p class="section-description">Community members</p>
+          {
+            isOwnProfile && (
+              <a href="/following/users" class="manage-link">
+                View All
+              </a>
+            )
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Tab -->
+    <div class="tab-pane" id="activity-tab">
+      <div class="activity-grid">
+        <div class="activity-section">
+          <h3 class="section-title">Threads</h3>
+          <div class="count-display">{profileData.threads}</div>
+          <p class="section-description">Forum discussions started</p>
+        </div>
+
+        <div class="activity-section">
+          <h3 class="section-title">Posts</h3>
+          <div class="count-display">{profileData.posts}</div>
+          <p class="section-description">Comments and replies</p>
+        </div>
+
+        <div class="activity-section">
+          <h3 class="section-title">Reads</h3>
+          <div class="count-display">{profileData.totalReads}</div>
+          <p class="section-description">Articles read</p>
+        </div>
+
+        <div class="activity-section">
+          <h3 class="section-title">Reputation</h3>
+          <div class="count-display">{profileData.reputation}</div>
+          <p class="section-description">Community score</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contributions Tab -->
+    <div class="tab-pane" id="contributions-tab">
+      <div class="contributions-section">
+        <h3 class="section-title">Recent Activity</h3>
+        <div class="activity-feed">
+          <div class="activity-item">
+            <div class="activity-icon">💬</div>
+            <div class="activity-content">
+              <p class="activity-text">
+                Commented on <a href="#" class="activity-link"
+                  >"Building with AI: Practical Lessons"</a>
+              </p>
+              <span class="activity-time">2 hours ago</span>
+            </div>
+          </div>
+
+          <div class="activity-item">
+            <div class="activity-icon">👍</div>
+            <div class="activity-content">
+              <p class="activity-text">
+                Liked <a href="#" class="activity-link"
+                  >"Product Strategy for Startups"</a>
+              </p>
+              <span class="activity-time">1 day ago</span>
+            </div>
+          </div>
+
+          <div class="activity-item">
+            <div class="activity-icon">📖</div>
+            <div class="activity-content">
+              <p class="activity-text">
+                Read <a href="#" class="activity-link"
+                  >"Developer Tools Landscape 2025"</a>
+              </p>
+              <span class="activity-time">2 days ago</span>
+            </div>
+          </div>
+
+          <div class="activity-item">
+            <div class="activity-icon">➕</div>
+            <div class="activity-content">
+              <p class="activity-text">
+                Started following <a href="#" class="activity-link"
+                  >AI Evolution</a
+                > topic
+              </p>
+              <span class="activity-time">3 days ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Tab (only for own profile) -->
+    {
+      isOwnProfile && (
+        <div class="tab-pane" id="settings-tab">
+          <div class="settings-quick-links">
+            <a href="/profile/settings/account" class="settings-link">
+              <div class="settings-icon">👤</div>
+              <div class="settings-content">
+                <h4 class="settings-title">Account Settings</h4>
+                <p class="settings-description">
+                  Update your profile, avatar, and personal information
+                </p>
+              </div>
+            </a>
+
+            <a href="/profile/settings/preferences" class="settings-link">
+              <div class="settings-icon">⚙️</div>
+              <div class="settings-content">
+                <h4 class="settings-title">Preferences</h4>
+                <p class="settings-description">
+                  Manage topics, notifications, and newsletter subscriptions
+                </p>
+              </div>
+            </a>
+
+            <a href="/profile/settings/premium" class="settings-link">
+              <div class="settings-icon">⭐</div>
+              <div class="settings-content">
+                <h4 class="settings-title">Premium Membership</h4>
+                <p class="settings-description">
+                  Upgrade to premium for exclusive content and features
+                </p>
+              </div>
+              {!profileData.isPremium && (
+                <div class="upgrade-badge">Upgrade</div>
+              )}
+            </a>
+
+            <a href="/profile/settings/privacy" class="settings-link">
+              <div class="settings-icon">🔒</div>
+              <div class="settings-content">
+                <h4 class="settings-title">Privacy & Security</h4>
+                <p class="settings-description">
+                  Control your privacy settings and security options
+                </p>
+              </div>
+            </a>
+          </div>
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  /* TinkByte Profile Content Styling */
+  .profile-content {
+    font-family: "Space Grotesk", sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  /* Profile Header */
+  .profile-header {
+    background: white;
+    border: 2px solid #e2e8f0;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  :global(.dark) .profile-header {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+  }
+
+  .profile-avatar-section {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  .avatar-container {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .user-avatar {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+  }
+
+  .default-avatar {
+    width: 80px;
+    height: 80px;
+    border: 2px solid #e2e8f0;
+  }
+
+  :global(.dark) .user-avatar,
+  :global(.dark) .default-avatar {
+    border-color: rgb(51, 65, 85);
+  }
+
+  .premium-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #243788;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .profile-info {
+    flex: 1;
+  }
+
+  .profile-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.25rem 0;
+    letter-spacing: -0.025em;
+  }
+
+  :global(.dark) .profile-name {
+    color: rgb(248, 250, 252);
+  }
+
+  .profile-id {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  :global(.dark) .profile-id {
+    color: rgb(148, 163, 184);
+  }
+
+  .member-since {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0 0 1rem 0;
+  }
+
+  :global(.dark) .member-since {
+    color: rgb(148, 163, 184);
+  }
+
+  .profile-bio {
+    color: #475569;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0 0 1rem 0;
+  }
+
+  :global(.dark) .profile-bio {
+    color: rgb(203, 213, 225);
+  }
+
+  .edit-profile-btn {
+    display: inline-block;
+    background: #243788;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+  }
+
+  .edit-profile-btn:hover {
+    background: #1e2d6b;
+    transform: translateY(-1px);
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  .stat-card:hover {
+    border-color: #243788;
+    transform: translateY(-2px);
+  }
+
+  :global(.dark) .stat-card {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+  }
+
+  .stat-number {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #243788;
+    margin-bottom: 0.25rem;
+  }
+
+  :global(.dark) .stat-number {
+    color: #b4bce1;
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+
+  :global(.dark) .stat-label {
+    color: rgb(148, 163, 184);
+  }
+
+  /* Navigation Tabs */
+  .profile-nav {
+    background: white;
+    border: 2px solid #e2e8f0;
+    margin-bottom: 2rem;
+  }
+
+  :global(.dark) .profile-nav {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+  }
+
+  .nav-tabs {
+    display: flex;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  :global(.dark) .nav-tabs {
+    border-bottom-color: rgb(51, 65, 85);
+  }
+
+  .nav-tab {
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .nav-tab:hover {
+    color: #243788;
+    background: #f8fafc;
+  }
+
+  .nav-tab.active {
+    color: #243788;
+    background: #f8fafc;
+  }
+
+  .nav-tab.active::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #243788;
+  }
+
+  :global(.dark) .nav-tab {
+    color: rgb(148, 163, 184);
+  }
+
+  :global(.dark) .nav-tab:hover {
+    color: #b4bce1;
+    background: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .nav-tab.active {
+    color: #b4bce1;
+    background: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .nav-tab.active::after {
+    background: #b4bce1;
+  }
+
+  /* Tab Content */
+  .tab-content {
+    background: white;
+    border: 2px solid #e2e8f0;
+    padding: 2rem;
+  }
+
+  :global(.dark) .tab-content {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+  }
+
+  .tab-pane {
+    display: none;
+  }
+
+  .tab-pane.active {
+    display: block;
+  }
+
+  /* Following Grid */
+  .following-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+  }
+
+  .following-section {
+    text-align: center;
+    padding: 1.5rem;
+    border: 2px solid #f1f5f9;
+    transition: all 0.2s ease;
+  }
+
+  .following-section:hover {
+    border-color: #e2e8f0;
+    transform: translateY(-2px);
+  }
+
+  :global(.dark) .following-section {
+    border-color: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .following-section:hover {
+    border-color: rgb(51, 65, 85);
+  }
+
+  .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 1rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  :global(.dark) .section-title {
+    color: rgb(248, 250, 252);
+  }
+
+  .count-display {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #243788;
+    margin-bottom: 0.5rem;
+  }
+
+  :global(.dark) .count-display {
+    color: #b4bce1;
+  }
+
+  .section-description {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0 0 1rem 0;
+  }
+
+  :global(.dark) .section-description {
+    color: rgb(148, 163, 184);
+  }
+
+  .manage-link {
+    color: #243788;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .manage-link:hover {
+    text-decoration: underline;
+  }
+
+  :global(.dark) .manage-link {
+    color: #b4bce1;
+  }
+
+  /* Activity Grid */
+  .activity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+  }
+
+  .activity-section {
+    text-align: center;
+    padding: 1.5rem;
+    border: 2px solid #f1f5f9;
+    transition: all 0.2s ease;
+  }
+
+  .activity-section:hover {
+    border-color: #e2e8f0;
+    transform: translateY(-2px);
+  }
+
+  :global(.dark) .activity-section {
+    border-color: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .activity-section:hover {
+    border-color: rgb(51, 65, 85);
+  }
+
+  /* Activity Feed */
+  .activity-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .activity-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    border: 2px solid #f1f5f9;
+    transition: all 0.2s ease;
+  }
+
+  .activity-item:hover {
+    border-color: #e2e8f0;
+  }
+
+  :global(.dark) .activity-item {
+    border-color: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .activity-item:hover {
+    border-color: rgb(51, 65, 85);
+  }
+
+  .activity-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .activity-content {
+    flex: 1;
+  }
+
+  .activity-text {
+    color: #475569;
+    margin: 0 0 0.25rem 0;
+    font-size: 0.875rem;
+  }
+
+  :global(.dark) .activity-text {
+    color: rgb(203, 213, 225);
+  }
+
+  .activity-link {
+    color: #243788;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .activity-link:hover {
+    text-decoration: underline;
+  }
+
+  :global(.dark) .activity-link {
+    color: #b4bce1;
+  }
+
+  .activity-time {
+    color: #64748b;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+
+  :global(.dark) .activity-time {
+    color: rgb(148, 163, 184);
+  }
+
+  /* Settings Quick Links */
+  .settings-quick-links {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .settings-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border: 2px solid #f1f5f9;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .settings-link:hover {
+    border-color: #243788;
+    transform: translateY(-2px);
+  }
+
+  :global(.dark) .settings-link {
+    border-color: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .settings-link:hover {
+    border-color: #b4bce1;
+  }
+
+  .settings-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .settings-content {
+    flex: 1;
+  }
+
+  .settings-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.25rem 0;
+  }
+
+  :global(.dark) .settings-title {
+    color: rgb(248, 250, 252);
+  }
+
+  .settings-description {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  :global(.dark) .settings-description {
+    color: rgb(148, 163, 184);
+  }
+
+  .upgrade-badge {
+    background: #243788;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .profile-content {
+      padding: 1rem;
+    }
+
+    .profile-avatar-section {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .following-grid,
+    .activity-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .nav-tabs {
+      flex-wrap: wrap;
+    }
+
+    .nav-tab {
+      flex: 1;
+      min-width: 120px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tab-content {
+      padding: 1rem;
+    }
+
+    .profile-header {
+      padding: 1rem;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Tab switching functionality
+    const tabs = document.querySelectorAll(".nav-tab");
+    const tabPanes = document.querySelectorAll(".tab-pane");
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        // Remove active class from all tabs and panes
+        tabs.forEach((t) => t.classList.remove("active"));
+        tabPanes.forEach((pane) => pane.classList.remove("active"));
+
+        // Add active class to clicked tab
+        tab.classList.add("active");
+
+        // Show corresponding tab pane
+        const tabId = tab.getAttribute("data-tab");
+        const targetPane = document.getElementById(`${tabId}-tab`);
+        if (targetPane) {
+          targetPane.classList.add("active");
+        }
+      });
+    });
+  });
+</script>

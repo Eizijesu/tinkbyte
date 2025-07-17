@@ -1,0 +1,532 @@
+---
+// src/pages/auth/admin-signin.astro
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout title="Admin Sign In | TinkByte">
+  <div class="admin-signin-container">
+    <div class="admin-signin-form">
+      <div class="admin-header">
+        <h1>Admin Access</h1>
+        <p>Sign in to access the admin panel</p>
+      </div>
+
+      <form id="admin-signin-form">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            class="form-input"
+            placeholder="Enter your admin email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            class="form-input"
+            placeholder="Enter your password"
+            required
+          />
+        </div>
+
+        <button type="submit" class="admin-btn" id="signin-btn">
+          <span class="btn-content">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+            </svg>
+            <span class="btn-text">Sign In</span>
+          </span>
+        </button>
+      </form>
+
+      <div class="error-message" id="error-message" style="display: none;">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+        <span id="error-text"></span>
+      </div>
+
+      <div class="success-message" id="success-message" style="display: none;">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <polyline points="20,6 9,17 4,12"></polyline>
+        </svg>
+        <span id="success-text"></span>
+      </div>
+
+      <div class="admin-options">
+        <a href="/auth/forgot-password">Forgot Password?</a>
+        <a href="/">← Back to Site</a>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .admin-signin-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    padding: 2rem;
+  }
+
+  .admin-signin-form {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+
+  .admin-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .admin-header h1 {
+    color: #f1f5f9;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .admin-header p {
+    color: #94a3b8;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group label {
+    display: block;
+    color: #f1f5f9;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.875rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    color: #f1f5f9;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .form-input::placeholder {
+    color: #64748b;
+  }
+
+  .admin-btn {
+    width: 100%;
+    padding: 0.875rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .admin-btn:hover:not(:disabled) {
+    background: #2563eb;
+    transform: translateY(-1px);
+  }
+
+  .admin-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-content svg {
+    transition: all 0.2s;
+  }
+
+  .admin-btn:disabled .btn-content svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .admin-options {
+    text-align: center;
+    margin-top: 1.5rem;
+  }
+
+  .admin-options a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.875rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    transition: color 0.2s;
+  }
+
+  .admin-options a:hover {
+    color: #f1f5f9;
+  }
+
+  .error-message,
+  .success-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+  }
+
+  .error-message {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #ef4444;
+    color: #ef4444;
+  }
+
+  .success-message {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid #22c55e;
+    color: #22c55e;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 480px) {
+    .admin-signin-container {
+      padding: 1rem;
+    }
+
+    .admin-signin-form {
+      padding: 1.5rem;
+    }
+
+    .admin-header h1 {
+      font-size: 1.25rem;
+    }
+
+    .form-input,
+    .admin-btn {
+      padding: 0.75rem;
+    }
+  }
+</style>
+
+<script>
+  import { createClient } from "@supabase/supabase-js";
+
+  // Admin authentication system
+  const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+  const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+  // Initialize Supabase client
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Initialize animations
+  function initializeAnimations() {
+    if (!document.getElementById("tinkbyte-animations")) {
+      const style = document.createElement("style");
+      style.id = "tinkbyte-animations";
+      style.textContent = `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin { animation: spin 1s linear infinite; }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  // Create spinner SVG
+  function createSpinnerSVG(isLoading: boolean, size: number = 16) {
+    return isLoading
+      ? `<svg class="animate-spin" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="12" y1="2" x2="12" y2="6"/>
+          <line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+          <line x1="2" y1="12" x2="6" y2="12"/>
+          <line x1="18" y1="12" x2="22" y2="12"/>
+          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+        </svg>`
+      : `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+        </svg>`;
+  }
+
+  // Update button state
+  function updateButtonState(
+    button: HTMLButtonElement,
+    isLoading: boolean,
+    loadingText: string = "Signing in...",
+    defaultText: string = "Sign In"
+  ) {
+    const btnContent = button.querySelector(".btn-content");
+
+    if (btnContent) {
+      btnContent.innerHTML = isLoading
+        ? `${createSpinnerSVG(true)} <span class="btn-text">${loadingText}</span>`
+        : `${createSpinnerSVG(false)} <span class="btn-text">${defaultText}</span>`;
+    }
+
+    button.disabled = isLoading;
+  }
+
+  class ClientAdminAuth {
+    static ADMIN_EMAILS = ["tinkbytehq@gmail.com"];
+    static STORAGE_KEY = "tinkbyte-admin-session";
+
+    static async signIn(email: string, password: string) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+
+        if (!data.user || !data.session) {
+          return { success: false, error: "Authentication failed" };
+        }
+
+        const isAdmin = this.ADMIN_EMAILS.includes(data.user.email || "");
+
+        if (!isAdmin) {
+          await supabase.auth.signOut();
+          return {
+            success: false,
+            error: "Access denied. Admin privileges required.",
+          };
+        }
+
+        const adminUser = {
+          id: data.user.id,
+          email: data.user.email,
+          isAdmin: true,
+        };
+
+        const sessionData = {
+          user: adminUser,
+          token: data.session.access_token,
+          expiresAt: data.session.expires_at,
+        };
+
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(sessionData));
+
+        return { success: true, user: adminUser };
+      } catch (error: any) {
+        return { success: false, error: error.message || "Signin failed" };
+      }
+    }
+
+    static async getCurrentUser() {
+      try {
+        const stored = localStorage.getItem(this.STORAGE_KEY);
+        if (!stored) return null;
+
+        const session = JSON.parse(stored);
+
+        if (Date.now() > session.expiresAt * 1000) {
+          this.signOut();
+          return null;
+        }
+
+        return session.user;
+      } catch (error) {
+        this.signOut();
+        return null;
+      }
+    }
+
+    static signOut() {
+      localStorage.removeItem(this.STORAGE_KEY);
+      supabase.auth.signOut();
+    }
+  }
+
+  function initializeAdminSignin() {
+    initializeAnimations();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get("error");
+    const message = urlParams.get("message");
+    const redirect = urlParams.get("redirect") || "/admin/dashboard";
+
+    const form = document.getElementById(
+      "admin-signin-form"
+    ) as HTMLFormElement;
+    const emailInput = document.getElementById("email") as HTMLInputElement;
+    const passwordInput = document.getElementById(
+      "password"
+    ) as HTMLInputElement;
+    const submitBtn = document.getElementById(
+      "signin-btn"
+    ) as HTMLButtonElement;
+    const errorMessageEl = document.getElementById(
+      "error-message"
+    ) as HTMLElement;
+    const errorText = document.getElementById("error-text") as HTMLElement;
+    const successMessage = document.getElementById(
+      "success-message"
+    ) as HTMLElement;
+    const successText = document.getElementById("success-text") as HTMLElement;
+
+    function showError(message: string) {
+      if (errorText && errorMessageEl) {
+        errorText.textContent = message;
+        errorMessageEl.style.display = "flex";
+        if (successMessage) successMessage.style.display = "none";
+      }
+    }
+
+    function showSuccess(message: string) {
+      if (successText && successMessage) {
+        successText.textContent = message;
+        successMessage.style.display = "flex";
+        if (errorMessageEl) errorMessageEl.style.display = "none";
+      }
+    }
+
+    function hideMessages() {
+      if (errorMessageEl) errorMessageEl.style.display = "none";
+      if (successMessage) successMessage.style.display = "none";
+    }
+
+    // Handle URL parameters
+    if (error) {
+      const errorMessages: Record<string, string> = {
+        access_denied: "Access denied. Admin privileges required.",
+        session_expired: "Your session has expired. Please sign in again.",
+        not_admin: "You don't have admin privileges.",
+      };
+      showError(errorMessages[error] || "An error occurred. Please try again.");
+    }
+
+    if (message === "signed_out") {
+      showSuccess("You have been signed out successfully.");
+    }
+
+    // Check if already signed in
+    ClientAdminAuth.getCurrentUser()
+      .then((user) => {
+        if (user && !window.location.href.includes("redirecting")) {
+          window.location.href = redirect + "?from=signin";
+          return;
+        }
+      })
+      .catch(() => {
+        // Continue with normal flow
+      });
+
+    // Form submission handler
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        hideMessages();
+
+        const email = emailInput?.value.trim();
+        const password = passwordInput?.value.trim();
+
+        if (!email || !password) {
+          showError("Please enter both email and password");
+          return;
+        }
+
+        updateButtonState(submitBtn, true, "Signing in...");
+
+        try {
+          const result = await ClientAdminAuth.signIn(email, password);
+
+          if (result.success) {
+            showSuccess("Signin successful! Redirecting...");
+            setTimeout(() => {
+              window.location.href = redirect;
+            }, 1000);
+          } else {
+            showError(result.error || "Signin failed");
+          }
+        } catch (error) {
+          showError((error as Error).message || "Signin failed");
+        } finally {
+          updateButtonState(submitBtn, false);
+        }
+      });
+    }
+
+    // Focus on email input
+    if (emailInput) {
+      emailInput.focus();
+    }
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeAdminSignin);
+  } else {
+    initializeAdminSignin();
+  }
+</script>

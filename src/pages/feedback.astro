@@ -1,0 +1,382 @@
+---
+// src/pages/feedback.astro
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Feedback - TinkByte" description="Share your feedback and help us improve TinkByte">
+  <main class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          We'd Love Your Feedback
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
+          Help us improve TinkByte by sharing your thoughts, suggestions, or reporting any issues you've encountered.
+        </p>
+      </div>
+
+      <!-- Feedback Form -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+        <form id="feedback-form" class="space-y-6">
+          <!-- Feedback Type -->
+          <div>
+            <label for="feedback-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Feedback Type
+            </label>
+            <select 
+              id="feedback-type" 
+              name="type" 
+              required
+              class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+            >
+              <option value="">Select feedback type...</option>
+              <option value="bug">Bug Report</option>
+              <option value="feature">Feature Request</option>
+              <option value="improvement">Improvement Suggestion</option>
+              <option value="content">Content Feedback</option>
+              <option value="general">General Feedback</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <!-- Message -->
+          <div>
+            <label for="feedback-message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Your Feedback
+            </label>
+            <textarea 
+              id="feedback-message"
+              name="message"
+              required
+              rows="6"
+              placeholder="Please share your detailed feedback here..."
+              class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors resize-vertical"
+            ></textarea>
+            <div id="char-counter" class="text-xs text-gray-500 dark:text-gray-400 text-right mt-1">
+              0 characters
+            </div>
+          </div>
+
+          <!-- Contact Information (Optional) -->
+          <div>
+            <label for="contact-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email (Optional)
+            </label>
+            <input 
+              type="email"
+              id="contact-email"
+              name="email"
+              placeholder="your@email.com"
+              class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+            />
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              Leave your email if you'd like us to follow up with you
+            </p>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="flex gap-4">
+            <button 
+              type="submit"
+              id="submit-btn"
+              class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-medium flex items-center justify-center gap-2"
+            >
+              <span id="submit-text">Submit Feedback</span>
+              <svg id="submit-spinner" class="hidden animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </button>
+            
+            <a 
+              href="/"
+              class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-center"
+            >
+              Cancel
+            </a>
+          </div>
+        </form>
+
+        <!-- Success Message -->
+        <div id="success-message" class="hidden mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <div class="flex items-start">
+            <svg class="h-5 w-5 text-green-400 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <h3 class="text-sm font-medium text-green-800 dark:text-green-200">
+                Feedback Submitted Successfully!
+              </h3>
+              <p class="text-sm text-green-700 dark:text-green-300 mt-1">
+                Thank you for your feedback. We'll review it and get back to you if needed.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="hidden mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <div class="flex items-start">
+            <svg class="h-5 w-5 text-red-400 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+                Submission Failed
+              </h3>
+              <p id="error-text" class="text-sm text-red-700 dark:text-red-300 mt-1">
+                Please try again later.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Info -->
+      <div class="mt-12 text-center">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          Other Ways to Reach Us
+        </h2>
+        <div class="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+          <div class="text-center">
+            <div class="bg-blue-100 dark:bg-blue-900/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <h3 class="font-medium text-gray-900 dark:text-white">Email</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">hello@tinkbyte.com</p>
+          </div>
+          
+          <div class="text-center">
+            <div class="bg-green-100 dark:bg-green-900/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+              </svg>
+            </div>
+            <h3 class="font-medium text-gray-900 dark:text-white">Twitter</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">@tinkbyte</p>
+          </div>
+          
+          <div class="text-center">
+            <div class="bg-purple-100 dark:bg-purple-900/20 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+              </svg>
+            </div>
+            <h3 class="font-medium text-gray-900 dark:text-white">GitHub</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">github.com/tinkbyte</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('feedback-form') as HTMLFormElement;
+    const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+    const submitText = document.getElementById('submit-text') as HTMLSpanElement;
+    const submitSpinner = document.getElementById('submit-spinner') as HTMLElement;
+    const successMessage = document.getElementById('success-message') as HTMLElement;
+    const errorMessage = document.getElementById('error-message') as HTMLElement;
+    const errorText = document.getElementById('error-text') as HTMLElement;
+    const charCounter = document.getElementById('char-counter') as HTMLElement;
+    const messageTextarea = document.getElementById('feedback-message') as HTMLTextAreaElement;
+
+    // Character counter
+    messageTextarea.addEventListener('input', () => {
+      const length = messageTextarea.value.length;
+      charCounter.textContent = `${length} characters`;
+      
+      if (length < 10) {
+        charCounter.className = 'text-xs text-red-500 dark:text-red-400 text-right mt-1';
+      } else {
+        charCounter.className = 'text-xs text-gray-500 dark:text-gray-400 text-right mt-1';
+      }
+    });
+
+    // Form validation
+    const validateForm = () => {
+      const type = (document.getElementById('feedback-type') as HTMLSelectElement).value;
+      const message = messageTextarea.value;
+      
+      if (!type) {
+        showError('Please select a feedback type');
+        return false;
+      }
+
+      if (!message || message.trim().length < 10) {
+        showError('Please provide at least 10 characters of feedback');
+        return false;
+      }
+
+      return true;
+    };
+
+    // Show error message
+    const showError = (message: string) => {
+      errorText.textContent = message;
+      errorMessage.classList.remove('hidden');
+      successMessage.classList.add('hidden');
+      errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    // Show success message
+    const showSuccess = () => {
+      successMessage.classList.remove('hidden');
+      errorMessage.classList.add('hidden');
+      form.reset();
+      charCounter.textContent = '0 characters';
+      charCounter.className = 'text-xs text-gray-500 dark:text-gray-400 text-right mt-1';
+      successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    // Set loading state
+    const setLoading = (loading: boolean) => {
+      submitBtn.disabled = loading;
+      
+      if (loading) {
+        submitText.textContent = 'Submitting...';
+        submitSpinner.classList.remove('hidden');
+        submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+      } else {
+        submitText.textContent = 'Submit Feedback';
+        submitSpinner.classList.add('hidden');
+        submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+      }
+    };
+
+    // Get auth token from cookies
+    const getAuthToken = () => {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'sb-access-token') {
+          return decodeURIComponent(value);
+        }
+      }
+      return null;
+    };
+
+    // Handle form submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Hide previous messages
+      successMessage.classList.add('hidden');
+      errorMessage.classList.add('hidden');
+
+      // Validate form
+      if (!validateForm()) {
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const formData = new FormData(form);
+        const type = formData.get('type') as string;
+        const message = formData.get('message') as string;
+        const email = formData.get('email') as string;
+
+        // Prepare submission data to match your API
+        const submissionData = {
+          type,
+          message: message.trim(),
+          user_id: null, // Will be set by your API if user is authenticated
+          metadata: {
+            email: email || null,
+            timestamp: new Date().toISOString(),
+            user_agent: navigator.userAgent,
+            url: window.location.href,
+            referrer: document.referrer || null
+          }
+        };
+
+        // Prepare headers
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        };
+
+        // Add auth token if available
+        const token = getAuthToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // Submit to your existing API
+        const response = await fetch('/api/feedback', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(submissionData)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to submit feedback');
+        }
+
+        // Show success
+        showSuccess();
+        console.log('✅ Feedback submitted successfully:', result);
+
+      } catch (error) {
+        console.error('❌ Feedback submission error:', error);
+        
+        let errorMessage = 'Failed to submit feedback. Please try again.';
+        
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        
+        showError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    });
+  });
+</script>
+
+<style>
+  .focus\:ring-2:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  }
+
+  .transition-colors {
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+
+  .transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .focus\:ring-2:focus {
+      box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.5);
+    }
+  }
+</style>

@@ -1,13 +1,11 @@
-// src/utils/content.ts - Updated with getTagColor function
+// src/utils/content.ts - 
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 
 export type BlogPost = CollectionEntry<'blog'>;
-export type Author = CollectionEntry<'authors'>;
-export type Category = CollectionEntry<'categories'>;
 
 /**
- * Get tag color based on tag slug
+ * Get tag color based on tag slug - Complete TinkByte mapping
  */
 export function getTagColor(tagSlug: string): string {
   const colorMap: Record<string, string> = {
@@ -16,102 +14,182 @@ export function getTagColor(tagSlug: string): string {
     'machine-learning': 'purple',
     'ai-evolution': 'purple',
     'ai': 'purple',
+    'automation': 'purple',
+    'neural-networks': 'purple',
     
     // Product & Strategy
     'product-management': 'green',
     'product-strategy': 'green',
     'product-insights': 'green',
+    'product-lessons': 'green',
     'user-experience': 'green',
     'ux': 'green',
+    'ui': 'green',
+    'design-thinking': 'green',
     
     // Work & Culture
     'remote-work': 'blue',
     'tech-culture': 'blue',
     'team-building': 'blue',
     'workplace': 'blue',
+    'collaboration': 'blue',
+    'communication': 'blue',
+    'people-systems': 'blue',
     
     // Business & Startup
     'startup-culture': 'orange',
     'startup-lessons': 'orange',
+    'startup-insight': 'orange',
     'entrepreneurship': 'orange',
     'business': 'orange',
     'scaling': 'orange',
+    'business-models': 'orange',
+    'monetization': 'orange',
+    'funding': 'orange',
     
-    // Technology Trends
+    // Technology Trends & Future
     'web3': 'indigo',
     'blockchain': 'indigo',
     'crypto': 'indigo',
     'emerging-tech': 'indigo',
     'future-tech': 'indigo',
+    'future-stacks': 'indigo',
+    'quantum': 'indigo',
+    'ar-vr': 'indigo',
+    'iot': 'indigo',
     
-    // Development
+    // Development & Tools
     'developer-experience': 'teal',
     'developer-tools': 'teal',
     'programming': 'teal',
     'coding': 'teal',
     'development': 'teal',
+    'frameworks': 'teal',
+    'apis': 'teal',
+    'devops': 'teal',
+    'infrastructure': 'teal',
     
     // Industry & Analysis
     'tech-trends': 'pink',
     'industry-analysis': 'pink',
     'market-trends': 'pink',
     'analysis': 'pink',
+    'research': 'pink',
+    'research-bites': 'pink',
+    'data-analysis': 'pink',
+    'market-maps': 'pink',
     
     // Innovation & Ideas
     'innovation': 'red',
     'creativity': 'red',
     'ideas': 'red',
     'breakthrough': 'red',
+    'experimentation': 'red',
+    'prototyping': 'red',
+    
+    // Learning & Growth
+    'learning': 'cyan',
+    'learning-by-doing': 'cyan',
+    'education': 'cyan',
+    'skills': 'cyan',
+    'career': 'cyan',
+    'career-stacks': 'cyan',
+    'professional-development': 'cyan',
     
     // TinaCMS Content Pillars
     'build-thinking': 'purple',
     'community-innovation': 'green',
-    'learning-by-doing': 'blue',
-    'no-fluff-coverage': 'orange',
-    'research-backed': 'indigo',
     'global-perspective': 'teal',
+    'system-thinking': 'emerald',
+    'fail-iterate-ship': 'orange',
+    'the-interface': 'blue',
     
     // Additional common tags
-    'productivity': 'cyan',
-    'tools': 'cyan',
-    'frameworks': 'cyan',
+    'productivity': 'yellow',
+    'tools': 'yellow',
+    'efficiency': 'yellow',
+    'optimization': 'yellow',
     'design': 'pink',
-    'leadership': 'yellow',
-    'management': 'yellow',
-    'career': 'yellow',
+    'leadership': 'red',
+    'management': 'red',
     'growth': 'green',
-    'marketing': 'red',
-    'sales': 'red',
+    'marketing': 'orange',
+    'sales': 'orange',
     'data': 'indigo',
     'analytics': 'indigo',
     'security': 'red',
     'privacy': 'red',
+    'creator-economy': 'pink',
+    'consumer-behavior': 'cyan',
+    'attention': 'cyan',
+    'psychology': 'purple',
   };
   
   return colorMap[tagSlug] || 'blue';
 }
 
 /**
- * Get category color based on category name
+ * Get category color based on category name - Complete TinkByte categories
  */
 export function getCategoryColor(categoryName: string): string {
   const colorMap: Record<string, string> = {
-    'Build Thinking': 'purple',
+    // Core Themes (both full and alias)
+    'Build Thinking': 'blue',
+    'build-thinking': 'blue',
+    'Learning by Doing': 'purple', 
+    'learning-by-doing': 'purple',
+    'Fail / Iterate / Ship': 'orange',
+    'fail-iterate-ship': 'orange',
+    'build-loop': 'orange', 
+    'Product Lessons': 'green',
+    'product-lessons': 'green',
+    'Startup Insight': 'red',
+    'startup-insight': 'red',
+    'Product Strategy': 'indigo',
+    'product-strategy': 'indigo',
+    
+    // Specialized Themes (both full and alias)
+    'AI Evolution': 'violet',
+    'ai-evolution': 'violet',
+    'Developer Stack & Tools': 'emerald',
+    'developer-stack-tools': 'emerald',
+    'developer-tools': 'emerald',       
+    'Research Bites': 'pink',
+    'research-bites': 'pink',
+    'research-backed': 'pink',
+    'System Thinking': 'emerald',
+    'system-thinking': 'emerald',
+    'The Interface': 'blue',
+    'the-interface': 'blue',
+    'Tech Culture': 'pink',
+    'tech-culture': 'pink',
+    'Global Perspective': 'cyan',
+    'global-perspective': 'cyan',
     'Community Innovation': 'green',
-    'Learning by Doing': 'blue',
-    'No-Fluff Tech Coverage': 'orange',
-    'Research-Backed': 'indigo',
-    'Global Perspective': 'teal',
-    'Product Strategy': 'green',
-    'Tech Culture': 'blue',
-    'AI Evolution': 'purple',
-    'Developer Tools': 'teal',
-    'Industry Analysis': 'pink',
-    'Startup Lessons': 'orange',
-    'Innovation': 'red',
+    'community-innovation': 'green',
+    
+    // Extended Themes (both full and alias)
+    'Career Stacks': 'red',
+    'career-stacks': 'red',
+    'Future Stacks': 'violet',
+    'future-stacks': 'violet',
+    'Creator Economy': 'pink',
+    'creator-economy': 'pink',
+    'Business Models & Monetization': 'indigo',
+    'business-models-monetization': 'indigo', 
+    'business-models': 'indigo',              
+    'Consumer Behavior & Attention': 'cyan',
+    'consumer-behavior-attention': 'cyan',    
+    'consumer-behavior': 'cyan',              
+    'Ecosystem Shifts & Market Maps': 'emerald',
+    'ecosystem-shifts-market-maps': 'emerald', 
+    'market-maps': 'emerald',                  
+    'People Systems': 'orange',
+    'people-systems': 'orange',
   };
   
-  return colorMap[categoryName] || 'blue';
+  const normalizedName = categoryName?.toLowerCase().replace(/\s+/g, '-') || '';
+  return colorMap[categoryName] || colorMap[normalizedName] || 'blue';
 }
 
 /**
@@ -138,7 +216,7 @@ export async function getPostsByTags(
   const allPosts = await getAllPosts();
   
   const filteredPosts = allPosts.filter((post: BlogPost) => {
-    const postTags = post.data.tags.map((tag: string) => 
+    const postTags = (post.data.tags || []).map((tag: string) => 
       tag.toLowerCase().replace(/\s+/g, '-')
     );
     
@@ -147,10 +225,8 @@ export async function getPostsByTags(
     );
     
     if (operator === 'AND') {
-      // Post must have ALL specified tags
       return searchTags.every((tag: string) => postTags.includes(tag));
     } else {
-      // Post must have ANY of the specified tags
       return searchTags.some((tag: string) => postTags.includes(tag));
     }
   });
@@ -170,10 +246,11 @@ export async function getPostsByTag(tag: string, limit?: number): Promise<BlogPo
  */
 export async function getPostsByCategory(category: string, limit?: number): Promise<BlogPost[]> {
   const allPosts = await getAllPosts();
-  const categoryPosts = allPosts.filter((post: BlogPost) => 
-    post.data.category.toLowerCase().replace(/\s+/g, '-') === 
-    category.toLowerCase().replace(/\s+/g, '-')
-  );
+  const categoryPosts = allPosts.filter((post: BlogPost) => {
+    const postCategory = post.data.category?.toLowerCase().replace(/\s+/g, '-') || '';
+    const searchCategory = category.toLowerCase().replace(/\s+/g, '-');
+    return postCategory === searchCategory;
+  });
   
   return limit ? categoryPosts.slice(0, limit) : categoryPosts;
 }
@@ -191,7 +268,8 @@ export async function getAllTags(): Promise<Array<{
   const tagMap = new Map<string, BlogPost[]>();
   
   posts.forEach((post: BlogPost) => {
-    post.data.tags.forEach((tag: string) => {
+    const tags = post.data.tags || [];
+    tags.forEach((tag: string) => {
       const normalizedTag = tag.toLowerCase().replace(/\s+/g, '-');
       if (!tagMap.has(normalizedTag)) {
         tagMap.set(normalizedTag, []);
@@ -217,10 +295,8 @@ export async function getRelatedPosts(
 ): Promise<BlogPost[]> {
   const allPosts = await getAllPosts();
   
-  // Filter out the current post
   const otherPosts = allPosts.filter((post: BlogPost) => post.slug !== currentPost.slug);
   
-  // Score posts based on shared category and tags
   const scoredPosts = otherPosts.map((post: BlogPost) => {
     let score = 0;
     
@@ -230,15 +306,16 @@ export async function getRelatedPosts(
     }
     
     // Shared tags get points
-    const sharedTags = post.data.tags.filter((tag: string) => 
-      currentPost.data.tags.includes(tag)
+    const currentTags = currentPost.data.tags || [];
+    const postTags = post.data.tags || [];
+    const sharedTags = postTags.filter((tag: string) => 
+      currentTags.includes(tag)
     );
     score += sharedTags.length;
     
     return { post, score };
   });
   
-  // Sort by score and return top results
   return scoredPosts
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
@@ -263,10 +340,10 @@ export async function searchPosts(options: {
   if (options.query) {
     const searchTerm = options.query.toLowerCase();
     posts = posts.filter((post: BlogPost) => {
-      const title = post.data.title.toLowerCase();
-      const excerpt = post.data.excerpt.toLowerCase();
-      const category = post.data.category.toLowerCase();
-      const tags = post.data.tags.join(' ').toLowerCase();
+      const title = post.data.title?.toLowerCase() || '';
+      const excerpt = post.data.excerpt?.toLowerCase() || '';
+      const category = post.data.category?.toLowerCase() || '';
+      const tags = (post.data.tags || []).join(' ').toLowerCase();
       
       return title.includes(searchTerm) || 
              excerpt.includes(searchTerm) || 
@@ -278,7 +355,7 @@ export async function searchPosts(options: {
   // Filter by tags
   if (options.tags && options.tags.length > 0) {
     posts = posts.filter((post: BlogPost) => {
-      const postTags = post.data.tags.map((tag: string) => 
+      const postTags = (post.data.tags || []).map((tag: string) => 
         tag.toLowerCase().replace(/\s+/g, '-')
       );
       
@@ -296,18 +373,20 @@ export async function searchPosts(options: {
   
   // Filter by category
   if (options.category) {
-    posts = posts.filter((post: BlogPost) => 
-      post.data.category.toLowerCase().replace(/\s+/g, '-') === 
-      options.category!.toLowerCase().replace(/\s+/g, '-')
-    );
+    posts = posts.filter((post: BlogPost) => {
+      const postCategory = post.data.category?.toLowerCase().replace(/\s+/g, '-') || '';
+      const searchCategory = options.category!.toLowerCase().replace(/\s+/g, '-');
+      return postCategory === searchCategory;
+    });
   }
   
   // Filter by author
   if (options.author) {
-    posts = posts.filter((post: BlogPost) => 
-      post.data.author.toLowerCase().replace(/\s+/g, '-') === 
-      options.author!.toLowerCase().replace(/\s+/g, '-')
-    );
+    posts = posts.filter((post: BlogPost) => {
+      const postAuthor = post.data.author?.toLowerCase().replace(/\s+/g, '-') || '';
+      const searchAuthor = options.author!.toLowerCase().replace(/\s+/g, '-');
+      return postAuthor === searchAuthor;
+    });
   }
   
   // Filter by featured status
@@ -363,10 +442,12 @@ export async function getAllCategories(): Promise<Array<{
   
   posts.forEach((post: BlogPost) => {
     const category = post.data.category;
-    if (!categoryMap.has(category)) {
+    if (category && !categoryMap.has(category)) {
       categoryMap.set(category, []);
     }
-    categoryMap.get(category)!.push(post);
+    if (category) {
+      categoryMap.get(category)!.push(post);
+    }
   });
   
   return Array.from(categoryMap.entries()).map(([name, categoryPosts]) => ({
@@ -381,4 +462,163 @@ export async function getAllCategories(): Promise<Array<{
       featured: false
     }
   })).sort((a, b) => b.count - a.count);
+}
+
+/**
+ * Helper function to format dates consistently
+ */
+export function formatDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
+  const defaultOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  };
+  
+  return date.toLocaleDateString('en-US', { ...defaultOptions, ...options });
+}
+
+/**
+ * Get featured posts
+ */
+export async function getFeaturedPosts(limit?: number): Promise<BlogPost[]> {
+  const allPosts = await getAllPosts();
+  const featuredPosts = allPosts.filter((post: BlogPost) => post.data.featured === true);
+  
+  return limit ? featuredPosts.slice(0, limit) : featuredPosts;
+}
+
+/**
+ * Get trending posts (you can customize the logic)
+ */
+export async function getTrendingPosts(limit: number = 5): Promise<BlogPost[]> {
+  const allPosts = await getAllPosts();
+  
+  // Simple trending logic: recent posts with high engagement
+  // You can customize this based on your metrics
+  const recentPosts = allPosts.filter((post: BlogPost) => {
+    const postDate = new Date(post.data.pubDate);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return postDate > thirtyDaysAgo;
+  });
+  
+  return recentPosts.slice(0, limit);
+}
+
+/**
+ * Enhanced post retrieval with new schema fields
+ */
+export async function getEnhancedPosts(): Promise<BlogPost[]> {
+  const posts = await getCollection('blog', ({ data }) => {
+    return data.draft !== true && data.editorial?.status !== 'draft';
+  });
+  
+  return posts.sort((a: BlogPost, b: BlogPost) => 
+    new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
+  );
+}
+
+/**
+ * Get posts by story type (new field in your schema)
+ */
+export async function getPostsByStoryType(
+  storyType: string, 
+  limit?: number
+): Promise<BlogPost[]> {
+  const posts = await getAllPosts();
+  const filtered = posts.filter((post: BlogPost) => 
+    post.data.storyType === storyType
+  );
+  
+  return limit ? filtered.slice(0, limit) : filtered;
+}
+
+/**
+ * Get posts with audio content
+ */
+export async function getAudioPosts(limit?: number): Promise<BlogPost[]> {
+  const posts = await getAllPosts();
+  const audioPosts = posts.filter((post: BlogPost) => 
+    post.data.audioUrl && post.data.audioDuration
+  );
+  
+  return limit ? audioPosts.slice(0, limit) : audioPosts;
+}
+
+/**
+ * Enhanced author information extraction
+ */
+export function getAuthorInfo(post: BlogPost) {
+  const authorInfo = post.data.authorInfo;
+  if (!authorInfo) {
+    return {
+      name: 'TinkByte Team',
+      role: 'Editorial Team',
+      bio: 'Building meaningful, data-driven products that solve real problems',
+      avatar: null,
+      social: {}
+    };
+  }
+  
+  return {
+    name: authorInfo.name,
+    role: authorInfo.role || 'Contributor',
+    bio: authorInfo.bio || '',
+    avatar: authorInfo.avatar || null,
+    social: authorInfo.social || {}
+  };
+}
+
+/**
+ * Get hero image with fallback logic
+ */
+export function getHeroImage(post: BlogPost) {
+  const heroImage = post.data.heroImage;
+  
+  if (heroImage?.imageType === 'upload' && heroImage.uploadedImage) {
+    return {
+      src: heroImage.uploadedImage,
+      alt: heroImage.alt,
+      caption: heroImage.caption
+    };
+  }
+  
+  if (heroImage?.imageType === 'url' && heroImage.externalUrl) {
+    return {
+      src: heroImage.externalUrl,
+      alt: heroImage.alt,
+      caption: heroImage.caption
+    };
+  }
+  
+  // Fallback to legacy image field
+  if (post.data.image) {
+    return {
+      src: post.data.image,
+      alt: post.data.imageAlt || post.data.title,
+      caption: null
+    };
+  }
+  
+  return null;
+}
+
+/**
+ * Enhanced category utilities with theme grouping
+ */
+export function getCategoryTheme(categorySlug: string): 'core' | 'specialized' | 'extended' {
+  const coreThemes = [
+    'build-thinking', 'learning-by-doing', 'fail-iterate-ship',
+    'product-lessons', 'startup-insight', 'product-strategy'
+  ];
+  
+  const specializedThemes = [
+    'ai-evolution', 'developer-stack-tools', 'research-bites',
+    'system-thinking', 'the-interface', 'tech-culture',
+    'global-perspective', 'community-innovation'
+  ];
+  
+  if (coreThemes.includes(categorySlug)) return 'core';
+  if (specializedThemes.includes(categorySlug)) return 'specialized';
+  return 'extended';
 }

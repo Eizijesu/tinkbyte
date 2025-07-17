@@ -4,16 +4,17 @@ import ShareButtons from "../../components/ui/ShareButtons.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 import { Image } from "astro:assets";
 
-type NewsletterIssue = CollectionEntry<'newsletter'>;
+type NewsletterIssue = CollectionEntry<"newsletter">;
 
 export async function getStaticPaths() {
-  const issues = await getCollection("newsletter", ({ data }) => 
-    data.status === "published"
+  const issues = await getCollection(
+    "newsletter",
+    ({ data }) => data.status === "published"
   );
-  
+
   return issues.map((issue) => ({
     params: { slug: issue.slug },
-    props: { issue }
+    props: { issue },
   }));
 }
 
@@ -25,37 +26,120 @@ const { issue } = Astro.props;
 const { Content } = await issue.render();
 
 // Get related issues from same newsletter type
-const allIssues = await getCollection("newsletter", ({ data }) => 
-  data.status === "published"
+const allIssues = await getCollection(
+  "newsletter",
+  ({ data }) => data.status === "published"
 );
 const relatedIssues = allIssues
-  .filter(i => i.slug !== issue.slug && i.data.newsletterType === issue.data.newsletterType)
-  .sort((a, b) => new Date(b.data.publishDate).getTime() - new Date(a.data.publishDate).getTime())
+  .filter(
+    (i) =>
+      i.slug !== issue.slug &&
+      i.data.newsletterType === issue.data.newsletterType
+  )
+  .sort(
+    (a, b) =>
+      new Date(b.data.publishDate).getTime() -
+      new Date(a.data.publishDate).getTime()
+  )
   .slice(0, 3);
 
 const publishedTime = new Date(issue.data.publishDate).toISOString();
-const formattedDate = new Date(issue.data.publishDate).toLocaleDateString("en-US", {
-  year: "numeric",
-  month: "long", 
-  day: "numeric",
-});
+const formattedDate = new Date(issue.data.publishDate).toLocaleDateString(
+  "en-US",
+  {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }
+);
 
-// Newsletter type display mapping
-const newsletterTypeDisplay = {
-  'tinkbyte-weekly': { name: 'TinkByte Weekly', color: 'blue', icon: 'fas fa-newspaper' },
-  'build-sheet': { name: 'Build Sheet', color: 'purple', icon: 'fas fa-hammer' },
-  'stackdown': { name: 'Stackdown', color: 'green', icon: 'fas fa-layer-group' },
-  'signal-drop': { name: 'Signal Drop', color: 'orange', icon: 'fas fa-signal' },
-  'system-signal': { name: 'System Signal', color: 'red', icon: 'fas fa-cogs' },
-  'the-real-build': { name: 'The Real Build', color: 'indigo', icon: 'fas fa-rocket' },
-  'the-loop': { name: 'The Loop', color: 'pink', icon: 'fas fa-sync' },
-  'data-slice': { name: 'Data Slice', color: 'teal', icon: 'fas fa-chart-bar' },
-  'the-mirror': { name: 'The Mirror', color: 'gray', icon: 'fas fa-mirror' },
-  'community-code': { name: 'Community Code', color: 'lime', icon: 'fas fa-users' },
-  'future-tech': { name: 'Future Tech', color: 'cyan', icon: 'fas fa-atom' }
+// Updated Newsletter type display mapping for all 12 categories
+const newsletterTypeDisplay: Record<
+  string,
+  { name: string; color: string; icon: string; description: string }
+> = {
+  // Weekly Publications (5)
+  "tinkbyte-weekly": {
+    name: "TinkByte Weekly",
+    color: "blue",
+    icon: "fas fa-newspaper",
+    description:
+      "Product strategy, AI trends, market analysis, business insights",
+  },
+  "build-sheet": {
+    name: "Build Sheet",
+    color: "purple",
+    icon: "fas fa-hammer",
+    description: "Real-time shipping, fixing, learning, hands-on experiments",
+  },
+  stackdown: {
+    name: "Stackdown",
+    color: "green",
+    icon: "fas fa-layer-group",
+    description: "Tools, workflows, stack breakdowns, technical setups",
+  },
+  "signal-drop": {
+    name: "Signal Drop",
+    color: "orange",
+    icon: "fas fa-signal",
+    description: "Quick insights, launches, updates, AI shifts, market signals",
+  },
+  "system-signal": {
+    name: "System Signal",
+    color: "red",
+    icon: "fas fa-cogs",
+    description: "Automation, logic, ML patterns, system architecture",
+  },
+  // Monthly Deep Dives (6)
+  "the-real-build": {
+    name: "The Real Build",
+    color: "indigo",
+    icon: "fas fa-rocket",
+    description: "Complete product journey documentation, idea to execution",
+  },
+  "the-loop": {
+    name: "The Loop",
+    color: "pink",
+    icon: "fas fa-sync",
+    description: "Recurring patterns, mental models, strategy frameworks",
+  },
+  "data-slice": {
+    name: "Data Slice",
+    color: "teal",
+    icon: "fas fa-chart-bar",
+    description: "Single powerful insight from research, behavior, testing",
+  },
+  "the-mirror": {
+    name: "The Mirror",
+    color: "gray",
+    icon: "fas fa-mirror",
+    description: "Culture, ethics, human impact of technology",
+  },
+  "community-code": {
+    name: "Community Code",
+    color: "lime",
+    icon: "fas fa-users",
+    description: "Creator projects, community stories, builder insights",
+  },
+  "career-stack": {
+    name: "Career Stack",
+    color: "yellow",
+    icon: "fas fa-briefcase",
+    description: "Professional development, skills, remote hiring strategies",
+  },
+  // Limited Series (1)
+  "start-here-future-tech": {
+    name: "Start Here: Future Tech",
+    color: "cyan",
+    icon: "fas fa-atom",
+    description:
+      "Beginner introductions to AR, VR, Robotics, Quantum, Blockchain, Web3, IoTs",
+  },
 };
 
-const typeInfo = newsletterTypeDisplay[issue.data.newsletterType] || newsletterTypeDisplay['tinkbyte-weekly'];
+const typeInfo =
+  newsletterTypeDisplay[issue.data.newsletterType] ||
+  newsletterTypeDisplay["tinkbyte-weekly"];
 ---
 
 <Layout
@@ -72,16 +156,26 @@ const typeInfo = newsletterTypeDisplay[issue.data.newsletterType] || newsletterT
     <header class="mb-8">
       <!-- Breadcrumb -->
       <nav class="mb-6">
-        <div class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
-          <a href="/newsletter" class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide font-semibold">
+        <div
+          class="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400"
+        >
+          <a
+            href="/newsletter"
+            class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide font-semibold"
+          >
             Newsletter
           </a>
           <i class="fas fa-chevron-right text-xs mx-2"></i>
-          <a href="/newsletter/archive" class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide">
+          <a
+            href="/newsletter/archive"
+            class="hover:text-zinc-700 dark:hover:text-zinc-300 uppercase tracking-wide"
+          >
             Archive
           </a>
           <i class="fas fa-chevron-right text-xs mx-2"></i>
-          <span class="text-zinc-700 dark:text-zinc-300 uppercase tracking-wide font-semibold">
+          <span
+            class="text-zinc-700 dark:text-zinc-300 uppercase tracking-wide font-semibold"
+          >
             {typeInfo.name}
           </span>
         </div>
@@ -89,124 +183,157 @@ const typeInfo = newsletterTypeDisplay[issue.data.newsletterType] || newsletterT
 
       <!-- Newsletter Type & Issue Badge -->
       <div class="mb-4">
-        <span class={`inline-flex items-center px-3 py-1 bg-${typeInfo.color}-100 dark:bg-${typeInfo.color}-900/30 text-${typeInfo.color}-800 dark:text-${typeInfo.color}-300 text-sm font-bold uppercase tracking-wide border border-${typeInfo.color}-200 dark:border-${typeInfo.color}-800`}>
+        <span
+          class={`inline-flex items-center px-3 py-1 bg-${typeInfo.color}-100 dark:bg-${typeInfo.color}-900/30 text-${typeInfo.color}-800 dark:text-${typeInfo.color}-300 text-sm font-bold uppercase tracking-wide border border-${typeInfo.color}-200 dark:border-${typeInfo.color}-800`}
+        >
           <i class={`${typeInfo.icon} mr-2`}></i>
           {typeInfo.name} #{issue.data.issueNumber}
         </span>
-        {issue.data.featured && (
-          <span class="ml-2 inline-flex items-center px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-sm font-bold uppercase tracking-wide border border-yellow-200 dark:border-yellow-800">
-            <i class="fas fa-star mr-2"></i>
-            Featured
-          </span>
-        )}
-        <span class="ml-2 inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-sm font-bold uppercase tracking-wide border border-green-200 dark:border-green-800">
+        {
+          issue.data.featured && (
+            <span class="ml-2 inline-flex items-center px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-sm font-bold uppercase tracking-wide border border-yellow-200 dark:border-yellow-800">
+              <i class="fas fa-star mr-2" />
+              Featured
+            </span>
+          )
+        }
+        <span
+          class="ml-2 inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-sm font-bold uppercase tracking-wide border border-green-200 dark:border-green-800"
+        >
           <i class="fas fa-eye mr-2"></i>
           Preview Only
         </span>
       </div>
 
       <!-- Title -->
-      <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 leading-tight">
+      <h1
+        class="text-3xl sm:text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 leading-tight"
+      >
         {issue.data.title}
       </h1>
 
       <!-- Issue Meta -->
-      <div class="flex flex-wrap items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-6">
-        <time datetime={publishedTime} class="font-medium">{formattedDate}</time>
-        {issue.data.trackStats && issue.data.stats && (
-          <>
-            <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
-            <span>{issue.data.stats.subscribers} subscribers</span>
-            <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
-            <span>{issue.data.stats.openRate}% open rate</span>
-          </>
-        )}
-        {issue.data.readingTime && (
-          <>
-            <span class="w-1 h-1 bg-zinc-400 rounded-full"></span>
-            <span>{issue.data.readingTime} min read</span>
-          </>
-        )}
+      <div
+        class="flex flex-wrap items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400 mb-6"
+      >
+        <time datetime={publishedTime} class="font-medium">{formattedDate}</time
+        >
+        {
+          issue.data.trackStats && issue.data.stats && (
+            <>
+              <span class="w-1 h-1 bg-zinc-400 rounded-full" />
+              <span>{issue.data.stats.subscribers} subscribers</span>
+              <span class="w-1 h-1 bg-zinc-400 rounded-full" />
+              <span>{issue.data.stats.openRate}% open rate</span>
+            </>
+          )
+        }
+        {
+          issue.data.readingTime && (
+            <>
+              <span class="w-1 h-1 bg-zinc-400 rounded-full" />
+              <span>{issue.data.readingTime} min read</span>
+            </>
+          )
+        }
       </div>
 
       <!-- Excerpt -->
-      <div class="bg-zinc-50 dark:bg-zinc-900 border-l-4 border-blue-500 p-6 mb-8">
-        <p class="text-xl text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+      <div
+        class="bg-zinc-50 dark:bg-zinc-900 border-l-4 border-blue-500 p-6 mb-8"
+      >
+        <p
+          class="text-xl text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium"
+        >
           {issue.data.excerpt}
         </p>
       </div>
     </header>
 
     <!-- Cover Image -->
-    {issue.data.coverImage && (
-      <div class="aspect-[16/9] overflow-hidden mb-8 border border-zinc-200 dark:border-zinc-700">
-        <Image
-          src={issue.data.coverImage}
-          alt={issue.data.title}
-          width={1200}
-          height={675}
-          class="w-full h-full object-cover"
-          loading="eager"
-        />
-      </div>
-    )}
+    {
+      issue.data.coverImage && (
+        <div class="aspect-[16/9] overflow-hidden mb-8 border border-zinc-200 dark:border-zinc-700">
+          <Image
+            src={issue.data.coverImage}
+            alt={issue.data.title}
+            width={1200}
+            height={675}
+            class="w-full h-full object-cover"
+            loading="eager"
+          />
+        </div>
+      )
+    }
 
     <!-- Newsletter Preview Content -->
     <div class="newsletter-preview-section">
       <!-- What's Inside Preview -->
-      {issue.data.highlights && issue.data.highlights.length > 0 && (
-        <div class="highlights-preview mb-8">
-          <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 flex items-center">
-            <i class="fas fa-list-ul mr-3 text-blue-600"></i>
-            What's Inside This Issue
-          </h2>
-          
-          <div class="grid gap-4">
-            {issue.data.highlights.map((highlight, index) => (
-              <div class="flex items-start gap-4 p-4 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
-                <div class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center font-bold text-sm">
-                  {index + 1}
-                </div>
-                <div class="flex-1">
-                  <h3 class="font-bold text-zinc-900 dark:text-zinc-100 mb-1">
-                    {highlight.title}
-                  </h3>
-                  {highlight.description && (
-                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                      {highlight.description}
-                    </p>
+      {
+        issue.data.highlights && issue.data.highlights.length > 0 && (
+          <div class="highlights-preview mb-8">
+            <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6 flex items-center">
+              <i class="fas fa-list-ul mr-3 text-blue-600" />
+              What's Inside This Issue
+            </h2>
+
+            <div class="grid gap-4">
+              {issue.data.highlights.map((highlight, index) => (
+                <div class="flex items-start gap-4 p-4 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                  <div class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center font-bold text-sm">
+                    {index + 1}
+                  </div>
+                  <div class="flex-1">
+                    <h3 class="font-bold text-zinc-900 dark:text-zinc-100 mb-1">
+                      {highlight.title}
+                    </h3>
+                    {highlight.description && (
+                      <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                        {highlight.description}
+                      </p>
+                    )}
+                  </div>
+                  {highlight.link && (
+                    <div class="flex-shrink-0">
+                      <i class="fas fa-external-link-alt text-zinc-400 text-sm" />
+                    </div>
                   )}
                 </div>
-                {highlight.link && (
-                  <div class="flex-shrink-0">
-                    <i class="fas fa-external-link-alt text-zinc-400 text-sm"></i>
-                  </div>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <!-- Preview Content Snippet -->
-      {issue.data.previewContent ? (
-        <div class="preview-content-snippet mb-8">
-          <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none">
-            <div set:html={issue.data.previewContent} />
+      {
+        issue.data.previewContent ? (
+          <div class="preview-content-snippet mb-8">
+            <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none">
+              <div set:html={issue.data.previewContent} />
+            </div>
           </div>
-        </div>
-      ) : (
-        <div class="preview-content-snippet mb-8">
-          <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none">
-            <h2>📧 Newsletter Preview</h2>
-            <p>This is a preview of our {typeInfo.name} newsletter. The full issue contains detailed analysis, actionable insights, and resources that help you build better products.</p>
-            
-            <blockquote>
-              <p><strong>Full subscribers get:</strong> Complete articles, exclusive tools, community access, and weekly insights delivered straight to their inbox.</p>
-            </blockquote>
+        ) : (
+          <div class="preview-content-snippet mb-8">
+            <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none">
+              <h2>📧 Newsletter Preview</h2>
+              <p>
+                This is a preview of our {typeInfo.name} newsletter. The full
+                issue contains detailed analysis, actionable insights, and
+                resources that help you build better products.
+              </p>
+
+              <blockquote>
+                <p>
+                  <strong>Full subscribers get:</strong> Complete articles,
+                  exclusive tools, community access, and weekly insights
+                  delivered straight to their inbox.
+                </p>
+              </blockquote>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <!-- Subscription Gate -->
       <div class="subscription-gate">
@@ -214,13 +341,15 @@ const typeInfo = newsletterTypeDisplay[issue.data.newsletterType] || newsletterT
           <div class="gate-icon">
             <i class="fas fa-envelope-open text-4xl text-blue-600"></i>
           </div>
-          
+
           <h3 class="gate-title">Get the Full Newsletter</h3>
           <p class="gate-description">
-            Subscribe to {typeInfo.name} and get complete access to this issue plus all future newsletters delivered directly to your inbox. 
-            Join {issue.data.stats?.subscribers || '1,000+'} other builders getting practical insights.
+            Subscribe to {typeInfo.name} and get complete access to this issue plus
+            all future newsletters delivered directly to your inbox. Join {
+              issue.data.stats?.subscribers || "1,000+"
+            } other builders getting practical insights.
           </p>
-          
+
           <div class="gate-benefits">
             <div class="benefits-grid">
               <div class="benefit-item">
@@ -241,7 +370,7 @@ const typeInfo = newsletterTypeDisplay[issue.data.newsletterType] || newsletterT
               </div>
             </div>
           </div>
-          
+
           <div class="gate-actions">
             <a href="/newsletter" class="subscribe-button primary">
               <i class="fas fa-envelope mr-2"></i>
@@ -257,18 +386,20 @@ const typeInfo = newsletterTypeDisplay[issue.data.newsletterType] || newsletterT
     </div>
 
     <!-- Tags -->
-    {issue.data.tags && issue.data.tags.length > 0 && (
-      <div class="flex flex-wrap gap-2 mb-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
-        <span class="text-sm font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-          Tags:
-        </span>
-        {issue.data.tags.map((tag) => (
-          <span class="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm font-medium uppercase tracking-wide border border-zinc-200 dark:border-zinc-700">
-            #{tag}
+    {
+      issue.data.tags && issue.data.tags.length > 0 && (
+        <div class="flex flex-wrap gap-2 mb-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
+          <span class="text-sm font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+            Tags:
           </span>
-        ))}
-      </div>
-    )}
+          {issue.data.tags.map((tag) => (
+            <span class="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm font-medium uppercase tracking-wide border border-zinc-200 dark:border-zinc-700">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )
+    }
 
     <!-- Share Buttons -->
     <div class="border-t border-zinc-200 dark:border-zinc-800 pt-8 mb-8">
@@ -281,73 +412,87 @@ const typeInfo = newsletterTypeDisplay[issue.data.newsletterType] || newsletterT
   </article>
 
   <!-- Related Issues from Same Newsletter Type -->
-  {relatedIssues.length > 0 && (
-    <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
-      <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-12">
-          <h2 class="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
-            More from {typeInfo.name}
-          </h2>
-          <p class="text-xl text-zinc-600 dark:text-zinc-400">
-            Browse other issues from this newsletter series
-          </p>
-        </div>
+  {
+    relatedIssues.length > 0 && (
+      <section class="py-16 px-4 sm:px-6 bg-zinc-50 dark:bg-zinc-900/50">
+        <div class="max-w-7xl mx-auto">
+          <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+              More from {typeInfo.name}
+            </h2>
+            <p class="text-xl text-zinc-600 dark:text-zinc-400">
+              Browse other issues from this newsletter series
+            </p>
+          </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {relatedIssues.map((relatedIssue) => (
-            <article class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-lg transition-shadow group">
-              {relatedIssue.data.coverImage && (
-                <div class="aspect-[16/9] overflow-hidden">
-                  <Image
-                    src={relatedIssue.data.coverImage}
-                    alt={relatedIssue.data.title}
-                    width={400}
-                    height={225}
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {relatedIssues.map((relatedIssue) => (
+              <article class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-lg transition-shadow group">
+                {relatedIssue.data.coverImage && (
+                  <div class="aspect-[16/9] overflow-hidden">
+                    <Image
+                      src={relatedIssue.data.coverImage}
+                      alt={relatedIssue.data.title}
+                      width={400}
+                      height={225}
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+                <div class="p-6">
+                  <div class="flex items-center gap-2 mb-3 text-xs">
+                    <span
+                      class={`bg-${typeInfo.color}-100 dark:bg-${typeInfo.color}-900/30 text-${typeInfo.color}-800 dark:text-${typeInfo.color}-300 px-2 py-1 text-xs font-bold border border-${typeInfo.color}-200 dark:border-${typeInfo.color}-800`}
+                    >
+                      Issue #{relatedIssue.data.issueNumber}
+                    </span>
+                    <time
+                      datetime={relatedIssue.data.publishDate.toISOString()}
+                      class="text-zinc-500 dark:text-zinc-400"
+                    >
+                      {relatedIssue.data.publishDate.toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )}
+                    </time>
+                  </div>
+                  <h3 class="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2 leading-tight">
+                    <a
+                      href={`/newsletter/${relatedIssue.slug}`}
+                      class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      {relatedIssue.data.title}
+                    </a>
+                  </h3>
+                  <p class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
+                    {relatedIssue.data.excerpt}
+                  </p>
                 </div>
-              )}
-              <div class="p-6">
-                <div class="flex items-center gap-2 mb-3 text-xs">
-                  <span class={`bg-${typeInfo.color}-100 dark:bg-${typeInfo.color}-900/30 text-${typeInfo.color}-800 dark:text-${typeInfo.color}-300 px-2 py-1 text-xs font-bold border border-${typeInfo.color}-200 dark:border-${typeInfo.color}-800`}>
-                    Issue #{relatedIssue.data.issueNumber}
-                  </span>
-                  <time datetime={relatedIssue.data.publishDate.toISOString()} class="text-zinc-500 dark:text-zinc-400">
-                    {relatedIssue.data.publishDate.toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </time>
-                </div>
-                <h3 class="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2 leading-tight">
-                  <a
-                    href={`/newsletter/${relatedIssue.slug}`}
-                    class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                  >
-                    {relatedIssue.data.title}
-                  </a>
-                </h3>
-                <p class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2">
-                  {relatedIssue.data.excerpt}
-                </p>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
+          </div>
+
+          <div class="text-center mt-12">
+            <a
+              href="/newsletter/archive"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors border border-blue-600"
+            >
+              <i class="fas fa-archive" />
+              View All Newsletter Issues
+            </a>
+          </div>
         </div>
-        
-        <div class="text-center mt-12">
-          <a href="/newsletter/archive" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors border border-blue-600">
-            <i class="fas fa-archive"></i>
-            View All Newsletter Issues
-          </a>
-        </div>
-      </div>
-    </section>
-  )}
+      </section>
+    )
+  }
 </Layout>
 
+<!-- Keep your existing styles -->
 <style>
   .line-clamp-2 {
     display: -webkit-box;
@@ -373,13 +518,13 @@ const typeInfo = newsletterTypeDisplay[issue.data.newsletterType] || newsletterT
   }
 
   .subscription-gate::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('/images/pattern.svg') repeat;
+    background: url("/images/pattern.svg") repeat;
     opacity: 0.05;
     pointer-events: none;
   }
@@ -525,7 +670,7 @@ const typeInfo = newsletterTypeDisplay[issue.data.newsletterType] || newsletterT
   }
 
   .preview-content-snippet::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0;
@@ -544,22 +689,22 @@ const typeInfo = newsletterTypeDisplay[issue.data.newsletterType] || newsletterT
     .subscription-gate {
       padding: 2rem 1rem;
     }
-    
+
     .gate-title {
       font-size: 1.5rem;
     }
-    
+
     .gate-actions {
       flex-direction: column;
       align-items: center;
     }
-    
+
     .subscribe-button {
       width: 100%;
       max-width: 300px;
       justify-content: center;
     }
-    
+
     .benefits-grid {
       grid-template-columns: 1fr;
       text-align: center;

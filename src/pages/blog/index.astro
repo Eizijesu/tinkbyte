@@ -21,24 +21,48 @@ const recentPosts = sortedPosts
   .filter(post => !post.data.featured)
   .slice(0, 9); // Show 9 recent posts
 
-// Get categories with post counts - FIXED: Proper type handling
+// Get categories with post counts - Complete mapping for all TinkByte topics
 const allCategories = [...new Set(allPosts.map(post => post.data.category).filter(Boolean))];
 const categoriesWithCounts = allCategories.map(category => ({
   name: category as string,
   slug: (category as string)?.toLowerCase().replace(/\s+/g, '-') || '',
   count: allPosts.filter(post => post.data.category === category).length,
-  // Map category to icon based on your TinaCMS config
+  // Complete icon mapping for all TinkByte categories
   icon: {
+    // Core Themes
     'build-thinking': 'hammer',
-    'community-innovation': 'users', 
     'learning-by-doing': 'book',
-    'no-fluff-coverage': 'bullseye',
-    'research-backed': 'chart-line',
-    'global-perspective': 'globe',
+    'product-lessons': 'lightbulb',
+    'startup-insight': 'rocket',
+    'product-strategy': 'chess',
+    'fail-iterate-ship': 'sync-alt',
+    
+    // Specialized Themes -
     'ai-evolution': 'brain',
-    'product-strategy': 'target',
+    'developer-stack-tools': 'tools',    
+    'research-bites': 'chart-line',
+    'global-perspective': 'globe',
+    'community-innovation': 'users',
     'tech-culture': 'users-cog',
-    'developer-tools': 'tools'
+    'system-thinking': 'sitemap',
+    'the-interface': 'desktop',
+    
+    // Extended Themes - 
+    'career-stacks': 'briefcase',
+    'future-stacks': 'rocket',
+    'creator-economy': 'paint-brush',
+    'business-models-monetization': 'dollar-sign',  // CORRECTED
+    'consumer-behavior-attention': 'eye',           // CORRECTED
+    'ecosystem-shifts-market-maps': 'map',          // CORRECTED
+    'people-systems': 'network-wired',
+    
+    // Legacy support
+    'developer-tools': 'tools',
+    'business-models': 'dollar-sign',
+    'consumer-behavior': 'eye',
+    'market-maps': 'map',
+    'build-loop': 'sync-alt',
+    'research-backed': 'chart-line',
   }[(category as string)?.toLowerCase().replace(/\s+/g, '-')] || 'tag'
 }));
 

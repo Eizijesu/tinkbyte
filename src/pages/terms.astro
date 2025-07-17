@@ -1,10 +1,24 @@
 ---
-// src/pages/terms.astro - Fixed with TinaCMS integration and squared design
+// src/pages/terms.astro - Fixed getEntry call
 import Layout from "../layouts/Layout.astro";
 import { getEntry } from "astro:content";
 
-// Get terms content from TinaCMS
-const termsPage = await getEntry("legal", "terms-of-service");
+// FIXED: Use the actual filename from your TinaCMS
+// Check what the actual filename is in src/content/legal/
+let termsPage;
+try {
+  // Try different possible filenames
+  termsPage = await getEntry("legal", "terms-of-service");
+} catch (error) {
+  console.log("Trying alternative filename...");
+  try {
+    termsPage = await getEntry("legal", "terms");
+  } catch (error2) {
+    console.log("Could not find terms page, using fallback");
+    termsPage = null;
+  }
+}
+
 const { Content } = termsPage ? await termsPage.render() : { Content: null };
 
 const lastUpdated = termsPage?.data.updatedDate 
@@ -20,9 +34,9 @@ const pageDescription = termsPage?.data.seo?.description || termsPage?.data.desc
 ---
 
 <Layout title={pageTitle} description={pageDescription}>
+  <!-- Your existing layout content -->
   <div class="legal-page-container">
     <div class="max-w-4xl mx-auto py-12 lg:py-16 px-4 sm:px-6">
-      <!-- Enhanced Header -->
       <header class="legal-page-header">
         <div class="header-decoration">
           <div class="decoration-circle">
@@ -48,37 +62,17 @@ const pageDescription = termsPage?.data.seo?.description || termsPage?.data.desc
         </p>
       </header>
 
-      <!-- Content -->
       <div class="legal-content">
         {Content ? (
           <div class="prose-content">
             <Content />
           </div>
         ) : (
-          <!-- Fallback content if no TinaCMS content -->
           <div class="prose-content">
-            <!-- Your existing fallback content here -->
-            <section class="content-section">
-              <h2 class="section-title">
-                <span class="section-number">01</span>
-                Acceptance of Terms
-              </h2>
-              <p>
-                By accessing and using TinkByte's website and services, you accept and agree to be bound by these terms. If you don't agree, please don't use our service.
-              </p>
-            </section>
-
-            <!-- Rest of your fallback content... -->
+            <p><strong>Terms of Service content is being loaded...</strong></p>
+            <p>If you're seeing this message, please check back shortly or contact us at legal@tinkbyte.com</p>
           </div>
         )}
-      </div>
-
-      <!-- Back to Top -->
-      <div class="back-to-top">
-        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="back-to-top-btn">
-          <i class="fas fa-arrow-up"></i>
-          Back to Top
-        </button>
       </div>
     </div>
   </div>

@@ -1,0 +1,17 @@
+ 
+<!-- public/images/avatars/preset-4.svg -->
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="120" rx="60" fill="url(#gradient4)"/>
+  <circle cx="60" cy="45" r="18" fill="white" opacity="0.9"/>
+  <path d="M30 95c0-16.569 13.431-30 30-30s30 13.431 30 30v10H30V95z" fill="white" opacity="0.9"/>
+  <rect x="50" y="36" width="20" height="2" rx="1" fill="#F59E0B"/>
+  <circle cx="55" cy="42" r="1.5" fill="#F59E0B"/>
+  <circle cx="65" cy="42" r="1.5" fill="#F59E0B"/>
+  <path d="M54 47c0 3 2.5 5 6 5s6-2 6-5" stroke="#F59E0B" stroke-width="1.5" fill="none"/>
+  <defs>
+    <linearGradient id="gradient4" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+</svg>

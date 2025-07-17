@@ -1,0 +1,919 @@
+---
+interface Props {
+  comment: any;
+  user?: any;
+  level?: number;
+}
+
+const { comment, user, level = 0 } = Astro.props;
+
+// Format date
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  } else if (hours < 24) {
+    return `${hours}h ago`;
+  } else if (days < 7) {
+    return `${days}d ago`;
+  } else {
+    return date.toLocaleDateString();
+  }
+}
+
+// Get user avatar
+function getUserAvatar(profile: any) {
+  if (profile?.avatar_type === 'uploaded' && profile?.avatar_url) {
+    return profile.avatar_url;
+  }
+  // Default avatar based on preset
+  const presetId = profile?.avatar_preset_id || 1;
+  return `/avatars/preset-${presetId}.svg`;
+}
+
+// Format content with basic markdown
+function formatContent(content: string) {
+  return content
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br>');
+}
+---
+
+<div class="comment-thread" data-comment-id={comment.id} data-level={level}>
+  <!-- Main Comment -->
+  <div class="comment-item">
+    <div class="comment-avatar">
+      <img 
+        src={getUserAvatar(comment.user_profile)} 
+        alt={comment.user_profile?.display_name || 'User'} 
+        class="avatar-image"
+      />
+    </div>
+
+    <div class="comment-content">
+      <!-- Comment Header -->
+      <div class="comment-header">
+        <div class="comment-meta">
+          <span class="author-name">
+            {comment.user_profile?.display_name || 'Anonymous'}
+          </span>
+          <span class="comment-time">
+            {formatDate(comment.created_at)}
+          </span>
+          {comment.is_edited && (
+            <span class="edited-badge">edited</span>
+          )}
+        </div>
+        
+        <div class="comment-actions">
+          <button class="action-btn more-btn" data-action="more" title="More options">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="1"/>
+              <circle cx="19" cy="12" r="1"/>
+              <circle cx="5" cy="12" r="1"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Comment Body -->
+      <div class="comment-body">
+        <div class="comment-text" set:html={formatContent(comment.content)}></div>
+      </div>
+
+      <!-- Comment Footer -->
+      <div class="comment-footer">
+        <div class="comment-reactions">
+          <button class="reaction-btn" data-reaction="helpful" data-comment-id={comment.id} title="Helpful">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+            </svg>
+            <span class="reaction-count">{comment.reaction_counts?.helpful || 0}</span>
+          </button>
+          
+          <button class="reaction-btn" data-reaction="insightful" data-comment-id={comment.id} title="Insightful">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4"/>
+              <circle cx="12" cy="12" r="9"/>
+            </svg>
+            <span class="reaction-count">{comment.reaction_counts?.insightful || 0}</span>
+          </button>
+          
+          <button class="reaction-btn" data-reaction="great" data-comment-id={comment.id} title="Great">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1.5-2s-1.5.62-1.5 2a2.5 2.5 0 0 0 2.5 2.5z"/>
+              <path d="M15.5 14.5A2.5 2.5 0 0 0 18 12c0-1.38-.5-2-1.5-2s-1.5.62-1.5 2a2.5 2.5 0 0 0 2.5 2.5z"/>
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+            </svg>
+            <span class="reaction-count">{comment.reaction_counts?.great || 0}</span>
+          </button>
+        </div>
+
+        <div class="comment-reply-actions">
+          {user && level < 3 && (
+            <button class="reply-btn" data-comment-id={comment.id}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+              Reply
+            </button>
+          )}
+          
+          <button class="action-btn bookmark-btn" data-comment-id={comment.id} title="Bookmark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+          </button>
+          
+          <button class="action-btn share-btn" data-comment-id={comment.id} title="Share">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reply Form (Hidden by default) -->
+  <div class="reply-form-container" id="reply-form-{comment.id}" style="display: none;">
+    <div class="reply-form">
+      <textarea 
+        class="reply-textarea" 
+        placeholder="Write a reply..." 
+        rows="3"
+        maxlength="1000"
+      ></textarea>
+      <div class="reply-form-actions">
+        <button class="cancel-reply-btn">Cancel</button>
+        <button class="submit-reply-btn" data-parent-id={comment.id}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+          </svg>
+          Reply
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nested Replies -->
+  {comment.replies && comment.replies.length > 0 && (
+    <div class="comment-replies">
+      {comment.replies.map((reply: any) => (
+        <div class="reply-item" data-level={level + 1}>
+          <div class="comment-avatar">
+            <img 
+              src={getUserAvatar(reply.user_profile)} 
+              alt={reply.user_profile?.display_name || 'User'} 
+              class="avatar-image"
+            />
+          </div>
+
+          <div class="comment-content">
+            <!-- Reply Header -->
+            <div class="comment-header">
+              <div class="comment-meta">
+                <span class="author-name">
+                  {reply.user_profile?.display_name || 'Anonymous'}
+                </span>
+                <span class="comment-time">
+                  {formatDate(reply.created_at)}
+                </span>
+                {reply.is_edited && (
+                  <span class="edited-badge">edited</span>
+                )}
+              </div>
+              
+              <div class="comment-actions">
+                <button class="action-btn more-btn" data-action="more" title="More options">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="1"/>
+                    <circle cx="19" cy="12" r="1"/>
+                    <circle cx="5" cy="12" r="1"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Reply Body -->
+            <div class="comment-body">
+              <div class="comment-text" set:html={formatContent(reply.content)}></div>
+            </div>
+
+            <!-- Reply Footer -->
+            <div class="comment-footer">
+              <div class="comment-reactions">
+                <button class="reaction-btn" data-reaction="helpful" data-comment-id={reply.id} title="Helpful">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                  </svg>
+                  <span class="reaction-count">{reply.reaction_counts?.helpful || 0}</span>
+                </button>
+                
+                <button class="reaction-btn" data-reaction="insightful" data-comment-id={reply.id} title="Insightful">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4"/>
+                    <circle cx="12" cy="12" r="9"/>
+                  </svg>
+                  <span class="reaction-count">{reply.reaction_counts?.insightful || 0}</span>
+                </button>
+                
+                <button class="reaction-btn" data-reaction="great" data-comment-id={reply.id} title="Great">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1.5-2s-1.5.62-1.5 2a2.5 2.5 0 0 0 2.5 2.5z"/>
+                    <path d="M15.5 14.5A2.5 2.5 0 0 0 18 12c0-1.38-.5-2-1.5-2s-1.5.62-1.5 2a2.5 2.5 0 0 0 2.5 2.5z"/>
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                  </svg>
+                  <span class="reaction-count">{reply.reaction_counts?.great || 0}</span>
+                </button>
+              </div>
+
+              <div class="comment-reply-actions">
+                {user && level < 2 && (
+                  <button class="reply-btn" data-comment-id={reply.id}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                    </svg>
+                    Reply
+                  </button>
+                )}
+                
+                <button class="action-btn bookmark-btn" data-comment-id={reply.id} title="Bookmark">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nested Reply Form -->
+          <div class="reply-form-container" id="reply-form-{reply.id}" style="display: none;">
+            <div class="reply-form">
+              <textarea 
+                class="reply-textarea" 
+                placeholder="Write a reply..." 
+                rows="3"
+                maxlength="1000"
+              ></textarea>
+              <div class="reply-form-actions">
+                <button class="cancel-reply-btn">Cancel</button>
+                <button class="submit-reply-btn" data-parent-id={reply.id}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+                  </svg>
+                  Reply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
+<style>
+  .comment-thread {
+    margin-bottom: 0;
+    position: relative;
+  }
+
+  .comment-item {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background: #1a1a2e;
+    border-bottom: 1px solid #2d2d44;
+    position: relative;
+  }
+
+  .comment-item:last-child {
+    border-bottom: none;
+  }
+
+  /* Threading lines */
+  .comment-thread[data-level="1"] .comment-item {
+    margin-left: 32px;
+    border-left: 2px solid #4285f4;
+  }
+
+  .comment-thread[data-level="2"] .comment-item {
+    margin-left: 64px;
+    border-left: 2px solid #34a853;
+  }
+
+  .comment-thread[data-level="3"] .comment-item {
+    margin-left: 96px;
+    border-left: 2px solid #fbbc05;
+  }
+
+  .comment-avatar {
+    flex-shrink: 0;
+  }
+
+  .avatar-image {
+    width: 32px;
+    height: 32px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    object-fit: cover;
+  }
+
+  .comment-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .author-name {
+    font-weight: 600;
+    color: #f0f6fc;
+    font-size: 0.875rem;
+  }
+
+  .comment-time {
+    font-size: 0.75rem;
+    color: #8b949e;
+  }
+
+  .edited-badge {
+    font-size: 0.75rem;
+    color: #8b949e;
+    font-style: italic;
+  }
+
+  .comment-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .action-btn {
+    background: transparent;
+    border: none;
+    color: #8b949e;
+    cursor: pointer;
+    padding: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .action-btn:hover {
+    color: #f0f6fc;
+    background: #21262d;
+  }
+
+  .comment-body {
+    margin-bottom: 12px;
+  }
+
+  .comment-text {
+    color: #f0f6fc;
+    line-height: 1.6;
+    font-size: 0.875rem;
+    word-wrap: break-word;
+  }
+
+  .comment-text strong {
+    font-weight: 600;
+    color: #f0f6fc;
+  }
+
+  .comment-text em {
+    font-style: italic;
+  }
+
+  .comment-text code {
+    background: #161b22;
+    border: 1px solid #30363d;
+    padding: 2px 4px;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size: 0.8125rem;
+    color: #e6edf3;
+  }
+
+  .comment-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .comment-reactions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .reaction-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .reaction-btn:hover {
+    background: #30363d;
+    color: #f0f6fc;
+    border-color: #4285f4;
+  }
+
+  .reaction-btn.active {
+    background: #4285f4;
+    color: white;
+    border-color: #4285f4;
+  }
+
+  .reaction-count {
+    font-weight: 500;
+    min-width: 12px;
+    text-align: center;
+  }
+
+  .comment-reply-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .reply-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: #8b949e;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .reply-btn:hover {
+    color: #f0f6fc;
+    background: #21262d;
+  }
+
+  /* Reply Form */
+  .reply-form-container {
+    margin-left: 44px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
+
+  .reply-form {
+    background: #161b22;
+    border: 1px solid #30363d;
+    padding: 12px;
+  }
+
+  .reply-textarea {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    padding: 8px;
+    font-size: 0.875rem;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+
+  .reply-textarea:focus {
+    outline: none;
+    border-color: #4285f4;
+  }
+
+  .reply-textarea::placeholder {
+    color: #8b949e;
+  }
+
+  .reply-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .cancel-reply-btn,
+  .submit-reply-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid #30363d;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .cancel-reply-btn {
+    background: transparent;
+    color: #8b949e;
+  }
+
+  .cancel-reply-btn:hover {
+    background: #21262d;
+    color: #f0f6fc;
+  }
+
+  .submit-reply-btn {
+    background: #4285f4;
+    color: white;
+    border-color: #4285f4;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .submit-reply-btn:hover:not(:disabled) {
+    background: #3367d6;
+    border-color: #3367d6;
+  }
+
+  .submit-reply-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Replies Container */
+  .comment-replies {
+    border-top: 1px solid #21262d;
+  }
+
+  .reply-item {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background: #161b22;
+    border-bottom: 1px solid #21262d;
+    position: relative;
+  }
+
+  .reply-item:last-child {
+    border-bottom: none;
+  }
+
+  /* Light mode styles */
+  :global(.light) .comment-item {
+    background: white;
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .avatar-image {
+    background: #f8f9fa;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .author-name {
+    color: #374151;
+  }
+
+  :global(.light) .comment-time,
+  :global(.light) .edited-badge {
+    color: #6b7280;
+  }
+
+  :global(.light) .action-btn {
+    color: #6b7280;
+  }
+
+  :global(.light) .action-btn:hover {
+    color: #374151;
+    background: #f9fafb;
+  }
+
+  :global(.light) .comment-text {
+    color: #374151;
+  }
+
+  :global(.light) .comment-text code {
+    background: #f8f9fa;
+    border-color: #e2e8f0;
+    color: #374151;
+  }
+
+  :global(.light) .reaction-btn {
+    background: white;
+    border-color: #d1d5db;
+    color: #6b7280;
+  }
+
+  :global(.light) .reaction-btn:hover {
+    background: #f9fafb;
+    color: #374151;
+    border-color: #243788;
+  }
+
+  :global(.light) .reaction-btn.active {
+    background: #243788;
+    color: white;
+    border-color: #243788;
+  }
+
+  :global(.light) .reply-btn {
+    color: #6b7280;
+  }
+
+  :global(.light) .reply-btn:hover {
+    color: #374151;
+    background: #f9fafb;
+  }
+
+  :global(.light) .reply-form {
+    background: #f8f9fa;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .reply-textarea {
+    background: white;
+    border-color: #d1d5db;
+    color: #374151;
+  }
+
+  :global(.light) .reply-textarea:focus {
+    border-color: #243788;
+  }
+
+  :global(.light) .reply-textarea::placeholder {
+    color: #6b7280;
+  }
+
+  :global(.light) .cancel-reply-btn {
+    background: transparent;
+    color: #6b7280;
+    border-color: #d1d5db;
+  }
+
+  :global(.light) .cancel-reply-btn:hover {
+    background: #f9fafb;
+    color: #374151;
+  }
+
+  :global(.light) .submit-reply-btn {
+    background: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .submit-reply-btn:hover:not(:disabled) {
+    background: #1e2d6b;
+    border-color: #1e2d6b;
+  }
+
+  :global(.light) .comment-replies {
+    border-top-color: #e2e8f0;
+  }
+
+  :global(.light) .reply-item {
+    background: #f8f9fa;
+    border-bottom-color: #e2e8f0;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 640px) {
+    .comment-thread[data-level="1"] .comment-item,
+    .comment-thread[data-level="2"] .comment-item,
+    .comment-thread[data-level="3"] .comment-item {
+      margin-left: 16px;
+    }
+
+    .comment-footer {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .comment-reactions {
+      flex-wrap: wrap;
+    }
+
+    .reply-form-container {
+      margin-left: 16px;
+    }
+
+    .comment-item {
+      padding: 12px;
+    }
+
+    .avatar-image {
+      width: 28px;
+      height: 28px;
+    }
+  }
+</style>
+
+<script>
+  import { supabase } from '../../lib/supabase';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Handle reaction buttons
+    const reactionButtons = document.querySelectorAll('.reaction-btn');
+    reactionButtons.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        const commentId = btn.getAttribute('data-comment-id');
+        const reactionType = btn.getAttribute('data-reaction');
+        
+        if (!commentId || !reactionType) return;
+
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            alert('Please sign in to react to comments');
+            return;
+          }
+
+          const response = await fetch('/api/comments/react', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              comment_id: commentId,
+              reaction_type: reactionType
+            })
+          });
+
+          const result = await response.json();
+          
+          if (response.ok) {
+            // Update the count immediately
+            const countElement = btn.querySelector('.reaction-count');
+            if (countElement) {
+              const currentCount = parseInt(countElement.textContent || '0');
+              const newCount = result.action === 'added' ? currentCount + 1 : currentCount - 1;
+              countElement.textContent = Math.max(0, newCount).toString();
+            }
+
+            // Toggle active state
+            btn.classList.toggle('active', result.action === 'added');
+          }
+        } catch (error) {
+          console.error('Error reacting to comment:', error);
+        }
+      });
+    });
+
+    // Handle reply buttons
+    const replyButtons = document.querySelectorAll('.reply-btn');
+    replyButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const commentId = btn.getAttribute('data-comment-id');
+        if (commentId) {
+          const replyForm = document.getElementById(`reply-form-${commentId}`);
+          if (replyForm) {
+            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+            if (replyForm.style.display === 'block') {
+              const textarea = replyForm.querySelector('.reply-textarea') as HTMLTextAreaElement;
+              textarea?.focus();
+            }
+          }
+        }
+      });
+    });
+
+    // Handle cancel reply buttons
+    const cancelReplyButtons = document.querySelectorAll('.cancel-reply-btn');
+    cancelReplyButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const replyForm = btn.closest('.reply-form-container') as HTMLElement;
+        if (replyForm) {
+          replyForm.style.display = 'none';
+          const textarea = replyForm.querySelector('.reply-textarea') as HTMLTextAreaElement;
+          if (textarea) textarea.value = '';
+        }
+      });
+    });
+
+    // Handle submit reply buttons
+    const submitReplyButtons = document.querySelectorAll('.submit-reply-btn');
+    submitReplyButtons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const parentId = btn.getAttribute('data-parent-id');
+        const replyForm = btn.closest('.reply-form-container');
+        const textarea = replyForm?.querySelector('.reply-textarea') as HTMLTextAreaElement;
+        
+        if (!parentId || !textarea) return;
+
+        const content = textarea.value.trim();
+        if (!content) {
+          alert('Please enter a reply');
+          return;
+        }
+
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            alert('Please sign in to reply');
+            return;
+          }
+
+          // Disable button
+          (btn as HTMLButtonElement).disabled = true;
+          (btn as HTMLButtonElement).innerHTML = 'Posting...';
+
+          const response = await fetch('/api/comments/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              content,
+              article_id: window.location.pathname.split('/').pop(),
+              parent_id: parentId
+            })
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            // Hide form and clear textarea
+            (replyForm as HTMLElement).style.display = 'none';
+            textarea.value = '';
+            
+            // Refresh page to show new reply
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
+          } else {
+            throw new Error(result.error || 'Failed to post reply');
+          }
+        } catch (error) {
+          console.error('Error posting reply:', error);
+          alert('Failed to post reply. Please try again.');
+        } finally {
+          // Re-enable button
+          (btn as HTMLButtonElement).disabled = false;
+          (btn as HTMLButtonElement).innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+            </svg>
+            Reply
+          `;
+        }
+      });
+    });
+
+    // Handle bookmark buttons
+    const bookmarkButtons = document.querySelectorAll('.bookmark-btn');
+    bookmarkButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const commentId = btn.getAttribute('data-comment-id');
+        console.log('Bookmark comment:', commentId);
+        // Implement bookmark functionality
+      });
+    });
+
+    // Handle share buttons
+    const shareButtons = document.querySelectorAll('.share-btn');
+    shareButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const commentId = btn.getAttribute('data-comment-id');
+        console.log('Share comment:', commentId);
+        // Implement share functionality
+      });
+    });
+  });
+</script>

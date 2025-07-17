@@ -1,0 +1,17 @@
+ 
+<!-- public/images/avatars/preset-2.svg -->
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="120" rx="60" fill="url(#gradient2)"/>
+  <circle cx="60" cy="45" r="18" fill="white" opacity="0.9"/>
+  <path d="M30 95c0-16.569 13.431-30 30-30s30 13.431 30 30v10H30V95z" fill="white" opacity="0.9"/>
+  <path d="M48 38h24v4h-24z" fill="#10B981" rx="2"/>
+  <circle cx="54" cy="42" r="2" fill="#10B981"/>
+  <circle cx="66" cy="42" r="2" fill="#10B981"/>
+  <path d="M55 48c2 2 5 2 7 0" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="gradient2" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10B981"/>
+      <stop offset="1" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+</svg>

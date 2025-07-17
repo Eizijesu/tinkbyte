@@ -1,0 +1,42 @@
+---
+// src/components/comments/CommentReplies.astro
+import CommentCard from './CommentCard.astro';
+import type { CommentWithProfile } from '../../lib/types/comments';
+
+interface Props {
+  replies: CommentWithProfile[];
+  currentUserId?: string;
+  reactionTypes: string[];
+  maxDepth?: number;
+}
+
+const { replies, currentUserId, reactionTypes, maxDepth = 4 } = Astro.props;
+
+// Filter replies that are within max depth
+const visibleReplies = replies.filter(reply => (reply.thread_level || 0) <= maxDepth);
+---
+
+{visibleReplies.length > 0 && (
+  <div class="comment-replies">
+    {visibleReplies.map((reply) => (
+      <div class="reply-wrapper" data-reply-id={reply.id}>
+        <CommentCard 
+          comment={reply}
+          currentUserId={currentUserId}
+          isReply={true}
+          reactionTypes={reactionTypes}
+        />
+        
+        <!-- Nested Replies -->
+        {reply.replies && reply.replies.length > 0 && (reply.thread_level || 0) < maxDepth && (
+          <Astro.self 
+            replies={reply.replies}
+            currentUserId={currentUserId}
+            reactionTypes={reactionTypes}
+            maxDepth={maxDepth}
+          />
+        )}
+      </div>
+    ))}
+  </div>
+)}

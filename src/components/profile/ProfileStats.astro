@@ -1,0 +1,141 @@
+---
+// src/components/profile/ProfileStats.astro
+---
+
+<div class="profile-stats">
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-value" id="followers-count">0</div>
+      <div class="stat-label">Followers</div>
+    </div>
+
+    <div class="stat-item">
+      <div class="stat-value" id="following-count">0</div>
+      <div class="stat-label">Following</div>
+      <div class="stat-breakdown">
+        <span id="following-users">0 Users</span>
+        <span id="following-topics">0 Topics</span>
+        <span id="following-authors">0 Authors</span>
+      </div>
+    </div>
+
+    <div class="stat-item">
+      <div class="stat-value" id="stories-count">0</div>
+      <div class="stat-label">Stories</div>
+    </div>
+
+    <div class="stat-item">
+      <div class="stat-value" id="threads-count">0</div>
+      <div class="stat-label">Threads</div>
+    </div>
+
+    <div class="stat-item">
+      <div class="stat-value" id="comments-count">0</div>
+      <div class="stat-label">Comments</div>
+    </div>
+
+    <div class="stat-item">
+      <div class="stat-value" id="reads-count">0</div>
+      <div class="stat-label">Total Reads</div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .profile-stats {
+    background: white;
+    border: 2px solid #e2e8f0;
+    padding: 1.5rem;
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  :global(.dark) .profile-stats {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 2rem;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 1rem;
+    border: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+  }
+
+  .stat-item:hover {
+    border-color: #243788;
+    background: #f8fafc;
+  }
+
+  :global(.dark) .stat-item {
+    border-color: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .stat-item:hover {
+    border-color: #b4bce1;
+    background: rgb(30, 41, 59);
+  }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #243788;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  :global(.dark) .stat-value {
+    color: #b4bce1;
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  :global(.dark) .stat-label {
+    color: rgb(148, 163, 184);
+  }
+
+  .stat-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+
+  :global(.dark) .stat-breakdown {
+    color: rgb(156, 163, 175);
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-item {
+      padding: 0.75rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

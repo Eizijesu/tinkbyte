@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/categories/[category].astro - Fixed Version with Shorter Hero
+// src/pages/blog/categories/[category].astro - Fixed version
 import Layout from "../../../layouts/Layout.astro";
 import ArticleCard from "../../../components/blog/ArticleCard.astro";
 import Button from "../../../components/ui/Button.astro";
@@ -12,24 +12,122 @@ type BlogPost = CollectionEntry<"blog">;
 export async function getStaticPaths() {
   const allPosts = await getCollection("blog", ({ data }) => !data.draft);
 
-  const categories: string[] = [
+  
+  // Category alias mapping
+  const categoryAliases: Record<string, string> = {
+    'build-loop': 'fail-iterate-ship',
+    'developer-tools': 'developer-stack-tools', 
+    'business-models': 'business-models-monetization',
+    'consumer-behavior': 'consumer-behavior-attention',
+    'research-backed': 'research-bites',
+    'market-maps': 'ecosystem-shifts-market-maps'
+  };
+
+  // Get categories from existing posts (already in kebab-case)
+  const existingCategories: string[] = [
     ...new Set(allPosts.map((post: BlogPost) => post.data.category)),
   ].filter((cat): cat is string => Boolean(cat));
 
-  return categories.map((category: string) => ({
-    params: {
-      category: category
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^\w-]+/g, ""),
-    },
-    props: {
-      categoryName: category,
-      posts: allPosts.filter(
-        (post: BlogPost) => post.data.category === category
-      ),
-    },
-  }));
+  // Define predefined categories in kebab-case to match your posts
+  const predefinedCategories = [
+  // Core Themes
+  "build-thinking",
+  "learning-by-doing",
+  "fail-iterate-ship",
+  "build-loop", // ← ADD: alias for fail-iterate-ship
+  "product-lessons",
+  "startup-insight", 
+  "product-strategy",
+  
+  // Specialized Themes
+  "ai-evolution",
+  "developer-stack-tools", // ← CORRECTED: full slug
+  "developer-tools",       // ← ADD: alias
+  "research-bites",
+  "research-backed", // ← ADD: alias
+  "system-thinking",
+  "the-interface",
+  "tech-culture", 
+  "global-perspective",
+  "community-innovation",
+  
+  // Extended Themes
+  "career-stacks",
+  "future-stacks",
+  "business-models-monetization", // ← CORRECTED: full slug
+  "business-models",              // ← ADD: alias
+  "creator-economy",
+  "consumer-behavior-attention",  // ← CORRECTED: full slug
+  "consumer-behavior",            // ← ADD: alias
+  "ecosystem-shifts-market-maps", // ← CORRECTED: full slug
+  "market-maps",                  // ← ADD: alias
+  "people-systems"
+];
+
+  // Combine both - ensures all predefined categories have pages
+  const allCategories = [...new Set([...existingCategories, ...predefinedCategories])];
+
+  // Create mapping from kebab-case to Title Case for display
+  const categoryDisplayNames: Record<string, string> = {
+  // Core Themes
+  "build-thinking": "Build Thinking",
+  "learning-by-doing": "Learning by Doing", 
+  "fail-iterate-ship": "Fail / Iterate / Ship",
+  "build-loop": "Fail / Iterate / Ship",
+  "product-lessons": "Product Lessons",
+  "startup-insight": "Startup Insight",
+  "product-strategy": "Product Strategy",
+  
+  // Specialized Themes
+  "ai-evolution": "AI Evolution",
+  "developer-stack-tools": "Developer Stack & Tools", 
+  "developer-tools": "Developer Stack & Tools",      
+  "research-bites": "Research Bites",
+  "research-backed": "Research Bites",
+  "system-thinking": "System Thinking",
+  "the-interface": "The Interface", 
+  "tech-culture": "Tech Culture",
+  "global-perspective": "Global Perspective",
+  "community-innovation": "Community Innovation",
+  
+  // Extended Themes
+  "career-stacks": "Career Stacks",
+  "future-stacks": "Future Stacks",
+  "business-models-monetization": "Business Models & Monetization", // ← CORRECTED
+  "business-models": "Business Models & Monetization",              // ← ADD: alias
+  "creator-economy": "Creator Economy",
+  "consumer-behavior-attention": "Consumer Behavior & Attention",   // ← CORRECTED
+  "consumer-behavior": "Consumer Behavior & Attention",             // ← ADD: alias
+  "ecosystem-shifts-market-maps": "Ecosystem Shifts & Market Maps", // ← CORRECTED
+  "market-maps": "Ecosystem Shifts & Market Maps",                  // ← ADD: alias
+  "people-systems": "People Systems"
+};
+
+console.log("Creating category pages for:", allCategories);
+  console.log("Total categories:", allCategories.length);
+
+  return allCategories.map((category: string) => {
+    // Get the canonical category (resolve aliases)
+    const canonicalCategory = categoryAliases[category] || category;
+    
+    // Filter posts by both the category and its aliases
+    const categoryPosts = allPosts.filter((post: BlogPost) => {
+      const postCategory = post.data.category;
+      return postCategory === category || 
+             postCategory === canonicalCategory ||
+             categoryAliases[postCategory] === category;
+    });
+
+    console.log(`Category: ${category} -> Posts: ${categoryPosts.length}`);
+
+    return {
+      params: { category: category },
+      props: {
+        categoryName: categoryDisplayNames[category] || category,
+        posts: categoryPosts,
+      },
+    };
+  });
 }
 
 interface Props {
@@ -39,20 +137,34 @@ interface Props {
 
 const { categoryName, posts }: Props = Astro.props;
 
-// Enhanced category color and icon mapping (matching your blog index)
+// Enhanced category color and icon mapping (using kebab-case keys)
 const getCategoryColor = (categoryName: string): string => {
   const colorMap: Record<string, string> = {
     "build-thinking": "blue",
-    "community-innovation": "green", 
     "learning-by-doing": "purple",
-    "no-fluff-coverage": "orange",
-    "research-backed": "red",
-    "global-perspective": "cyan",
-    "ai-evolution": "violet",
+    "product-lessons": "green",
+    "startup-insight": "red",
     "product-strategy": "indigo",
+    "ai-evolution": "violet",
+    "developer-tools": "emerald",
+    "research-bites": "pink",
+    "global-perspective": "cyan",
+    "community-innovation": "green",
     "tech-culture": "pink",
-    "developer-tools": "emerald"
+    "system-thinking": "emerald",
+    "the-interface": "blue",
+    "fail-iterate-ship":"orange",
+    "build-loop": "orange",
+    "career-stacks": "red",
+    "future-stacks": "violet",
+    "creator-economy": "pink",
+    "business-models": "indigo",
+    "consumer-behavior": "cyan",
+    "market-maps": "emerald",
+    "people-systems": "orange"
   };
+  
+  // Convert display name back to kebab-case for lookup
   const slug = categoryName.toLowerCase().replace(/\s+/g, '-');
   return colorMap[slug] || "blue";
 };
@@ -60,16 +172,29 @@ const getCategoryColor = (categoryName: string): string => {
 const getCategoryIcon = (categoryName: string): string => {
   const iconMap: Record<string, string> = {
     "build-thinking": "fas fa-hammer",
-    "community-innovation": "fas fa-users", 
     "learning-by-doing": "fas fa-book",
-    "no-fluff-coverage": "fas fa-bullseye",
-    "research-backed": "fas fa-chart-line",
-    "global-perspective": "fas fa-globe",
+    "product-lessons": "fas fa-lightbulb",
+    "startup-insight": "fas fa-rocket",
+    "product-strategy": "fas fa-chess",
     "ai-evolution": "fas fa-brain",
-    "product-strategy": "fas fa-target",
+    "developer-tools": "fas fa-tools",
+    "research-bites": "fas fa-chart-line",
+    "global-perspective": "fas fa-globe",
+    "community-innovation": "fas fa-users",
     "tech-culture": "fas fa-users-cog",
-    "developer-tools": "fas fa-tools"
+    "system-thinking": "fas fa-sitemap",
+    "the-interface": "fas fa-desktop",
+    "fail-iterate-ship": "fas fa-repeat",
+    "career-stacks": "fas fa-briefcase",
+    "future-stacks": "fas fa-rocket",
+    "creator-economy": "fas fa-paint-brush",
+    "business-models": "fas fa-dollar-sign",
+    "consumer-behavior": "fas fa-eye",
+    "market-maps": "fas fa-map",
+    "people-systems": "fas fa-network-wired"
   };
+  
+  // Convert display name back to kebab-case for lookup
   const slug = categoryName.toLowerCase().replace(/\s+/g, '-');
   return iconMap[slug] || "fas fa-tag";
 };
@@ -77,7 +202,7 @@ const getCategoryIcon = (categoryName: string): string => {
 const categoryColor = getCategoryColor(categoryName);
 const categoryIcon = getCategoryIcon(categoryName);
 
-// Format post data with consistent author handling (matching your blog index)
+// Format post data with consistent author handling
 const formatPost = (post: BlogPost) => {
   let authorData: {
     name: string;
@@ -152,7 +277,7 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
   title={`${categoryName} Articles | ${SITE.name}`}
   description={`Explore our ${safeCategoryName} articles. Deep insights and practical knowledge for builders and innovators.`}
 >
-  <!-- Compact Category Hero - Much Shorter -->
+  <!-- Compact Category Hero -->
   <section class="relative py-12 lg:py-16 overflow-hidden">
     <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-5"></div>
     <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-0"></div>
@@ -197,7 +322,7 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
             </span>
           </div>
 
-          <!-- Compact Category Title with Icon -->
+          <!-- Category Title with Icon -->
           <div class="flex items-center justify-center gap-3 mb-4">
             <i class={`${categoryIcon} text-2xl ${
               categoryColor === "purple" ? "text-purple-600" :
@@ -231,7 +356,7 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
             </h1>
           </div>
 
-          <!-- Compact Stats -->
+          <!-- Stats -->
           <div class="flex justify-center gap-6 mb-6">
             <div class="text-center">
               <div class="text-2xl font-bold text-zinc-900 dark:text-white">{posts.length}</div>
@@ -251,7 +376,7 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
             )}
           </div>
 
-          <!-- Compact Description -->
+          <!-- Description -->
           <p class="text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-2xl mx-auto mb-6">
             {posts.length === 0 
               ? `No articles in ${categoryName} yet. Check back soon for fresh insights!`
@@ -259,7 +384,7 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
             }
           </p>
 
-          <!-- Compact Action Buttons -->
+          <!-- Action Buttons -->
           <div class="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
               variant="outline"
@@ -273,12 +398,12 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
             </Button>
             <Button
               variant="outline"
-              href="/blog/categories"
+              href="/all-topics"
               className="group compact-btn"
             >
               <span class="flex items-center gap-2">
                 <i class="fas fa-th-large text-sm"></i>
-                BROWSE CATEGORIES
+                ALL TOPICS
               </span>
             </Button>
           </div>
@@ -287,13 +412,60 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     </div>
   </section>
 
+  <!-- Quick Actions Sidebar -->
+  <div class="quick-actions-sidebar" id="quick-actions">
+    <div class="actions-content">
+      <button 
+        id="follow-topic" 
+        class="action-btn follow-btn"
+        data-topic-name={categoryName}
+        data-topic-slug={Astro.params.category}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="follow-icon">
+          <path
+            d="M8 2V14M2 8H14"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="following-icon" style="display: none;">
+          <path
+            d="M13.5 3L6 10.5L2.5 7"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+
+      <button id="share-category" class="action-btn secondary">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M13 10.5C12.1716 10.5 11.5 11.1716 11.5 12C11.5 12.8284 12.1716 13.5 13 13.5C13.8284 13.5 14.5 12.8284 14.5 12C14.5 11.1716 13.8284 10.5 13 10.5ZM13 10.5L8.5 8M3 5.5C2.17157 5.5 1.5 6.17157 1.5 7C1.5 7.82843 2.17157 8.5 3 8.5C3.82843 8.5 4.5 7.82843 4.5 7C4.5 6.17157 3.82843 5.5 3 5.5ZM3 5.5L8.5 8M8.5 8L13 5.5"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+
+      <div class="follower-count" id="follower-count" style="display: none;">
+        <span class="count-number">0</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Articles Section -->
   <main class="category-articles-page">
     <div class="max-w-7xl mx-auto px-4 py-12">
       
       {posts.length > 0 ? (
         <>
-          <!-- Featured Articles - Smaller Cards, Up to 3 -->
+          <!-- Featured Articles -->
           {featuredPosts.length > 0 && (
             <section class="mb-12">
               <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center">
@@ -344,7 +516,7 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
           </section>
         </>
       ) : (
-        <!-- Compact Empty State -->
+        <!-- Empty State -->
         <section class="text-center py-16">
           <div class="max-w-md mx-auto">
             <div class="mb-6">
@@ -374,9 +546,9 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
                 <i class="fas fa-newspaper mr-2"></i>
                 EXPLORE ALL ARTICLES
               </Button>
-              <Button href="/blog/categories" variant="outline" className="compact-btn">
+              <Button href="/all-topics" variant="outline" className="compact-btn">
                 <i class="fas fa-th-large mr-2"></i>
-                BROWSE CATEGORIES
+                ALL TOPICS
               </Button>
             </div>
           </div>
@@ -387,14 +559,127 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
 </Layout>
 
 <style>
-  /* Compact styling for category page */
   .category-articles-page {
     font-family: "Space Grotesk", sans-serif;
     background-color: var(--color-bg-primary);
     color: var(--color-text-primary);
   }
 
-  /* Compact buttons */
+  /* Quick Actions Sidebar */
+  .quick-actions-sidebar {
+    position: fixed;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 50;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    opacity: 1;
+    min-width: 60px;
+  }
+
+  :global(.dark) .quick-actions-sidebar {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .actions-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    background: var(--color-bg-primary);
+    border: 2px solid #243788;
+    color: #243788;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600;
+    width: 48px;
+    height: 48px;
+    position: relative;
+  }
+
+  .action-btn:hover {
+    background: #243788;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(36, 55, 136, 0.3);
+  }
+
+  .action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .action-btn.secondary {
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  .action-btn.secondary:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border-color: var(--color-text-muted);
+  }
+
+  .follow-btn.following {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+  }
+
+  .follow-btn.following:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+  }
+
+  .follow-btn.following .follow-icon {
+    display: none;
+  }
+
+  .follow-btn.following .following-icon {
+    display: block !important;
+  }
+
+  .follower-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    text-align: center;
+    width: 48px;
+    height: 32px;
+  }
+
+  .count-number {
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    line-height: 1;
+  }
+
+  @media (max-width: 1024px) {
+    .quick-actions-sidebar {
+      display: none;
+    }
+  }
+
   .compact-btn {
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -403,7 +688,6 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     padding: 0.75rem 1.5rem;
   }
 
-  /* Featured Articles Grid - Smaller, up to 3 cards */
   .featured-articles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -428,7 +712,6 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     opacity: 0.6;
   }
 
-  /* Regular Articles Grid */
   .articles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -449,7 +732,6 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     }
   }
 
-  /* Responsive Design */
   @media (max-width: 1024px) {
     .featured-articles-grid {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -472,7 +754,6 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     }
   }
 
-  /* Gradient text animation */
   @keyframes gradient {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -484,7 +765,6 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     animation: gradient 3s ease-in-out infinite;
   }
 
-  /* Hover effects */
   .article-wrapper {
     transition: transform 0.3s ease;
   }
@@ -492,33 +772,220 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
   .article-wrapper:hover {
     transform: translateY(-4px);
   }
+
+  .toast-notification {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    background: #10b981;
+    color: white;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    z-index: 1002;
+    border: 2px solid #10b981;
+    border-radius: 6px;
+    animation: slideInRight 0.3s ease;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Staggered animation for articles
+  import { supabase } from '../../../lib/supabase.js';
+  
+  document.addEventListener('DOMContentLoaded', async () => {
+    const followBtn = document.getElementById('follow-topic') as HTMLButtonElement | null;
+    const shareBtn = document.getElementById('share-category') as HTMLButtonElement | null;
+    const followerCount = document.getElementById('follower-count') as HTMLElement | null;
+    
+    if (!followBtn) return;
+  
+    const topicName = followBtn.getAttribute('data-topic-name');
+    const topicSlug = followBtn.getAttribute('data-topic-slug');
+    
+    let currentUser: any = null;
+    let isFollowing = false;
+  
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      currentUser = user;
+      
+      if (user && topicSlug) {
+        const { data: topic } = await supabase
+          .from('categories')
+          .select('id, name')
+          .eq('slug', topicSlug)
+          .single();
+        
+        if (topic) {
+          const { data: followData } = await supabase
+            .from('user_category_follows')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('category_slug', topic.id)
+            .single();
+          
+          isFollowing = !!followData;
+          updateFollowButton();
+          followBtn.setAttribute('data-topic-id', topic.id);
+        }
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    }
+  
+    followBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      if (!currentUser) {
+        if (confirm('Sign in to follow topics and get personalized content?')) {
+          window.location.href = '/auth/signin';
+        }
+        return;
+      }
+
+      const topicId = followBtn.getAttribute('data-topic-id');
+      if (!topicId) return;
+
+      try {
+        followBtn.disabled = true;
+        
+        if (isFollowing) {
+          await supabase
+            .from('user_category_follows')
+            .delete()
+            .eq('user_id', currentUser.id)
+            .eq('category_slug', topicId);
+          
+          isFollowing = false;
+          showToast(`Unfollowed ${topicName}`);
+        } else {
+          await supabase
+            .from('user_category_follows')
+            .insert({
+              user_id: currentUser.id,
+              category_slug: topicId,
+              created_at: new Date().toISOString()
+            });
+          
+          isFollowing = true;
+          showToast(`Now following ${topicName}!`);
+        }
+        
+        updateFollowButton();
+        await updateFollowerCount();
+        
+      } catch (error) {
+        console.error('Follow action failed:', error);
+        showToast('Failed to update follow status');
+      } finally {
+        followBtn.disabled = false;
+      }
+    });
+
+    async function updateFollowerCount() {
+      if (!followerCount) return;
+      
+      const topicId = followBtn?.getAttribute('data-topic-id');
+      if (!topicId) return;
+      
+      try {
+        const { count } = await supabase
+          .from('user_category_follows')
+          .select('*', { count: 'exact', head: true })
+          .eq('category_slug', topicId);
+        
+        const countElement = followerCount.querySelector('.count-number');
+        if (countElement) {
+          countElement.textContent = (count || 0).toString();
+        }
+      } catch (error) {
+        console.error('Failed to get follower count:', error);
+      }
+    }
+
+    if (shareBtn) {
+      shareBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        const url = window.location.href;
+        const title = `${topicName} Articles | TinkByte`;
+        
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: title,
+              text: `Check out these ${topicName} articles on TinkByte`,
+              url: url
+            });
+          } catch (error) {
+            console.log('Share cancelled');
+          }
+        } else {
+          try {
+            await navigator.clipboard.writeText(url);
+            showToast('Link copied to clipboard!');
+          } catch (error) {
+            console.log('Copy failed');
+          }
+        }
+      });
+    }
+  
+    function updateFollowButton() {
+      if (followBtn) {
+        followBtn.classList.toggle('following', isFollowing);
+        
+        if (followerCount) {
+          followerCount.style.display = isFollowing ? 'flex' : 'none';
+        }
+      }
+    }
+  
+    function showToast(message: string) {
+      const toast = document.createElement('div');
+      toast.className = 'toast-notification';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => toast.remove(), 3000);
+    }
+  
     const articleWrappers = document.querySelectorAll('.article-wrapper');
     
     articleWrappers.forEach((wrapper, index) => {
-      wrapper.style.setProperty('--animation-delay', `${index * 0.1}s`);
+      const element = wrapper as HTMLElement;
+      element.style.setProperty('--animation-delay', `${index * 0.1}s`);
     });
-
-    // Intersection Observer for scroll animations
+  
     const observerOptions = {
       threshold: 0.1,
       rootMargin: '0px 0px -50px 0px',
     };
-
+  
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+          const element = entry.target as HTMLElement;
+          element.style.opacity = '1';
+          element.style.transform = 'translateY(0)';
           observer.unobserve(entry.target);
         }
       });
     }, observerOptions);
-
+  
     articleWrappers.forEach((wrapper) => {
       observer.observe(wrapper);
     });

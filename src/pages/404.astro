@@ -7,9 +7,12 @@ import { getCollection } from "astro:content";
 // Get real recent articles from your blog
 const allPosts = await getCollection("blog", ({ data }) => !data.draft);
 const recentArticles = allPosts
-  .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime())
+  .sort(
+    (a, b) =>
+      new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
+  )
   .slice(0, 3)
-  .map(post => ({
+  .map((post) => ({
     title: post.data.title,
     href: `/blog/${post.slug}`,
     date: post.data.pubDate.toLocaleDateString("en-US", {
@@ -18,7 +21,7 @@ const recentArticles = allPosts
       year: "numeric",
     }),
     category: post.data.category,
-    excerpt: post.data.excerpt
+    excerpt: post.data.excerpt,
   }));
 
 // Popular pages with correct URLs
@@ -32,11 +35,13 @@ const popularPages = [
 ];
 
 // Get categories for suggestions
-const allCategories = [...new Set(allPosts.map(post => post.data.category).filter(Boolean))];
-const topCategories = allCategories.slice(0, 4).map(category => ({
+const allCategories = [
+  ...new Set(allPosts.map((post) => post.data.category).filter(Boolean)),
+];
+const topCategories = allCategories.slice(0, 4).map((category) => ({
   name: category as string,
-  slug: (category as string).toLowerCase().replace(/\s+/g, '-'),
-  count: allPosts.filter(post => post.data.category === category).length
+  slug: (category as string).toLowerCase().replace(/\s+/g, "-"),
+  count: allPosts.filter((post) => post.data.category === category).length,
 }));
 ---
 
@@ -46,7 +51,10 @@ const topCategories = allCategories.slice(0, 4).map(category => ({
 >
   <!-- Enhanced 404 Hero -->
   <section class="relative py-16 lg:py-24 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-5"></div>
+    <div
+      class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-5"
+    >
+    </div>
 
     <div class="container mx-auto px-4 relative z-10">
       <div class="max-w-4xl mx-auto text-center">
@@ -59,40 +67,43 @@ const topCategories = allCategories.slice(0, 4).map(category => ({
         </div>
 
         <!-- Error Message -->
-        <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 mb-6">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 mb-6"
+        >
           <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-          <span class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+          <span
+            class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+          >
             PAGE NOT FOUND
           </span>
         </div>
 
-        <h1 class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-white mb-6">
+        <h1
+          class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-white mb-6"
+        >
           Lost in the
-          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <span
+            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+          >
             Digital Space
           </span>
         </h1>
 
-        <p class="text-xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-8">
-          The page you're looking for doesn't exist or has been moved. Let's get you back on track with some helpful options.
+        <p
+          class="text-xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-8"
+        >
+          The page you're looking for doesn't exist or has been moved. Let's get
+          you back on track with some helpful options.
         </p>
 
         <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button
-            variant="primary"
-            href="/"
-            className="error-action-btn"
-          >
+          <Button variant="primary" href="/" className="error-action-btn">
             <i class="fas fa-home mr-2"></i>
             GO HOME
           </Button>
 
-          <Button
-            variant="outline"
-            href="/blog"
-            className="error-action-btn"
-          >
+          <Button variant="outline" href="/blog" className="error-action-btn">
             <i class="fas fa-newspaper mr-2"></i>
             BROWSE ARTICLES
           </Button>
@@ -104,7 +115,6 @@ const topCategories = allCategories.slice(0, 4).map(category => ({
   <!-- Popular Pages Section -->
   <main class="error-page">
     <div class="max-w-7xl mx-auto px-4 py-12">
-      
       <section class="mb-16">
         <h2 class="section-title">
           <i class="fas fa-star mr-3 text-yellow-500"></i>
@@ -112,106 +122,123 @@ const topCategories = allCategories.slice(0, 4).map(category => ({
         </h2>
 
         <div class="popular-pages-grid">
-          {popularPages.map((page) => (
-            <a href={page.href} class="popular-page-card">
-              <div class="card-content">
-                <div class="page-icon">
-                  <i class={page.icon}></i>
+          {
+            popularPages.map((page) => (
+              <a href={page.href} class="popular-page-card">
+                <div class="card-content">
+                  <div class="page-icon">
+                    <i class={page.icon} />
+                  </div>
+                  <div class="page-info">
+                    <h3 class="page-title">{page.title}</h3>
+                  </div>
+                  <div class="page-arrow">
+                    <i class="fas fa-arrow-right" />
+                  </div>
                 </div>
-                <div class="page-info">
-                  <h3 class="page-title">{page.title}</h3>
-                </div>
-                <div class="page-arrow">
-                  <i class="fas fa-arrow-right"></i>
-                </div>
-              </div>
-            </a>
-          ))}
+              </a>
+            ))
+          }
         </div>
       </section>
 
       <!-- Recent Articles Section -->
-      {recentArticles.length > 0 && (
-        <section class="mb-16">
-          <h2 class="section-title">
-            <i class="fas fa-clock mr-3 text-blue-600"></i>
-            Recent Articles
-          </h2>
+      {
+        recentArticles.length > 0 && (
+          <section class="mb-16">
+            <h2 class="section-title">
+              <i class="fas fa-clock mr-3 text-blue-600" />
+              Recent Articles
+            </h2>
 
-          <div class="recent-articles-grid">
-            {recentArticles.map((article, index) => (
-              <article class="recent-article-card" style={`--animation-delay: ${index * 0.1}s`}>
-                <a href={article.href} class="article-link">
-                  <div class="article-content">
-                    <div class="article-meta">
-                      {article.category && (
-                        <span class="article-category">{article.category}</span>
+            <div class="recent-articles-grid">
+              {recentArticles.map((article, index) => (
+                <article
+                  class="recent-article-card"
+                  style={`--animation-delay: ${index * 0.1}s`}
+                >
+                  <a href={article.href} class="article-link">
+                    <div class="article-content">
+                      <div class="article-meta">
+                        {article.category && (
+                          <span class="article-category">
+                            {article.category}
+                          </span>
+                        )}
+                        <span class="article-date">{article.date}</span>
+                      </div>
+                      <h3 class="article-title">{article.title}</h3>
+                      {article.excerpt && (
+                        <p class="article-excerpt">
+                          {article.excerpt.slice(0, 120)}...
+                        </p>
                       )}
-                      <span class="article-date">{article.date}</span>
+                      <div class="article-arrow">
+                        <i class="fas fa-arrow-right" />
+                      </div>
                     </div>
-                    <h3 class="article-title">{article.title}</h3>
-                    {article.excerpt && (
-                      <p class="article-excerpt">{article.excerpt.slice(0, 120)}...</p>
-                    )}
-                    <div class="article-arrow">
-                      <i class="fas fa-arrow-right"></i>
+                  </a>
+                </article>
+              ))}
+            </div>
+
+            <div class="section-footer">
+              <Button variant="outline" href="/blog" className="view-all-btn">
+                <span class="flex items-center gap-2">
+                  VIEW ALL ARTICLES
+                  <i class="fas fa-arrow-right text-sm" />
+                </span>
+              </Button>
+            </div>
+          </section>
+        )
+      }
+
+      <!-- Categories Section -->
+      {
+        topCategories.length > 0 && (
+          <section class="mb-16">
+            <h2 class="section-title">
+              <i class="fas fa-folder mr-3 text-green-600" />
+              Browse by Category
+            </h2>
+
+            <div class="categories-grid">
+              {topCategories.map((category) => (
+                <a
+                  href={`/blog/categories/${category.slug}`}
+                  class="category-card"
+                >
+                  <div class="category-content">
+                    <h3 class="category-name">{category.name}</h3>
+                    <p class="category-count">{category.count} articles</p>
+                    <div class="category-arrow">
+                      <i class="fas fa-arrow-right" />
                     </div>
                   </div>
                 </a>
-              </article>
-            ))}
-          </div>
-
-          <div class="section-footer">
-            <Button
-              variant="outline"
-              href="/blog"
-              className="view-all-btn"
-            >
-              <span class="flex items-center gap-2">
-                VIEW ALL ARTICLES
-                <i class="fas fa-arrow-right text-sm"></i>
-              </span>
-            </Button>
-          </div>
-        </section>
-      )}
-
-      <!-- Categories Section -->
-      {topCategories.length > 0 && (
-        <section class="mb-16">
-          <h2 class="section-title">
-            <i class="fas fa-folder mr-3 text-green-600"></i>
-            Browse by Category
-          </h2>
-
-          <div class="categories-grid">
-            {topCategories.map((category) => (
-              <a href={`/blog/categories/${category.slug}`} class="category-card">
-                <div class="category-content">
-                  <h3 class="category-name">{category.name}</h3>
-                  <p class="category-count">{category.count} articles</p>
-                  <div class="category-arrow">
-                    <i class="fas fa-arrow-right"></i>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+              ))}
+            </div>
+          </section>
+        )
+      }
     </div>
   </main>
 
   <!-- Help Section -->
-  <section class="py-16 px-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800">
+  <section
+    class="py-16 px-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800"
+  >
     <div class="max-w-2xl mx-auto text-center">
-      <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide">
+      <h2
+        class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide"
+      >
         Still Can't Find What You're Looking For?
       </h2>
 
       <p class="text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
-        Our team is here to help. Reach out and we'll get you pointed in the right direction.
+        Our team is here to help. Reach out and we'll get you pointed in the
+        right direction.
       </p>
 
       <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -223,7 +250,7 @@ const topCategories = allCategories.slice(0, 4).map(category => ({
           <i class="fas fa-envelope mr-2"></i>
           SUBSCRIBE TO NEWSLETTER
         </Button>
-        
+
         <Button
           variant="outline"
           href="/blog/categories"
@@ -268,8 +295,13 @@ const topCategories = allCategories.slice(0, 4).map(category => ({
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
   }
 
   /* Section Styling */
@@ -559,9 +591,15 @@ const topCategories = allCategories.slice(0, 4).map(category => ({
 
   /* Gradient text animation */
   @keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
   }
 
   .bg-gradient-to-r.bg-clip-text {
@@ -571,23 +609,28 @@ const topCategories = allCategories.slice(0, 4).map(category => ({
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener("DOMContentLoaded", () => {
     // Staggered animation for article cards
-    const articleCards = document.querySelectorAll('.recent-article-card');
-    
+    const articleCards = document.querySelectorAll(".recent-article-card");
+
     articleCards.forEach((card, index) => {
-      card.style.setProperty('--animation-delay', `${index * 0.1}s`);
+      // Fix: Cast to HTMLElement to access style property
+      (card as HTMLElement).style.setProperty(
+        "--animation-delay",
+        `${index * 0.1}s`
+      );
     });
 
     // Track 404 page interactions
     const links = document.querySelectorAll('a[href^="/"]');
-    links.forEach(link => {
-      link.addEventListener('click', (e) => {
-        if (typeof gtag !== 'undefined') {
-          gtag('event', '404_page_navigation', {
-            event_category: '404 Page',
-            event_label: link.href,
-            timestamp: Date.now()
+    links.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        // Fix: Check if gtag exists and cast link to HTMLAnchorElement
+        if (typeof (window as any).gtag !== "undefined") {
+          (window as any).gtag("event", "404_page_navigation", {
+            event_category: "404 Page",
+            event_label: (link as HTMLAnchorElement).href,
+            timestamp: Date.now(),
           });
         }
       });

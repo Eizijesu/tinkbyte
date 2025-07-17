@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinkByte Weekly - Product Insights That Matter</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #243788 0%, #b4bce1 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .logo-container {
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            letter-spacing: -1px;
+        }
+        
+        .tagline {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 400;
+            margin-bottom: 20px;
+        }
+        
+        .issue-info {
+            background-color: rgba(255,255,255,0.15);
+            padding: 12px 20px;
+            font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        /* Content Sections */
+        .content {
+            padding: 0 20px;
+        }
+        
+        .section {
+            margin: 35px 0;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .section:last-child {
+            border-bottom: none;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #243788;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #243788;
+            display: inline-block;
+        }
+        
+        /* Featured Article Card */
+        .featured-card {
+            background: white;
+            border: 2px solid #243788;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .featured-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #243788 0%, #b4bce1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .featured-content {
+            padding: 25px;
+        }
+        
+        .featured-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #243788;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+        
+        .featured-excerpt {
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+        
+        .read-more {
+            display: inline-block;
+            background-color: #243788;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        
+        .read-more:hover {
+            background-color: #1a2a66;
+        }
+        
+        /* Article Cards */
+        .article-grid {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .article-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+        }
+        
+        .article-card:hover {
+            border-color: #243788;
+        }
+        
+        .article-image {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .article-content {
+            padding: 18px;
+        }
+        
+        .article-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #243788;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        
+        .article-title a {
+            color: #243788;
+            text-decoration: none;
+        }
+        
+        .article-title a:hover {
+            text-decoration: underline;
+        }
+        
+        .article-meta {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .article-excerpt {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.4;
+        }
+        
+        /* Media Cards */
+        .media-grid {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .media-card {
+            background: #f8f9fa;
+            border-left: 4px solid #243788;
+            padding: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .media-icon {
+            width: 40px;
+            height: 40px;
+            background: #243788;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .media-content {
+            flex: 1;
+        }
+        
+        .media-title {
+            font-weight: 600;
+            color: #243788;
+            margin-bottom: 5px;
+            font-size: 15px;
+        }
+        
+        .media-description {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.4;
+        }
+        
+        /* Quote Section */
+        .quote-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-left: 4px solid #b4bce1;
+            margin: 25px 0;
+        }
+        
+        .quote-text {
+            font-size: 18px;
+            font-style: italic;
+            color: #243788;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        
+        .quote-author {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        /* Stats Card */
+        .stats-card {
+            background: linear-gradient(135deg, #243788 0%, #b4bce1 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* Newsletter CTA */
+        .newsletter-cta {
+            background: #243788;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .cta-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .cta-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #243788;
+            padding: 12px 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Footer */
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 40px 20px;
+        }
+        
+        .footer-content {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .footer-logo {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .footer-tagline {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 25px;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .social-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .footer-links {
+            text-align: center;
+            font-size: 12px;
+            color: #bdc3c7;
+            line-height: 1.5;
+        }
+        
+        .footer-links a {
+            color: #bdc3c7;
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                margin: 0;
+                box-shadow: none;
+            }
+            
+            .header, .content, .footer {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .featured-content, .article-content {
+                padding: 20px;
+            }
+            
+            .section-title {
+                font-size: 18px;
+            }
+            
+            .featured-title {
+                font-size: 20px;
+            }
+            
+            .social-links {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-container">
+                <a href="https://tinkbyte.com" class="logo">TinkByte</a>
+            </div>
+            <div class="tagline">Real Product Insights • No Hype • Just Results</div>
+            <div class="issue-info">
+                Issue #47 • July 3, 2025 • 4 min read
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Featured Article -->
+            <div class="section">
+                <div class="featured-card">
+                    <div class="featured-image">
+                        📊 SaaS Onboarding Analysis
+                    </div>
+                    <div class="featured-content">
+                        <div class="featured-title">Why Your SaaS Onboarding is Losing 60% of Users</div>
+                        <div class="featured-excerpt">
+                            Three product teams share what they learned from analyzing 50,000 user sessions. The patterns are clear, and the fixes are simpler than you think.
+                        </div>
+                        <a href="#" class="read-more">Read the breakdown →</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- This Week's Reads -->
+            <div class="section">
+                <div class="section-title">This Week's Essential Reads</div>
+                
+                <div class="article-grid">
+                    <div class="article-card">
+                        <div class="article-image">💰 Technical Debt</div>
+                        <div class="article-content">
+                            <div class="article-meta">Product Strategy • 6 min read</div>
+                            <div class="article-title">
+                                <a href="#">The Real Cost of Technical Debt in Product Teams</a>
+                            </div>
+                            <div class="article-excerpt">
+                                How Stripe's engineering team quantified the hidden costs and built a framework that every product manager should know about.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="article-card">
+                        <div class="article-image">🤖 AI Features</div>
+                        <div class="article-content">
+                            <div class="article-meta">AI Product Management • 8 min read</div>
+                            <div class="article-title">
+                                <a href="#">Building AI Features That Users Actually Want</a>
+                            </div>
+                            <div class="article-excerpt">
+                                Lessons from 12 product leaders who shipped AI features that stuck. What worked, what failed, and the patterns that matter.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="article-card">
+                        <div class="article-image">💸 Pricing Strategy</div>
+                        <div class="article-content">
+                            <div class="article-meta">Business Strategy • 5 min read</div>
+                            <div class="article-title">
+                                <a href="#">Pricing Strategy: When Free Tiers Actually Work</a>
+                            </div>
+                            <div class="article-excerpt">
+                                Data from 200+ SaaS companies reveals the specific conditions where freemium drives growth vs. where it kills revenue.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Highlight -->
+            <div class="section">
+                <div class="stats-card">
+                    <div class="stat-number">73%</div>
+                    <div class="stat-label">of SaaS signups happen on mobile, but only 31% of teams design mobile-first</div>
+                </div>
+            </div>
+            
+            <!-- Quote of the Week -->
+            <div class="section">
+                <div class="section-title">Worth Remembering</div>
+                <div class="quote-card">
+                    <div class="quote-text">
+                        "The best product decisions come from understanding what users do, not what they say they'll do."
+                    </div>
+                    <div class="quote-author">
+                        — Sarah Chen, VP Product at Notion
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tools & Resources -->
+            <div class="section">
+                <div class="section-title">Tools That Actually Help</div>
+                
+                <div class="media-grid">
+                    <div class="media-card">
+                        <div class="media-icon">📈</div>
+                        <div class="media-content">
+                            <div class="media-title">PostHog (Open Source Analytics)</div>
+                            <div class="media-description">
+                                Finally, product analytics that doesn't require a PhD in data science. Self-hosted option available.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="media-card">
+                        <div class="media-icon">⚡</div>
+                        <div class="media-content">
+                            <div class="media-title">Linear (Issue Tracking)</div>
+                            <div class="media-description">
+                                Built by former Facebook engineers who got tired of slow project management tools. Lightning fast.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="media-card">
+                        <div class="media-icon">✏️</div>
+                        <div class="media-content">
+                            <div class="media-title">Excalidraw (Wireframing)</div>
+                            <div class="media-description">
+                                Hand-drawn style diagrams that actually look good in presentations. Free and collaborative.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Newsletter CTA -->
+            <div class="newsletter-cta">
+                <div class="cta-title">Join 12,000+ Product Builders</div>
+                <div class="cta-subtitle">Get weekly insights that actually help you ship better products</div>
+                <a href="#" class="cta-button">Subscribe to TinkByte</a>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-content">
+                <div class="footer-logo">TinkByte</div>
+                <div class="footer-tagline">Real insights for product builders who ship things that matter</div>
+                
+                <div class="social-links">
+                    <a href="https://tinkbyte.com" class="social-link">Website</a>
+                    <a href="#" class="social-link">Twitter</a>
+                    <a href="#" class="social-link">LinkedIn</a>
+                    <a href="#" class="social-link">GitHub</a>
+                </div>
+            </div>
+            
+            <div class="footer-links">
+                You're receiving this because you signed up at tinkbyte.com<br>
+                <a href="#">Unsubscribe</a> • <a href="#">Update preferences</a> • <a href="#">Archive</a><br><br>
+                TinkByte • Built for Product Builders • 2025
+            </div>
+        </div>
+    </div>
+</body>
+</html>

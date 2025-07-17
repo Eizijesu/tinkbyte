@@ -1,0 +1,333 @@
+---
+// src/components/comments/CommentForm.astro
+import { COMMENT_CONFIG } from "../../lib/config/comments";
+
+interface Props {
+  articleId: string;
+  parentId?: string;
+  replyTo?: {
+    id: string;
+    author: string;
+    content: string;
+  };
+  isInline?: boolean;
+  placeholder?: string;
+}
+
+const {
+  articleId,
+  parentId,
+  replyTo,
+  isInline = false,
+  placeholder = "Share your thoughts, use @ to mention users",
+} = Astro.props;
+
+const formId = isInline ? `inline-form-${parentId || "main"}` : "comment-form";
+const textareaId = isInline
+  ? `inline-textarea-${parentId || "main"}`
+  : "comment-textarea";
+---
+
+<div class={isInline ? "inline-comment-form" : "comment-form-container"}>
+  {
+    replyTo && (
+      <div class="reply-context" id="reply-context">
+        <div class="reply-header">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="9,17 4,12 9,7" />
+            <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
+          </svg>
+          <span>
+            Replying to <strong>{replyTo.author}</strong>
+          </span>
+          <button
+            type="button"
+            class="cancel-reply-btn"
+            data-action="cancel-reply"
+          >
+            ×
+          </button>
+        </div>
+        <div class="reply-preview">
+          {replyTo.content.substring(0, 100)}
+          {replyTo.content.length > 100 ? "..." : ""}
+        </div>
+      </div>
+    )
+  }
+
+  <form
+    class="comment-form"
+    id={formId}
+    data-article-id={articleId}
+    data-parent-id={parentId}
+  >
+    <!-- User Info Section -->
+    <div class="user-info" id="user-info">
+      <div class="user-avatar" id="user-avatar">
+        <!-- Populated by JavaScript -->
+      </div>
+      <div class="user-details">
+        <div class="user-name" id="user-name">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Content Input Section -->
+    <div class="comment-input-section">
+      <!-- Formatting Toolbar -->
+      <div class="formatting-toolbar">
+        <div class="format-buttons">
+          <button
+            type="button"
+            class="format-btn"
+            data-format="bold"
+            title="Bold"
+          >
+            <strong>B</strong>
+          </button>
+          <button
+            type="button"
+            class="format-btn"
+            data-format="italic"
+            title="Italic"
+          >
+            <em>I</em>
+          </button>
+          <button
+            type="button"
+            class="format-btn"
+            data-format="code"
+            title="Code"
+          >
+            <code>&lt;/&gt;</code>
+          </button>
+          <button type="button" class="mention-btn" title="Mention User">
+            <span>@</span>
+          </button>
+          <button type="button" class="emoji-btn" title="Add Emoji">
+            <span>😊</span>
+          </button>
+        </div>
+        <div class="character-count">
+          <span class="count" id={`character-count-${formId}`}>0</span>/{
+            COMMENT_CONFIG.characterLimits.max
+          }
+        </div>
+      </div>
+
+      <!-- Emoji Picker -->
+      <div class="emoji-picker" id={`emoji-picker-${formId}`}>
+        <div class="emoji-categories">
+          <button
+            type="button"
+            class="emoji-category active"
+            data-category="recent">Recent</button
+          >
+          <button type="button" class="emoji-category" data-category="smileys"
+            >😊</button
+          >
+          <button type="button" class="emoji-category" data-category="objects"
+            >🎯</button
+          >
+          <button type="button" class="emoji-category" data-category="symbols"
+            >❤️</button
+          >
+        </div>
+        <div class="emoji-grid" id={`emoji-grid-${formId}`}>
+          <!-- Smileys & Emotion -->
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="😊"
+            data-category="smileys">😊</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="😂"
+            data-category="smileys">😂</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="😍"
+            data-category="smileys">😍</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="🤔"
+            data-category="smileys">🤔</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="😢"
+            data-category="smileys">😢</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="😅"
+            data-category="smileys">😅</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="😎"
+            data-category="smileys">😎</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="🤯"
+            data-category="smileys">🤯</button
+          >
+          <!-- Objects -->
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="👍"
+            data-category="objects">👍</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="👎"
+            data-category="objects">👎</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="🔥"
+            data-category="objects">🔥</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="💡"
+            data-category="objects">💡</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="🎉"
+            data-category="objects">🎉</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="⚡"
+            data-category="objects">⚡</button
+          >
+          <!-- Symbols -->
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="❤️"
+            data-category="symbols">❤️</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="💯"
+            data-category="symbols">💯</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="✨"
+            data-category="symbols">✨</button
+          >
+          <button
+            type="button"
+            class="emoji-option"
+            data-emoji="🚀"
+            data-category="symbols">🚀</button
+          >
+        </div>
+      </div>
+
+      <!-- Mention Suggestions -->
+      <div class="mention-suggestions" id={`mention-suggestions-${formId}`}>
+        <div class="mention-list" id={`mention-list-${formId}`}>
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Textarea -->
+      <textarea
+        name="content"
+        class="comment-textarea"
+        id={textareaId}
+        placeholder={placeholder}
+        rows={isInline ? "3" : "4"}
+        maxlength={COMMENT_CONFIG.characterLimits.max}
+        required></textarea>
+
+      <!-- Form Footer -->
+      <div class="form-footer">
+        <div class="form-guidelines">
+          Please respect our <a
+            href="/terms#community-guidelines"
+            target="_blank">community guidelines</a
+          >. No links, inappropriate language, or spam.
+        </div>
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" data-action="cancel"
+            >Cancel</button
+          >
+          <button type="submit" class="submit-btn" id={`submit-${formId}`}>
+            <span class="btn-text">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+              </svg>
+              {isInline ? "Reply" : "Post"}
+            </span>
+            <div class="btn-spinner" style="display: none;">
+              <div class="loading-spinner"></div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Error Messages -->
+  <div
+    class="error-message"
+    id={`error-message-${formId}`}
+    style="display: none;"
+  >
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <path
+        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+      ></path>
+      <line x1="12" y1="9" x2="12" y2="13"></line>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+    <span class="error-text"></span>
+  </div>
+</div>

@@ -1165,6 +1165,22 @@ export type LegalSeoFilter = {
   noindex?: InputMaybe<BooleanFilter>;
 };
 
+export type LegalBodySectionFilter = {
+  title?: InputMaybe<StringFilter>;
+  content?: InputMaybe<RichTextFilter>;
+};
+
+export type LegalBodyContactInfoFilter = {
+  title?: InputMaybe<StringFilter>;
+  email?: InputMaybe<StringFilter>;
+  address?: InputMaybe<StringFilter>;
+};
+
+export type LegalBodyFilter = {
+  section?: InputMaybe<LegalBodySectionFilter>;
+  contactInfo?: InputMaybe<LegalBodyContactInfoFilter>;
+};
+
 export type LegalFilter = {
   title?: InputMaybe<StringFilter>;
   description?: InputMaybe<StringFilter>;
@@ -1174,7 +1190,7 @@ export type LegalFilter = {
   pageType?: InputMaybe<StringFilter>;
   contact?: InputMaybe<LegalContactFilter>;
   seo?: InputMaybe<LegalSeoFilter>;
-  body?: InputMaybe<RichTextFilter>;
+  body?: InputMaybe<LegalBodyFilter>;
 };
 
 export type LegalConnectionEdges = {
@@ -1257,25 +1273,44 @@ export type PagesConnection = Connection & {
   edges?: Maybe<Array<Maybe<PagesConnectionEdges>>>;
 };
 
+export type CategoriesSeo = {
+  __typename?: 'CategoriesSeo';
+  title?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+};
+
 export type Categories = Node & Document & {
   __typename?: 'Categories';
   name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  theme: Scalars['String']['output'];
   icon: Scalars['String']['output'];
   color: Scalars['String']['output'];
   featured?: Maybe<Scalars['Boolean']['output']>;
+  sortOrder?: Maybe<Scalars['Float']['output']>;
+  seo?: Maybe<CategoriesSeo>;
   body?: Maybe<Scalars['JSON']['output']>;
   id: Scalars['ID']['output'];
   _sys: SystemInfo;
   _values: Scalars['JSON']['output'];
 };
 
+export type CategoriesSeoFilter = {
+  title?: InputMaybe<StringFilter>;
+  description?: InputMaybe<StringFilter>;
+};
+
 export type CategoriesFilter = {
   name?: InputMaybe<StringFilter>;
+  slug?: InputMaybe<StringFilter>;
   description?: InputMaybe<StringFilter>;
+  theme?: InputMaybe<StringFilter>;
   icon?: InputMaybe<StringFilter>;
   color?: InputMaybe<StringFilter>;
   featured?: InputMaybe<BooleanFilter>;
+  sortOrder?: InputMaybe<NumberFilter>;
+  seo?: InputMaybe<CategoriesSeoFilter>;
   body?: InputMaybe<RichTextFilter>;
 };
 
@@ -1377,6 +1412,8 @@ export type SettingsCategoriesCategoryMappings = {
   slug?: Maybe<Scalars['String']['output']>;
   color?: Maybe<Scalars['String']['output']>;
   description?: Maybe<Scalars['String']['output']>;
+  icon?: Maybe<Scalars['String']['output']>;
+  theme?: Maybe<Scalars['String']['output']>;
 };
 
 export type SettingsCategories = {
@@ -1550,6 +1587,8 @@ export type SettingsCategoriesCategoryMappingsFilter = {
   slug?: InputMaybe<StringFilter>;
   color?: InputMaybe<StringFilter>;
   description?: InputMaybe<StringFilter>;
+  icon?: InputMaybe<StringFilter>;
+  theme?: InputMaybe<StringFilter>;
 };
 
 export type SettingsCategoriesFilter = {
@@ -2200,12 +2239,21 @@ export type PagesMutation = {
   body?: InputMaybe<Scalars['JSON']['input']>;
 };
 
+export type CategoriesSeoMutation = {
+  title?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CategoriesMutation = {
   name?: InputMaybe<Scalars['String']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  theme?: InputMaybe<Scalars['String']['input']>;
   icon?: InputMaybe<Scalars['String']['input']>;
   color?: InputMaybe<Scalars['String']['input']>;
   featured?: InputMaybe<Scalars['Boolean']['input']>;
+  sortOrder?: InputMaybe<Scalars['Float']['input']>;
+  seo?: InputMaybe<CategoriesSeoMutation>;
   body?: InputMaybe<Scalars['JSON']['input']>;
 };
 
@@ -2254,6 +2302,8 @@ export type SettingsCategoriesCategoryMappingsMutation = {
   slug?: InputMaybe<Scalars['String']['input']>;
   color?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  icon?: InputMaybe<Scalars['String']['input']>;
+  theme?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SettingsCategoriesMutation = {
@@ -2398,11 +2448,11 @@ export type LegalPartsFragment = { __typename: 'Legal', title: string, descripti
 
 export type PagesPartsFragment = { __typename: 'Pages', title: string, description: string, pubDate: string, updatedDate?: string | null, layout?: string | null, body?: any | null, hero?: { __typename: 'PagesHero', title?: string | null, subtitle?: string | null, image?: string | null } | null, seo?: { __typename: 'PagesSeo', title?: string | null, description?: string | null, canonical?: string | null, noindex?: boolean | null } | null };
 
-export type CategoriesPartsFragment = { __typename: 'Categories', name: string, description: string, icon: string, color: string, featured?: boolean | null, body?: any | null };
+export type CategoriesPartsFragment = { __typename: 'Categories', name: string, slug: string, description: string, theme: string, icon: string, color: string, featured?: boolean | null, sortOrder?: number | null, body?: any | null, seo?: { __typename: 'CategoriesSeo', title?: string | null, description?: string | null } | null };
 
 export type AuthorsPartsFragment = { __typename: 'Authors', name: string, bio?: string | null, avatar?: string | null, role?: string | null, company?: string | null, email?: string | null, featured?: boolean | null, body?: any | null, social?: { __typename: 'AuthorsSocial', twitter?: string | null, linkedin?: string | null, github?: string | null, website?: string | null } | null };
 
-export type SettingsPartsFragment = { __typename: 'Settings', title: string, description?: string | null, site?: { __typename: 'SettingsSite', name: string, description?: string | null, url?: string | null, logo?: string | null, giscus?: { __typename: 'SettingsSiteGiscus', repo?: string | null, repoId?: string | null, category?: string | null, categoryId?: string | null, mapping?: string | null, reactionsEnabled?: boolean | null, emitMetadata?: boolean | null, inputPosition?: string | null, lang?: string | null, loading?: string | null } | null } | null, categories?: { __typename: 'SettingsCategories', defaultColor?: string | null, categoryMappings?: Array<{ __typename: 'SettingsCategoriesCategoryMappings', name?: string | null, slug?: string | null, color?: string | null, description?: string | null } | null> | null } | null, uiText?: { __typename: 'SettingsUiText', audioAvailableLabel?: string | null, audioTitle?: string | null, audioSubtitle?: string | null, noAudioText?: string | null, byAuthorPrefix?: string | null, aboutAuthorTitle?: string | null, shareLabel?: string | null, shareArticleTitle?: string | null, continueReadingTitle?: string | null, continueReadingSubtitle?: string | null, previousArticleLabel?: string | null, nextArticleLabel?: string | null, reachedBeginningText?: string | null, readAllText?: string | null, browseAllArticlesText?: string | null, tocTitle?: string | null, topicsTitle?: string | null, readingProgressTitle?: string | null, imageCreditText?: string | null, readingTimePrefix?: string | null, defaultCategoryLabel?: string | null, discussionTitle?: string | null, discussionSubtitle?: string | null, relatedTitle?: string | null, relatedSubtitle?: string | null } | null, community?: { __typename: 'SettingsCommunity', stats?: Array<{ __typename: 'SettingsCommunityStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, platforms?: Array<{ __typename: 'SettingsCommunityPlatforms', name?: string | null, description?: string | null, icon?: string | null, link?: string | null, members?: string | null, activity?: string | null, color?: string | null } | null> | null } | null, research?: { __typename: 'SettingsResearch', stats?: Array<{ __typename: 'SettingsResearchStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, reports?: Array<{ __typename: 'SettingsResearchReports', title?: string | null, description?: string | null, date?: string | null, type?: string | null, pages?: number | null, downloads?: string | null, downloadUrl?: string | null, coverImage?: string | null, featured?: boolean | null, tags?: Array<string | null> | null } | null> | null } | null, newsletter?: { __typename: 'SettingsNewsletter', title?: string | null, subtitle?: string | null, frequency?: string | null, subscriberCount?: string | null, signupFormId?: string | null, confirmationMessage?: string | null } | null, social?: { __typename: 'SettingsSocial', defaultShareText?: string | null, platforms?: Array<{ __typename: 'SettingsSocialPlatforms', name?: string | null, url?: string | null, username?: string | null, showInFooter?: boolean | null, enableSharing?: boolean | null } | null> | null } | null, analytics?: { __typename: 'SettingsAnalytics', googleAnalyticsId?: string | null, googleTagManagerId?: string | null, enableCookieConsent?: boolean | null, cookieConsentMessage?: string | null } | null, performance?: { __typename: 'SettingsPerformance', enableImageOptimization?: boolean | null, enableLazyLoading?: boolean | null, enableServiceWorker?: boolean | null, cacheMaxAge?: number | null } | null };
+export type SettingsPartsFragment = { __typename: 'Settings', title: string, description?: string | null, site?: { __typename: 'SettingsSite', name: string, description?: string | null, url?: string | null, logo?: string | null, giscus?: { __typename: 'SettingsSiteGiscus', repo?: string | null, repoId?: string | null, category?: string | null, categoryId?: string | null, mapping?: string | null, reactionsEnabled?: boolean | null, emitMetadata?: boolean | null, inputPosition?: string | null, lang?: string | null, loading?: string | null } | null } | null, categories?: { __typename: 'SettingsCategories', defaultColor?: string | null, categoryMappings?: Array<{ __typename: 'SettingsCategoriesCategoryMappings', name?: string | null, slug?: string | null, color?: string | null, description?: string | null, icon?: string | null, theme?: string | null } | null> | null } | null, uiText?: { __typename: 'SettingsUiText', audioAvailableLabel?: string | null, audioTitle?: string | null, audioSubtitle?: string | null, noAudioText?: string | null, byAuthorPrefix?: string | null, aboutAuthorTitle?: string | null, shareLabel?: string | null, shareArticleTitle?: string | null, continueReadingTitle?: string | null, continueReadingSubtitle?: string | null, previousArticleLabel?: string | null, nextArticleLabel?: string | null, reachedBeginningText?: string | null, readAllText?: string | null, browseAllArticlesText?: string | null, tocTitle?: string | null, topicsTitle?: string | null, readingProgressTitle?: string | null, imageCreditText?: string | null, readingTimePrefix?: string | null, defaultCategoryLabel?: string | null, discussionTitle?: string | null, discussionSubtitle?: string | null, relatedTitle?: string | null, relatedSubtitle?: string | null } | null, community?: { __typename: 'SettingsCommunity', stats?: Array<{ __typename: 'SettingsCommunityStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, platforms?: Array<{ __typename: 'SettingsCommunityPlatforms', name?: string | null, description?: string | null, icon?: string | null, link?: string | null, members?: string | null, activity?: string | null, color?: string | null } | null> | null } | null, research?: { __typename: 'SettingsResearch', stats?: Array<{ __typename: 'SettingsResearchStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, reports?: Array<{ __typename: 'SettingsResearchReports', title?: string | null, description?: string | null, date?: string | null, type?: string | null, pages?: number | null, downloads?: string | null, downloadUrl?: string | null, coverImage?: string | null, featured?: boolean | null, tags?: Array<string | null> | null } | null> | null } | null, newsletter?: { __typename: 'SettingsNewsletter', title?: string | null, subtitle?: string | null, frequency?: string | null, subscriberCount?: string | null, signupFormId?: string | null, confirmationMessage?: string | null } | null, social?: { __typename: 'SettingsSocial', defaultShareText?: string | null, platforms?: Array<{ __typename: 'SettingsSocialPlatforms', name?: string | null, url?: string | null, username?: string | null, showInFooter?: boolean | null, enableSharing?: boolean | null } | null> | null } | null, analytics?: { __typename: 'SettingsAnalytics', googleAnalyticsId?: string | null, googleTagManagerId?: string | null, enableCookieConsent?: boolean | null, cookieConsentMessage?: string | null } | null, performance?: { __typename: 'SettingsPerformance', enableImageOptimization?: boolean | null, enableLazyLoading?: boolean | null, enableServiceWorker?: boolean | null, cacheMaxAge?: number | null } | null };
 
 export type BlogQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
@@ -2542,7 +2592,7 @@ export type CategoriesQueryVariables = Exact<{
 }>;
 
 
-export type CategoriesQuery = { __typename?: 'Query', categories: { __typename: 'Categories', id: string, name: string, description: string, icon: string, color: string, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } };
+export type CategoriesQuery = { __typename?: 'Query', categories: { __typename: 'Categories', id: string, name: string, slug: string, description: string, theme: string, icon: string, color: string, featured?: boolean | null, sortOrder?: number | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, seo?: { __typename: 'CategoriesSeo', title?: string | null, description?: string | null } | null } };
 
 export type CategoriesConnectionQueryVariables = Exact<{
   before?: InputMaybe<Scalars['String']['input']>;
@@ -2554,7 +2604,7 @@ export type CategoriesConnectionQueryVariables = Exact<{
 }>;
 
 
-export type CategoriesConnectionQuery = { __typename?: 'Query', categoriesConnection: { __typename?: 'CategoriesConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'CategoriesConnectionEdges', cursor: string, node?: { __typename: 'Categories', id: string, name: string, description: string, icon: string, color: string, featured?: boolean | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string } } | null } | null> | null } };
+export type CategoriesConnectionQuery = { __typename?: 'Query', categoriesConnection: { __typename?: 'CategoriesConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'CategoriesConnectionEdges', cursor: string, node?: { __typename: 'Categories', id: string, name: string, slug: string, description: string, theme: string, icon: string, color: string, featured?: boolean | null, sortOrder?: number | null, body?: any | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, seo?: { __typename: 'CategoriesSeo', title?: string | null, description?: string | null } | null } | null } | null> | null } };
 
 export type AuthorsQueryVariables = Exact<{
   relativePath: Scalars['String']['input'];
@@ -2580,7 +2630,7 @@ export type SettingsQueryVariables = Exact<{
 }>;
 
 
-export type SettingsQuery = { __typename?: 'Query', settings: { __typename: 'Settings', id: string, title: string, description?: string | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, site?: { __typename: 'SettingsSite', name: string, description?: string | null, url?: string | null, logo?: string | null, giscus?: { __typename: 'SettingsSiteGiscus', repo?: string | null, repoId?: string | null, category?: string | null, categoryId?: string | null, mapping?: string | null, reactionsEnabled?: boolean | null, emitMetadata?: boolean | null, inputPosition?: string | null, lang?: string | null, loading?: string | null } | null } | null, categories?: { __typename: 'SettingsCategories', defaultColor?: string | null, categoryMappings?: Array<{ __typename: 'SettingsCategoriesCategoryMappings', name?: string | null, slug?: string | null, color?: string | null, description?: string | null } | null> | null } | null, uiText?: { __typename: 'SettingsUiText', audioAvailableLabel?: string | null, audioTitle?: string | null, audioSubtitle?: string | null, noAudioText?: string | null, byAuthorPrefix?: string | null, aboutAuthorTitle?: string | null, shareLabel?: string | null, shareArticleTitle?: string | null, continueReadingTitle?: string | null, continueReadingSubtitle?: string | null, previousArticleLabel?: string | null, nextArticleLabel?: string | null, reachedBeginningText?: string | null, readAllText?: string | null, browseAllArticlesText?: string | null, tocTitle?: string | null, topicsTitle?: string | null, readingProgressTitle?: string | null, imageCreditText?: string | null, readingTimePrefix?: string | null, defaultCategoryLabel?: string | null, discussionTitle?: string | null, discussionSubtitle?: string | null, relatedTitle?: string | null, relatedSubtitle?: string | null } | null, community?: { __typename: 'SettingsCommunity', stats?: Array<{ __typename: 'SettingsCommunityStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, platforms?: Array<{ __typename: 'SettingsCommunityPlatforms', name?: string | null, description?: string | null, icon?: string | null, link?: string | null, members?: string | null, activity?: string | null, color?: string | null } | null> | null } | null, research?: { __typename: 'SettingsResearch', stats?: Array<{ __typename: 'SettingsResearchStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, reports?: Array<{ __typename: 'SettingsResearchReports', title?: string | null, description?: string | null, date?: string | null, type?: string | null, pages?: number | null, downloads?: string | null, downloadUrl?: string | null, coverImage?: string | null, featured?: boolean | null, tags?: Array<string | null> | null } | null> | null } | null, newsletter?: { __typename: 'SettingsNewsletter', title?: string | null, subtitle?: string | null, frequency?: string | null, subscriberCount?: string | null, signupFormId?: string | null, confirmationMessage?: string | null } | null, social?: { __typename: 'SettingsSocial', defaultShareText?: string | null, platforms?: Array<{ __typename: 'SettingsSocialPlatforms', name?: string | null, url?: string | null, username?: string | null, showInFooter?: boolean | null, enableSharing?: boolean | null } | null> | null } | null, analytics?: { __typename: 'SettingsAnalytics', googleAnalyticsId?: string | null, googleTagManagerId?: string | null, enableCookieConsent?: boolean | null, cookieConsentMessage?: string | null } | null, performance?: { __typename: 'SettingsPerformance', enableImageOptimization?: boolean | null, enableLazyLoading?: boolean | null, enableServiceWorker?: boolean | null, cacheMaxAge?: number | null } | null } };
+export type SettingsQuery = { __typename?: 'Query', settings: { __typename: 'Settings', id: string, title: string, description?: string | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, site?: { __typename: 'SettingsSite', name: string, description?: string | null, url?: string | null, logo?: string | null, giscus?: { __typename: 'SettingsSiteGiscus', repo?: string | null, repoId?: string | null, category?: string | null, categoryId?: string | null, mapping?: string | null, reactionsEnabled?: boolean | null, emitMetadata?: boolean | null, inputPosition?: string | null, lang?: string | null, loading?: string | null } | null } | null, categories?: { __typename: 'SettingsCategories', defaultColor?: string | null, categoryMappings?: Array<{ __typename: 'SettingsCategoriesCategoryMappings', name?: string | null, slug?: string | null, color?: string | null, description?: string | null, icon?: string | null, theme?: string | null } | null> | null } | null, uiText?: { __typename: 'SettingsUiText', audioAvailableLabel?: string | null, audioTitle?: string | null, audioSubtitle?: string | null, noAudioText?: string | null, byAuthorPrefix?: string | null, aboutAuthorTitle?: string | null, shareLabel?: string | null, shareArticleTitle?: string | null, continueReadingTitle?: string | null, continueReadingSubtitle?: string | null, previousArticleLabel?: string | null, nextArticleLabel?: string | null, reachedBeginningText?: string | null, readAllText?: string | null, browseAllArticlesText?: string | null, tocTitle?: string | null, topicsTitle?: string | null, readingProgressTitle?: string | null, imageCreditText?: string | null, readingTimePrefix?: string | null, defaultCategoryLabel?: string | null, discussionTitle?: string | null, discussionSubtitle?: string | null, relatedTitle?: string | null, relatedSubtitle?: string | null } | null, community?: { __typename: 'SettingsCommunity', stats?: Array<{ __typename: 'SettingsCommunityStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, platforms?: Array<{ __typename: 'SettingsCommunityPlatforms', name?: string | null, description?: string | null, icon?: string | null, link?: string | null, members?: string | null, activity?: string | null, color?: string | null } | null> | null } | null, research?: { __typename: 'SettingsResearch', stats?: Array<{ __typename: 'SettingsResearchStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, reports?: Array<{ __typename: 'SettingsResearchReports', title?: string | null, description?: string | null, date?: string | null, type?: string | null, pages?: number | null, downloads?: string | null, downloadUrl?: string | null, coverImage?: string | null, featured?: boolean | null, tags?: Array<string | null> | null } | null> | null } | null, newsletter?: { __typename: 'SettingsNewsletter', title?: string | null, subtitle?: string | null, frequency?: string | null, subscriberCount?: string | null, signupFormId?: string | null, confirmationMessage?: string | null } | null, social?: { __typename: 'SettingsSocial', defaultShareText?: string | null, platforms?: Array<{ __typename: 'SettingsSocialPlatforms', name?: string | null, url?: string | null, username?: string | null, showInFooter?: boolean | null, enableSharing?: boolean | null } | null> | null } | null, analytics?: { __typename: 'SettingsAnalytics', googleAnalyticsId?: string | null, googleTagManagerId?: string | null, enableCookieConsent?: boolean | null, cookieConsentMessage?: string | null } | null, performance?: { __typename: 'SettingsPerformance', enableImageOptimization?: boolean | null, enableLazyLoading?: boolean | null, enableServiceWorker?: boolean | null, cacheMaxAge?: number | null } | null } };
 
 export type SettingsConnectionQueryVariables = Exact<{
   before?: InputMaybe<Scalars['String']['input']>;
@@ -2592,7 +2642,7 @@ export type SettingsConnectionQueryVariables = Exact<{
 }>;
 
 
-export type SettingsConnectionQuery = { __typename?: 'Query', settingsConnection: { __typename?: 'SettingsConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'SettingsConnectionEdges', cursor: string, node?: { __typename: 'Settings', id: string, title: string, description?: string | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, site?: { __typename: 'SettingsSite', name: string, description?: string | null, url?: string | null, logo?: string | null, giscus?: { __typename: 'SettingsSiteGiscus', repo?: string | null, repoId?: string | null, category?: string | null, categoryId?: string | null, mapping?: string | null, reactionsEnabled?: boolean | null, emitMetadata?: boolean | null, inputPosition?: string | null, lang?: string | null, loading?: string | null } | null } | null, categories?: { __typename: 'SettingsCategories', defaultColor?: string | null, categoryMappings?: Array<{ __typename: 'SettingsCategoriesCategoryMappings', name?: string | null, slug?: string | null, color?: string | null, description?: string | null } | null> | null } | null, uiText?: { __typename: 'SettingsUiText', audioAvailableLabel?: string | null, audioTitle?: string | null, audioSubtitle?: string | null, noAudioText?: string | null, byAuthorPrefix?: string | null, aboutAuthorTitle?: string | null, shareLabel?: string | null, shareArticleTitle?: string | null, continueReadingTitle?: string | null, continueReadingSubtitle?: string | null, previousArticleLabel?: string | null, nextArticleLabel?: string | null, reachedBeginningText?: string | null, readAllText?: string | null, browseAllArticlesText?: string | null, tocTitle?: string | null, topicsTitle?: string | null, readingProgressTitle?: string | null, imageCreditText?: string | null, readingTimePrefix?: string | null, defaultCategoryLabel?: string | null, discussionTitle?: string | null, discussionSubtitle?: string | null, relatedTitle?: string | null, relatedSubtitle?: string | null } | null, community?: { __typename: 'SettingsCommunity', stats?: Array<{ __typename: 'SettingsCommunityStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, platforms?: Array<{ __typename: 'SettingsCommunityPlatforms', name?: string | null, description?: string | null, icon?: string | null, link?: string | null, members?: string | null, activity?: string | null, color?: string | null } | null> | null } | null, research?: { __typename: 'SettingsResearch', stats?: Array<{ __typename: 'SettingsResearchStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, reports?: Array<{ __typename: 'SettingsResearchReports', title?: string | null, description?: string | null, date?: string | null, type?: string | null, pages?: number | null, downloads?: string | null, downloadUrl?: string | null, coverImage?: string | null, featured?: boolean | null, tags?: Array<string | null> | null } | null> | null } | null, newsletter?: { __typename: 'SettingsNewsletter', title?: string | null, subtitle?: string | null, frequency?: string | null, subscriberCount?: string | null, signupFormId?: string | null, confirmationMessage?: string | null } | null, social?: { __typename: 'SettingsSocial', defaultShareText?: string | null, platforms?: Array<{ __typename: 'SettingsSocialPlatforms', name?: string | null, url?: string | null, username?: string | null, showInFooter?: boolean | null, enableSharing?: boolean | null } | null> | null } | null, analytics?: { __typename: 'SettingsAnalytics', googleAnalyticsId?: string | null, googleTagManagerId?: string | null, enableCookieConsent?: boolean | null, cookieConsentMessage?: string | null } | null, performance?: { __typename: 'SettingsPerformance', enableImageOptimization?: boolean | null, enableLazyLoading?: boolean | null, enableServiceWorker?: boolean | null, cacheMaxAge?: number | null } | null } | null } | null> | null } };
+export type SettingsConnectionQuery = { __typename?: 'Query', settingsConnection: { __typename?: 'SettingsConnection', totalCount: number, pageInfo: { __typename?: 'PageInfo', hasPreviousPage: boolean, hasNextPage: boolean, startCursor: string, endCursor: string }, edges?: Array<{ __typename?: 'SettingsConnectionEdges', cursor: string, node?: { __typename: 'Settings', id: string, title: string, description?: string | null, _sys: { __typename?: 'SystemInfo', filename: string, basename: string, hasReferences?: boolean | null, breadcrumbs: Array<string>, path: string, relativePath: string, extension: string }, site?: { __typename: 'SettingsSite', name: string, description?: string | null, url?: string | null, logo?: string | null, giscus?: { __typename: 'SettingsSiteGiscus', repo?: string | null, repoId?: string | null, category?: string | null, categoryId?: string | null, mapping?: string | null, reactionsEnabled?: boolean | null, emitMetadata?: boolean | null, inputPosition?: string | null, lang?: string | null, loading?: string | null } | null } | null, categories?: { __typename: 'SettingsCategories', defaultColor?: string | null, categoryMappings?: Array<{ __typename: 'SettingsCategoriesCategoryMappings', name?: string | null, slug?: string | null, color?: string | null, description?: string | null, icon?: string | null, theme?: string | null } | null> | null } | null, uiText?: { __typename: 'SettingsUiText', audioAvailableLabel?: string | null, audioTitle?: string | null, audioSubtitle?: string | null, noAudioText?: string | null, byAuthorPrefix?: string | null, aboutAuthorTitle?: string | null, shareLabel?: string | null, shareArticleTitle?: string | null, continueReadingTitle?: string | null, continueReadingSubtitle?: string | null, previousArticleLabel?: string | null, nextArticleLabel?: string | null, reachedBeginningText?: string | null, readAllText?: string | null, browseAllArticlesText?: string | null, tocTitle?: string | null, topicsTitle?: string | null, readingProgressTitle?: string | null, imageCreditText?: string | null, readingTimePrefix?: string | null, defaultCategoryLabel?: string | null, discussionTitle?: string | null, discussionSubtitle?: string | null, relatedTitle?: string | null, relatedSubtitle?: string | null } | null, community?: { __typename: 'SettingsCommunity', stats?: Array<{ __typename: 'SettingsCommunityStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, platforms?: Array<{ __typename: 'SettingsCommunityPlatforms', name?: string | null, description?: string | null, icon?: string | null, link?: string | null, members?: string | null, activity?: string | null, color?: string | null } | null> | null } | null, research?: { __typename: 'SettingsResearch', stats?: Array<{ __typename: 'SettingsResearchStats', number?: string | null, label?: string | null, icon?: string | null } | null> | null, reports?: Array<{ __typename: 'SettingsResearchReports', title?: string | null, description?: string | null, date?: string | null, type?: string | null, pages?: number | null, downloads?: string | null, downloadUrl?: string | null, coverImage?: string | null, featured?: boolean | null, tags?: Array<string | null> | null } | null> | null } | null, newsletter?: { __typename: 'SettingsNewsletter', title?: string | null, subtitle?: string | null, frequency?: string | null, subscriberCount?: string | null, signupFormId?: string | null, confirmationMessage?: string | null } | null, social?: { __typename: 'SettingsSocial', defaultShareText?: string | null, platforms?: Array<{ __typename: 'SettingsSocialPlatforms', name?: string | null, url?: string | null, username?: string | null, showInFooter?: boolean | null, enableSharing?: boolean | null } | null> | null } | null, analytics?: { __typename: 'SettingsAnalytics', googleAnalyticsId?: string | null, googleTagManagerId?: string | null, enableCookieConsent?: boolean | null, cookieConsentMessage?: string | null } | null, performance?: { __typename: 'SettingsPerformance', enableImageOptimization?: boolean | null, enableLazyLoading?: boolean | null, enableServiceWorker?: boolean | null, cacheMaxAge?: number | null } | null } | null } | null> | null } };
 
 export const BlogPartsFragmentDoc = gql`
     fragment BlogParts on Blog {
@@ -2882,10 +2932,18 @@ export const CategoriesPartsFragmentDoc = gql`
     fragment CategoriesParts on Categories {
   __typename
   name
+  slug
   description
+  theme
   icon
   color
   featured
+  sortOrder
+  seo {
+    __typename
+    title
+    description
+  }
   body
 }
     `;
@@ -2943,6 +3001,8 @@ export const SettingsPartsFragmentDoc = gql`
       slug
       color
       description
+      icon
+      theme
     }
   }
   uiText {

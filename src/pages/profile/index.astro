@@ -1,0 +1,827 @@
+---
+// src/pages/profile/index.astro - UPDATED WITH CONSISTENT WIDTH
+import ProfileLayout from "../../layouts/ProfileLayout.astro";
+---
+
+<ProfileLayout
+  title="My Profile | TinkByte"
+  description="Manage your TinkByte profile and preferences"
+>
+  <div class="profile-page">
+    <!-- Single Column Layout -->
+    <div class="profile-container">
+      <!-- Profile Header Card -->
+      <div class="profile-header-card">
+        <div class="profile-info">
+          <div class="avatar-section">
+            <img
+              id="profile-avatar"
+              src="/images/avatars/preset-1.svg"
+              alt="Profile Avatar"
+              class="profile-avatar"
+            />
+            <button
+              class="avatar-edit-btn"
+              id="edit-avatar-btn"
+              title="Edit Profile"
+            >
+              <i class="fas fa-edit"></i>
+            </button>
+          </div>
+
+          <div class="profile-details">
+            <h1 class="profile-username" id="profile-name">Loading...</h1>
+            <p class="profile-id" id="profile-id">#TB000000</p>
+            <p class="follower-count" id="follower-count">0 Followers</p>
+            <p class="member-since" id="member-since">Loading...</p>
+          </div>
+
+          <div class="profile-stats">
+            <div class="following-stats">
+              <span class="following-label">Following:</span>
+              <div class="stats-row">
+                <span class="stat-item" id="articles-count">0 Articles</span>
+                <span class="stat-item" id="topics-count">0 Topics</span>
+                <span class="stat-item" id="authors-count">0 Authors</span>
+                <span class="stat-item" id="users-count">0 Users</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two Column Layout for Content -->
+      <div class="content-grid">
+        <!-- Left Column: Profile Statistics -->
+        <div class="stats-card">
+          <div class="card-header">
+            <h2 class="card-title">Profile Statistics</h2>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-number" id="total-reads">0</span>
+              <span class="stat-label">Articles Read</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="total-comments">0</span>
+              <span class="stat-label">Comments</span>
+            </div>
+            <!-- REMOVED: Reputation section -->
+          </div>
+
+          <!-- Quick Settings -->
+          <div class="quick-settings">
+            <h3 class="settings-title">Quick Settings</h3>
+            <div class="settings-list">
+              <a href="/profile/account" class="setting-item">
+                <i class="fas fa-user"></i>
+                Account Settings
+              </a>
+              <a href="/profile/preferences" class="setting-item">
+                <i class="fas fa-cog"></i>
+                Preferences
+              </a>
+              <a href="/profile/following" class="setting-item">
+                <i class="fas fa-heart"></i>
+                Manage Following
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Activity Timeline -->
+        <div class="activity-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-chart-line"></i>
+              Activity (<span id="activity-count">0</span>)
+            </h2>
+          </div>
+          <div class="activity-timeline" id="activity-timeline">
+            <div class="loading-state">Loading timeline...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ProfileLayout>
+
+<style is:global>
+  :root {
+    --tinkbyte-primary: #243788;
+    --tinkbyte-accent: #b4bce1;
+    --tinkbyte-spacing: 1rem;
+    --tinkbyte-border: 2px solid #e2e8f0;
+    --tinkbyte-radius: 0;
+    --tinkbyte-transition: all 0.2s ease;
+  }
+
+  /* Consolidate common card styles */
+  .tinkbyte-card {
+    background: white;
+    border: var(--tinkbyte-border);
+    border-radius: var(--tinkbyte-radius);
+    transition: var(--tinkbyte-transition);
+  }
+
+  .tinkbyte-card:hover {
+    border-color: var(--tinkbyte-primary);
+    transform: translateY(-2px);
+  }
+
+  html.dark .tinkbyte-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .profile-page {
+    font-family: "Space Grotesk", sans-serif;
+    background: white;
+    min-height: 100vh;
+    color: #1e293b;
+  }
+
+  html.dark .profile-page {
+    background: #0f172a;
+    color: #f8fafc;
+  }
+
+  .profile-container {
+    /* FIXED: Consistent width with other pages */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* Profile Header Card */
+  .profile-header-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    padding: 2rem;
+    border-radius: 0;
+  }
+
+  html.dark .profile-header-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .profile-info {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+
+  .avatar-section {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* Square Avatar */
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+    border: 3px solid #e2e8f0;
+    object-fit: cover;
+    display: block;
+    border-radius: 0;
+  }
+
+  html.dark .profile-avatar {
+    border-color: #334155;
+  }
+
+  /* Edit Icon Only */
+  .avatar-edit-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: #243788;
+    color: white;
+    border: 2px solid white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border-radius: 0;
+  }
+
+  .avatar-edit-btn:hover {
+    background: #1e2d6b;
+    transform: translateY(-1px);
+  }
+
+  html.dark .avatar-edit-btn {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  html.dark .avatar-edit-btn:hover {
+    background: #94a3b8;
+  }
+
+  .profile-details {
+    flex: 1;
+  }
+
+  .profile-username {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+
+  html.dark .profile-username {
+    color: #f8fafc;
+  }
+
+  .profile-id {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0 0 0.75rem 0;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  html.dark .profile-id {
+    color: #94a3b8;
+  }
+
+  .follower-count {
+    font-size: 1rem;
+    color: #1e293b;
+    margin: 0 0 1rem 0;
+    font-weight: 600;
+  }
+
+  html.dark .follower-count {
+    color: #f8fafc;
+  }
+
+  .member-since {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  html.dark .member-since {
+    color: #94a3b8;
+  }
+
+  .profile-stats {
+    flex-shrink: 0;
+    min-width: 300px;
+  }
+
+  .following-stats {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 0;
+  }
+
+  html.dark .following-stats {
+    background: #0f172a;
+    border-color: #334155;
+  }
+
+  .following-label {
+    display: block;
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  html.dark .following-label {
+    color: #94a3b8;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .stat-item {
+    color: #1e293b;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    padding: 0.5rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    border-radius: 0;
+  }
+
+  html.dark .stat-item {
+    color: #f8fafc;
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  /* Content Grid */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  .stats-card,
+  .activity-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 0;
+  }
+
+  html.dark .stats-card,
+  html.dark .activity-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .card-header {
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  html.dark .card-header {
+    background: #0f172a;
+    border-bottom-color: #334155;
+  }
+
+  .card-title {
+    color: #1e293b;
+    font-size: 1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  html.dark .card-title {
+    color: #f8fafc;
+  }
+
+  /* Stats Grid - UPDATED: Only 2 columns now */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+
+  .stat-box {
+    background: #f8fafc;
+    padding: 1.5rem;
+    text-align: center;
+    border: 2px solid #e2e8f0;
+    transition: all 0.2s ease;
+    border-radius: 0;
+  }
+
+  .stat-box:hover {
+    border-color: #243788;
+    transform: translateY(-2px);
+  }
+
+  html.dark .stat-box {
+    background: #0f172a;
+    border-color: #334155;
+  }
+
+  html.dark .stat-box:hover {
+    border-color: #b4bce1;
+  }
+
+  .stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #243788;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+
+  html.dark .stat-number {
+    color: #b4bce1;
+  }
+
+  .stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-weight: 600;
+  }
+
+  html.dark .stat-label {
+    color: #94a3b8;
+  }
+
+  /* Quick Settings */
+  .quick-settings {
+    padding: 1.5rem;
+    border-top: 2px solid #e2e8f0;
+  }
+
+  html.dark .quick-settings {
+    border-top-color: #334155;
+  }
+
+  .settings-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 1rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  html.dark .settings-title {
+    color: #f8fafc;
+  }
+
+  .settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .setting-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border: 2px solid transparent;
+    color: #1e293b;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border-radius: 0;
+  }
+
+  .setting-item:hover {
+    background: white;
+    border-color: #243788;
+    color: #243788;
+    transform: translateX(4px);
+  }
+
+  html.dark .setting-item {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+  }
+
+  html.dark .setting-item:hover {
+    background: #1e293b;
+    border-color: #b4bce1;
+    color: #b4bce1;
+  }
+
+  /* Activity Timeline */
+  .activity-timeline {
+    padding: 1.5rem;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .timeline-date {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  html.dark .timeline-date {
+    color: #94a3b8;
+    border-bottom-color: #334155;
+  }
+
+  .timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .timeline-item:last-child {
+    border-bottom: none;
+  }
+
+  html.dark .timeline-item {
+    border-bottom-color: #334155;
+  }
+
+  .timeline-marker {
+    width: 8px;
+    height: 8px;
+    background: #243788;
+    flex-shrink: 0;
+    margin-top: 0.5rem;
+    border-radius: 0;
+  }
+
+  html.dark .timeline-marker {
+    background: #b4bce1;
+  }
+
+  .timeline-content {
+    flex: 1;
+  }
+
+  .timeline-action {
+    color: #1e293b;
+    font-size: 0.875rem;
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  html.dark .timeline-action {
+    color: #f8fafc;
+  }
+
+  .timeline-meta {
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  html.dark .timeline-meta {
+    color: #94a3b8;
+  }
+
+  .loading-state {
+    color: #64748b;
+    text-align: center;
+    padding: 2rem;
+    font-style: italic;
+    font-size: 0.875rem;
+  }
+
+  html.dark .loading-state {
+    color: #94a3b8;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .profile-container {
+      padding: 1rem;
+      gap: 1rem;
+    }
+
+    .profile-info {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .profile-stats {
+      min-width: auto;
+    }
+
+    .stats-row {
+      grid-template-columns: 1fr;
+    }
+
+    .content-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+    }
+  }
+</style>
+
+<script>
+  import { authStore } from "../../lib/auth-store.js";
+  import { getCachedUserStats, dataCache } from "../../lib/data-cache.js";
+  import { ProfileUtils } from "../../lib/profile-utils.js";
+  import { supabase } from "../../lib/supabase.js";
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    await loadProfileData();
+    setupEventListeners();
+  });
+
+  async function loadProfileData() {
+    try {
+      // Get instant data from cache
+      if (authStore.hasInstantData()) {
+        console.log("⚡ Profile: Using instant cached data");
+
+        const user = authStore.getUser();
+        const profile = authStore.getProfile();
+
+        // Update UI immediately
+        updateProfileUI(user, profile, null);
+
+        // Load additional data in background
+        loadBackgroundData(user!.id);
+
+        return;
+      }
+
+      // No instant data, need to initialize
+      console.log("🔄 Profile: Initializing auth...");
+      await authStore.initialize();
+
+      const user = authStore.getUser();
+      const profile = authStore.getProfile();
+
+      if (!user) {
+        window.location.href = "/auth/signin";
+        return;
+      }
+
+      updateProfileUI(user, profile, null);
+      loadBackgroundData(user.id);
+    } catch (error) {
+      console.error("Error loading profile:", error);
+      showError("Failed to load profile data");
+    }
+  }
+
+  async function loadBackgroundData(userId: string) {
+    try {
+      const [stats, activities] = await Promise.all([
+        getCachedUserStats(userId),
+        loadRecentActivities(userId),
+      ]);
+
+      const user = authStore.getUser();
+      const profile = authStore.getProfile();
+
+      updateProfileUI(user, profile, stats);
+      updateActivityTimeline(activities);
+    } catch (error) {
+      console.error("Error loading background data:", error);
+    }
+  }
+
+  // Rest of your existing functions remain the same...
+  async function loadRecentActivities(userId: string) {
+    const cacheKey = `user-activities-${userId}`;
+
+    let activities = dataCache.get(cacheKey);
+    if (activities) return activities;
+
+    try {
+      const { data: userActivities } = await supabase
+        .from("user_activities")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(15);
+
+      activities = userActivities || [];
+      dataCache.set(cacheKey, activities, 2);
+      return activities;
+    } catch (error) {
+      console.error("Error loading activities:", error);
+      return [];
+    }
+  }
+
+  function updateProfileUI(user: any, profile: any, stats: any) {
+    updateElement(
+      "profile-name",
+      profile?.display_name || user.email?.split("@")[0] || "TinkByte User"
+    );
+    updateElement("profile-id", `#TB${user.id.slice(-6).toUpperCase()}`);
+    updateElement(
+      "member-since",
+      `Member since ${formatDate(user.created_at)}`
+    );
+
+    const avatarElement = document.getElementById(
+      "profile-avatar"
+    ) as HTMLImageElement;
+    if (avatarElement) {
+      avatarElement.src = authStore.getAvatarUrl();
+    }
+
+    if (stats) {
+      updateElement("follower-count", `${stats.followers} Followers`);
+      updateElement("articles-count", `${stats.followed_articles} Articles`);
+      updateElement("topics-count", `${stats.following_topics} Topics`);
+      updateElement("authors-count", `0 Authors`);
+      updateElement("users-count", `${stats.following_users} Users`);
+      updateElement("total-reads", stats.articles_read.toString());
+      updateElement("total-comments", stats.comments_posted.toString());
+    }
+  }
+
+  function updateActivityTimeline(activities: any[]) {
+    const timelineElement = document.getElementById("activity-timeline");
+    const activityCountElement = document.getElementById("activity-count");
+
+    if (!timelineElement || !activityCountElement) return;
+
+    activityCountElement.textContent = activities.length.toString();
+
+    if (activities.length === 0) {
+      timelineElement.innerHTML = `<div class="loading-state">No recent activity</div>`;
+      return;
+    }
+
+    const groupedActivities = groupActivitiesByDate(activities);
+    let timelineHTML = "";
+
+    Object.entries(groupedActivities).forEach(([date, dateActivities]) => {
+      timelineHTML += `<div class="timeline-date">${date}</div>`;
+      (dateActivities as any[]).forEach((activity) => {
+        timelineHTML += `
+        <div class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="timeline-content">
+            <span class="timeline-action">${activity.description}</span>
+            <span class="timeline-meta">${formatTime(activity.created_at)}</span>
+          </div>
+        </div>
+      `;
+      });
+    });
+
+    timelineElement.innerHTML = timelineHTML;
+  }
+
+  function groupActivitiesByDate(activities: any[]) {
+    return activities.reduce(
+      (groups, activity) => {
+        const date = formatDate(activity.created_at);
+        if (!groups[date]) {
+          groups[date] = [];
+        }
+        groups[date].push(activity);
+        return groups;
+      },
+      {} as Record<string, any[]>
+    );
+  }
+
+  function setupEventListeners() {
+    const editAvatarBtn = document.getElementById("edit-avatar-btn");
+    editAvatarBtn?.addEventListener("click", () => {
+      window.location.href = "/profile/account";
+    });
+  }
+
+  function updateElement(id: string, value: string) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = value;
+    }
+  }
+
+  function formatDate(dateString: string) {
+    return ProfileUtils.formatDate(dateString);
+  }
+
+  function formatTime(dateString: string) {
+    return ProfileUtils.formatTime(dateString);
+  }
+
+  function showError(message: string) {
+    console.error(message);
+  }
+</script>

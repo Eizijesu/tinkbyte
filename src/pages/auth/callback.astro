@@ -1,0 +1,127 @@
+---
+// src/pages/auth/callback.astro
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout
+  title="Authentication Callback | TinkByte"
+  description="Processing your authentication request..."
+>
+  <div class="callback-container">
+    <div class="callback-content">
+      <div class="square-spinner-large"></div>
+      <h1>Processing Authentication</h1>
+      <p>Please wait while we complete your sign in...</p>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .callback-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  :global(.dark) .callback-container {
+    background: linear-gradient(
+      135deg,
+      rgb(15, 23, 42) 0%,
+      rgb(30, 41, 59) 100%
+    );
+  }
+
+  .callback-content {
+    text-align: center;
+    max-width: 400px;
+  }
+
+  .square-spinner-large {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid #243788;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 2rem;
+  }
+
+  :global(.dark) .square-spinner-large {
+    border-color: rgba(180, 188, 225, 0.3);
+    border-top-color: #b4bce1;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: rgb(15, 23, 42);
+    margin-bottom: 1rem;
+  }
+
+  :global(.dark) h1 {
+    color: rgb(248, 250, 252);
+  }
+
+  p {
+    color: #64748b;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  :global(.dark) p {
+    color: rgb(148, 163, 184);
+  }
+</style>
+
+<script>
+  import { auth } from "../../lib/auth.js";
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    console.log("🔄 Callback: Processing authentication...");
+
+    try {
+      // Initialize auth
+      await auth.initialize();
+
+      // Wait a moment for auth state to settle
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Check if user is authenticated
+      const isAuthenticated = await auth.isAuthenticated();
+      const user = auth.getUser();
+
+      if (isAuthenticated && user) {
+        console.log("🔄 Callback: User authenticated, redirecting...");
+
+        // Check if user needs to set password (first time login)
+        const profile = auth.getProfile();
+        if (!profile) {
+          // New user, redirect to password setup
+          window.location.href = "/profile?setup=password";
+        } else {
+          // Existing user, redirect to profile
+          window.location.href = "/profile";
+        }
+      } else {
+        console.log(
+          "🔄 Callback: No authentication found, redirecting to signin"
+        );
+        window.location.href = "/auth/signin";
+      }
+    } catch (error) {
+      console.error("🔄 Callback: Error processing authentication:", error);
+      window.location.href = "/auth/signin?error=callback_failed";
+    }
+  });
+</script>

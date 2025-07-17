@@ -1,16 +1,33 @@
-// src/env.d.ts - Environment type declarations (FIXED)
-/// <reference path="../.astro/types.d.ts" />
+// src/env.d.ts
 /// <reference types="astro/client" />
 
-declare module 'astro:components' {
-  export { default as ClientOnly } from 'astro/components';
+declare namespace App {
+  interface Locals {
+    user?: any;
+    session?: any;
+    profile?: {
+      id?: string;  // Made optional
+      display_name?: string;
+      is_admin?: boolean;
+      is_blocked?: boolean;
+      membership_type?: string;
+      reputation_score?: number;
+    };
+    isAdmin?: boolean;
+    isBlocked?: boolean;
+  }
 }
+
 interface ImportMetaEnv {
   // TinaCMS
   readonly TINA_CLIENT_ID: string;
   readonly TINA_TOKEN: string;
   readonly TINA_BRANCH: string;
   readonly TINA_SEARCH_TOKEN: string;
+  
+  // Supabase
+  readonly PUBLIC_SUPABASE_URL: string;
+  readonly PUBLIC_SUPABASE_ANON_KEY: string;
   
   // ConvertKit
   readonly PUBLIC_CONVERTKIT_FORM_ID: string;
@@ -28,15 +45,15 @@ interface ImportMetaEnv {
   readonly PUBLIC_GISCUS_INPUT_POSITION: string;
   readonly PUBLIC_GISCUS_THEME: string;
   readonly PUBLIC_GISCUS_LANG: string;
+
+  // Site Configuration
+  readonly PUBLIC_SITE_URL: string;
+  readonly PUBLIC_SITE_NAME: string;
+  readonly PUBLIC_SITE_DESCRIPTION: string;
+  readonly PUBLIC_SITE_AUTHOR: string;
+  readonly PUBLIC_SITE_URL_DEV: string;
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
-}
-
-// Astro global types
-declare namespace App {
-  interface Locals {
-    // Add any local variables here if needed
-  }
 }

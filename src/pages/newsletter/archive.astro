@@ -1,5 +1,4 @@
 ---
-// src/pages/newsletter/archive.astro - Newsletter-specific archive with filtering
 import Layout from "../../layouts/Layout.astro";
 import { getCollection } from "astro:content";
 import { Image } from "astro:assets";
@@ -31,73 +30,108 @@ const years = Object.keys(newslettersByYear)
   .map(Number)
   .sort((a, b) => b - a);
 
-// Newsletter type counts and info
+// Newsletter type counts and info - Updated for all 12 categories
 const newsletterTypes = {
+  // Weekly Publications (5)
   'tinkbyte-weekly': { 
     name: 'TinkByte Weekly', 
     color: 'blue', 
     icon: 'fas fa-newspaper',
-    description: 'Product, AI, tools, strategy, and market signals'
+    description: 'Product strategy, AI trends, market analysis, business insights',
+    frequency: 'Thursday',
+    audience: 'PMs, builders, curious minds'
   },
   'build-sheet': { 
     name: 'Build Sheet', 
     color: 'purple', 
     icon: 'fas fa-hammer',
-    description: 'What we\'re shipping, fixing, and learning in real-time'
+    description: 'Real-time shipping, fixing, learning, hands-on experiments',
+    frequency: 'Tuesday',
+    audience: 'Startup teams, indie hackers'
   },
   'stackdown': { 
     name: 'Stackdown', 
     color: 'green', 
     icon: 'fas fa-layer-group',
-    description: 'Toolkits, stacks, and workflow breakdowns that work'
+    description: 'Tools, workflows, stack breakdowns, technical setups',
+    frequency: 'Monday',
+    audience: 'Founders, makers, ops leads'
   },
   'signal-drop': { 
     name: 'Signal Drop', 
     color: 'orange', 
     icon: 'fas fa-signal',
-    description: 'Launches, AI updates, and fast insights for busy builders'
+    description: 'Quick insights, launches, updates, AI shifts, market signals',
+    frequency: 'Friday',
+    audience: 'Growth leads, devs, tinkerers'
   },
   'system-signal': { 
     name: 'System Signal', 
     color: 'red', 
     icon: 'fas fa-cogs',
-    description: 'Logic, systems, automation, algorithms, ML, and robotics'
+    description: 'Automation, logic, ML patterns, system architecture',
+    frequency: 'Wednesday',
+    audience: 'Product thinkers, engineers, analysts'
   },
+  
+  // Monthly Deep Dives (6)
   'the-real-build': { 
     name: 'The Real Build', 
     color: 'indigo', 
     icon: 'fas fa-rocket',
-    description: 'Deep product journey from idea to launch with honest insights'
+    description: 'Complete product journey documentation, idea to execution',
+    frequency: 'Monthly',
+    audience: 'Founders, product teams, early investors'
   },
   'the-loop': { 
     name: 'The Loop', 
     color: 'pink', 
     icon: 'fas fa-sync',
-    description: 'Recurring patterns across tech, design, and product development'
+    description: 'Recurring patterns, mental models, strategy frameworks',
+    frequency: 'Monthly',
+    audience: 'Designers, PMs, strategic thinkers'
   },
   'data-slice': { 
     name: 'Data Slice', 
     color: 'teal', 
     icon: 'fas fa-chart-bar',
-    description: 'One useful insight from data, behavior, and experiments made practical'
+    description: 'Single powerful insight from research, behavior, testing',
+    frequency: 'Monthly',
+    audience: 'Analysts, PMs, growth marketers'
   },
   'the-mirror': { 
     name: 'The Mirror', 
     color: 'gray', 
     icon: 'fas fa-mirror',
-    description: 'Tech culture, ethics, and people impact discussions'
+    description: 'Culture, ethics, human impact of technology',
+    frequency: 'Monthly',
+    audience: 'Designers, human-centered builders'
   },
   'community-code': { 
     name: 'Community Code', 
     color: 'lime', 
     icon: 'fas fa-users',
-    description: 'Builder stories, creator projects, and community learnings'
+    description: 'Creator projects, community stories, builder insights',
+    frequency: 'Bi-monthly',
+    audience: 'Community builders, indie creators'
   },
-  'future-tech': { 
-    name: 'Future Tech', 
+  'career-stack': { 
+    name: 'Career Stack', 
+    color: 'yellow', 
+    icon: 'fas fa-briefcase',
+    description: 'Professional development, skills, remote hiring strategies',
+    frequency: 'Monthly',
+    audience: 'Career changers, learners, job seekers'
+  },
+  
+  // Limited Series (1)
+  'start-here-future-tech': { 
+    name: 'Start Here: Future Tech', 
     color: 'cyan', 
     icon: 'fas fa-atom',
-    description: 'Basics on AI, blockchain, XR, systems for newcomers'
+    description: 'Beginner introductions to AR, VR, Robotics, Quantum, Blockchain, Web3, IoTs',
+    frequency: 'Limited Series',
+    audience: 'Non-technical readers, new entrants'
   }
 };
 
@@ -113,7 +147,7 @@ const totalNewsletters = sortedNewsletters.length;
 const totalSubscribers = Math.max(...sortedNewsletters.map(n => n.data.stats?.subscribers || 0));
 const avgOpenRate = Math.round(
   sortedNewsletters
-    .filter(n => n.data.stats?.openRate)
+  .filter(n => n.data.stats?.openRate)
     .reduce((sum, n) => sum + (n.data.stats?.openRate || 0), 0) / 
   sortedNewsletters.filter(n => n.data.stats?.openRate).length
 );
@@ -226,27 +260,100 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
           </button>
         </div>
 
-        <!-- Newsletter Type Legend -->
+        <!-- Updated Newsletter Type Legend with enhanced information and fixed text wrapping -->
         <div class="newsletter-legend">
           <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4 text-center">
-            Newsletter Series
+            TinkByte Newsletter Ecosystem (12 Series)
           </h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(newsletterTypes).map(([type, info]) => {
-              const count = typeCounts[type] || 0;
-              return count > 0 ? (
-                <div class={`legend-item newsletter-type-${info.color}`}>
-                  <div class="legend-icon">
-                    <i class={info.icon}></i>
-                  </div>
-                  <div class="legend-content">
-                    <h4 class="legend-title">{info.name}</h4>
-                    <p class="legend-description">{info.description}</p>
-                    <span class="legend-count">{count} issues</span>
-                  </div>
-                </div>
-              ) : null;
-            })}
+          
+          <!-- Weekly Publications Section -->
+          <div class="legend-section mb-6">
+            <h4 class="text-md font-bold text-zinc-800 dark:text-zinc-200 mb-3 flex items-center">
+              <i class="fas fa-calendar-week mr-2 text-blue-600"></i>
+              Weekly Publications (5)
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(newsletterTypes)
+                .filter(([type, info]) => ['tinkbyte-weekly', 'build-sheet', 'stackdown', 'signal-drop', 'system-signal'].includes(type))
+                .map(([type, info]) => {
+                  const count = typeCounts[type] || 0;
+                  return count > 0 ? (
+                    <div class={`legend-item newsletter-type-${info.color}`}>
+                      <div class="legend-icon">
+                        <i class={info.icon}></i>
+                      </div>
+                      <div class="legend-content">
+                        <h5 class="legend-title">{info.name}</h5>
+                        <div class="legend-frequency">{info.frequency}</div>
+                        <p class="legend-description">{info.description}</p>
+                        <div class="legend-audience">For: {info.audience}</div>
+                        <span class="legend-count">{count} issues</span>
+                      </div>
+                    </div>
+                  ) : null;
+                })
+              }
+            </div>
+          </div>
+
+          <!-- Monthly Deep Dives Section -->
+          <div class="legend-section mb-6">
+            <h4 class="text-md font-bold text-zinc-800 dark:text-zinc-200 mb-3 flex items-center">
+              <i class="fas fa-calendar-alt mr-2 text-purple-600"></i>
+              Monthly Deep Dives (6)
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(newsletterTypes)
+                .filter(([type, info]) => ['the-real-build', 'the-loop', 'data-slice', 'the-mirror', 'community-code', 'career-stack'].includes(type))
+                .map(([type, info]) => {
+                  const count = typeCounts[type] || 0;
+                  return count > 0 ? (
+                    <div class={`legend-item newsletter-type-${info.color}`}>
+                      <div class="legend-icon">
+                        <i class={info.icon}></i>
+                      </div>
+                      <div class="legend-content">
+                        <h5 class="legend-title">{info.name}</h5>
+                        <div class="legend-frequency">{info.frequency}</div>
+                        <p class="legend-description">{info.description}</p>
+                        <div class="legend-audience">For: {info.audience}</div>
+                        <span class="legend-count">{count} issues</span>
+                      </div>
+                    </div>
+                  ) : null;
+                })
+              }
+            </div>
+          </div>
+        
+          <!-- Limited Series Section -->
+          <div class="legend-section">
+            <h4 class="text-md font-bold text-zinc-800 dark:text-zinc-200 mb-3 flex items-center">
+              <i class="fas fa-star mr-2 text-cyan-600"></i>
+              Limited Series (1)
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Object.entries(newsletterTypes)
+                .filter(([type, info]) => type === 'start-here-future-tech')
+                .map(([type, info]) => {
+                  const count = typeCounts[type] || 0;
+                  return count > 0 ? (
+                    <div class={`legend-item newsletter-type-${info.color}`}>
+                      <div class="legend-icon">
+                        <i class={info.icon}></i>
+                      </div>
+                      <div class="legend-content">
+                        <h5 class="legend-title">{info.name}</h5>
+                        <div class="legend-frequency limited">{info.frequency}</div>
+                        <p class="legend-description">{info.description}</p>
+                        <div class="legend-audience">For: {info.audience}</div>
+                        <span class="legend-count">{count} issues</span>
+                      </div>
+                    </div>
+                  ) : null;
+                })
+              }
+            </div>
           </div>
         </div>
       </div>
@@ -500,7 +607,11 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     @apply bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-300;
   }
 
-  .newsletter-type-badge.future-tech {
+  .newsletter-type-badge.career-stack {
+    @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300;
+  }
+
+  .newsletter-type-badge.start-here-future-tech {
     @apply bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-300;
   }
 
@@ -512,7 +623,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700;
   }
 
-  /* Newsletter Legend */
+  /* Newsletter Legend - Fixed text wrapping */
   .newsletter-legend {
     background: var(--color-bg-secondary, #f8fafc);
     border: 1px solid var(--color-border, #e2e8f0);
@@ -527,7 +638,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
 
   .legend-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
     padding: 1rem;
     background: white;
@@ -558,6 +669,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     align-items: center;
     justify-content: center;
     font-size: 1.25rem;
+    margin-top: 0.25rem; /* Align with text baseline */
   }
 
   .newsletter-type-blue .legend-icon { @apply bg-blue-100 text-blue-600; }
@@ -570,6 +682,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
   .newsletter-type-teal .legend-icon { @apply bg-teal-100 text-teal-600; }
   .newsletter-type-gray .legend-icon { @apply bg-gray-100 text-gray-600; }
   .newsletter-type-lime .legend-icon { @apply bg-lime-100 text-lime-600; }
+  .newsletter-type-yellow .legend-icon { @apply bg-yellow-100 text-yellow-600; }
   .newsletter-type-cyan .legend-icon { @apply bg-cyan-100 text-cyan-600; }
 
   :global(.dark) .newsletter-type-blue .legend-icon { @apply bg-blue-900/30 text-blue-400; }
@@ -582,6 +695,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
   :global(.dark) .newsletter-type-teal .legend-icon { @apply bg-teal-900/30 text-teal-400; }
   :global(.dark) .newsletter-type-gray .legend-icon { @apply bg-gray-900/30 text-gray-400; }
   :global(.dark) .newsletter-type-lime .legend-icon { @apply bg-lime-900/30 text-lime-400; }
+  :global(.dark) .newsletter-type-yellow .legend-icon { @apply bg-yellow-900/30 text-yellow-400; }
   :global(.dark) .newsletter-type-cyan .legend-icon { @apply bg-cyan-900/30 text-cyan-400; }
 
   .legend-content {
@@ -598,11 +712,37 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     letter-spacing: 0.05em;
   }
 
+  .legend-frequency {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .legend-frequency.limited {
+    color: #06b6d4;
+  }
+
   .legend-description {
     font-size: 0.75rem;
     color: var(--color-text-secondary);
     line-height: 1.4;
+    margin-bottom: 0.5rem;
+    /* Fixed text wrapping */
+    word-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .legend-audience {
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    font-style: italic;
     margin-bottom: 0.25rem;
+    /* Fixed text wrapping */
+    word-wrap: break-word;
+    hyphens: auto;
   }
 
   .legend-count {
@@ -657,6 +797,11 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
       flex-direction: column;
       text-align: center;
       gap: 0.75rem;
+      align-items: center;
+    }
+    
+    .legend-icon {
+      margin-top: 0;
     }
     
     .filter-tab {
@@ -685,16 +830,23 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
 </style>
 
 <script>
+  // Type declarations for better TypeScript support
+  declare global {
+    interface Window {
+      gtag?: (command: string, targetId: string, config?: any) => void;
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
-    // Get all filter tabs and newsletter cards
-    const filterTabs = document.querySelectorAll('.filter-tab');
-    const newsletterCards = document.querySelectorAll('.newsletter-card');
-    const yearSections = document.querySelectorAll('.year-section');
+    // Get all filter tabs and newsletter cards with proper typing
+    const filterTabs = document.querySelectorAll('.filter-tab') as NodeListOf<HTMLButtonElement>;
+    const newsletterCards = document.querySelectorAll('.newsletter-card') as NodeListOf<HTMLElement>;
+    const yearSections = document.querySelectorAll('.year-section') as NodeListOf<HTMLElement>;
 
     // Filter functionality
     filterTabs.forEach(tab => {
       tab.addEventListener('click', () => {
-        const filter = tab.getAttribute('data-filter');
+        const filter = tab.getAttribute('data-filter') || 'all';
         
         // Update active tab
         filterTabs.forEach(t => t.classList.remove('active'));
@@ -702,7 +854,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
         
         // Filter newsletter cards
         newsletterCards.forEach(card => {
-          const newsletterType = card.getAttribute('data-newsletter-type');
+          const newsletterType = card.getAttribute('data-newsletter-type') || '';
           const isFeatured = card.getAttribute('data-featured') === 'true';
           
           let shouldShow = false;
@@ -736,10 +888,10 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
         });
 
         // Update URL hash for bookmarking
-        if (filter !== 'all') {
-          window.history.replaceState(null, null, `#${filter}`);
+        if (filter && filter !== 'all') {
+          window.history.replaceState(null, '', `#${filter}`);
         } else {
-          window.history.replaceState(null, null, window.location.pathname);
+          window.history.replaceState(null, '', window.location.pathname);
         }
       });
     });
@@ -747,7 +899,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     // Handle initial filter from URL hash
     const initialFilter = window.location.hash.slice(1);
     if (initialFilter) {
-      const targetTab = document.querySelector(`[data-filter="${initialFilter}"]`);
+      const targetTab = document.querySelector(`[data-filter="${initialFilter}"]`) as HTMLButtonElement;
       if (targetTab) {
         targetTab.click();
       }
@@ -773,8 +925,9 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+          const target = entry.target as HTMLElement;
+          target.style.opacity = '1';
+          target.style.transform = 'translateY(0)';
           observer.unobserve(entry.target);
         }
       });
@@ -789,7 +942,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     });
 
     // Get legend items and add animations + interactions
-    const legendItems = document.querySelectorAll('.legend-item');
+    const legendItems = document.querySelectorAll('.legend-item') as NodeListOf<HTMLElement>;
     legendItems.forEach((item, index) => {
       // Add fade-in animation
       item.style.opacity = '0';
@@ -806,7 +959,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
           const color = typeClass.replace('newsletter-type-', '');
           // Find corresponding filter tab
           const filterTab = Array.from(filterTabs).find(tab => {
-            const filterType = tab.getAttribute('data-filter');
+            const filterType = tab.getAttribute('data-filter') || '';
             const typeInfo = getNewsletterTypeDisplay(filterType);
             return typeInfo && typeInfo.color === color;
           });
@@ -814,7 +967,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
             filterTab.click();
             // Scroll to filtered content
             setTimeout(() => {
-              const firstVisibleCard = document.querySelector('.newsletter-card:not(.hidden)');
+              const firstVisibleCard = document.querySelector('.newsletter-card:not(.hidden)') as HTMLElement;
               if (firstVisibleCard) {
                 firstVisibleCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
               }
@@ -829,8 +982,8 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     });
 
     // Helper function to get newsletter type display info
-    function getNewsletterTypeDisplay(newsletterType) {
-      const types = {
+    function getNewsletterTypeDisplay(newsletterType: string) {
+      const types: Record<string, { name: string; color: string; icon: string }> = {
         'tinkbyte-weekly': { name: 'TinkByte Weekly', color: 'blue', icon: 'fas fa-newspaper' },
         'build-sheet': { name: 'Build Sheet', color: 'purple', icon: 'fas fa-hammer' },
         'stackdown': { name: 'Stackdown', color: 'green', icon: 'fas fa-layer-group' },
@@ -841,22 +994,26 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
         'data-slice': { name: 'Data Slice', color: 'teal', icon: 'fas fa-chart-bar' },
         'the-mirror': { name: 'The Mirror', color: 'gray', icon: 'fas fa-mirror' },
         'community-code': { name: 'Community Code', color: 'lime', icon: 'fas fa-users' },
-        'future-tech': { name: 'Future Tech', color: 'cyan', icon: 'fas fa-atom' }
+        'career-stack': { name: 'Career Stack', color: 'yellow', icon: 'fas fa-briefcase' },
+        'start-here-future-tech': { name: 'Start Here: Future Tech', color: 'cyan', icon: 'fas fa-atom' }
       };
       return types[newsletterType] || { name: 'Newsletter', color: 'gray', icon: 'fas fa-envelope' };
     }
 
     // Search functionality (if you want to add search later)
     function addSearchFunctionality() {
-      const searchInput = document.getElementById('newsletter-search');
+      const searchInput = document.getElementById('newsletter-search') as HTMLInputElement;
       if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-          const searchTerm = e.target.value.toLowerCase();
+          const target = e.target as HTMLInputElement;
+          const searchTerm = target.value.toLowerCase();
           
           newsletterCards.forEach(card => {
-            const title = card.querySelector('h3').textContent.toLowerCase();
-            const excerpt = card.querySelector('p').textContent.toLowerCase();
-            const newsletterType = card.getAttribute('data-newsletter-type');
+            const titleElement = card.querySelector('h3');
+            const excerptElement = card.querySelector('p');
+            const title = titleElement?.textContent?.toLowerCase() || '';
+            const excerpt = excerptElement?.textContent?.toLowerCase() || '';
+            const newsletterType = card.getAttribute('data-newsletter-type') || '';
             const typeDisplay = getNewsletterTypeDisplay(newsletterType);
             
             const matches = title.includes(searchTerm) || 
@@ -884,9 +1041,9 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     }
 
     // Analytics tracking
-    function trackNewsletterArchiveInteraction(action, newsletterType = null, issueNumber = null) {
-      if (typeof gtag !== 'undefined') {
-        gtag('event', 'newsletter_archive_interaction', {
+    function trackNewsletterArchiveInteraction(action: string, newsletterType: string | null = null, issueNumber: string | null = null) {
+      if (typeof window.gtag !== 'undefined') {
+        window.gtag('event', 'newsletter_archive_interaction', {
           action: action,
           newsletter_type: newsletterType,
           issue_number: issueNumber,
@@ -906,18 +1063,19 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
 
     // Track newsletter preview clicks
     newsletterCards.forEach(card => {
-      const previewLink = card.querySelector('a[href*="/newsletter/"]');
+      const previewLink = card.querySelector('a[href*="/newsletter/"]') as HTMLAnchorElement;
       if (previewLink) {
         previewLink.addEventListener('click', () => {
           const newsletterType = card.getAttribute('data-newsletter-type');
-          const issueNumber = card.querySelector('[class*="Issue"]')?.textContent?.match(/\d+/)?.[0];
+          const issueElement = card.querySelector('[class*="Issue"]');
+          const issueNumber = issueElement?.textContent?.match(/\d+/)?.[0] || null;
           trackNewsletterArchiveInteraction('preview_click', newsletterType, issueNumber);
         });
       }
     });
 
     // Track subscription CTA clicks
-    const subscriptionCTAs = document.querySelectorAll('a[href="/newsletter"]');
+    const subscriptionCTAs = document.querySelectorAll('a[href="/newsletter"]') as NodeListOf<HTMLAnchorElement>;
     subscriptionCTAs.forEach(cta => {
       cta.addEventListener('click', () => {
         trackNewsletterArchiveInteraction('subscription_cta_click');
@@ -927,8 +1085,8 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     // Keyboard navigation support
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
-        const focusedTab = document.activeElement;
-        if (focusedTab.classList.contains('filter-tab')) {
+        const focusedTab = document.activeElement as HTMLButtonElement;
+        if (focusedTab && focusedTab.classList.contains('filter-tab')) {
           e.preventDefault();
           focusedTab.click();
         }
@@ -954,7 +1112,7 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     const imageObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          const img = entry.target;
+          const img = entry.target as HTMLImageElement;
           if (img.dataset.src) {
             img.src = img.dataset.src;
             img.removeAttribute('data-src');
@@ -965,19 +1123,22 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
     });
 
     // Apply lazy loading to images (if you want to implement it)
-    const images = document.querySelectorAll('img[data-src]');
+    const images = document.querySelectorAll('img[data-src]') as NodeListOf<HTMLImageElement>;
     images.forEach(img => imageObserver.observe(img));
 
     // Smooth scroll to sections
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
         e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-          target.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
+        const href = this.getAttribute('href');
+        if (href) {
+          const target = document.querySelector(href);
+          if (target) {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
         }
       });
     });

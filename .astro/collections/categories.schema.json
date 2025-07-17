@@ -32,7 +32,23 @@
             "mobile-alt",
             "cloud",
             "lock",
-            "microchip"
+            "microchip",
+            "repeat",
+            "layers",
+            "trending-up",
+            "briefcase",
+            "dollar-sign",
+            "users-group",
+            "eye",
+            "map",
+            "compass",
+            "target",
+            "zap",
+            "cpu",
+            "wifi",
+            "monitor",
+            "smartphone",
+            "headphones"
           ]
         },
         "color": {
@@ -46,12 +62,27 @@
             "red",
             "pink",
             "yellow",
-            "gray"
+            "gray",
+            "indigo",
+            "teal",
+            "emerald",
+            "amber",
+            "violet",
+            "slate"
           ]
         },
         "featured": {
           "type": "boolean",
           "default": false
+        },
+        "categoryGroup": {
+          "type": "string",
+          "enum": [
+            "core",
+            "specialized",
+            "extended",
+            "legacy"
+          ]
         },
         "seo": {
           "type": "object",

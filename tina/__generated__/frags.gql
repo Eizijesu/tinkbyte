@@ -278,10 +278,18 @@ fragment PagesParts on Pages {
 fragment CategoriesParts on Categories {
   __typename
   name
+  slug
   description
+  theme
   icon
   color
   featured
+  sortOrder
+  seo {
+    __typename
+    title
+    description
+  }
   body
 }
 
@@ -337,6 +345,8 @@ fragment SettingsParts on Settings {
       slug
       color
       description
+      icon
+      theme
     }
   }
   uiText {
