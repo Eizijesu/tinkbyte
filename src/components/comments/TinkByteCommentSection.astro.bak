@@ -2,7 +2,6 @@
 // src/components/comments/TinkByteCommentSection.astro
 import { supabase } from "../../lib/supabase";
 import { COMMENT_CONFIG } from "../../lib/config/comments";
-import type { CommentWithProfile } from "../../lib/types/comments";
 
 const { articleId, postSlug, postTitle } = Astro.props;
 
