@@ -1,0 +1,884 @@
+---
+// src/components/auth/SignUpForm.astro
+---
+
+<div class="auth-form">
+  <!-- Initial Options -->
+  <div class="auth-options" id="auth-options">
+    <div class="social-buttons">
+      <button type="button" class="auth-btn google-btn" id="google-signup">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path
+            fill="#4285F4"
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+          ></path>
+          <path
+            fill="#34A853"
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+          ></path>
+          <path
+            fill="#FBBC05"
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+          ></path>
+          <path
+            fill="#EA4335"
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+          ></path>
+        </svg>
+        Sign up with Google
+      </button>
+
+      <button type="button" class="auth-btn email-btn" id="email-signup">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+          ></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+        Sign up with Email
+      </button>
+    </div>
+
+    <div class="auth-links">
+      <p>
+        Already have an account? <a href="/auth/signin" class="auth-link"
+          >Sign In</a
+        >
+      </p>
+    </div>
+  </div>
+
+  <!-- Email Form -->
+  <form id="email-form" class="email-form" style="display: none;">
+    <div class="form-group">
+      <input
+        type="text"
+        id="display-name"
+        name="displayName"
+        class="form-input"
+        placeholder="Full name"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <input
+        type="email"
+        id="email"
+        name="email"
+        class="form-input"
+        placeholder="Email address"
+        required
+      />
+    </div>
+
+    <div class="terms-section">
+      <label class="checkbox-label">
+        <input type="checkbox" id="terms-checkbox" required />
+        <span class="checkbox-custom"></span>
+        <span class="checkbox-text">
+          I agree to the <a href="/terms" target="_blank" class="terms-link"
+            >Terms of Service</a
+          >
+          and <a href="/privacy" target="_blank" class="terms-link"
+            >Privacy Policy</a
+          >
+        </span>
+      </label>
+    </div>
+
+    <button type="submit" class="auth-btn primary" id="signup-btn">
+      <span class="btn-text">Create Account</span>
+      <div class="btn-spinner" style="display: none;">
+        <div class="square-spinner"></div>
+      </div>
+    </button>
+
+    <button type="button" class="back-btn" id="back-btn">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12,19 5,12 12,5"></polyline>
+      </svg>
+      Back to options
+    </button>
+  </form>
+
+  <!-- OTP Form -->
+  <form id="otp-form" class="otp-form" style="display: none;">
+    <div class="otp-header">
+      <h3>Check Your Email</h3>
+      <p>
+        We've sent a verification code to <strong id="email-display"></strong>
+      </p>
+    </div>
+
+    <div class="form-group">
+      <input
+        type="text"
+        id="otp-code"
+        name="otp"
+        class="form-input otp-input"
+        placeholder="Enter 6-digit code"
+        required
+        maxlength="6"
+      />
+    </div>
+
+    <button type="submit" class="auth-btn primary" id="verify-btn">
+      <span class="btn-text">Verify Code</span>
+      <div class="btn-spinner" style="display: none;">
+        <div class="square-spinner"></div>
+      </div>
+    </button>
+
+    <div class="otp-options">
+      <button type="button" class="option-link" id="resend-code">
+        <span class="resend-text">Resend code</span>
+        <span class="resend-timer" style="display: none;"
+          >Resend in <span id="timer">60</span>s</span
+        >
+      </button>
+      <button type="button" class="option-link" id="back-to-email"
+        >Back to email</button
+      >
+    </div>
+  </form>
+
+  <!-- Messages -->
+  <div class="toast-message" id="toast-message" style="display: none;">
+    <div class="toast-content">
+      <div class="toast-icon" id="toast-icon"></div>
+      <span id="toast-text"></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .social-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .auth-btn {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e2e8f0;
+    background: white;
+    color: #374151;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: inherit;
+  }
+
+  .auth-btn:hover {
+    border-color: #d1d5db;
+    background: #f9fafb;
+  }
+
+  .auth-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .auth-btn.primary {
+    background: #243788;
+    color: white;
+    border-color: #243788;
+  }
+
+  .auth-btn.primary:hover:not(:disabled) {
+    background: #1e2d6b;
+    border-color: #1e2d6b;
+  }
+
+  .email-form,
+  .otp-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.875rem;
+    border: 2px solid #e2e8f0;
+    background: white;
+    color: #374151;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: #243788;
+  }
+
+  .form-input::placeholder {
+    color: #9ca3af;
+  }
+
+  .otp-input {
+    text-align: center;
+    font-size: 1.125rem;
+    letter-spacing: 0.25em;
+    font-weight: 600;
+  }
+
+  .otp-header {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .otp-header h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #243788;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .otp-header p {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  .terms-section {
+    margin: 0.5rem 0;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    display: none;
+  }
+
+  .checkbox-custom {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #d1d5db;
+    background: white;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+    background: #243788;
+    border-color: #243788;
+  }
+
+  .checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+  }
+
+  .checkbox-text {
+    color: #64748b;
+  }
+
+  .terms-link {
+    color: #243788;
+    text-decoration: none;
+  }
+
+  .terms-link:hover {
+    text-decoration: underline;
+  }
+
+  .back-btn {
+    background: none;
+    border: 2px solid #e2e8f0;
+    color: #64748b;
+    padding: 0.5rem;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .back-btn:hover {
+    border-color: #d1d5db;
+    background: #f9fafb;
+  }
+
+  .auth-links {
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 2px solid #e2e8f0;
+  }
+
+  .auth-links p {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  .auth-link {
+    color: #243788;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .auth-link:hover {
+    text-decoration: underline;
+  }
+
+  .otp-options {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .option-link {
+    background: none;
+    border: none;
+    color: #243788;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: inherit;
+  }
+
+  .option-link:hover {
+    opacity: 0.8;
+  }
+
+  .btn-spinner {
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .square-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .toast-message {
+    position: fixed;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    z-index: 9999;
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 400px;
+    width: 90%;
+  }
+
+  .toast-content {
+    backdrop-filter: blur(16px);
+    background: rgba(34, 197, 94, 0.1);
+    border: 2px solid rgba(34, 197, 94, 0.3);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #16a34a;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .toast-content.error {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #dc2626;
+  }
+
+  .toast-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  /* Dark mode support2 */
+  :global(.dark) .auth-btn {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+    color: rgb(248, 250, 252);
+  }
+
+  :global(.dark) .auth-btn:hover {
+    border-color: rgb(75, 85, 99);
+    background: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .auth-btn.primary {
+    background: #b4bce1;
+    color: rgb(15, 23, 42);
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .auth-btn.primary:hover:not(:disabled) {
+    background: #9ca8d4;
+    border-color: #9ca8d4;
+  }
+
+  :global(.dark) .form-input {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+    color: rgb(248, 250, 252);
+  }
+
+  :global(.dark) .form-input:focus {
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .checkbox-custom {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+  }
+
+  :global(.dark)
+    .checkbox-label
+    input[type="checkbox"]:checked
+    + .checkbox-custom {
+    background: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  :global(.dark)
+    .checkbox-label
+    input[type="checkbox"]:checked
+    + .checkbox-custom::after {
+    color: rgb(15, 23, 42);
+  }
+
+  :global(.dark) .checkbox-text {
+    color: rgb(148, 163, 184);
+  }
+
+  :global(.dark) .terms-link {
+    color: #b4bce1;
+  }
+
+  :global(.dark) .back-btn {
+    border-color: rgb(51, 65, 85);
+    color: rgb(148, 163, 184);
+  }
+
+  :global(.dark) .back-btn:hover {
+    border-color: rgb(75, 85, 99);
+    background: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .auth-links {
+    border-top-color: rgb(51, 65, 85);
+  }
+
+  :global(.dark) .auth-links p {
+    color: rgb(148, 163, 184);
+  }
+
+  :global(.dark) .auth-link {
+    color: #b4bce1;
+  }
+
+  :global(.dark) .error-content {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  :global(.dark) .success-content {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+
+  :global(.dark) .error-message p {
+    color: #fca5a5;
+  }
+
+  :global(.dark) .success-message p {
+    color: #86efac;
+  }
+
+  :global(.dark) .square-spinner {
+    border-color: rgba(180, 188, 225, 0.3);
+    border-top-color: #b4bce1;
+  }
+
+  /* Dark mode support */
+  :global(.dark) .auth-btn {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+    color: rgb(248, 250, 252);
+  }
+
+  :global(.dark) .auth-btn:hover {
+    border-color: rgb(75, 85, 99);
+    background: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .auth-btn.primary {
+    background: #b4bce1;
+    color: rgb(15, 23, 42);
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .auth-btn.primary:hover:not(:disabled) {
+    background: #9ca8d4;
+    border-color: #9ca8d4;
+  }
+
+  :global(.dark) .form-input {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+    color: rgb(248, 250, 252);
+  }
+
+  :global(.dark) .form-input:focus {
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .checkbox-custom {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+  }
+
+  :global(.dark)
+    .checkbox-label
+    input[type="checkbox"]:checked
+    + .checkbox-custom {
+    background: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  :global(.dark)
+    .checkbox-label
+    input[type="checkbox"]:checked
+    + .checkbox-custom::after {
+    color: rgb(15, 23, 42);
+  }
+
+  :global(.dark) .square-spinner {
+    border-color: rgba(180, 188, 225, 0.3);
+    border-top-color: #b4bce1;
+  }
+
+  @media (max-width: 480px) {
+    .otp-options {
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: center;
+    }
+  }
+</style>
+
+<script>
+  import { auth } from "../../lib/auth.js";
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    console.log("📝 SignUpForm: Initializing...");
+
+    // Initialize auth
+    await auth.initialize();
+
+    // DOM Elements
+    const authOptions = document.getElementById("auth-options") as HTMLElement;
+    const emailForm = document.getElementById("email-form") as HTMLFormElement;
+    const otpForm = document.getElementById("otp-form") as HTMLFormElement;
+    const emailSignupBtn = document.getElementById(
+      "email-signup"
+    ) as HTMLButtonElement;
+    const googleBtn = document.getElementById(
+      "google-signup"
+    ) as HTMLButtonElement;
+    const backBtn = document.getElementById("back-btn") as HTMLButtonElement;
+    const backToEmailBtn = document.getElementById(
+      "back-to-email"
+    ) as HTMLButtonElement;
+    const signupBtn = document.getElementById(
+      "signup-btn"
+    ) as HTMLButtonElement;
+    const verifyBtn = document.getElementById(
+      "verify-btn"
+    ) as HTMLButtonElement;
+    const resendBtn = document.getElementById(
+      "resend-code"
+    ) as HTMLButtonElement;
+    const emailDisplay = document.getElementById(
+      "email-display"
+    ) as HTMLElement;
+    const toastMessage = document.getElementById(
+      "toast-message"
+    ) as HTMLElement;
+    const toastText = document.getElementById("toast-text") as HTMLElement;
+    const toastIcon = document.getElementById("toast-icon") as HTMLElement;
+
+    let currentEmail = "";
+    let resendTimer: number | null = null;
+
+    // Helper Functions
+    function showToast(message: string, type: "success" | "error" = "success") {
+      if (toastText && toastMessage && toastIcon) {
+        toastText.textContent = message;
+        toastIcon.innerHTML =
+          type === "success"
+            ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>'
+            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+
+        const toastContent = toastMessage.querySelector(
+          ".toast-content"
+        ) as HTMLElement;
+        if (toastContent) {
+          toastContent.className = `toast-content ${type === "error" ? "error" : ""}`;
+        }
+
+        toastMessage.style.display = "block";
+        setTimeout(() => {
+          toastMessage.style.transform = "translateX(-50%) translateY(0)";
+          toastMessage.style.opacity = "1";
+        }, 10);
+
+        setTimeout(
+          () => {
+            toastMessage.style.transform = "translateX(-50%) translateY(-20px)";
+            toastMessage.style.opacity = "0";
+            setTimeout(() => (toastMessage.style.display = "none"), 300);
+          },
+          type === "error" ? 5000 : 3000
+        );
+      }
+    }
+
+    function setButtonLoading(button: HTMLButtonElement, isLoading: boolean) {
+      const btnText = button.querySelector(".btn-text") as HTMLElement;
+      const btnSpinner = button.querySelector(".btn-spinner") as HTMLElement;
+
+      button.disabled = isLoading;
+      if (btnText) btnText.style.display = isLoading ? "none" : "block";
+      if (btnSpinner) btnSpinner.style.display = isLoading ? "flex" : "none";
+    }
+
+    function showEmailForm() {
+      if (authOptions) authOptions.style.display = "none";
+      if (emailForm) emailForm.style.display = "flex";
+      if (otpForm) otpForm.style.display = "none";
+    }
+
+    function showOTPForm(email: string) {
+      currentEmail = email;
+      if (emailDisplay) emailDisplay.textContent = email;
+      if (authOptions) authOptions.style.display = "none";
+      if (emailForm) emailForm.style.display = "none";
+      if (otpForm) otpForm.style.display = "flex";
+
+      // Focus OTP input
+      const otpInput = document.getElementById("otp-code") as HTMLInputElement;
+      if (otpInput) otpInput.focus();
+    }
+
+    function showAuthOptions() {
+      if (authOptions) authOptions.style.display = "block";
+      if (emailForm) emailForm.style.display = "none";
+      if (otpForm) otpForm.style.display = "none";
+    }
+
+    function startResendTimer() {
+      const resendText = resendBtn?.querySelector(
+        ".resend-text"
+      ) as HTMLElement;
+      const resendTimer = resendBtn?.querySelector(
+        ".resend-timer"
+      ) as HTMLElement;
+      const timerSpan = document.getElementById("timer") as HTMLElement;
+
+      if (resendBtn) resendBtn.disabled = true;
+      if (resendText) resendText.style.display = "none";
+      if (resendTimer) resendTimer.style.display = "block";
+
+      let countdown = 60;
+      const interval = setInterval(() => {
+        if (timerSpan) timerSpan.textContent = countdown.toString();
+        countdown--;
+
+        if (countdown < 0) {
+          clearInterval(interval);
+          if (resendBtn) resendBtn.disabled = false;
+          if (resendText) resendText.style.display = "block";
+          if (resendTimer) resendTimer.style.display = "none";
+        }
+      }, 1000);
+    }
+
+    // Event Listeners
+    emailSignupBtn?.addEventListener("click", showEmailForm);
+    backBtn?.addEventListener("click", showAuthOptions);
+    backToEmailBtn?.addEventListener("click", showEmailForm);
+
+    // Google signup
+    googleBtn?.addEventListener("click", async () => {
+      try {
+        setButtonLoading(googleBtn, true);
+        const result = await auth.signInWithGoogle();
+
+        if (!result.success) {
+          throw new Error(result.error || "Google sign up failed");
+        }
+      } catch (error: any) {
+        showToast(error.message || "Google sign up failed", "error");
+        setButtonLoading(googleBtn, false);
+      }
+    });
+
+    // Email form submission
+    emailForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(emailForm);
+      const displayName = formData.get("displayName") as string;
+      const email = formData.get("email") as string;
+      const termsAccepted = (
+        document.getElementById("terms-checkbox") as HTMLInputElement
+      )?.checked;
+
+      if (!displayName || !email) {
+        showToast("Please fill in all fields", "error");
+        return;
+      }
+
+      if (!termsAccepted) {
+        showToast("Please accept the terms and conditions", "error");
+        return;
+      }
+
+      setButtonLoading(signupBtn, true);
+
+      try {
+        const result = await auth.signUpWithEmail(email, displayName);
+
+        if (!result.success) {
+          throw new Error(result.error || "Sign up failed");
+        }
+
+        showToast("Verification code sent to your email!");
+        showOTPForm(email);
+        startResendTimer();
+      } catch (error: any) {
+        showToast(error.message || "Sign up failed", "error");
+      } finally {
+        setButtonLoading(signupBtn, false);
+      }
+    });
+
+    // OTP form submission
+    otpForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(otpForm);
+      const otp = formData.get("otp") as string;
+
+      if (!otp || otp.length !== 6) {
+        showToast("Please enter a valid 6-digit code", "error");
+        return;
+      }
+
+      setButtonLoading(verifyBtn, true);
+
+      try {
+        const result = await auth.verifyOTP(currentEmail, otp);
+
+        if (!result.success) {
+          throw new Error(result.error || "Invalid verification code");
+        }
+
+        showToast("Account created successfully! Redirecting...");
+
+        setTimeout(() => {
+          window.location.href = "/profile?setup=password";
+        }, 1500);
+      } catch (error: any) {
+        showToast(error.message || "Verification failed", "error");
+      } finally {
+        setButtonLoading(verifyBtn, false);
+      }
+    });
+
+    // Resend code
+    resendBtn?.addEventListener("click", async () => {
+      if (!currentEmail) return;
+
+      try {
+        const result = await auth.signUpWithEmail(currentEmail, "");
+
+        if (result.success) {
+          showToast("New verification code sent!");
+          startResendTimer();
+        } else {
+          showToast("Failed to resend code", "error");
+        }
+      } catch (error: any) {
+        showToast("Failed to resend code", "error");
+      }
+    });
+
+    console.log("📝 SignUpForm: Initialization complete");
+  });
+</script>

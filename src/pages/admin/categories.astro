@@ -1,0 +1,2481 @@
+---
+// src/pages/admin/categories.astro - CORRECTED VERSION
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { supabase } from "../../lib/supabase";
+
+// Updated interfaces
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  target_audience?: string;
+  color: string;
+  icon?: string;
+  sort_order: number;
+  is_premium: boolean;
+  created_at: string;
+  article_count: number;
+  follower_count?: number;
+  is_featured?: boolean;
+  featured?: boolean;
+}
+
+interface Article {
+  id: string;
+  title: string;
+  slug: string;
+  created_at: string;
+  is_published: boolean;
+  category_slug: string;
+  categories?: {
+    name: string;
+    slug: string;
+    color: string;
+  } | null; // ← Single object, not array
+}
+
+// Get all categories
+const { data: categoriesRaw, error: categoriesError } = await supabase
+  .from("categories")
+  .select("*")
+  .order("sort_order", { ascending: true });
+
+// Get article counts using category_slug
+let categoriesWithCounts: Category[] = [];
+if (categoriesRaw) {
+  categoriesWithCounts = await Promise.all(
+    categoriesRaw.map(async (category): Promise<Category> => {
+      const { count } = await supabase
+        .from("articles")
+        .select("*", { count: "exact", head: true })
+        .eq("category_slug", category.slug) // ← Using category_slug
+        .eq("is_published", true);
+      
+      return {
+        ...category,
+        article_count: count || 0,
+        follower_count: 0,
+        is_featured: category.is_featured || category.featured || false
+      } as Category;
+    })
+  );
+}
+
+// Get category statistics
+const { data: categoryStats } = await supabase
+  .from("categories")
+  .select("is_premium, created_at, is_featured, featured");
+
+// Recent articles query
+const { data: recentArticlesRaw } = await supabase
+  .from("articles")
+  .select(`
+    id,
+    title,
+    slug,
+    created_at,
+    is_published,
+    category_slug,
+    categories!category_slug(name, slug, color)
+  `)
+  .eq("is_published", true)
+  .not("category_slug", "is", null)
+  .order("created_at", { ascending: false })
+  .limit(10);
+
+// Type assertion
+const recentArticles = recentArticlesRaw || [];
+
+// ADDED: Missing newsletter query
+const { data: newsletters } = await supabase
+  .from("newsletters")
+  .select("*")
+  .eq("is_active", true);
+
+const stats = {
+  total: categoriesWithCounts?.length || 0,
+  premium: categoryStats?.filter((c) => c.is_premium).length || 0,
+  featured: categoryStats?.filter((c) => c.is_featured || c.featured).length || 0,
+  active: categoriesWithCounts?.filter((c) => c.article_count > 0).length || 0,
+  totalArticles: categoriesWithCounts?.reduce((sum, category) => sum + category.article_count, 0) || 0,
+};
+
+console.log("Categories Debug:", {
+  categoriesCount: categoriesWithCounts?.length,
+  recentArticlesCount: recentArticles?.length,
+  stats,
+  error: categoriesError
+});
+---
+
+<AdminLayout title="Categories - TinkByte Admin">
+  <div class="categories-container">
+    <!-- Categories Header -->
+    <div class="categories-header">
+      <div class="header-content">
+        <h1>Categories</h1>
+        <p>Manage your content categories and organization</p>
+      </div>
+      <div class="header-actions">
+        <button class="add-category-btn" id="add-category-btn">
+          <i class="fas fa-plus"></i>
+          Add New Category
+        </button>
+        <button class="bulk-actions-btn" id="bulk-actions-btn">
+          <i class="fas fa-tasks"></i>
+          Bulk Actions
+        </button>
+        <a href="/admin/index.html" class="cms-link-btn" target="_blank">
+          <i class="fas fa-external-link-alt"></i>
+          Manage in TinaCMS
+        </a>
+      </div>
+    </div>
+
+    <!-- Enhanced Filters and Search -->
+    <div class="categories-filters">
+      <div class="search-section">
+        <div class="search-input-container">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search categories..." id="category-search" />
+        </div>
+      </div>
+      <div class="filter-section">
+        <select id="status-filter" class="filter-select">
+          <option value="">All Categories</option>
+          <option value="premium">Premium Only</option>
+          <option value="featured">Featured Only</option>
+          <option value="active">Active (with articles)</option>
+          <option value="inactive">Inactive (no articles)</option>
+        </select>
+        <select id="sort-filter" class="filter-select">
+          <option value="sort_order">Sort Order</option>
+          <option value="name">Name A-Z</option>
+          <option value="created_at">Newest First</option>
+          <option value="article_count">Most Articles</option>
+        </select>
+        <button class="filter-btn" id="apply-filters">
+          <i class="fas fa-filter"></i>
+          Apply Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Categories Stats -->
+    <div class="categories-stats">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-tags"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{stats.total}</span>
+          <span class="stat-label">Total Categories</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-crown"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{stats.premium}</span>
+          <span class="stat-label">Premium Categories</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{stats.featured}</span>
+          <span class="stat-label">Featured Categories</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{stats.active}</span>
+          <span class="stat-label">Active Categories</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{stats.totalArticles}</span>
+          <span class="stat-label">Total Articles</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories Grid -->
+    <div class="categories-grid">
+      {
+        categoriesWithCounts && categoriesWithCounts.length > 0 ? (
+          categoriesWithCounts.map((category) => (
+            <div class="category-card" data-category-id={category.id} data-category-slug={category.slug}>
+              <div class="category-header">
+                <div class="category-select">
+                  <input type="checkbox" class="category-checkbox" value={category.id} />
+                </div>
+                <div
+                  class="category-color"
+                  style={`background-color: ${category.color || "#243788"}`}
+                />
+                <div class="category-info">
+                  <h3 class="category-name">{category.name}</h3>
+                  <p class="category-slug">/{category.slug}</p>
+                </div>
+                <div class="category-badges">
+                  {category.is_featured && (
+                    <span class="featured-badge">
+                      <i class="fas fa-star" />
+                      Featured
+                    </span>
+                  )}
+                  {category.is_premium && (
+                    <span class="premium-badge">
+                      <i class="fas fa-crown" />
+                      Premium
+                    </span>
+                  )}
+                  <span class="article-count">
+                    {category.article_count} articles
+                  </span>
+                </div>
+              </div>
+
+              <div class="category-description">
+                <p>{category.description || "No description available"}</p>
+                {category.target_audience && (
+                  <div class="target-audience">
+                    <i class="fas fa-users" />
+                    <span>Target: {category.target_audience}</span>
+                  </div>
+                )}
+              </div>
+
+              <div class="category-meta">
+                <div class="meta-item">
+                  <i class="fas fa-sort-numeric-up" />
+                  <span>Order: {category.sort_order || 0}</span>
+                </div>
+                <div class="meta-item">
+                  <i class="fas fa-calendar" />
+                  <span>
+                    Created: {new Date(category.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                {category.icon && (
+                  <div class="meta-item">
+                    <i class={category.icon} />
+                    <span>Icon: {category.icon}</span>
+                  </div>
+                )}
+                <div class="meta-item">
+                  <i class="fas fa-heart" />
+                  <span>{category.follower_count || 0} followers</span>
+                </div>
+              </div>
+
+              <!-- Impact Assessment -->
+              {category.article_count > 0 && (
+                <div class="category-impact">
+                  <div class="impact-warning">
+                    <i class="fas fa-exclamation-triangle" />
+                    <span>
+                      Deleting this category will affect {category.article_count} articles
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div class="category-actions">
+                <button
+                  class="action-btn edit"
+                  data-action="edit"
+                  data-category-id={category.id}
+                  title="Edit Category"
+                >
+                  <i class="fas fa-edit" />
+                  Edit
+                </button>
+                <button
+                  class="action-btn view"
+                  data-action="view"
+                  data-category-slug={category.slug}
+                  title="View Category Page"
+                >
+                  <i class="fas fa-eye" />
+                  View
+                </button>
+                <button
+                  class="action-btn articles"
+                  data-action="articles"
+                  data-category-id={category.slug}
+                  title="View Articles"
+                >
+                  <i class="fas fa-file-alt" />
+                  Articles ({category.article_count})
+                </button>
+                <button
+                  class="action-btn feature"
+                  data-action="feature"
+                  data-category-id={category.id}
+                  title={category.is_featured ? "Remove from Featured" : "Add to Featured"}
+                >
+                  <i class={category.is_featured ? "fas fa-star" : "far fa-star"} />
+                  {category.is_featured ? "Unfeature" : "Feature"}
+                </button>
+                <button
+                  class="action-btn delete"
+                  data-action="delete"
+                  data-category-id={category.id}
+                  title="Delete Category"
+                >
+                  <i class="fas fa-trash" />
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div class="empty-state">
+            <i class="fas fa-tags" />
+            <h3>No categories found</h3>
+            <p>Create your first category to organize your content</p>
+            <button class="create-first-category-btn" id="create-first-category">
+              <i class="fas fa-plus" />
+              Create First Category
+            </button>
+          </div>
+        )
+      }
+    </div>
+
+    <!-- Newsletter Integration Section -->
+    <div class="newsletter-integration-section">
+      <h2>Newsletter Integration</h2>
+      <div class="newsletter-grid">
+        {
+          newsletters && newsletters.length > 0 ? (
+            newsletters.map((newsletter) => (
+              <div class="newsletter-card">
+                <div class="newsletter-header">
+                  <h4>{newsletter.name}</h4>
+                  <span class="newsletter-frequency">{newsletter.frequency}</span>
+                </div>
+                <p>{newsletter.description}</p>
+                <div class="newsletter-stats">
+                  <span>{newsletter.subscriber_count || 0} subscribers</span>
+                </div>
+                <div class="newsletter-actions">
+                  <button class="newsletter-btn" data-newsletter-id={newsletter.id}>
+                    <i class="fas fa-link" />
+                    Link Categories
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div class="newsletter-empty">
+              <p>No active newsletters found. <a href="/admin/newsletters">Create one</a> to link with categories.</p>
+            </div>
+          )
+        }
+      </div>
+    </div>
+
+<!-- Recent Articles section -->
+<div class="recent-articles-section">
+  <h2>Recent Articles by Category</h2>
+  <div class="articles-by-category">
+    {
+      recentArticles && recentArticles.length > 0 ? (
+        recentArticles.map((article) => {
+          // Handle both array and single object cases
+          const categoryData = Array.isArray(article.categories) 
+            ? article.categories[0] 
+            : article.categories;
+          
+          return (
+            <div class="article-item">
+              <div
+                class="article-category-indicator"
+                style={`background-color: ${categoryData?.color || "#243788"}`}
+              />
+              <div class="article-content">
+                <h4 class="article-title">{article.title}</h4>
+                <div class="article-meta">
+                  <span class="article-category">
+                    {categoryData?.name || "Unknown"}
+                  </span>
+                  <span class="article-date">
+                    {new Date(article.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+              <div class="article-actions">
+                <a
+                  href={`/blog/${article.slug}`}
+                  class="view-article-btn"
+                  target="_blank"
+                  title="View Article"
+                >
+                  <i class="fas fa-external-link-alt" />
+                </a>
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        <p class="no-articles">No recent articles found</p>
+      )
+    }
+  </div>
+</div>
+
+  <!-- Enhanced Add/Edit Category Modal -->
+  <div id="category-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Add New Category</h3>
+        <button class="modal-close" id="modal-close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form id="category-form" class="modal-form">
+        <div class="form-tabs">
+          <button type="button" class="tab-btn active" data-tab="basic">Basic Info</button>
+          <button type="button" class="tab-btn" data-tab="advanced">Advanced</button>
+          <button type="button" class="tab-btn" data-tab="seo">SEO & Features</button>
+        </div>
+
+        <!-- Basic Info Tab -->
+        <div id="basic-tab" class="tab-content active">
+          <div class="form-group">
+            <label for="category-name">Category Name *</label>
+            <input
+              type="text"
+              id="category-name"
+              name="name"
+              required
+              placeholder="e.g., Build Thinking"
+            />
+            <div class="validation-message" id="name-validation"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="category-slug">URL Slug *</label>
+            <input
+              type="text"
+              id="category-slug"
+              name="slug"
+              required
+              placeholder="e.g., build-thinking"
+            />
+            <small class="form-help">Auto-generated from name, but you can customize</small>
+            <div class="validation-message" id="slug-validation"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="category-description">Description</label>
+            <textarea
+              id="category-description"
+              name="description"
+              rows="3"
+              placeholder="Brief description of this category..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="category-target-audience">Target Audience</label>
+            <select id="category-target-audience" name="target_audience">
+              <option value="">Select target audience</option>
+              <option value="Product Managers">Product Managers</option>
+              <option value="Developers">Developers</option>
+              <option value="Designers">Designers</option>
+              <option value="Entrepreneurs">Entrepreneurs</option>
+              <option value="General">General Audience</option>
+              <option value="Executives">Executives</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Advanced Tab -->
+        <div id="advanced-tab" class="tab-content">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="category-color">Category Color</label>
+              <div class="color-picker-container">
+                <input
+                  type="color"
+                  id="category-color"
+                  name="color"
+                  value="#243788"
+                />
+                <div class="color-presets">
+                  <button type="button" class="color-preset" data-color="#243788" style="background: #243788"></button>
+                  <button type="button" class="color-preset" data-color="#4285f4" style="background: #4285f4"></button>
+                  <button type="button" class="color-preset" data-color="#34a853" style="background: #34a853"></button>
+                  <button type="button" class="color-preset" data-color="#fbbc04" style="background: #fbbc04"></button>
+                  <button type="button" class="color-preset" data-color="#ea4335" style="background: #ea4335"></button>
+                  <button type="button" class="color-preset" data-color="#9c27b0" style="background: #9c27b0"></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="category-icon">Icon Class</label>
+              <div class="icon-picker-container">
+                <input
+                  type="text"
+                  id="category-icon"
+                  name="icon"
+                  placeholder="e.g., fas fa-lightbulb"
+                />
+                <div class="icon-presets">
+                  <button type="button" class="icon-preset" data-icon="fas fa-lightbulb"><i class="fas fa-lightbulb"></i></button>
+                  <button type="button" class="icon-preset" data-icon="fas fa-code"><i class="fas fa-code"></i></button>
+                  <button type="button" class="icon-preset" data-icon="fas fa-paint-brush"><i class="fas fa-paint-brush"></i></button>
+                  <button type="button" class="icon-preset" data-icon="fas fa-rocket"><i class="fas fa-rocket"></i></button>
+                  <button type="button" class="icon-preset" data-icon="fas fa-chart-line"><i class="fas fa-chart-line"></i></button>
+                  <button type="button" class="icon-preset" data-icon="fas fa-users"><i class="fas fa-users"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="category-sort-order">Sort Order</label>
+              <input
+                type="number"
+                id="category-sort-order"
+                name="sort_order"
+                min="0"
+                value="0"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Category Tags</label>
+            <div class="tags-input-container">
+              <input
+                type="text"
+                id="category-tags"
+                placeholder="Type and press Enter to add tags"
+              />
+              <div class="tags-display" id="tags-display"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEO & Features Tab -->
+        <div id="seo-tab" class="tab-content">
+          <div class="form-group">
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="category-is-premium" name="is_premium" />
+                <span>Premium Category</span>
+                <small>Only premium subscribers can access</small>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="category-is-featured" name="is_featured" />
+                <span>Featured Category</span>
+                <small>Show prominently on homepage</small>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="category-newsletter-enabled" name="newsletter_enabled" />
+                <span>Enable Newsletter</span>
+                <small>Send newsletter updates for this category</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="category-seo-title">SEO Title</label>
+            <input
+              type="text"
+              id="category-seo-title"
+              name="seo_title"
+              placeholder="Custom SEO title (optional)"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="category-seo-description">SEO Description</label>
+            <textarea
+              id="category-seo-description"
+              name="seo_description"
+              rows="2"
+              placeholder="Custom SEO description (optional)"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" id="cancel-btn">Cancel</button>
+          <button type="submit" class="save-btn" id="save-btn">
+            <i class="fas fa-save"></i>
+            Save Category
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bulk Actions Modal -->
+  <div id="bulk-actions-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Bulk Actions</h3>
+        <button class="modal-close" id="bulk-modal-close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="bulk-actions-content">
+        <div class="bulk-selection-info">
+          <span id="bulk-selected-count">0</span> categories selected
+        </div>
+        <div class="bulk-action-buttons">
+          <button class="bulk-action-btn" data-action="feature">
+            <i class="fas fa-star"></i>
+            Toggle Featured
+          </button>
+          <button class="bulk-action-btn" data-action="premium">
+            <i class="fas fa-crown"></i>
+            Toggle Premium
+          </button>
+          <button class="bulk-action-btn" data-action="export">
+            <i class="fas fa-download"></i>
+            Export Selected
+          </button>
+          <button class="bulk-action-btn danger" data-action="delete">
+            <i class="fas fa-trash"></i>
+            Delete Selected
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  /* All your existing styles plus new ones */
+  .categories-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .categories-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .header-content h1 {
+    color: #f0f6fc;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .header-content p {
+    color: #8b949e;
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .add-category-btn,
+  .bulk-actions-btn,
+  .cms-link-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-size: 0.875rem;
+  }
+
+  .add-category-btn {
+    background: #4285f4;
+    color: white;
+    border: 1px solid #4285f4;
+  }
+
+  .bulk-actions-btn {
+    background: #fb8500;
+    color: white;
+    border: 1px solid #fb8500;
+  }
+
+  .cms-link-btn {
+    background: transparent;
+    color: #4285f4;
+    border: 1px solid #4285f4;
+  }
+
+  /* Enhanced Filters */
+  .categories-filters {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #161b22;
+    border: 1px solid #21262d;
+  }
+
+  .search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-input-container i {
+    position: absolute;
+    left: 12px;
+    color: #8b949e;
+    z-index: 1;
+  }
+
+  #category-search {
+    width: 300px;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    font-size: 0.875rem;
+  }
+
+  .filter-section {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .filter-select {
+    padding: 0.75rem 1rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+
+  .filter-btn {
+    padding: 0.75rem 1rem;
+    background: #238636;
+    color: white;
+    border: 1px solid #238636;
+    cursor: pointer;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Enhanced Stats */
+  .categories-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .stat-card:hover {
+    border-color: #4285f4;
+    transform: translateY(-2px);
+  }
+
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    background: #4285f4;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .stat-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #f0f6fc;
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: #8b949e;
+  }
+
+  /* Enhanced Category Cards */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .category-card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .category-card:hover {
+    border-color: #4285f4;
+    transform: translateY(-2px);
+  }
+
+  .category-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .category-select {
+    flex-shrink: 0;
+  }
+
+  .category-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #4285f4;
+  }
+
+  .category-color {
+    width: 4px;
+    height: 60px;
+    flex-shrink: 0;
+  }
+
+  .category-info {
+    flex: 1;
+  }
+
+  .category-name {
+    color: #f0f6fc;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .category-slug {
+    color: #8b949e;
+    font-size: 0.875rem;
+    font-family: monospace;
+    margin: 0;
+  }
+
+  .category-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+
+  .featured-badge {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid #ffc107;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .premium-badge {
+    background: rgba(251, 133, 0, 0.1);
+    color: #fb8500;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid #fb8500;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .article-count {
+    background: rgba(66, 133, 244, 0.1);
+    color: #4285f4;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid #4285f4;
+  }
+
+  /* Impact Assessment */
+  .category-impact {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: rgba(251, 133, 0, 0.1);
+    border: 1px solid #fb8500;
+  }
+
+  .impact-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #fb8500;
+    font-size: 0.875rem;
+  }
+
+  /* Enhanced Form Tabs */
+  .form-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .tab-btn {
+    padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    color: #8b949e;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .tab-btn.active {
+    color: #4285f4;
+    border-bottom-color: #4285f4;
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  /* Color and Icon Pickers */
+  .color-picker-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .color-presets {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .color-preset {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #30363d;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .color-preset:hover {
+    border-color: #4285f4;
+    transform: scale(1.1);
+  }
+
+  .icon-picker-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .icon-presets {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .icon-preset {
+    width: 32px;
+    height: 32px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .icon-preset:hover {
+    background: #4285f4;
+    border-color: #4285f4;
+  }
+
+  /* Tags Input */
+  .tags-input-container {
+    border: 1px solid #30363d;
+    background: #21262d;
+    padding: 0.5rem;
+  }
+
+  #category-tags {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #f0f6fc;
+    padding: 0.5rem;
+  }
+
+  .tags-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .tag-item {
+    background: #4285f4;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .tag-remove {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Newsletter Integration */
+  .newsletter-integration-section {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .newsletter-integration-section h2 {
+    color: #f0f6fc;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem 0;
+  }
+
+  .newsletter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .newsletter-card {
+    background: #21262d;
+    border: 1px solid #30363d;
+    padding: 1.5rem;
+  }
+
+  .newsletter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .newsletter-header h4 {
+    color: #f0f6fc;
+    margin: 0;
+  }
+
+  .newsletter-frequency {
+    background: rgba(66, 133, 244, 0.1);
+    color: #4285f4;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    border: 1px solid #4285f4;
+  }
+
+  .newsletter-btn {
+    padding: 0.5rem 1rem;
+    background: #4285f4;
+    color: white;
+    border: 1px solid #4285f4;
+    cursor: pointer;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Validation Messages */
+  .validation-message {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    min-height: 1rem;
+  }
+
+  .validation-message.error {
+    color: #da3633;
+  }
+
+  .validation-message.success {
+    color: #238636;
+  }
+
+  /* Bulk Actions Modal */
+  .bulk-actions-content {
+    padding: 2rem;
+  }
+
+  .bulk-selection-info {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.125rem;
+    color: #f0f6fc;
+  }
+
+  .bulk-action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .bulk-action-btn {
+    padding: 1rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .bulk-action-btn:hover {
+    background: #4285f4;
+    border-color: #4285f4;
+  }
+
+  .bulk-action-btn.danger:hover {
+    background: #da3633;
+    border-color: #da3633;
+  }
+
+  .category-description {
+    margin-bottom: 1rem;
+  }
+
+  .category-description p {
+    color: #8b949e;
+    line-height: 1.5;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .target-audience {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #8b949e;
+    font-size: 0.875rem;
+  }
+
+  .category-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #21262d;
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #8b949e;
+    font-size: 0.75rem;
+  }
+
+  .category-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    padding: 0.5rem 1rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .action-btn:hover {
+    background: #30363d;
+  }
+
+  .action-btn.edit:hover {
+    background: #4285f4;
+    border-color: #4285f4;
+  }
+
+  .action-btn.view:hover {
+    background: #238636;
+    border-color: #238636;
+  }
+
+  .action-btn.articles:hover {
+    background: #fb8500;
+    border-color: #fb8500;
+  }
+
+  .action-btn.feature:hover {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+  }
+
+  .action-btn.delete:hover {
+    background: #da3633;
+    border-color: #da3633;
+  }
+
+
+  .recent-articles-section {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 2rem;
+  }
+
+  .recent-articles-section h2 {
+    color: #f0f6fc;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem 0;
+  }
+
+  .articles-by-category {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .article-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    transition: all 0.2s ease;
+  }
+
+  .article-item:hover {
+    border-color: #4285f4;
+  }
+
+  .article-category-indicator {
+    width: 4px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  .article-content {
+    flex: 1;
+  }
+
+  .article-title {
+    color: #f0f6fc;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .article-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #8b949e;
+  }
+
+  .article-actions {
+    flex-shrink: 0;
+  }
+
+  .view-article-btn {
+    width: 32px;
+    height: 32px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .view-article-btn:hover {
+    background: #4285f4;
+    border-color: #4285f4;
+  }
+
+  .no-articles {
+    text-align: center;
+    color: #8b949e;
+    padding: 2rem;
+  }
+
+  /* Modal Styles */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: #161b22;
+    border: 1px solid #21262d;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .modal-header h3 {
+    color: #f0f6fc;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: #8b949e;
+    cursor: pointer;
+    font-size: 1.25rem;
+    padding: 0.5rem;
+  }
+
+  .modal-close:hover {
+    color: #f0f6fc;
+  }
+
+  .modal-form {
+    padding: 1.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group label {
+    display: block;
+    color: #f0f6fc;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #4285f4;
+  }
+
+  .form-help {
+    display: block;
+    color: #8b949e;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #f0f6fc;
+    font-weight: 400;
+    cursor: pointer;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #4285f4;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #21262d;
+  }
+
+  .cancel-btn,
+  .save-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .cancel-btn {
+    background: transparent;
+    color: #8b949e;
+    border: 1px solid #30363d;
+  }
+
+  .cancel-btn:hover {
+    background: #21262d;
+    color: #f0f6fc;
+  }
+
+  .save-btn {
+    background: #4285f4;
+    color: white;
+    border: 1px solid #4285f4;
+  }
+
+  .save-btn:hover {
+    background: #3367d6;
+    border-color: #3367d6;
+  }
+
+  /* Light mode styles */
+  :global(.light) .categories-header {
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .header-content h1 {
+    color: #1f2937;
+  }
+
+  :global(.light) .header-content p {
+    color: #6b7280;
+  }
+
+  :global(.light) .add-category-btn {
+    background: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .add-category-btn:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+  }
+
+  :global(.light) .cms-link-btn {
+    color: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .cms-link-btn:hover {
+    background: #243788;
+  }
+
+  :global(.light) .stat-card {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .stat-card:hover {
+    border-color: #243788;
+  }
+
+  :global(.light) .stat-icon {
+    background: #243788;
+  }
+
+  :global(.light) .stat-number {
+    color: #1f2937;
+  }
+
+  :global(.light) .stat-label {
+    color: #6b7280;
+  }
+
+  :global(.light) .category-card {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .category-card:hover {
+    border-color: #243788;
+  }
+
+  :global(.light) .category-name {
+    color: #1f2937;
+  }
+
+  :global(.light) .category-slug {
+    color: #6b7280;
+  }
+
+  :global(.light) .category-description p {
+    color: #6b7280;
+  }
+
+  :global(.light) .target-audience {
+    color: #6b7280;
+  }
+
+  :global(.light) .category-meta {
+    border-top-color: #e2e8f0;
+  }
+
+  :global(.light) .meta-item {
+    color: #6b7280;
+  }
+
+  :global(.light) .action-btn {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .action-btn:hover {
+    background: #f9fafb;
+  }
+
+  :global(.light) .empty-state {
+    color: #6b7280;
+  }
+
+  :global(.light) .empty-state h3 {
+    color: #1f2937;
+  }
+
+  :global(.light) .create-first-category-btn {
+    background: #243788;
+  }
+
+  :global(.light) .create-first-category-btn:hover {
+    background: #1e293b;
+  }
+
+  :global(.light) .recent-articles-section {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .recent-articles-section h2 {
+    color: #1f2937;
+  }
+
+  :global(.light) .article-item {
+    background: #f9fafb;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .article-item:hover {
+    border-color: #243788;
+  }
+
+  :global(.light) .article-title {
+    color: #1f2937;
+  }
+
+  :global(.light) .article-meta {
+    color: #6b7280;
+  }
+
+  :global(.light) .view-article-btn {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .view-article-btn:hover {
+    background: #243788;
+    border-color: #243788;
+    color: white;
+  }
+
+  :global(.light) .no-articles {
+    color: #6b7280;
+  }
+
+  :global(.light) .modal-content {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .modal-header {
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .modal-header h3 {
+    color: #1f2937;
+  }
+
+  :global(.light) .modal-close {
+    color: #6b7280;
+  }
+
+  :global(.light) .modal-close:hover {
+    color: #1f2937;
+  }
+
+  :global(.light) .form-group label {
+    color: #1f2937;
+  }
+
+  :global(.light) .form-group input,
+  :global(.light) .form-group textarea {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .form-group input:focus,
+  :global(.light) .form-group textarea:focus {
+    border-color: #243788;
+  }
+
+  :global(.light) .form-help {
+    color: #6b7280;
+  }
+
+  :global(.light) .checkbox-label {
+    color: #1f2937;
+  }
+
+  :global(.light) .form-actions {
+    border-top-color: #e2e8f0;
+  }
+
+  :global(.light) .cancel-btn {
+    color: #6b7280;
+    border-color: #d1d5db;
+  }
+
+  :global(.light) .cancel-btn:hover {
+    background: #f9fafb;
+    color: #1f2937;
+  }
+
+  :global(.light) .save-btn {
+    background: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .save-btn:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .categories-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .header-actions {
+      flex-direction: column;
+      gap: 0.5rem;
+      width: 100%;
+    }
+
+    .add-category-btn,
+    .cms-link-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .categories-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .categories-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .category-header {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .category-badges {
+      align-items: flex-start;
+    }
+
+    .category-actions {
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+
+    .action-btn {
+      flex: 1;
+      min-width: 100px;
+      justify-content: center;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .cancel-btn,
+    .save-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  import { ClientAdminAuth } from "../../lib/admin/auth.js";
+
+  // typeScript interfaces
+  interface CategoryActionElement extends HTMLButtonElement {
+    dataset: DOMStringMap;
+  }
+
+  interface CategoryFormData {
+    name: string;
+    slug: string;
+    description?: string;
+    target_audience?: string;
+    color: string;
+    icon?: string;
+    sort_order: number;
+    is_premium: boolean;
+    is_featured: boolean;
+    newsletter_enabled?: boolean;
+    seo_title?: string;
+    seo_description?: string;
+  }
+
+  let currentEditingCategoryId: string | null = null;
+  let categoryTags: string[] = [];
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      await ClientAdminAuth.requireAdmin();
+      setupCategoryManagement();
+      setupEnhancedFeatures();
+    } catch (error) {
+      console.error("Category management error:", error);
+    }
+  });
+
+  function setupCategoryManagement() {
+    // Modal controls
+    const addCategoryBtn = document.getElementById("add-category-btn");
+    const createFirstCategoryBtn = document.getElementById("create-first-category");
+    const modal = document.getElementById("category-modal");
+    const modalClose = document.getElementById("modal-close");
+    const cancelBtn = document.getElementById("cancel-btn");
+    const categoryForm = document.getElementById("category-form") as HTMLFormElement;
+
+    // Open modal for new category
+    addCategoryBtn?.addEventListener("click", () => openModal());
+    createFirstCategoryBtn?.addEventListener("click", () => openModal());
+
+    // Close modal
+    modalClose?.addEventListener("click", () => closeModal());
+    cancelBtn?.addEventListener("click", () => closeModal());
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // Form submission
+    categoryForm?.addEventListener("submit", handleFormSubmit);
+
+    // Category action buttons
+    const actionButtons = document.querySelectorAll(".action-btn") as NodeListOf<CategoryActionElement>;
+    actionButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const action = button.dataset.action;
+        const categoryId = button.dataset.categoryId;
+        const categorySlug = button.dataset.categorySlug;
+
+        if (action && (categoryId || categorySlug)) {
+          handleCategoryAction(action, categoryId, categorySlug);
+        }
+      });
+    });
+  }
+
+  function setupEnhancedFeatures() {
+    // Tab switching
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const tabContents = document.querySelectorAll(".tab-content");
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const targetTab = (button as HTMLElement).dataset.tab;
+        if (!targetTab) return;
+
+        tabButtons.forEach((btn) => btn.classList.remove("active"));
+        tabContents.forEach((content) => content.classList.remove("active"));
+
+        button.classList.add("active");
+        const targetContent = document.getElementById(`${targetTab}-tab`);
+        if (targetContent) {
+          targetContent.classList.add("active");
+        }
+      });
+    });
+
+    // Auto-generate slug from name
+    const categoryNameInput = document.getElementById("category-name") as HTMLInputElement;
+    const categorySlugInput = document.getElementById("category-slug") as HTMLInputElement;
+
+    categoryNameInput?.addEventListener("input", (e) => {
+      const name = (e.target as HTMLInputElement).value;
+      const slug = generateSlug(name);
+      if (categorySlugInput) {
+        categorySlugInput.value = slug;
+      }
+      validateField("name", name);
+    });
+
+    categorySlugInput?.addEventListener("input", (e) => {
+      const slug = (e.target as HTMLInputElement).value;
+      validateField("slug", slug);
+    });
+
+    // Color presets
+    const colorPresets = document.querySelectorAll(".color-preset");
+    const colorInput = document.getElementById("category-color") as HTMLInputElement;
+
+    colorPresets.forEach((preset) => {
+      preset.addEventListener("click", () => {
+        const color = (preset as HTMLElement).dataset.color;
+        if (color && colorInput) {
+          colorInput.value = color;
+        }
+      });
+    });
+
+    // Icon presets
+    const iconPresets = document.querySelectorAll(".icon-preset");
+    const iconInput = document.getElementById("category-icon") as HTMLInputElement;
+
+    iconPresets.forEach((preset) => {
+      preset.addEventListener("click", () => {
+        const icon = (preset as HTMLElement).dataset.icon;
+        if (icon && iconInput) {
+          iconInput.value = icon;
+        }
+      });
+    });
+
+    // Tags input
+    const tagsInput = document.getElementById("category-tags") as HTMLInputElement;
+    tagsInput?.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const tag = tagsInput.value.trim();
+        if (tag && !categoryTags.includes(tag)) {
+          categoryTags.push(tag);
+          updateTagsDisplay();
+          tagsInput.value = "";
+        }
+      }
+    });
+
+    // Search and filters
+    const searchInput = document.getElementById("category-search") as HTMLInputElement;
+    searchInput?.addEventListener("input", (e) => {
+      const searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
+      filterCategories();
+    });
+
+    const applyFiltersBtn = document.getElementById("apply-filters");
+    applyFiltersBtn?.addEventListener("click", filterCategories);
+
+    // Bulk actions
+    setupBulkActions();
+  }
+
+  function setupBulkActions() {
+    const bulkActionsBtn = document.getElementById("bulk-actions-btn");
+    const bulkModal = document.getElementById("bulk-actions-modal");
+    const bulkModalClose = document.getElementById("bulk-modal-close");
+    const selectAllCheckbox = document.querySelector(".category-checkbox") as HTMLInputElement;
+    const categoryCheckboxes = document.querySelectorAll(".category-checkbox") as NodeListOf<HTMLInputElement>;
+
+    bulkActionsBtn?.addEventListener("click", () => {
+      const selectedCount = document.querySelectorAll(".category-checkbox:checked").length;
+      if (selectedCount === 0) {
+        showNotification("Please select categories first", "error");
+        return;
+      }
+      updateBulkSelectedCount();
+      if (bulkModal) bulkModal.style.display = "flex";
+    });
+
+    bulkModalClose?.addEventListener("click", () => {
+      if (bulkModal) bulkModal.style.display = "none";
+    });
+
+    // Bulk action buttons
+    const bulkActionButtons = document.querySelectorAll(".bulk-action-btn");
+    bulkActionButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const action = (button as HTMLElement).dataset.action;
+        if (action) {
+          handleBulkAction(action);
+        }
+      });
+    });
+
+    // Update bulk selection count
+    categoryCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", updateBulkSelectedCount);
+    });
+  }
+
+  function openModal(category?: any) {
+    const modal = document.getElementById("category-modal");
+    const modalTitle = document.getElementById("modal-title");
+    const form = document.getElementById("category-form") as HTMLFormElement;
+
+    if (!modal || !modalTitle || !form) return;
+
+    if (category) {
+      currentEditingCategoryId = category.id;
+      modalTitle.textContent = "Edit Category";
+      populateForm(category);
+    } else {
+      currentEditingCategoryId = null;
+      modalTitle.textContent = "Add New Category";
+      form.reset();
+      categoryTags = [];
+      updateTagsDisplay();
+      (document.getElementById("category-color") as HTMLInputElement).value = "#243788";
+    }
+
+    modal.style.display = "flex";
+  }
+
+  function closeModal() {
+    const modal = document.getElementById("category-modal");
+    if (modal) {
+      modal.style.display = "none";
+    }
+    currentEditingCategoryId = null;
+    categoryTags = [];
+    clearValidationMessages();
+  }
+
+  function populateForm(category: any) {
+    (document.getElementById("category-name") as HTMLInputElement).value = category.name || "";
+    (document.getElementById("category-slug") as HTMLInputElement).value = category.slug || "";
+    (document.getElementById("category-description") as HTMLTextAreaElement).value = category.description || "";
+    (document.getElementById("category-target-audience") as HTMLSelectElement).value = category.target_audience || "";
+    (document.getElementById("category-color") as HTMLInputElement).value = category.color || "#243788";
+    (document.getElementById("category-icon") as HTMLInputElement).value = category.icon || "";
+    (document.getElementById("category-sort-order") as HTMLInputElement).value = category.sort_order || "0";
+    (document.getElementById("category-is-premium") as HTMLInputElement).checked = category.is_premium || false;
+    (document.getElementById("category-is-featured") as HTMLInputElement).checked = category.is_featured || false;
+    (document.getElementById("category-newsletter-enabled") as HTMLInputElement).checked = category.newsletter_enabled || false;
+    (document.getElementById("category-seo-title") as HTMLInputElement).value = category.seo_title || "";
+    (document.getElementById("category-seo-description") as HTMLTextAreaElement).value = category.seo_description || "";
+    
+    // Load tags if available
+    categoryTags = category.tags || [];
+    updateTagsDisplay();
+  }
+
+  function generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  }
+
+  function validateField(field: string, value: string) {
+    const validationElement = document.getElementById(`${field}-validation`);
+    if (!validationElement) return;
+
+    let isValid = true;
+    let message = "";
+
+    switch (field) {
+      case "name":
+        if (value.length < 2) {
+          isValid = false;
+          message = "Name must be at least 2 characters long";
+        } else if (value.length > 50) {
+          isValid = false;
+          message = "Name must be less than 50 characters";
+        } else {
+          message = "✓ Valid name";
+        }
+        break;
+      case "slug":
+        const slugPattern = /^[a-z0-9-]+$/;
+        if (!slugPattern.test(value)) {
+          isValid = false;
+          message = "Slug can only contain lowercase letters, numbers, and hyphens";
+        } else if (value.length < 2) {
+          isValid = false;
+          message = "Slug must be at least 2 characters long";
+        } else {
+          message = "✓ Valid slug";
+        }
+        break;
+    }
+
+    validationElement.textContent = message;
+    validationElement.className = `validation-message ${isValid ? "success" : "error"}`;
+  }
+
+  function clearValidationMessages() {
+    const validationMessages = document.querySelectorAll(".validation-message");
+    validationMessages.forEach((msg) => {
+      msg.textContent = "";
+      msg.className = "validation-message";
+    });
+  }
+
+  function updateTagsDisplay() {
+    const tagsDisplay = document.getElementById("tags-display");
+    if (!tagsDisplay) return;
+
+    tagsDisplay.innerHTML = categoryTags.map(tag => `
+      <div class="tag-item">
+        ${tag}
+        <button type="button" class="tag-remove" onclick="removeTag('${tag}')">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    `).join("");
+  }
+
+  function removeTag(tag: string) {
+    categoryTags = categoryTags.filter(t => t !== tag);
+    updateTagsDisplay();
+  }
+
+  function filterCategories() {
+    const searchTerm = (document.getElementById("category-search") as HTMLInputElement)?.value.toLowerCase() || "";
+    const statusFilter = (document.getElementById("status-filter") as HTMLSelectElement)?.value || "";
+    const sortFilter = (document.getElementById("sort-filter") as HTMLSelectElement)?.value || "";
+
+    const categoryCards = document.querySelectorAll(".category-card");
+    
+    categoryCards.forEach((card) => {
+      const categoryName = card.querySelector(".category-name")?.textContent?.toLowerCase() || "";
+      const categorySlug = card.querySelector(".category-slug")?.textContent?.toLowerCase() || "";
+      const isPremium = card.querySelector(".premium-badge") !== null;
+      const isFeatured = card.querySelector(".featured-badge") !== null;
+      const articleCount = parseInt(card.querySelector(".article-count")?.textContent?.match(/\d+/)?.[0] || "0");
+
+      let matchesSearch = categoryName.includes(searchTerm) || categorySlug.includes(searchTerm);
+      let matchesStatus = true;
+
+      switch (statusFilter) {
+        case "premium":
+          matchesStatus = isPremium;
+          break;
+        case "featured":
+          matchesStatus = isFeatured;
+          break;
+        case "active":
+          matchesStatus = articleCount > 0;
+          break;
+        case "inactive":
+          matchesStatus = articleCount === 0;
+          break;
+      }
+
+      (card as HTMLElement).style.display = matchesSearch && matchesStatus ? "" : "none";
+    });
+  }
+
+  function updateBulkSelectedCount() {
+    const selectedCount = document.querySelectorAll(".category-checkbox:checked").length;
+    const countElement = document.getElementById("bulk-selected-count");
+    if (countElement) {
+      countElement.textContent = selectedCount.toString();
+    }
+  }
+
+  async function handleFormSubmit(e: Event) {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const categoryData: CategoryFormData = {
+      name: formData.get("name") as string,
+      slug: formData.get("slug") as string,
+      description: (formData.get("description") as string) || undefined,
+      target_audience: (formData.get("target_audience") as string) || undefined,
+      color: formData.get("color") as string,
+      icon: (formData.get("icon") as string) || undefined,
+      sort_order: parseInt(formData.get("sort_order") as string) || 0,
+      is_premium: formData.has("is_premium"),
+      is_featured: formData.has("is_featured"),
+      newsletter_enabled: formData.has("newsletter_enabled"),
+      seo_title: (formData.get("seo_title") as string) || undefined,
+      seo_description: (formData.get("seo_description") as string) || undefined,
+    };
+
+    // Add tags to the data
+    (categoryData as any).tags = categoryTags;
+
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const isEdit = currentEditingCategoryId !== null;
+      const url = isEdit ? "/api/admin/categories/update" : "/api/admin/categories/create";
+      const method = "POST";
+
+      const requestBody = isEdit ? { id: currentEditingCategoryId, ...categoryData } : categoryData;
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showNotification(
+          isEdit ? "Category updated successfully" : "Category created successfully",
+          "success"
+        );
+        closeModal();
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showNotification(result.error || "Failed to save category", "error");
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      showNotification("An error occurred while saving the category", "error");
+    }
+  }
+
+  async function handleCategoryAction(action: string, categoryId?: string, categorySlug?: string) {
+    switch (action) {
+      case "edit":
+        if (categoryId) {
+          await editCategory(categoryId);
+        }
+        break;
+      case "view":
+        if (categorySlug) {
+          window.open(`/blog/categories/${categorySlug}`, "_blank");
+        }
+        break;
+      case "articles":
+        if (categorySlug) {
+          window.location.href = `/admin/articles?category=${categorySlug}`;
+        }
+        break;
+      case "feature":
+        if (categoryId) {
+          await toggleCategoryFeature(categoryId);
+        }
+        break;
+      case "delete":
+        if (categoryId) {
+          const categoryCard = document.querySelector(`[data-category-id="${categoryId}"]`);
+          const articleCount = categoryCard?.querySelector(".article-count")?.textContent?.match(/\d+/)?.[0] || "0";
+          
+          let confirmMessage = "Are you sure you want to delete this category?";
+          if (parseInt(articleCount) > 0) {
+            confirmMessage += `\n\nThis will affect ${articleCount} articles. Consider moving them to another category first.`;
+          }
+          confirmMessage += "\n\nThis action cannot be undone.";
+
+          if (confirm(confirmMessage)) {
+            await deleteCategory(categoryId);
+          }
+        }
+        break;
+    }
+  }
+
+  async function toggleCategoryFeature(categoryId: string) {
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch("/api/admin/categories/toggle-feature", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({ id: categoryId }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showNotification("Category feature status updated", "success");
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showNotification(result.error || "Failed to update category", "error");
+      }
+    } catch (error) {
+      console.error("Toggle feature error:", error);
+      showNotification("An error occurred", "error");
+    }
+  }
+
+  async function editCategory(categoryId: string) {
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch(`/api/admin/categories/${categoryId}`, {
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        openModal(result.data);
+      } else {
+        showNotification("Failed to load category data", "error");
+      }
+    } catch (error) {
+      console.error("Edit category error:", error);
+      showNotification("An error occurred while loading the category", "error");
+    }
+  }
+
+  async function deleteCategory(categoryId: string) {
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch("/api/admin/categories/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({ id: categoryId }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showNotification("Category deleted successfully", "success");
+        const categoryCard = document.querySelector(`[data-category-id="${categoryId}"]`);
+        if (categoryCard) {
+          categoryCard.remove();
+        }
+      } else {
+        showNotification(result.error || "Failed to delete category", "error");
+      }
+    } catch (error) {
+      console.error("Delete category error:", error);
+      showNotification("An error occurred while deleting the category", "error");
+    }
+  }
+
+  async function handleBulkAction(action: string) {
+    const selectedCheckboxes = document.querySelectorAll(".category-checkbox:checked") as NodeListOf<HTMLInputElement>;
+    const categoryIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+    if (categoryIds.length === 0) {
+      showNotification("No categories selected", "error");
+      return;
+    }
+
+    let confirmMessage = `Are you sure you want to ${action} ${categoryIds.length} categories?`;
+    if (action === "delete") {
+      confirmMessage = `⚠️ Are you sure you want to DELETE ${categoryIds.length} categories? This action cannot be undone and may affect articles.`;
+    }
+
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch("/api/admin/categories/bulk-action", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({ categoryIds, action }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showNotification(`Bulk ${action} completed successfully`, "success");
+        const bulkModal = document.getElementById("bulk-actions-modal");
+        if (bulkModal) bulkModal.style.display = "none";
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showNotification(result.error || `Failed to ${action} categories`, "error");
+      }
+    } catch (error) {
+      console.error("Bulk action error:", error);
+      showNotification("An error occurred", "error");
+    }
+  }
+
+  function showNotification(message: string, type: "success" | "error" = "success") {
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      color: white;
+      font-weight: 500;
+      z-index: 10000;
+      background: ${type === "success" ? "#238636" : "#da3633"};
+      animation: slideIn 0.3s ease;
+    `;
+
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  }
+
+  // Global functions for tag removal
+  (window as any).removeTag = removeTag;
+
+  // Add animation styles
+  if (!document.getElementById("category-animations")) {
+    const style = document.createElement("style");
+    style.id = "category-animations";
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+</script>

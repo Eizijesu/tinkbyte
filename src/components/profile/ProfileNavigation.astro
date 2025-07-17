@@ -1,0 +1,197 @@
+---
+// src/components/profile/ProfileNavigation.astro
+---
+
+<div class="profile-navigation">
+  <nav class="profile-nav">
+    <button class="nav-item active" data-tab="overview">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9,22 9,12 15,12 15,22"></polyline>
+      </svg>
+      My Profile
+    </button>
+
+    <button class="nav-item" data-tab="following">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="m19 8 2 2-2 2"></path>
+        <path d="m17 10 2 2-2 2"></path>
+      </svg>
+      Following
+    </button>
+
+    <button class="nav-item" data-tab="account">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+      Account
+    </button>
+
+    <button class="nav-item" data-tab="preferences">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M12 1v6m0 6v6"></path>
+        <path d="m15.5 3.5-3 3-3-3"></path>
+        <path d="m15.5 20.5-3-3-3 3"></path>
+      </svg>
+      Preferences
+    </button>
+
+    <button class="nav-item premium" data-tab="premium">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <polygon
+          points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+        ></polygon>
+      </svg>
+      Premium
+    </button>
+  </nav>
+</div>
+
+<style>
+  .profile-navigation {
+    background: white;
+    border: 2px solid #e2e8f0;
+    font-family: "Space Grotesk", sans-serif;
+  }
+
+  :global(.dark) .profile-navigation {
+    background: rgb(17, 24, 39);
+    border-color: rgb(51, 65, 85);
+  }
+
+  .profile-nav {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .profile-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #64748b;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .nav-item:hover {
+    color: #243788;
+    background: #f8fafc;
+  }
+
+  .nav-item.active {
+    color: #243788;
+    border-bottom-color: #243788;
+    background: #f8fafc;
+  }
+
+  .nav-item.premium {
+    color: #f59e0b;
+  }
+
+  .nav-item.premium:hover,
+  .nav-item.premium.active {
+    color: #d97706;
+    border-bottom-color: #f59e0b;
+  }
+
+  :global(.dark) .nav-item {
+    color: rgb(148, 163, 184);
+  }
+
+  :global(.dark) .nav-item:hover {
+    color: #b4bce1;
+    background: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .nav-item.active {
+    color: #b4bce1;
+    border-bottom-color: #b4bce1;
+    background: rgb(30, 41, 59);
+  }
+
+  @media (max-width: 768px) {
+    .nav-item {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const navItems = document.querySelectorAll(".nav-item");
+
+    navItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        // Remove active class from all items
+        navItems.forEach((nav) => nav.classList.remove("active"));
+
+        // Add active class to clicked item
+        item.classList.add("active");
+
+        // Get tab name and trigger content change
+        const tabName = item.getAttribute("data-tab");
+        const event = new CustomEvent("profileTabChange", {
+          detail: { tab: tabName },
+        });
+        document.dispatchEvent(event);
+      });
+    });
+  });
+</script>

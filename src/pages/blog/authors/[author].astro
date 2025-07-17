@@ -475,7 +475,7 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     // Staggered animation for article cards
-    const articleWrappers = document.querySelectorAll('.article-wrapper');
+    const articleWrappers = document.querySelectorAll('.article-wrapper') as NodeListOf<HTMLElement>;
     
     articleWrappers.forEach((wrapper, index) => {
       wrapper.style.setProperty('--animation-delay', `${index * 0.1}s`);
@@ -490,8 +490,9 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+          const element = entry.target as HTMLElement;
+          element.style.opacity = '1';
+          element.style.transform = 'translateY(0)';
           observer.unobserve(entry.target);
         }
       });

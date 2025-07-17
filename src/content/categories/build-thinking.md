@@ -1,26 +1,25 @@
 ---
-# src/content/categories/ai-evolution.md
 name: "Build Thinking"
-description: "Practical insights into artificial intelligence implementation, machine learning applications, and the real-world impact of AI technologies beyond the hype."
-icon: "brain"
-color: "purple"
+description: "Mental models, product intuition, systems mindset for effective building"
+icon: "hammer"
+color: "blue"
 featured: true
 seo:
-  title: "AI Evolution Articles | TinkByte"
-  description: "Practical AI insights beyond the hype - real-world machine learning applications and implementation strategies."
+  title: "Build Thinking Articles | TinkByte"
+  description: "Mental models and systems thinking for product builders and innovators."
 ---
 
 # Build Thinking
 
-Deep dive into artificial intelligence that actually works in production environments.
+Mental models, product intuition, and systems mindset for effective building.
 
 ## What You'll Find Here
 
-- **Real-World AI**: Implementation stories from actual production systems
-- **ML Applications**: Practical machine learning solutions that deliver business value
-- **AI Strategy**: How to evaluate and implement AI technologies effectively
-- **Beyond the Hype**: Cutting through marketing noise to find what actually works
+- **Mental Models**: Frameworks for better decision-making
+- **Product Intuition**: Developing instincts for what works
+- **Systems Thinking**: Understanding interconnected systems
+- **Building Philosophy**: Approaches to creating meaningful products
 
 ## Our Approach
 
-We focus on AI that solves real problems, not just impressive demos. Every article includes practical implementation details and honest assessments of what works and what doesn't.
+We focus on the thinking patterns that separate great builders from the rest.

@@ -1,4 +1,5 @@
 ---
+// src/components/blog/ArticleCard.astro
 export interface Props {
   title: string;
   excerpt: string;
@@ -36,7 +37,7 @@ const {
   layout = 'vertical',
 } = Astro.props;
 
-// FIXED: Generate optimized image URL with proper type checking
+// Generate optimized image URL with proper type checking
 function getOptimizedImageUrl(url: string | undefined, width: number, height: number): string {
   if (!url || typeof url !== 'string') return '';
   
@@ -50,7 +51,6 @@ function getOptimizedImageUrl(url: string | undefined, width: number, height: nu
 }
 
 const optimizedImageUrl = image ? getOptimizedImageUrl(image, 600, 400) : '';
-const highResImageUrl = image ? getOptimizedImageUrl(image, 1200, 800) : '';
 ---
 
 <article class="group article-card bg-white dark:bg-zinc-800 rounded-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-600 transition-all duration-300 transform hover:-translate-y-2">
@@ -212,11 +212,33 @@ const highResImageUrl = image ? getOptimizedImageUrl(image, 1200, 800) : '';
       </div>
     )}
   </div>
+
+  <!-- Audio Player Integration -->
+  {audioUrl && (
+    <div class="px-6 pb-6">
+      <div class="audio-player-container">
+        <audio 
+          controls 
+          preload="metadata"
+          class="w-full rounded-sm"
+          onError={() => {
+            console.log('Audio file not found:', audioUrl);
+            // Hide the audio player if file not found
+            const container = document.querySelector('.audio-player-container');
+            if (container) {
+              container.style.display = 'none';
+            }
+          }}
+        >
+          <source src={audioUrl} type="audio/mpeg" />
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+    </div>
+  )}
 </article>
 
-<!-- Your existing styles stay the same -->
 <style>
-  /* All your existing styles remain unchanged */
   .article-card {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -227,47 +249,100 @@ const highResImageUrl = image ? getOptimizedImageUrl(image, 1200, 800) : '';
       0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
-  /* ... rest of your existing styles ... */
+  .image-container img {
+    transition: transform 0.5s ease;
+  }
+
+  .group:hover .image-container img {
+    transform: scale(1.05);
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .audio-player-container {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .audio-player-container audio {
+    width: 100%;
+    height: 40px;
+  }
+
+  :global(.dark) .audio-player-container {
+    background: rgba(255, 255, 255, 0.05);
+  }
 </style>
 
 <script>
-  // FIXED: Device capability detection with proper null safety
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const isLowEndDevice = navigator.hardwareConcurrency < 4;
-  const isMobile = window.innerWidth < 768;
+  // FIXED: Safer script execution without document.currentScript dependency
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      // Device capability detection with proper null safety
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const isLowEndDevice = navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4;
+      const isMobile = window.innerWidth < 768;
 
-  // Proper null checking
-  const currentScript = document.currentScript;
-  if (!currentScript?.parentElement) {
-    console.warn('ArticleCard: Unable to find parent element');
-  } else {
-    const articleCard = currentScript.parentElement.querySelector('.article-card');
-    
-    if (!articleCard) {
-      console.warn('ArticleCard: Unable to find article card element');
-    } else {
-      if (!prefersReducedMotion && !isLowEndDevice && !isMobile) {
-        // Enable enhanced animations and effects
-        articleCard.classList.add('enhanced-interactions');
-        
-        // Enable image hover effects
-        const imageContainer = articleCard.querySelector('.image-container img');
-        if (imageContainer) {
-          imageContainer.classList.add('hover-scale-enabled');
-        }
-        
-        // Enable shimmer effect
-        const titleLink = articleCard.querySelector('h3 a');
-        if (titleLink) {
-          titleLink.classList.add('shimmer-enabled');
-        }
-        
-        // Enable smooth hover transitions
-        articleCard.classList.add('smooth-hover');
-      } else {
-        // Fallback for reduced motion or low-end devices
-        articleCard.classList.add('reduced-motion');
+      // Find article cards in a safer way
+      const articleCards = document.querySelectorAll('.article-card');
+      
+      if (articleCards.length === 0) {
+        console.warn('ArticleCard: No article cards found');
+        return;
       }
+
+      articleCards.forEach((articleCard, index) => {
+        if (!articleCard) {
+          console.warn(`ArticleCard ${index}: Card element not found`);
+          return;
+        }
+
+        // Apply enhancements based on device capabilities
+        if (!prefersReducedMotion && !isLowEndDevice && !isMobile) {
+          // Enable enhanced animations and effects
+          articleCard.classList.add('enhanced-interactions');
+          
+          // Enable image hover effects
+          const imageContainer = articleCard.querySelector('.image-container img');
+          if (imageContainer) {
+            imageContainer.classList.add('hover-scale-enabled');
+          }
+          
+          // Enable shimmer effect
+          const titleLink = articleCard.querySelector('h3 a');
+          if (titleLink) {
+            titleLink.classList.add('shimmer-enabled');
+          }
+          
+          // Enable smooth hover transitions
+          articleCard.classList.add('smooth-hover');
+        } else {
+          // Fallback for reduced motion or low-end devices
+          articleCard.classList.add('reduced-motion');
+        }
+
+        // Handle audio player errors
+        const audioElement = articleCard.querySelector('audio');
+        if (audioElement) {
+          audioElement.addEventListener('error', (e) => {
+            console.log('Audio file not found or cannot be loaded');
+            const container = audioElement.closest('.audio-player-container');
+            if (container) {
+              container.style.display = 'none';
+            }
+          });
+        }
+      });
+
+    } catch (error) {
+      console.warn('ArticleCard: Error during initialization:', error);
     }
-  }
+  });
 </script>

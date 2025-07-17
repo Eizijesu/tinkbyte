@@ -83,50 +83,6 @@ export default defineConfig({
     }),
   ], 
 
-  vite: {
-    optimizeDeps: {
-      include: ['react', 'react-dom', 'date-fns', 'fuse.js'],
-      exclude: ['shiki'],
-    },
-    ssr: {
-      noExternal: ['shiki'],
-    },
-    css: {
-      devSourcemap: true,
-    },
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom'],
-            'date-vendor': ['date-fns'],
-            'search-vendor': ['fuse.js'],
-          },
-        },
-      },
-    },
-    server: {
-      fs: {
-        allow: ['..'],
-      },
-    },
-    // ADDED: Global component registration
-    define: {
-      'globalThis.astroMDXComponents': JSON.stringify({
-        ImageBlock: true,
-        VideoBlock: true,
-        Callout: true,
-        ButtonBlock: true,
-        CodeBlock: true,
-        Quote: true,
-        TableBlock: true,
-        ImageGallery: true,
-        Newsletter: true,
-        TwoColumnLayout: true,
-      }),
-    },
-  },
-
   // Markdown configuration
   markdown: {
     syntaxHighlight: 'shiki',
@@ -155,8 +111,18 @@ export default defineConfig({
     extendMarkdownConfig: false,
   },
 
-  // Vite configuration for enhanced development
+  // Vite configuration for enhanced development (MERGED - NO DUPLICATES)
   vite: {
+    // ADD THIS RESOLVE SECTION FOR THE SUPABASE FIX
+    resolve: {
+      alias: {
+        '/lib/supabase': '/src/lib/supabase.js',
+        '/lib/auth': '/src/lib/auth.js',
+        // Add other common problematic paths
+        '@/lib/supabase': '/src/lib/supabase.js',
+        '@/lib/auth': '/src/lib/auth.js',
+      }
+    },
     optimizeDeps: {
       include: ['react', 'react-dom', 'date-fns', 'fuse.js'],
       exclude: ['shiki'],
@@ -182,6 +148,21 @@ export default defineConfig({
       fs: {
         allow: ['..'],
       },
+    },
+    // Global component registration
+    define: {
+      'globalThis.astroMDXComponents': JSON.stringify({
+        ImageBlock: true,
+        VideoBlock: true,
+        Callout: true,
+        ButtonBlock: true,
+        CodeBlock: true,
+        Quote: true,
+        TableBlock: true,
+        ImageGallery: true,
+        Newsletter: true,
+        TwoColumnLayout: true,
+      }),
     },
   },
 

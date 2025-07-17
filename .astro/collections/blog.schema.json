@@ -163,27 +163,35 @@
         "imageAlt": {
           "type": "string"
         },
-        "tags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": []
-        },
         "category": {
           "type": "string",
           "enum": [
+            "build-thinking",
+            "learning-by-doing",
+            "fail-iterate-ship",
+            "product-lessons",
+            "startup-insight",
             "product-strategy",
             "ai-evolution",
-            "developer-tools",
+            "developer-stack-tools",
+            "research-bites",
+            "system-thinking",
+            "the-interface",
             "tech-culture",
-            "startup-insights",
-            "build-thinking",
-            "community-innovation",
-            "learning-by-doing",
-            "no-fluff-coverage",
-            "research-backed",
             "global-perspective",
+            "community-innovation",
+            "career-stacks",
+            "future-stacks",
+            "business-models-monetization",
+            "creator-economy",
+            "consumer-behavior-attention",
+            "ecosystem-shifts-market-maps",
+            "people-systems",
+            "startup-insights",
+            "developer-tools",
+            "research-backed",
+            "build-loop",
+            "no-fluff-coverage",
             "privacy-security",
             "mobile-development",
             "cloud-technologies",
@@ -200,7 +208,12 @@
             "data-story",
             "build-guide",
             "failure-story",
-            "global-spotlight"
+            "global-spotlight",
+            "experiment-log",
+            "case-study",
+            "framework-guide",
+            "pattern-analysis",
+            "deep-dive"
           ]
         },
         "featured": {
@@ -218,6 +231,9 @@
         "readTime": {
           "type": "string"
         },
+        "hasAudio": {
+          "type": "boolean"
+        },
         "audioUrl": {
           "type": "string"
         },
@@ -225,6 +241,16 @@
           "type": "string"
         },
         "audioTranscript": {
+          "type": "string"
+        },
+        "audioType": {
+          "type": "string",
+          "enum": [
+            "upload",
+            "url"
+          ]
+        },
+        "audioDescripton": {
           "type": "string"
         },
         "editorial": {
@@ -252,6 +278,9 @@
         "seo": {
           "type": "object",
           "properties": {
+            "customSEO": {
+              "type": "boolean"
+            },
             "title": {
               "type": "string"
             },
@@ -267,6 +296,13 @@
             }
           },
           "additionalProperties": false
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         },
         "$schema": {
           "type": "string"

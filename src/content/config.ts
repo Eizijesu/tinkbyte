@@ -55,20 +55,41 @@ const blogCollection = defineCollection({
     image: z.string().optional(),
     imageAlt: z.string().optional(),
 
-    // Content categorization
-    tags: z.array(z.string()).default([]),
+    // UPDATED: Add your 21 categories while keeping existing ones for backward compatibility
     category: z.enum([
-      'product-strategy',
-      'ai-evolution',
-      'developer-tools',
-      'tech-culture',
-      'startup-insights',
+      // Core Themes (6)
       'build-thinking',
-      'community-innovation',
-      'learning-by-doing',
-      'no-fluff-coverage',
-      'research-backed',
+      'learning-by-doing', 
+      'fail-iterate-ship',
+      'product-lessons',
+      'startup-insight', 
+      'product-strategy',
+      
+      // Specialized Themes (8)
+      'ai-evolution',
+      'developer-stack-tools',
+      'research-bites',
+      'system-thinking',
+      'the-interface',
+      'tech-culture',
       'global-perspective',
+      'community-innovation',
+      
+      // Extended Themes (7)
+      'career-stacks',
+      'future-stacks',
+      'business-models-monetization',
+      'creator-economy',
+      'consumer-behavior-attention',
+      'ecosystem-shifts-market-maps',
+      'people-systems',
+      
+      // Legacy categories (keep for backward compatibility)
+      'startup-insights', // alias for startup-insight
+      'developer-tools', // alias for developer-stack-tools
+      'research-backed', // alias for research-bites
+      'build-loop', // alias for fail-iterate-ship  
+      'no-fluff-coverage',
       'privacy-security',
       'mobile-development',
       'cloud-technologies',
@@ -83,7 +104,12 @@ const blogCollection = defineCollection({
       'data-story',
       'build-guide',
       'failure-story',
-      'global-spotlight'
+      'global-spotlight',
+      'experiment-log',
+      'case-study',
+      'framework-guide',
+      'pattern-analysis',
+      'deep-dive'
     ]).optional(),
 
     // Publishing options
@@ -95,9 +121,13 @@ const blogCollection = defineCollection({
     readTime: z.string().optional(),
 
     // Audio content
+    hasAudio: z.boolean().optional(),
     audioUrl: z.string().optional(),
     audioDuration: z.string().optional(),
     audioTranscript: z.string().optional(),
+    audioType: z.enum(['upload', 'url']).optional(),
+    audioDescripton: z.string().optional(),
+
 
     // Editorial workflow fields
     editorial: z.object({
@@ -112,7 +142,85 @@ const blogCollection = defineCollection({
       editorNotes: z.string().optional(),
     }).optional(),
 
-    // Enhanced SEO settings
+    // SEO settings
+    seo: z.object({
+      customSEO: z.boolean().optional(),
+      title: z.string().optional(),
+      description: z.string().optional(),
+      canonical: z.string().optional(),
+      noindex: z.boolean().default(false),
+    }).optional(),
+
+    tags: z.array(z.string()).default([]),
+  }),
+});
+
+
+// UPDATED: Enhanced All Topics collection for your 21 categories
+const allTopicsCollection = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string().default('All Topics - TinkByte'),
+    description: z.string().default('Explore all 21 topic categories covering everything from build thinking to people systems'),
+    hero: z.object({
+      badgeText: z.string().default('TINKBYTE CATEGORIES'),
+      title: z.string().default('Explore'),
+      titleAccent: z.string().default('TinkByte Topics'),
+      subtitle: z.string().default('21 future-focused categories covering every aspect of building products that matter'),
+    }),
+    
+    // Enhanced structure for your 3-tier system
+    coreThemes: z.array(z.object({
+      name: z.string(),
+      href: z.string(),
+      description: z.string(),
+      audience: z.string(),
+      focus: z.string().optional(),
+      suggestedArticles: z.array(z.string()).optional(),
+    })).default([]),
+    
+    specializedThemes: z.array(z.object({
+      name: z.string(),
+      href: z.string(),
+      description: z.string(),
+      audience: z.string(),
+      focus: z.string().optional(),
+      suggestedArticles: z.array(z.string()).optional(),
+    })).default([]),
+    
+    extendedThemes: z.array(z.object({
+      name: z.string(),
+      href: z.string(),
+      description: z.string(),
+      audience: z.string(),
+      focus: z.string().optional(),
+      suggestedArticles: z.array(z.string()).optional(),
+    })).default([]),
+    
+    // Legacy topics field for backward compatibility
+    topics: z.array(z.object({
+      name: z.string(),
+      href: z.string(),
+      description: z.string(),
+      audience: z.string(),
+    })).optional(),
+    
+    stats: z.object({
+      topicCount: z.number().default(21), // Updated to 21
+      articleCount: z.string().default('100+'),
+      storiesLabel: z.string().default('Real'),
+      newsletterCount: z.number().default(12), // Added newsletter count
+    }),
+    
+    cta: z.object({
+      title: z.string().default('Stay Updated'),
+      description: z.string().default('Get practical insights delivered weekly. No fluff, just actionable content.'),
+      primaryButtonText: z.string().default('Subscribe Newsletter'),
+      primaryButtonLink: z.string().default('/newsletter'),
+      secondaryButtonText: z.string().default('Join Community'),
+      secondaryButtonLink: z.string().default('/community'),
+    }),
+    
     seo: z.object({
       title: z.string().optional(),
       description: z.string().optional(),
@@ -122,45 +230,6 @@ const blogCollection = defineCollection({
   }),
 });
 
-// All Topics page collection
-const allTopicsCollection = defineCollection({
-  type: 'content',
-  schema: z.object({
-    title: z.string().default('All Topics'),
-    description: z.string().default('Explore all topic categories'),
-    hero: z.object({
-      badgeText: z.string().default('TINKBYTE CATEGORIES'),
-      title: z.string().default('Explore'),
-      titleAccent: z.string().default('TinkByte Topics'),
-      subtitle: z.string().default('Future focused categories covering every aspect of building products that matter'),
-    }),
-    topics: z.array(z.object({
-      name: z.string(),
-      href: z.string(),
-      description: z.string(),
-      audience: z.string(),
-    })),
-    stats: z.object({
-      topicCount: z.number().default(14),
-      articleCount: z.string().default('100+'),
-      storiesLabel: z.string().default('Real'),
-    }),
-    cta: z.object({
-      title: z.string().default('Stay Updated'),
-      description: z.string().default('Get practical insights delivered weekly. No fluff, just actionable content.'),
-      primaryButtonText: z.string().default('Subscribe Newsletter'),
-      primaryButtonLink: z.string().default('/newsletter'),
-      secondaryButtonText: z.string().default('Join Community'),
-      secondaryButtonLink: z.string().default('/community'),
-    }),
-    seo: z.object({
-      title: z.string().optional(),
-      description: z.string().optional(),
-      canonical: z.string().optional(),
-      noindex: z.boolean().default(false),
-    }).optional(),
-  }),
-});
 
 // Authors collection with enhanced social support
 const authorsCollection = defineCollection({
@@ -171,52 +240,40 @@ const authorsCollection = defineCollection({
     avatar: z.string().optional(),
     role: z.string().optional(),
     company: z.string().optional(),
-    email: z.string().optional(),
+    email: z.string().email().optional(),
     social: socialMediaSchema.optional(),
     featured: z.boolean().default(false),
+    active: z.boolean().default(true),
+    joinDate: z.date().optional(),
   }),
 });
 
-// Categories collection
+// UPDATED: Enhanced Categories collection with new icons for your 21 categories
 const categoriesCollection = defineCollection({
   type: 'content',
   schema: z.object({
     name: z.string(),
     description: z.string(),
     icon: z.enum([
-      'hammer',
-      'users',
-      'book',
-      'bullseye',
-      'chart-line',
-      'globe',
-      'brain',
-      'lightbulb',
-      'rocket',
-      'tools',
-      'code',
-      'cog',
-      'star',
-      'fire',
-      'shield-alt',
-      'database',
-      'mobile-alt',
-      'cloud',
-      'lock',
-      'microchip'
+      // Existing icons
+      'hammer', 'users', 'book', 'bullseye', 'chart-line', 'globe',
+      'brain', 'lightbulb', 'rocket', 'tools', 'code', 'cog',
+      'star', 'fire', 'shield-alt', 'database', 'mobile-alt',
+      'cloud', 'lock', 'microchip',
+      'repeat', 'layers', 'trending-up', 'briefcase', 'dollar-sign',
+      'users-group', 'eye', 'map', 'compass', 'target', 'zap',
+      'cpu', 'wifi', 'monitor', 'smartphone', 'headphones'
     ]),
     color: z.enum([
-      'purple',
-      'green',
-      'blue',
-      'cyan',
-      'orange',
-      'red',
-      'pink',
-      'yellow',
-      'gray'
+      'purple', 'green', 'blue', 'cyan', 'orange', 'red',
+      'pink', 'yellow', 'gray',
+      'indigo', 'teal', 'emerald', 'amber', 'violet', 'slate'
     ]),
     featured: z.boolean().default(false),
+    
+    // NEW: Category grouping for your 3-tier system
+    categoryGroup: z.enum(['core', 'specialized', 'extended', 'legacy']).optional(),
+    
     seo: z.object({
       title: z.string().optional(),
       description: z.string().optional(),
@@ -257,7 +314,7 @@ const podcastCollection = defineCollection({
   }),
 });
 
-// Newsletter collection
+// UPDATED: Enhanced Newsletter collection for your 12 newsletters
 const newsletterCollection = defineCollection({
   type: 'content',
   schema: z.object({
@@ -265,19 +322,39 @@ const newsletterCollection = defineCollection({
     issueNumber: z.number(),
     excerpt: z.string(),
     publishDate: z.date(),
+    
+    //  12 newsletter types
     newsletterType: z.enum([
+      // Weekly Publications (5)
       'tinkbyte-weekly',
       'build-sheet', 
       'stackdown',
       'signal-drop',
       'system-signal',
+      
+      // Monthly Deep Dives (6)
       'the-real-build',
       'the-loop',
       'data-slice',
       'the-mirror',
       'community-code',
-      'future-tech'
+      'career-stack',
+      
+      // Limited Series (1)
+      'start-here-future-tech',
+      
+      // Legacy support
+      'future-tech' // alias for start-here-future-tech
     ]),
+    
+    // NEW: Enhanced newsletter metadata
+    frequency: z.enum(['weekly', 'monthly', 'bi-monthly', 'limited-series']).optional(),
+    day: z.string().optional(), // For weekly newsletters (Monday, Tuesday, etc.)
+    audience: z.string().optional(),
+    contentMix: z.string().optional(),
+    topicIntegration: z.array(z.string()).default([]), // Which topics this newsletter covers
+    
+    // Keep your existing fields
     subscriberOnly: z.boolean().default(true),
     previewContent: z.string().optional(),
     readingTime: z.number().optional(),
@@ -302,6 +379,7 @@ const newsletterCollection = defineCollection({
     }).optional(),
   }),
 });
+
 
 // Enhanced Pages collection with comprehensive social support
 const pagesCollection = defineCollection({
@@ -473,8 +551,8 @@ const legalCollection = defineCollection({
     description: z.string(),
     pubDate: z.date(),
     updatedDate: z.date().optional(),
-    pageType: z.enum(['legal', 'policy', 'terms', 'general']).default('legal'),
     effectiveDate: z.string().optional(),
+    pageType: z.enum(['legal', 'privacy', 'terms', 'cookies', 'disclaimer', 'gdpr', 'data']),
     contact: z.object({
       email: z.string().optional(),
       address: z.string().optional(),

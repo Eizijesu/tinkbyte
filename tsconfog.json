@@ -11,14 +11,16 @@
       "@/content/*": ["src/content/*"],
       "@/styles/*": ["src/styles/*"],
       "@/assets/*": ["src/assets/*"],
-      "@/types/*": ["src/types/*"],
+      "@/types/*": ["src/types/*", "src/lib/types/*"],
+      "@/lib/*": ["src/lib/*"],
       "@/scripts/*": ["src/scripts/*"]
     },
     "types": [
       "astro/client",
-      "vite/client",
+      "vite/client", 
       "@types/node"
     ],
+    "typeRoots": ["./node_modules/@types", "./src/types", "./src/lib/types"],
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "noEmit": true,
@@ -33,10 +35,14 @@
     "esModuleInterop": true,
     "target": "ES2022",
     "module": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "src/**/*",
+    "functions/**/*",
     ".astro/types.d.ts",
     "astro.config.mjs",
     "tina/**/*",

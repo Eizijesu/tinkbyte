@@ -167,6 +167,8 @@ const structuredData = getStructuredData();
 
     <!-- Enhanced Theme CSS Variables -->
     <style is:inline>
+      @import "../styles/global.css";
+      @import "../styles/comments.css";
       :root {
         /* Light theme colors */
         --color-bg-primary: #ffffff;
@@ -183,7 +185,7 @@ const structuredData = getStructuredData();
         --color-warning: #d97706;
         --color-error: #dc2626;
         --color-info: #0284c7;
-        
+
         /* Featured post specific */
         --featured-bg: #ffffff;
         --featured-border: #e2e8f0;
@@ -192,7 +194,7 @@ const structuredData = getStructuredData();
         --featured-text: #0f172a;
         --featured-text-muted: #64748b;
         --featured-overlay: rgba(0, 0, 0, 0.4);
-        
+
         /* Card backgrounds */
         --card-bg: #ffffff;
         --card-border: #e2e8f0;
@@ -216,7 +218,7 @@ const structuredData = getStructuredData();
         --color-warning: #f59e0b;
         --color-error: #ef4444;
         --color-info: #06b6d4;
-        
+
         /* Featured post specific - Dark theme */
         --featured-bg: #1e293b;
         --featured-border: #374151;
@@ -225,7 +227,7 @@ const structuredData = getStructuredData();
         --featured-text: #f8fafc;
         --featured-text-muted: #94a3b8;
         --featured-overlay: rgba(0, 0, 0, 0.6);
-        
+
         /* Card backgrounds - Dark theme */
         --card-bg: #1e293b;
         --card-border: #374151;
@@ -235,7 +237,10 @@ const structuredData = getStructuredData();
 
       /* Ensure all elements inherit theme properly */
       * {
-        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease,
+          border-color 0.3s ease;
       }
 
       /* Featured post styling */
@@ -466,26 +471,26 @@ const structuredData = getStructuredData();
     </script>
 
     <!-- Add this RIGHT AFTER the existing theme detection script (around line 289) -->
-<script is:inline>
-  // CRITICAL: Theme transition coordinator for synchronized transitions
-  function initializeThemeTransitions() {
-    const html = document.documentElement;
-    
-    // Create a centralized theme transition manager
-    window.themeTransitionManager = {
-      isTransitioning: false,
-      transitionDuration: 300,
-      
-      startTransition() {
-        if (this.isTransitioning) return;
-        
-        this.isTransitioning = true;
-        html.classList.add('theme-transitioning');
-        
-        // Force all elements to use synchronized transitions
-        const style = document.createElement('style');
-        style.id = 'theme-transition-override';
-        style.textContent = `
+    <script is:inline>
+      // CRITICAL: Theme transition coordinator for synchronized transitions
+      function initializeThemeTransitions() {
+        const html = document.documentElement;
+
+        // Create a centralized theme transition manager
+        window.themeTransitionManager = {
+          isTransitioning: false,
+          transitionDuration: 300,
+
+          startTransition() {
+            if (this.isTransitioning) return;
+
+            this.isTransitioning = true;
+            html.classList.add("theme-transitioning");
+
+            // Force all elements to use synchronized transitions
+            const style = document.createElement("style");
+            style.id = "theme-transition-override";
+            style.textContent = `
           *, *::before, *::after {
             transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
                        color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -493,40 +498,43 @@ const structuredData = getStructuredData();
                        stroke 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
           }
         `;
-        document.head.appendChild(style);
-        
-        setTimeout(() => {
-          this.endTransition();
-        }, this.transitionDuration);
-      },
-      
-      endTransition() {
-        this.isTransitioning = false;
-        html.classList.remove('theme-transitioning');
-        
-        const style = document.getElementById('theme-transition-override');
-        if (style) style.remove();
+            document.head.appendChild(style);
+
+            setTimeout(() => {
+              this.endTransition();
+            }, this.transitionDuration);
+          },
+
+          endTransition() {
+            this.isTransitioning = false;
+            html.classList.remove("theme-transitioning");
+
+            const style = document.getElementById("theme-transition-override");
+            if (style) style.remove();
+          },
+        };
+
+        // Override existing theme toggle to use transition manager
+        const originalToggle = window.toggleTheme;
+        window.toggleTheme = function () {
+          window.themeTransitionManager.startTransition();
+
+          setTimeout(() => {
+            if (originalToggle) originalToggle();
+          }, 10);
+        };
       }
-    };
-    
-    // Override existing theme toggle to use transition manager
-    const originalToggle = window.toggleTheme;
-    window.toggleTheme = function() {
-      window.themeTransitionManager.startTransition();
-      
-      setTimeout(() => {
-        if (originalToggle) originalToggle();
-      }, 10);
-    };
-  }
-  
-  // Initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeThemeTransitions);
-  } else {
-    initializeThemeTransitions();
-  }
-</script>
+
+      // Initialize when DOM is ready
+      if (document.readyState === "loading") {
+        document.addEventListener(
+          "DOMContentLoaded",
+          initializeThemeTransitions
+        );
+      } else {
+        initializeThemeTransitions();
+      }
+    </script>
   </head>
 
   <body
@@ -557,21 +565,23 @@ const structuredData = getStructuredData();
         // Enhanced theme application
         const applyThemeToAllElements = () => {
           // Apply theme to featured posts
-          const featuredPosts = document.querySelectorAll('.featured-post');
-          featuredPosts.forEach(post => {
-            post.setAttribute('data-theme-aware', 'true');
+          const featuredPosts = document.querySelectorAll(".featured-post");
+          featuredPosts.forEach((post) => {
+            post.setAttribute("data-theme-aware", "true");
           });
 
           // Apply theme to cards
-          const cards = document.querySelectorAll('.theme-card, .bg-white, .border-gray-200');
-          cards.forEach(card => {
-            card.setAttribute('data-theme-aware', 'true');
+          const cards = document.querySelectorAll(
+            ".theme-card, .bg-white, .border-gray-200"
+          );
+          cards.forEach((card) => {
+            card.setAttribute("data-theme-aware", "true");
           });
 
           // Force repaint
-          document.body.style.display = 'none';
+          document.body.style.display = "none";
           document.body.offsetHeight; // Trigger reflow
-          document.body.style.display = '';
+          document.body.style.display = "";
         };
 
         // Apply theme immediately
@@ -706,16 +716,18 @@ const structuredData = getStructuredData();
         // Watch for dynamic content and apply theme
         const mutationObserver = new MutationObserver((mutations) => {
           mutations.forEach((mutation) => {
-            if (mutation.type === 'childList') {
+            if (mutation.type === "childList") {
               mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === 1) { // Element node
+                if (node.nodeType === 1) {
+                  // Element node
                   const element = node;
-                  if (element.classList && (
-                    element.classList.contains('featured-post') ||
-                    element.classList.contains('bg-white') ||
-                    element.classList.contains('border-gray-200')
-                  )) {
-                    element.setAttribute('data-theme-aware', 'true');
+                  if (
+                    element.classList &&
+                    (element.classList.contains("featured-post") ||
+                      element.classList.contains("bg-white") ||
+                      element.classList.contains("border-gray-200"))
+                  ) {
+                    element.setAttribute("data-theme-aware", "true");
                   }
                 }
               });
@@ -725,7 +737,7 @@ const structuredData = getStructuredData();
 
         mutationObserver.observe(document.body, {
           childList: true,
-          subtree: true
+          subtree: true,
         });
       });
     </script>

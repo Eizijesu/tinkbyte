@@ -490,7 +490,11 @@ const faqItems = faqData.enabled ? faqData.items.filter(item => item.featured !=
           const contentHeight = getContentHeight(faqContent);
           faqContent.style.maxHeight = contentHeight + "px";
           faqIcon.style.transform = "rotate(180deg)";
-          faqToggle.querySelector("span").textContent = "Hide FAQs";
+          
+          const toggleText = faqToggle.querySelector("span");
+          if (toggleText) {
+            toggleText.textContent = "Hide FAQs";
+          }
           
           // Remove max-height after animation completes
           setTimeout(() => {
@@ -505,7 +509,11 @@ const faqItems = faqData.enabled ? faqData.items.filter(item => item.featured !=
           requestAnimationFrame(() => {
             faqContent.style.maxHeight = "0";
             faqIcon.style.transform = "rotate(0deg)";
-            faqToggle.querySelector("span").textContent = "View FAQs";
+            
+            const toggleText = faqToggle.querySelector("span");
+            if (toggleText) {
+              toggleText.textContent = "View FAQs";
+            }
           });
         }
       });
@@ -517,7 +525,11 @@ const faqItems = faqData.enabled ? faqData.items.filter(item => item.featured !=
       const content = document.querySelector(`[data-faq-content="${index}"]`);
       const icon = document.querySelector(`[data-faq-icon="${index}"]`);
 
-      if (!content || !icon) return;
+      if (!content || !icon || !index) return;
+
+      // Type assertions for HTMLElement
+      const contentElement = content as HTMLElement;
+      const iconElement = icon as HTMLElement;
 
       let isExpanded = false;
 
@@ -529,27 +541,27 @@ const faqItems = faqData.enabled ? faqData.items.filter(item => item.featured !=
 
         if (isExpanded) {
           // Expanding individual FAQ item
-          const contentHeight = getContentHeight(content);
-          content.style.maxHeight = contentHeight + "px";
-          icon.style.transform = "rotate(180deg)";
+          const contentHeight = getContentHeight(contentElement);
+          contentElement.style.maxHeight = contentHeight + "px";
+          iconElement.style.transform = "rotate(180deg)";
           
           // Update parent container height after expansion
           updateParentHeight();
           
           // Remove max-height after animation
           setTimeout(() => {
-            content.style.maxHeight = "none";
+            contentElement.style.maxHeight = "none";
             updateParentHeight();
           }, 300);
         } else {
           // Collapsing individual FAQ item
-          const currentHeight = content.scrollHeight;
-          content.style.maxHeight = currentHeight + "px";
+          const currentHeight = contentElement.scrollHeight;
+          contentElement.style.maxHeight = currentHeight + "px";
           
           // Force reflow then collapse
           requestAnimationFrame(() => {
-            content.style.maxHeight = "0";
-            icon.style.transform = "rotate(0deg)";
+            contentElement.style.maxHeight = "0";
+            iconElement.style.transform = "rotate(0deg)";
             
             // Update parent container height after collapse
             setTimeout(() => {
@@ -568,9 +580,10 @@ const faqItems = faqData.enabled ? faqData.items.filter(item => item.featured !=
         // Recalculate all expanded elements
         const expandedFaqItems = document.querySelectorAll('[data-faq-content]');
         expandedFaqItems.forEach(item => {
-          if (item.style.maxHeight !== "0px" && item.style.maxHeight !== "") {
-            const newHeight = getContentHeight(item);
-            item.style.maxHeight = newHeight + "px";
+          const itemElement = item as HTMLElement;
+          if (itemElement.style.maxHeight !== "0px" && itemElement.style.maxHeight !== "") {
+            const newHeight = getContentHeight(itemElement);
+            itemElement.style.maxHeight = newHeight + "px";
           }
         });
         

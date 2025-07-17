@@ -910,6 +910,22 @@ input LegalSeoFilter {
   noindex: BooleanFilter
 }
 
+input LegalBodySectionFilter {
+  title: StringFilter
+  content: RichTextFilter
+}
+
+input LegalBodyContactInfoFilter {
+  title: StringFilter
+  email: StringFilter
+  address: StringFilter
+}
+
+input LegalBodyFilter {
+  section: LegalBodySectionFilter
+  contactInfo: LegalBodyContactInfoFilter
+}
+
 input LegalFilter {
   title: StringFilter
   description: StringFilter
@@ -919,7 +935,7 @@ input LegalFilter {
   pageType: StringFilter
   contact: LegalContactFilter
   seo: LegalSeoFilter
-  body: RichTextFilter
+  body: LegalBodyFilter
 }
 
 type LegalConnectionEdges {
@@ -995,24 +1011,42 @@ type PagesConnection implements Connection {
   edges: [PagesConnectionEdges]
 }
 
+type CategoriesSeo {
+  title: String
+  description: String
+}
+
 type Categories implements Node & Document {
   name: String!
+  slug: String!
   description: String!
+  theme: String!
   icon: String!
   color: String!
   featured: Boolean
+  sortOrder: Float
+  seo: CategoriesSeo
   body: JSON
   id: ID!
   _sys: SystemInfo!
   _values: JSON!
 }
 
+input CategoriesSeoFilter {
+  title: StringFilter
+  description: StringFilter
+}
+
 input CategoriesFilter {
   name: StringFilter
+  slug: StringFilter
   description: StringFilter
+  theme: StringFilter
   icon: StringFilter
   color: StringFilter
   featured: BooleanFilter
+  sortOrder: NumberFilter
+  seo: CategoriesSeoFilter
   body: RichTextFilter
 }
 
@@ -1105,6 +1139,8 @@ type SettingsCategoriesCategoryMappings {
   slug: String
   color: String
   description: String
+  icon: String
+  theme: String
 }
 
 type SettingsCategories {
@@ -1264,6 +1300,8 @@ input SettingsCategoriesCategoryMappingsFilter {
   slug: StringFilter
   color: StringFilter
   description: StringFilter
+  icon: StringFilter
+  theme: StringFilter
 }
 
 input SettingsCategoriesFilter {
@@ -1758,12 +1796,21 @@ input PagesMutation {
   body: JSON
 }
 
+input CategoriesSeoMutation {
+  title: String
+  description: String
+}
+
 input CategoriesMutation {
   name: String
+  slug: String
   description: String
+  theme: String
   icon: String
   color: String
   featured: Boolean
+  sortOrder: Float
+  seo: CategoriesSeoMutation
   body: JSON
 }
 
@@ -1812,6 +1859,8 @@ input SettingsCategoriesCategoryMappingsMutation {
   slug: String
   color: String
   description: String
+  icon: String
+  theme: String
 }
 
 input SettingsCategoriesMutation {

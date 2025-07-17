@@ -1,0 +1,9 @@
+---
+// src/pages/auth/admin-signout.astro - Simple signout
+---
+
+<script>
+  // Clear localStorage and redirect
+  localStorage.removeItem("tinkbyte-admin-session");
+  window.location.href = "/auth/admin-signin?message=signed_out";
+</script>

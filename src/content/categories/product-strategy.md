@@ -1,13 +1,13 @@
 ---
 # src/content/categories/product-strategy.md
 name: "Product Strategy"
-description: "Product management insights, user experience design, and growth strategies that work in real markets."
-color: "green"
-icon: "lightbulb"
+description: "Positioning, roadmap thinking, growth decisions, strategic planning"
+icon: "target"
+color: "indigo"
 featured: true
 seo:
   title: "Product Strategy Articles | TinkByte"
-  description: "Product management insights, UX design principles, and growth strategies from experienced product builders."
+  description: "Product management insights, UX design principles, and Strategic approaches to product development and growths."
 ---
 
 # Product Strategy

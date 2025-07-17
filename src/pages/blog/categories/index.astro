@@ -1,74 +1,235 @@
 ---
-// src/pages/blog/categories/index.astro - Enhanced with Newsletter-Style Design
+// src/pages/blog/categories/index.astro - Fully Dynamic from TinaCMS
 import Layout from "../../../layouts/Layout.astro";
 import Button from "../../../components/ui/Button.astro";
-import { getAllCategories, getAllPosts } from "../../../utils/content";
-import { formatDate, slugify } from "../../../utils/helpers";
+import { getCollection } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 
-// Get all posts and categories using our utility functions
-const allPosts = await getAllPosts();
-const categoriesWithStats = await getAllCategories();
+// Get all posts directly
+const allPosts = await getCollection("blog", ({ data }) => !data.draft);
 
-// Get categories collection data for enhanced information
-let categoriesData: CollectionEntry<'categories'>[] = [];
+// Get the allTopics data from TinaCMS (same as your all-topics page)
+let allTopicsData, pageData, topicsData;
+
 try {
-  const { getCollection } = await import("astro:content");
-  categoriesData = await getCollection("categories");
+  allTopicsData = await getCollection("allTopics");
+  pageData = allTopicsData[0]?.data;
+  topicsData = pageData?.topics;
+  console.log("TinaCMS allTopics data found:", !!pageData);
+  console.log("Topics count from CMS:", topicsData?.length || 0);
 } catch (error) {
-  console.warn("Categories collection not found, using dynamic categories");
+  console.warn("Could not load allTopics from CMS:", error);
 }
 
-// Enhanced category data with improved color mapping
-const enhancedCategories = categoriesWithStats.map((category) => {
-  const categoryData = categoriesData.find(
-    cat => cat.data.name.toLowerCase() === category.name.toLowerCase()
-  );
+// Use the same fallback as your all-topics page if TinaCMS data isn't available
+const fallbackTopics = [
+  {
+    name: "Build Thinking",
+    href: "/blog/categories/build-thinking",
+    description: "Mental models, product intuition, systems mindset",
+    audience: "Builders, designers, engineers",
+  },
+  {
+    name: "Learning by Doing",
+    href: "/blog/categories/learning-by-doing",
+    description: "Practical experiments, hands-on growth",
+    audience: "Self-learners, teams, tinkerers",
+  },
+  {
+    name: "Product Lessons",
+    href: "/blog/categories/product-lessons",
+    description: "Real build stories, what worked/didn't",
+    audience: "Product leads, founders",
+  },
+  {
+    name: "Startup Insight",
+    href: "/blog/categories/startup-insight",
+    description: "Early-stage execution, traction, team dynamics",
+    audience: "Startup founders, operators",
+  },
+  {
+    name: "Product Strategy",
+    href: "/blog/categories/product-strategy",
+    description: "Positioning, roadmap thinking, growth decisions",
+    audience: "Product strategists, growth leads",
+  },
+  {
+    name: "AI Evolution",
+    href: "/blog/categories/ai-evolution",
+    description: "Practical AI implementation, ethical considerations",
+    audience: "Technical founders, AI builders",
+  },
+  {
+    name: "Developer Tools",
+    href: "/blog/categories/developer-tools",
+    description: "Toolchains and infrastructure choices",
+    audience: "Developers, CTOs, tech leads",
+  },
+  {
+    name: "Research Bites",
+    href: "/blog/categories/research-bites",
+    description: "Data-driven insights made practical",
+    audience: "Product thinkers, researchers",
+  },
+  {
+    name: "Fail / Iterate / Ship",
+    href: "/blog/categories/fail-iterate-ship",
+    description: "Process-focused iteration and reflection",
+    audience: "Product teams, early founders",
+  },
+  {
+    name: "Global Perspective",
+    href: "/blog/categories/global-perspective",
+    description: "Stories from emerging markets",
+    audience: "Global builders",
+  },
+  {
+    name: "Community Innovation",
+    href: "/blog/categories/community-innovation",
+    description: "How communities build and grow",
+    audience: "Community managers",
+  },
+  {
+    name: "Tech Culture",
+    href: "/blog/categories/tech-culture",
+    description: "Human and ethical layers of tech",
+    audience: "Designers, DEI leaders",
+  },
+  {
+    name: "System Thinking",
+    href: "/blog/categories/system-thinking",
+    description: "How complex systems connect",
+    audience: "System designers",
+  },
+  {
+    name: "The Interface",
+    href: "/blog/categories/the-interface",
+    description: "UX decisions that shape behavior",
+    audience: "Designers, product leads",
+  },
+  {
+  name: "Build Loop",
+  href: "/blog/categories/build-loop",
+  description: "Fail, iterate, ship stories",
+  audience: "Learning from failure",
+  },
+  {
+    name: "Career Stacks",
+    href: "/blog/categories/career-stacks",
+    description: "Roles, skills, transitions, growth strategies",
+    audience: "Students, professionals, career changers",
+  },
+  {
+    name: "Future Stacks",
+    href: "/blog/categories/future-stacks",
+    description: "Emerging tech: AI, AR/VR, Quantum, Web3, Robotics",
+    audience: "Explorers, trend-watchers, technical minds",
+  },
+  {
+    name: "Creator Economy",
+    href: "/blog/categories/creator-economy",
+    description: "Tools, trends, case studies",
+    audience: "Indie creators, digital workers",
+  },
+  {
+    name: "Business Models",
+    href: "/blog/categories/business-models-monetization",
+    description: "Revenue strategies, pricing, monetization",
+    audience: "Founders, product marketers",
+  },
+  {
+    name: "Consumer Behavior",
+    href: "/blog/categories/consumer-behavior-attention",
+    description: "Audience shifts, demand patterns, psychology",
+    audience: "Growth leads, analysts, brand teams",
+  },
+  {
+    name: "Market Maps",
+    href: "/blog/categories/ecosystem-shifts-market-maps",
+    description: "Competitive changes, sector movements, market signals",
+    audience: "Investors, researchers, strategists",
+  },
+  {
+    name: "People Systems",
+    href: "/blog/categories/people-systems",
+    description: "Team building, communication frameworks, organizational design",
+    audience: "Team leads, founders, managers",
+  },
+];
 
-  const categoryPosts = allPosts.filter(
-    (post) => post.data.category?.toLowerCase() === category.name.toLowerCase()
-  );
+// Use CMS data if available, otherwise use fallback (same logic as all-topics page)
+const finalTopicsData = topicsData || fallbackTopics;
 
-  // Enhanced color system matching your newsletter design
-  const getDynamicColor = (name: string): string => {
-    const colorMap: Record<string, string> = {
-      "AI Evolution": "purple",
-      "Product Strategy": "blue", 
-      "Tech Culture": "indigo",
-      "Startup Lessons": "orange",
-      "Developer Tools": "cyan",
-      "Industry Analysis": "red",
-      "Emerging Tech": "pink",
-      "Future Tech": "violet",
-      "Web Development": "blue",
-      "Mobile Development": "cyan",
-      "Data Science": "purple",
-      "DevOps": "green",
-      "Security": "red",
-      "Design": "pink"
-    };
-    return colorMap[name] || "blue";
+// Helper function to get category slug from href
+const getCategorySlug = (topic: any): string => {
+  if (topic.href) {
+    return topic.href.split('/').pop() || '';
+  }
+  // Fallback: convert name to slug
+  return topic.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+};
+
+// Helper function to assign colors and icons
+const getCategoryMeta = (topicName: string) => {
+  const metaMap: Record<string, { color: string; icon: string; featured: boolean }> = {
+    "build thinking": { color: "blue", icon: "fas fa-hammer", featured: true },
+    "learning by doing": { color: "purple", icon: "fas fa-book", featured: true },
+    "product lessons": { color: "green", icon: "fas fa-lightbulb", featured: true },
+    "startup insight": { color: "red", icon: "fas fa-rocket", featured: false },
+    "product strategy": { color: "indigo", icon: "fas fa-chess", featured: true },
+    "ai evolution": { color: "violet", icon: "fas fa-brain", featured: true },
+    "developer tools": { color: "emerald", icon: "fas fa-tools", featured: false },
+    "research bites": { color: "pink", icon: "fas fa-chart-line", featured: false },
+    "global perspective": { color: "cyan", icon: "fas fa-globe", featured: false },
+    "community innovation": { color: "green", icon: "fas fa-users", featured: false },
+    "tech culture": { color: "pink", icon: "fas fa-users-cog", featured: false },
+    "system thinking": { color: "emerald", icon: "fas fa-sitemap", featured: false },
+    "the interface": { color: "blue", icon: "fas fa-desktop", featured: false },
+    "build loop": { color: "orange", icon: "fas fa-sync-alt", featured: false },
+    "fail / iterate / ship": { color: "orange", icon: "fas fa-sync-alt", featured: true },
+    "career stacks": { color: "red", icon: "fas fa-briefcase", featured: false },
+    "future stacks": { color: "violet", icon: "fas fa-rocket", featured: false },
+    "creator economy": { color: "pink", icon: "fas fa-paint-brush", featured: false },
+    "business models": { color: "indigo", icon: "fas fa-dollar-sign", featured: false },
+    "consumer behavior": { color: "cyan", icon: "fas fa-eye", featured: false },
+    "market maps": { color: "emerald", icon: "fas fa-map", featured: false },
+    "people systems": { color: "orange", icon: "fas fa-network-wired", featured: false },
   };
+  
+  const key = topicName.toLowerCase();
+  return metaMap[key] || { color: "blue", icon: "fas fa-tag", featured: false };
+};
+
+// Create enhanced categories from TinaCMS data
+const enhancedCategories = finalTopicsData.map((topic: any) => {
+  const slug = getCategorySlug(topic);
+  const meta = getCategoryMeta(topic.name);
+  
+  // Count posts for this category
+  const categoryPosts = allPosts.filter(
+    (post) => post.data.category === slug
+  );
 
   const latestPost = categoryPosts
     .sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime())[0];
 
   return {
-    slug: categoryData?.slug || slugify(category.name),
+    slug: slug,
     data: {
-      name: category.name,
-      description: categoryData?.data.description || 
-        `Explore articles about ${category.name} and related topics. Stay updated with the latest trends, insights, and best practices.`,
-      color: categoryData?.data.color || getDynamicColor(category.name),
-      icon: categoryData?.data.icon || "tag",
-      featured: categoryData?.data.featured || false,
+      name: topic.name,
+      description: topic.description,
+      color: meta.color,
+      icon: meta.icon,
+      featured: meta.featured,
+      audience: topic.audience || "Builders and innovators",
     },
-    postCount: category.count,
+    postCount: categoryPosts.length,
     featuredCount: categoryPosts.filter(post => post.data.featured).length,
     latestPost: latestPost || null,
     lastUpdated: latestPost ? latestPost.data.pubDate : null
   };
-}).sort((a, b) => {
+}).sort((a: any, b: any) => {
+  // Sort by featured first, then by post count
   if (a.data.featured !== b.data.featured) {
     return b.data.featured ? 1 : -1;
   }
@@ -77,14 +238,23 @@ const enhancedCategories = categoriesWithStats.map((category) => {
 
 const totalArticles = allPosts.length;
 const totalCategories = enhancedCategories.length;
-const featuredCategories = enhancedCategories.filter(cat => cat.data.featured);
+const featuredCategories = enhancedCategories.filter((cat: any) => cat.data.featured);
+
+// Simple date formatting function
+const formatDate = (date: Date, options?: { month?: 'short' | 'long', day?: 'numeric' }) => {
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: options?.month || "long",
+    day: options?.day || "numeric",
+  });
+};
 
 const pageTitle = "Categories | TinkByte Blog";
 const pageDescription = `Explore ${totalCategories} categories with ${totalArticles} articles - from AI Evolution to Product Strategy, discover content that matches your interests.`;
 ---
 
 <Layout title={pageTitle} description={pageDescription}>
-  <!-- Enhanced Categories Hero - Newsletter Style -->
+  <!-- Enhanced Categories Hero -->
   <section class="relative py-12 lg:py-16 overflow-hidden">
     <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-10"></div>
     <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5"></div>
@@ -106,7 +276,7 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
         </h1>
 
         <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12">
-          Dive deep into the topics that matter most in tech. From cutting-edge AI developments to strategic product insights.
+          Find the topics that matter most in tech. From cutting-edge AI developments to strategic product insights.
         </p>
 
         <div class="flex justify-center gap-8 text-center">
@@ -140,7 +310,7 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
             Featured Categories
           </h2>
           <div class="featured-categories-grid">
-            {featuredCategories.slice(0, 3).map((category) => (
+            {featuredCategories.slice(0, 3).map((category: any) => (
               <div class="featured-category-card theme-card">
                 <div class="card-header">
                   <div class="category-indicator" data-color={category.data.color}></div>
@@ -154,6 +324,7 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
                 <p class="card-description">{category.data.description.slice(0, 120)}...</p>
                 <div class="card-stats">
                   <span class="stat-item">{category.postCount} articles</span>
+                  <span class="stat-item">For {category.data.audience}</span>
                   {category.lastUpdated && (
                     <span class="stat-item">Updated {formatDate(category.lastUpdated, { month: 'short', day: 'numeric' })}</span>
                   )}
@@ -187,7 +358,7 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
         </div>
 
         <div class="categories-grid">
-          {enhancedCategories.map((category, index) => (
+          {enhancedCategories.map((category: any, index: number) => (
             <article class="category-card theme-card" data-category={category.slug} style={`--animation-delay: ${index * 0.1}s`}>
               <div class="card-content">
                 <!-- Category Header -->
@@ -207,6 +378,13 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
                   </h3>
 
                   <p class="category-description">{category.data.description}</p>
+                  
+                  <div class="category-audience">
+                    <i class="fas fa-users text-xs mr-2"></i>
+                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
+                      For {category.data.audience}
+                    </span>
+                  </div>
                 </div>
 
                 <!-- Category Stats -->
@@ -220,6 +398,14 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
                     <div class="stat-label">FEATURED</div>
                   </div>
                 </div>
+                
+                <!-- Add this to your categories/index.astro -->
+<div class="page-navigation">
+  <a href="/all-topics" class="nav-link">
+    <i class="fas fa-th-large"></i>
+    View as Topics
+  </a>
+</div>
 
                 <!-- Latest Article Preview -->
                 {category.latestPost && (
@@ -405,6 +591,47 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
     margin-bottom: 1rem;
   }
 
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    line-height: 1.2;
+  }
+
+  .card-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .card-title a:hover {
+    color: #243788;
+  }
+
+  .card-description {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+    margin-bottom: 1rem;
+  }
+
+  .card-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
   /* Category Indicators */
   .category-indicator {
     width: 12px;
@@ -422,7 +649,7 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
   .category-indicator[data-color="pink"] { background: #EC4899; }
   .category-indicator[data-color="indigo"] { background: #6366F1; }
   .category-indicator[data-color="violet"] { background: #8B5CF6; }
-  .category-indicator[data-color="yellow"] { background: #F59E0B; }
+  .category-indicator[data-color="emerald"] { background: #10B981; }
 
   /* Badges */
   .featured-badge {
@@ -699,16 +926,17 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
     const categoryCards = document.querySelectorAll('.category-card');
     
     categoryCards.forEach((card, index) => {
+      const element = card as HTMLElement;
       // Add staggered animation
-      card.style.setProperty('--animation-delay', `${index * 0.1}s`);
+      element.style.setProperty('--animation-delay', `${index * 0.1}s`);
       
       // Enhanced hover effects
       card.addEventListener('mouseenter', () => {
-        card.style.transform = 'translateY(-8px) scale(1.02)';
+        element.style.transform = 'translateY(-8px) scale(1.02)';
       });
       
       card.addEventListener('mouseleave', () => {
-        card.style.transform = 'translateY(0) scale(1)';
+        element.style.transform = 'translateY(0) scale(1)';
       });
     });
 
@@ -720,8 +948,9 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
         // Add loading state
         const card = link.closest('.category-card');
         if (card) {
-          card.style.opacity = '0.7';
-          card.style.transform = 'scale(0.98)';
+          const element = card as HTMLElement;
+          element.style.opacity = '0.7';
+          element.style.transform = 'scale(0.98)';
         }
       });
     });
@@ -735,8 +964,9 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+          const element = entry.target as HTMLElement;
+          element.style.opacity = '1';
+          element.style.transform = 'translateY(0)';
           observer.unobserve(entry.target);
         }
       });
@@ -748,9 +978,10 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
     });
 
     // Analytics tracking
-    function trackCategoryInteraction(action, category) {
-      if (typeof gtag !== 'undefined') {
-        gtag('event', 'category_interaction', {
+    function trackCategoryInteraction(action: string, category: string) {
+      const windowWithGtag = window as any;
+      if (typeof windowWithGtag.gtag !== 'undefined') {
+        windowWithGtag.gtag('event', 'category_interaction', {
           action: action,
           category: category,
           timestamp: Date.now()
@@ -761,7 +992,7 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
     // Track category clicks
     categoryLinks.forEach(link => {
       link.addEventListener('click', (e) => {
-        const categoryName = link.textContent.trim();
+        const categoryName = link.textContent?.trim() || 'Unknown';
         trackCategoryInteraction('click', categoryName);
       });
     });

@@ -42,8 +42,35 @@
             "data-slice",
             "the-mirror",
             "community-code",
+            "career-stack",
+            "start-here-future-tech",
             "future-tech"
           ]
+        },
+        "frequency": {
+          "type": "string",
+          "enum": [
+            "weekly",
+            "monthly",
+            "bi-monthly",
+            "limited-series"
+          ]
+        },
+        "day": {
+          "type": "string"
+        },
+        "audience": {
+          "type": "string"
+        },
+        "contentMix": {
+          "type": "string"
+        },
+        "topicIntegration": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         },
         "subscriberOnly": {
           "type": "boolean",

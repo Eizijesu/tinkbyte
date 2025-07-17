@@ -1,145 +1,227 @@
 ---
-// src/pages/all-topics.astro - Fixed Version
+// src/pages/all-topics.astro - Fixed to match TinaCMS config
 import Layout from "../layouts/Layout.astro";
 import { SITE } from "../config/site";
 import { getCollection } from "astro:content";
 
-// Try to get data from TinaCMS first
+// FIXED: Get data from the correct allTopics collection
 let allTopicsData, pageData, heroData, topicsData;
 
 try {
+  // Look in allTopics collection for index.md
   allTopicsData = await getCollection("allTopics");
-  pageData = allTopicsData[0]?.data;
+  pageData = allTopicsData[0]?.data; // Should be your index.md file
   heroData = pageData?.hero;
   topicsData = pageData?.topics;
+
+  console.log("TinaCMS allTopics data found:", !!pageData);
+  console.log("Topics count from CMS:", topicsData?.length || 0);
+  console.log("Hero data:", heroData);
 } catch (error) {
-  console.warn("Could not load allTopics from CMS, using fallback data");
+  console.warn(
+    "Could not load allTopics from CMS, using fallback data:",
+    error
+  );
 }
 
-// Your existing hardcoded topics as fallback
-const topics = [
+// Your 21-category fallback data
+const fallbackTopics = [
   {
     name: "Build Thinking",
     href: "/blog/categories/build-thinking",
-    description: "From concept to working product",
-    audience: "Product managers, indie hackers"
+    description: "Mental models, product intuition, systems mindset",
+    audience: "Builders, designers, engineers",
   },
   {
-    name: "Learning by Doing", 
+    name: "Learning by Doing",
     href: "/blog/categories/learning-by-doing",
-    description: "Real-world lessons from action",
-    audience: "Builders who experiment"
+    description: "Practical experiments, hands-on growth",
+    audience: "Self-learners, teams, tinkerers",
   },
   {
     name: "Product Lessons",
-    href: "/blog/categories/product-lessons", 
-    description: "Behind-the-scenes insights",
-    audience: "Product leads, founders"
+    href: "/blog/categories/product-lessons",
+    description: "Real build stories, what worked/didn't",
+    audience: "Product leads, founders",
+  },
+  {
+    name: "Fail / Iterate / Ship",  
+    href: "/blog/categories/fail-iterate-ship",
+    description: "Process-focused iteration and reflection, embracing failure as learning",
+    audience: "Product teams, early founders",
   },
   {
     name: "Startup Insight",
     href: "/blog/categories/startup-insight",
-    description: "Early-stage execution signals",
-    audience: "Startup founders, operators"
+    description: "Early-stage execution, traction, team dynamics",
+    audience: "Startup founders, operators",
   },
   {
     name: "Product Strategy",
     href: "/blog/categories/product-strategy",
-    description: "Roadmap decisions and prioritization",
-    audience: "Product strategists, growth leads"
+    description: "Positioning, roadmap thinking, growth decisions",
+    audience: "Product strategists, growth leads",
   },
   {
     name: "AI Evolution",
     href: "/blog/categories/ai-evolution",
-    description: "Practical AI integration stories",
-    audience: "Technical founders, AI builders"
+    description: "Practical AI implementation, ethical considerations",
+    audience: "Technical founders, AI builders",
   },
   {
     name: "Developer Tools",
     href: "/blog/categories/developer-tools",
     description: "Toolchains and infrastructure choices",
-    audience: "Developers, CTOs, tech leads"
+    audience: "Developers, CTOs, tech leads",
   },
   {
     name: "Research Bites",
     href: "/blog/categories/research-bites",
     description: "Data-driven insights made practical",
-    audience: "Product thinkers, researchers"
+    audience: "Product thinkers, researchers",
   },
   {
     name: "Global Perspective",
     href: "/blog/categories/global-perspective",
     description: "Stories from emerging markets",
-    audience: "Global builders"
+    audience: "Global builders",
   },
   {
     name: "Community Innovation",
     href: "/blog/categories/community-innovation",
     description: "How communities build and grow",
-    audience: "Community managers"
+    audience: "Community managers",
   },
   {
     name: "Tech Culture",
     href: "/blog/categories/tech-culture",
     description: "Human and ethical layers of tech",
-    audience: "Designers, DEI leaders"
+    audience: "Designers, DEI leaders",
   },
   {
     name: "System Thinking",
     href: "/blog/categories/system-thinking",
     description: "How complex systems connect",
-    audience: "System designers"
+    audience: "System designers",
   },
   {
     name: "The Interface",
     href: "/blog/categories/the-interface",
     description: "UX decisions that shape behavior",
-    audience: "Designers, product leads"
+    audience: "Designers, product leads",
+  },
+  //{
+   // name: "Build Loop",
+   // href: "/blog/categories/build-loop",
+   // description: "Fail, iterate, ship stories",
+   // audience: "Learning from failure",
+  //},
+  {
+    name: "Career Stacks",
+    href: "/blog/categories/career-stacks",
+    description: "Roles, skills, transitions, growth strategies",
+    audience: "Students, professionals, career changers",
   },
   {
-    name: "Build Loop",
-    href: "/blog/categories/build-loop",
-    description: "Fail, iterate, ship stories",
-    audience: "Learning from failure"
-  }
+    name: "Future Stacks",
+    href: "/blog/categories/future-stacks",
+    description: "Emerging tech: AI, AR/VR, Quantum, Web3, Robotics",
+    audience: "Explorers, trend-watchers, technical minds",
+  },
+  {
+    name: "Creator Economy",
+    href: "/blog/categories/creator-economy",
+    description: "Tools, trends, case studies",
+    audience: "Indie creators, digital workers",
+  },
+  {
+    name: "Business Models",
+    href: "/blog/categories/business-models-monetization",
+    description: "Revenue strategies, pricing, monetization",
+    audience: "Founders, product marketers",
+  },
+  {
+    name: "Consumer Behavior",
+    href: "/blog/categories/consumer-behavior-attention",
+    description: "Audience shifts, demand patterns, psychology",
+    audience: "Growth leads, analysts, brand teams",
+  },
+  {
+    name: "Market Maps",
+    href: "/blog/categories/ecosystem-shifts-market-maps",
+    description: "Competitive changes, sector movements, market signals",
+    audience: "Investors, researchers, strategists",
+  },
+  {
+    name: "People Systems",
+    href: "/blog/categories/people-systems",
+    description:
+      "Team building, communication frameworks, organizational design",
+    audience: "Team leads, founders, managers",
+  },
 ];
 
 // Use CMS data if available, otherwise use fallback
-const finalTopicsData = topicsData || topics;
+const finalTopicsData = topicsData || fallbackTopics;
 const finalHeroData = heroData || {
   badgeText: "TINKBYTE CATEGORIES",
   title: "Explore",
-  titleAccent: "TinkByte Topics", 
-  subtitle: "Future focused categories covering every aspect of building products that matter"
+  titleAccent: "TinkByte Topics",
+  subtitle:
+    "21 future-focused categories covering every aspect of building products that matter",
 };
 
 const pageTitle = pageData?.title || "All Topics - TinkByte";
-const pageDescription = pageData?.description || "Explore all 14 topic categories covering everything from build thinking to AI evolution. Find the right content for your builder journey.";
+const pageDescription =
+  pageData?.description ||
+  "Explore all 21 topic categories covering everything from build thinking to people systems.";
+
+console.log("=== DEBUG INFO ===");
+console.log("allTopicsData length:", allTopicsData?.length || 0);
+console.log("pageData exists:", !!pageData);
+console.log("topicsData length:", topicsData?.length || 0);
+console.log("finalTopicsData length:", finalTopicsData.length);
+console.log("Using fallback data:", !topicsData);
+console.log("=================");
 ---
 
 <Layout title={pageTitle} description={pageDescription}>
   <!-- Enhanced Topics Hero Section -->
   <section class="relative py-16 lg:py-24 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-10"></div>
-    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5"></div>
+    <div
+      class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-10"
+    >
+    </div>
+    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-5">
+    </div>
 
     <div class="container mx-auto px-4 relative z-10">
       <div class="max-w-4xl mx-auto text-center">
-        <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 mb-6">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 mb-6"
+        >
           <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-          <span class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+          <span
+            class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
+          >
             {finalHeroData.badgeText}
           </span>
         </div>
 
-        <h1 class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6">
+        <h1
+          class="text-4xl lg:text-6xl font-bold text-zinc-900 dark:text-white mb-6"
+        >
           {finalHeroData.title}
-          <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <span
+            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+          >
             {finalHeroData.titleAccent}
           </span>
         </h1>
 
-        <p class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12">
+        <p
+          class="text-xl lg:text-2xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-12"
+        >
           {finalHeroData.subtitle}
         </p>
       </div>
@@ -148,51 +230,71 @@ const pageDescription = pageData?.description || "Explore all 14 topic categorie
 
   <main class="topics-directory-clean">
     <div class="max-w-6xl mx-auto px-4 py-12">
-      
       <!-- Clean Topics Grid -->
       <section class="topics-grid-clean">
-        {finalTopicsData.map((topic, index) => (
-          <article class="topic-card-clean">
-            <div class="topic-number">
-              {String(index + 1).padStart(2, '0')}
-            </div>
-            
-            <div class="topic-content-clean">
-              <header class="topic-header-clean">
-                <h2 class="topic-title-clean">
-                  <a href={topic.href}>
-                    {topic.name}
-                  </a>
-                </h2>
-              </header>
-              
-              <p class="topic-description-clean">{topic.description}</p>
-              
-              <div class="topic-meta-clean">
-                <span class="topic-audience-clean">For: {topic.audience}</span>
-              </div>
-            </div>
-            
-            <div class="topic-arrow">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M7 14L12 9L7 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-          </article>
-        ))}
+        {
+          finalTopicsData.map((topic, index) => (
+          <!-- In your topic card loop, modify the topic-card-clean -->
+<article class="topic-card-clean">
+  <div class="topic-number">
+    {String(index + 1).padStart(2, "0")}
+  </div>
+
+  <div class="topic-content-clean">
+    <header class="topic-header-clean">
+      <h2 class="topic-title-clean">
+        <a href={topic.href}>{topic.name}</a>
+      </h2>
+    </header>
+
+    <p class="topic-description-clean">{topic.description}</p>
+
+    <div class="topic-meta-clean">
+      <span class="topic-audience-clean">
+        For: {topic.audience}
+      </span>
+    </div>
+    
+    <!-- ADD THIS FOLLOW BUTTON -->
+    <div class="topic-actions">
+      <button 
+        class="follow-topic-btn-small"
+        data-topic-name={topic.name}
+        data-topic-slug={topic.href.split('/').pop()}
+      >
+        <i class="fas fa-plus"></i>
+        <span>Follow</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="topic-arrow">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path
+        d="M7 14L12 9L7 4"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  </div>
+</article>
+          ))
+        }
       </section>
 
       <!-- Clean Stats -->
       <section class="topics-stats-clean">
         <div class="stats-container">
           <div class="stat-item-clean">
-            <span class="stat-number-clean">14</span>
+            <span class="stat-number-clean">21</span>
             <span class="stat-label-clean">Topics</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item-clean">
-            <span class="stat-number-clean">100+</span>
-            <span class="stat-label-clean">Articles</span>
+            <span class="stat-number-clean">12</span>
+            <span class="stat-label-clean">Newsletters</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item-clean">
@@ -207,7 +309,8 @@ const pageDescription = pageData?.description || "Explore all 14 topic categorie
         <div class="cta-content-clean">
           <h2 class="cta-title-clean">Stay Updated</h2>
           <p class="cta-description-clean">
-            Get practical insights delivered weekly. No fluff, just actionable content.
+            Get practical insights delivered weekly. No fluff, just actionable
+            content.
           </p>
           <div class="cta-buttons-clean">
             <a href="/newsletter" class="cta-button-primary-clean">
@@ -219,7 +322,6 @@ const pageDescription = pageData?.description || "Explore all 14 topic categorie
           </div>
         </div>
       </section>
-
     </div>
   </main>
 </Layout>
@@ -310,7 +412,7 @@ const pageDescription = pageData?.description || "Explore all 14 topic categorie
 
   .topic-title-clean a {
     text-decoration: none;
-    color: #243788;
+    color: #3e62ff;
     transition: color 0.3s ease;
   }
 
@@ -392,6 +494,72 @@ const pageDescription = pageData?.description || "Explore all 14 topic categorie
     background: var(--color-border);
   }
 
+  /* Topic Actions */
+.topic-actions {
+  margin-top: 0.75rem;
+}
+
+.follow-topic-btn-small {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.follow-topic-btn-small:hover {
+  background: #243788;
+  color: white;
+  border-color: #243788;
+}
+
+.follow-topic-btn-small.following {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.follow-topic-btn-small.following:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+/* Toast Notification */
+.toast-notification {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  background: #10b981;
+  color: white;
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  z-index: 1000;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
   /* Clean CTA */
   .topics-cta-clean {
     background: #243788;
@@ -467,7 +635,7 @@ const pageDescription = pageData?.description || "Explore all 14 topic categorie
   }
 
   .topic-card-clean::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -486,24 +654,24 @@ const pageDescription = pageData?.description || "Explore all 14 topic categorie
     .topic-card-clean {
       padding: 1.25rem;
     }
-    
+
     .topics-stats-clean {
       padding: 1.5rem;
     }
-    
+
     .topics-cta-clean {
       padding: 2rem 1rem;
     }
-    
+
     .cta-title-clean {
       font-size: 1.5rem;
     }
-    
+
     .cta-buttons-clean {
       flex-direction: column;
       align-items: center;
     }
-    
+
     .cta-button-primary-clean,
     .cta-button-secondary-clean {
       width: 100%;
@@ -518,15 +686,15 @@ const pageDescription = pageData?.description || "Explore all 14 topic categorie
       text-align: center;
       gap: 0.75rem;
     }
-    
+
     .topic-number {
       width: auto;
     }
-    
+
     .topic-arrow {
       transform: rotate(90deg);
     }
-    
+
     .topic-card-clean:hover .topic-arrow {
       transform: rotate(90deg) translateY(4px);
     }
@@ -535,7 +703,7 @@ const pageDescription = pageData?.description || "Explore all 14 topic categorie
       flex-direction: column;
       gap: 1rem;
     }
-    
+
     .stat-divider {
       display: none;
     }
@@ -559,57 +727,229 @@ const pageDescription = pageData?.description || "Explore all 14 topic categorie
 </style>
 
 <script>
-  // Make entire card clickable
-  document.addEventListener('DOMContentLoaded', () => {
-    const topicCards = document.querySelectorAll('.topic-card-clean');
+  import { supabase } from '../lib/supabase.js';
+  
+  document.addEventListener("DOMContentLoaded", async () => {
+    const topicCards = document.querySelectorAll(".topic-card-clean");
+    const followBtns = document.querySelectorAll(".follow-topic-btn-small");
     
-    topicCards.forEach(card => {
-      card.addEventListener('click', (e) => {
-        const link = card.querySelector('.topic-title-clean a') as HTMLAnchorElement;
-        if (link && e.target !== link) {
+    let currentUser: any = null;
+    let userFollowedTopics = new Set<string>();
+
+    // Check authentication and get followed topics
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      currentUser = user;
+      
+      if (user) {
+        // Get user's followed topics with proper typing
+        const { data: followedTopics } = await supabase
+          .from('user_category_follows')
+          .select(`
+            topics!inner (
+              slug
+            )
+          `)
+          .eq('user_id', user.id);
+        
+        if (followedTopics && Array.isArray(followedTopics)) {
+          followedTopics.forEach((item: any) => {
+            if (item.topics && item.topics.slug) {
+              userFollowedTopics.add(item.topics.slug);
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    }
+
+    // Initialize follow buttons
+    followBtns.forEach(btn => {
+      const followBtn = btn as HTMLButtonElement;
+      const topicSlug = followBtn.getAttribute('data-topic-slug');
+      
+      if (topicSlug && userFollowedTopics.has(topicSlug)) {
+        followBtn.classList.add('following');
+        const spanElement = followBtn.querySelector('span');
+        if (spanElement) {
+          spanElement.textContent = 'Following';
+        }
+      }
+
+      followBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!currentUser) {
+          if (confirm('Sign in to follow topics and get personalized content?')) {
+            window.location.href = '/auth/signin';
+          }
+          return;
+        }
+
+        const topicName = followBtn.getAttribute('data-topic-name');
+        const topicSlug = followBtn.getAttribute('data-topic-slug');
+        
+        if (!topicName || !topicSlug) {
+          console.error('Missing topic data');
+          return;
+        }
+
+        const isFollowing = followBtn.classList.contains('following');
+
+        try {
+          followBtn.disabled = true;
+          
+          // Get or create topic
+          let { data: topic, error: topicError } = await supabase
+            .from('topics')
+            .select('id')
+            .eq('slug', topicSlug)
+            .single();
+
+          if (topicError && topicError.code === 'PGRST116') {
+            // Topic doesn't exist, create it
+            const { data: newTopic, error: createError } = await supabase
+              .from('topics')
+              .insert({
+                name: topicName,
+                slug: topicSlug,
+                created_at: new Date().toISOString()
+              })
+              .select('id')
+              .single();
+            
+            if (createError) {
+              throw createError;
+            }
+            topic = newTopic;
+          } else if (topicError) {
+            throw topicError;
+          }
+
+          if (topic && topic.id) {
+            if (isFollowing) {
+              // Unfollow
+              const { error: unfollowError } = await supabase
+                .from('user_category_follows')
+                .delete()
+                .eq('user_id', currentUser.id)
+                .eq('category_slug', topic.id);
+              
+              if (unfollowError) {
+                throw unfollowError;
+              }
+              
+              followBtn.classList.remove('following');
+              const spanElement = followBtn.querySelector('span');
+              if (spanElement) {
+                spanElement.textContent = 'Follow';
+              }
+              userFollowedTopics.delete(topicSlug);
+              showToast(`Unfollowed ${topicName}`);
+            } else {
+              // Follow
+              const { error: followError } = await supabase
+                .from('user_category_follows')
+                .insert({
+                  user_id: currentUser.id,
+                  category_slug: topic.id,
+                  created_at: new Date().toISOString()
+                });
+              
+              if (followError) {
+                throw followError;
+              }
+              
+              followBtn.classList.add('following');
+              const spanElement = followBtn.querySelector('span');
+              if (spanElement) {
+                spanElement.textContent = 'Following';
+              }
+              userFollowedTopics.add(topicSlug);
+              showToast(`Now following ${topicName}!`);
+            }
+          }
+        } catch (error) {
+          console.error('Follow action failed:', error);
+          showToast('Failed to update follow status');
+        } finally {
+          followBtn.disabled = false;
+        }
+      });
+    });
+
+    // Make cards clickable (excluding follow buttons)
+    topicCards.forEach((card) => {
+      card.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (target && target.closest('.follow-topic-btn-small')) {
+          return; // Don't navigate if clicking follow button
+        }
+        
+        const link = card.querySelector(".topic-title-clean a") as HTMLAnchorElement;
+        if (link) {
           window.location.href = link.href;
         }
       });
-      
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+
+      card.addEventListener("keydown", (e) => {
+        const keyEvent = e as KeyboardEvent;
+        if (keyEvent.key === "Enter" || keyEvent.key === " ") {
           e.preventDefault();
-          const link = card.querySelector('.topic-title-clean a') as HTMLAnchorElement;
+          const link = card.querySelector(".topic-title-clean a") as HTMLAnchorElement;
           if (link) {
             window.location.href = link.href;
           }
         }
       });
-      
-      card.setAttribute('tabindex', '0');
-      
-      const topicName = card.querySelector('.topic-title-clean a')?.textContent;
+
+      const cardElement = card as HTMLElement;
+      cardElement.setAttribute("tabindex", "0");
+
+      const topicName = card.querySelector(".topic-title-clean a")?.textContent;
       if (topicName) {
-        card.setAttribute('aria-label', `Navigate to ${topicName} category`);
+        cardElement.setAttribute("aria-label", `Navigate to ${topicName} category`);
       }
     });
 
-    // Add fade-in animation
-    const observerOptions = {
+    // Fade-in animation
+    const observerOptions: IntersectionObserverInit = {
       threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px',
+      rootMargin: "0px 0px -50px 0px",
     };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+          const element = entry.target as HTMLElement;
+          element.style.opacity = "1";
+          element.style.transform = "translateY(0)";
           observer.unobserve(entry.target);
         }
       });
     }, observerOptions);
 
     topicCards.forEach((card, index) => {
-      card.style.opacity = '0';
-      card.style.transform = 'translateY(20px)';
-      card.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+      const element = card as HTMLElement;
+      element.style.opacity = "0";
+      element.style.transform = "translateY(20px)";
+      element.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
       observer.observe(card);
     });
+
+    function showToast(message: string): void {
+      const toast = document.createElement('div');
+      toast.className = 'toast-notification';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 3000);
+    }
   });
 </script>

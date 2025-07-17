@@ -1,11 +1,14 @@
 ---
 name: "Learning by Doing"
-description: "Real lessons from failures, MVPs, and successful launches"
+description: "Practical experiments, hands-on growth, real-world learning"
 icon: "book"
-color: "red"
+color: "green"
 featured: true
+seo:
+  title: "Learning by Doing Articles | TinkByte"
+  description: "Hands-on learning and practical experiments for skill development."
 ---
 
 # Learning by Doing
 
-Real-world lessons from builders who've been in the trenches. No theory, just practical insights from successes and failures.
+Practical experiments, hands-on growth, and real-world learning experiences.

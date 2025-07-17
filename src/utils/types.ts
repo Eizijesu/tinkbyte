@@ -284,3 +284,39 @@ export interface GiscusConfig {
   lang: string;
   loading: 'lazy' | 'eager';
 }
+
+/**
+ * Enhanced author info from TinaCMS schema
+ */
+export interface AuthorInfo {
+  name: string;
+  bio?: string;
+  avatar?: string;
+  role?: string;
+  social?: {
+    twitter?: string;
+    linkedin?: string;
+    github?: string;
+    website?: string;
+  };
+}
+
+/**
+ * Hero image from TinaCMS schema
+ */
+export interface HeroImage {
+  imageType: 'upload' | 'url';
+  uploadedImage?: string;
+  externalUrl?: string;
+  alt: string;
+  caption?: string;
+}
+
+/**
+ * Editorial workflow
+ */
+export interface Editorial {
+  status?: 'draft' | 'review' | 'approved' | 'published' | 'revision';
+  assignedEditor?: string;
+  editorNotes?: string;
+}

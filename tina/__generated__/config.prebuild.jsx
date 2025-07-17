@@ -333,22 +333,30 @@ var config_default = defineConfig({
             label: "\u{1F3F7}\uFE0F Content Pillar",
             required: true,
             options: [
-              { label: "\u{1F680} Product Strategy", value: "product-strategy" },
-              { label: "\u{1F916} AI Evolution", value: "ai-evolution" },
-              { label: "\u{1F6E0}\uFE0F Developer Tools", value: "developer-tools" },
-              { label: "\u{1F465} Tech Culture", value: "tech-culture" },
-              { label: "\u{1F3AF} Startup Insights", value: "startup-insights" },
+              // Core Themes
               { label: "\u{1F528} Build Thinking", value: "build-thinking" },
-              { label: "\u{1F91D} Community Innovation", value: "community-innovation" },
               { label: "\u{1F4DA} Learning by Doing", value: "learning-by-doing" },
-              { label: "\u{1F3AF} No-Fluff Tech Coverage", value: "no-fluff-coverage" },
-              { label: "\u{1F4CA} Research-Backed", value: "research-backed" },
+              { label: "\u{1F504} Fail / Iterate / Ship", value: "fail-iterate-ship" },
+              { label: "\u{1F4A1} Product Lessons", value: "product-lessons" },
+              { label: "\u{1F680} Startup Insight", value: "startup-insight" },
+              { label: "\u{1F3AF} Product Strategy", value: "product-strategy" },
+              // Specialized Themes
+              { label: "\u{1F9E0} AI Evolution", value: "ai-evolution" },
+              { label: "\u{1F6E0}\uFE0F Developer Stack & Tools", value: "developer-stack-tools" },
+              { label: "\u{1F4CA} Research Bites", value: "research-bites" },
+              { label: "\u2699\uFE0F System Thinking", value: "system-thinking" },
+              { label: "\u{1F5A5}\uFE0F The Interface", value: "the-interface" },
+              { label: "\u{1F465} Tech Culture", value: "tech-culture" },
               { label: "\u{1F30D} Global Perspective", value: "global-perspective" },
-              { label: "\u{1F512} Privacy & Security", value: "privacy-security" },
-              { label: "\u{1F4F1} Mobile Development", value: "mobile-development" },
-              { label: "\u2601\uFE0F Cloud Technologies", value: "cloud-technologies" },
-              { label: "\u{1F4CA} Data Science", value: "data-science" },
-              { label: "\u{1F527} Other", value: "other" }
+              { label: "\u{1F91D} Community Innovation", value: "community-innovation" },
+              // Extended Themes
+              { label: "\u{1F4BC} Career Stacks", value: "career-stacks" },
+              { label: "\u26A1 Future Stacks", value: "future-stacks" },
+              { label: "\u{1F4B0} Business Models & Monetization", value: "business-models-monetization" },
+              { label: "\u2B50 Creator Economy", value: "creator-economy" },
+              { label: "\u{1F441}\uFE0F Consumer Behavior & Attention", value: "consumer-behavior-attention" },
+              { label: "\u{1F5FA}\uFE0F Ecosystem Shifts & Market Maps", value: "ecosystem-shifts-market-maps" },
+              { label: "\u{1F465} People Systems", value: "people-systems" }
             ],
             description: "Select the main content pillar for this post"
           },
@@ -519,9 +527,10 @@ var config_default = defineConfig({
                   defaultItem: {
                     variant: "inline",
                     title: "Stay Updated with TinkByte",
-                    description: "Get the latest insights delivered to your inbox.",
+                    description: "Get practical insights delivered weekly. No fluff, just actionable content.",
                     buttonText: "Subscribe",
-                    showFeatures: false
+                    showFeatures: true,
+                    features: ["Weekly insights", "No spam", "Unsubscribe anytime"]
                   }
                 },
                 fields: [
@@ -530,47 +539,42 @@ var config_default = defineConfig({
                     name: "variant",
                     label: "Newsletter Style",
                     options: [
-                      { label: "Inline", value: "inline" },
+                      { label: "Inline (recommended)", value: "inline" },
                       { label: "Sidebar", value: "sidebar" },
-                      { label: "Hero", value: "hero" },
-                      { label: "Minimal", value: "minimal" },
-                      { label: "Footer", value: "footer" }
-                    ],
-                    description: "Choose the newsletter signup style"
+                      { label: "Hero Banner", value: "hero" },
+                      { label: "Minimal", value: "minimal" }
+                    ]
                   },
                   {
                     type: "string",
                     name: "title",
                     label: "Newsletter Title",
-                    description: "Main headline for the newsletter signup"
+                    description: "Keep it benefit-focused"
                   },
                   {
                     type: "string",
                     name: "description",
-                    label: "Description",
-                    ui: {
-                      component: "textarea"
-                    },
-                    description: "Brief description of what subscribers will get"
+                    label: "Value Proposition",
+                    ui: { component: "textarea" },
+                    description: "What specific value do subscribers get?"
                   },
                   {
                     type: "string",
                     name: "buttonText",
-                    label: "Button Text",
-                    description: "Text for the subscribe button"
+                    label: "CTA Button Text",
+                    description: "Action-oriented text (e.g., 'Get Weekly Insights')"
                   },
                   {
                     type: "boolean",
                     name: "showFeatures",
-                    label: "Show Features",
-                    description: "Display feature highlights below the form"
+                    label: "Show Benefits List"
                   },
                   {
                     type: "string",
                     name: "features",
-                    label: "Newsletter Features",
+                    label: "Key Benefits",
                     list: true,
-                    description: "Feature highlights (e.g., 'Weekly insights', 'No spam') - only fill if Show Features is checked"
+                    description: "3-4 key benefits subscribers get"
                   }
                 ]
               },
@@ -1499,7 +1503,7 @@ var config_default = defineConfig({
       {
         name: "allTopicsPage",
         label: "\u{1F4D1} All Topics Page",
-        path: "src/content/pages",
+        path: "src/content/allTopics",
         format: "md",
         ui: {
           allowedActions: {
@@ -1508,7 +1512,7 @@ var config_default = defineConfig({
           }
         },
         match: {
-          include: "all-topics"
+          include: "index"
         },
         fields: [
           {
@@ -2245,12 +2249,12 @@ var config_default = defineConfig({
           }
         ]
       },
-      // LEGAL COLLECTION (terms, privacy, cookies)
+      //  legal collection
       {
         name: "legal",
         label: "\u2696\uFE0F Legal Pages",
         path: "src/content/legal",
-        format: "md",
+        format: "mdx",
         ui: {
           router: ({ document }) => `/legal/${document._sys.filename}`,
           filename: {
@@ -2378,12 +2382,52 @@ var config_default = defineConfig({
               }
             ]
           },
+          // CORRECTED: Proper TinaCMS rich-text configuration
           {
             type: "rich-text",
             name: "body",
             label: "Legal Content",
             isBody: true,
-            description: "Legal document content"
+            description: "Legal document content with full formatting support",
+            templates: [
+              {
+                name: "section",
+                label: "Content Section",
+                fields: [
+                  {
+                    type: "string",
+                    name: "title",
+                    label: "Section Title"
+                  },
+                  {
+                    type: "rich-text",
+                    name: "content",
+                    label: "Section Content"
+                  }
+                ]
+              },
+              {
+                name: "contactInfo",
+                label: "Contact Information Block",
+                fields: [
+                  {
+                    type: "string",
+                    name: "title",
+                    label: "Contact Title"
+                  },
+                  {
+                    type: "string",
+                    name: "email",
+                    label: "Email"
+                  },
+                  {
+                    type: "string",
+                    name: "address",
+                    label: "Address"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -2528,7 +2572,7 @@ var config_default = defineConfig({
           }
         ]
       },
-      // CATEGORIES COLLECTION (from your original)
+      // CATEGORIES COLLECTION (Enhanced with all predefined categories)
       {
         name: "categories",
         label: "\u{1F3F7}\uFE0F Categories",
@@ -2552,7 +2596,9 @@ var config_default = defineConfig({
           description: "Category description",
           color: "blue",
           icon: "tag",
-          featured: false
+          featured: false,
+          slug: "",
+          theme: "core"
         }),
         fields: [
           {
@@ -2562,6 +2608,21 @@ var config_default = defineConfig({
             isTitle: true,
             required: true,
             description: "Display name (e.g., 'Build Thinking')"
+          },
+          {
+            type: "string",
+            name: "slug",
+            label: "Category Slug",
+            required: true,
+            description: "URL-friendly version (e.g., 'build-thinking')",
+            ui: {
+              validate: (value) => {
+                if (!value) return "Slug is required";
+                if (!/^[a-z0-9-]+$/.test(value)) {
+                  return "Slug should only contain lowercase letters, numbers, and hyphens";
+                }
+              }
+            }
           },
           {
             type: "string",
@@ -2575,23 +2636,53 @@ var config_default = defineConfig({
           },
           {
             type: "string",
+            name: "theme",
+            label: "Category Theme",
+            required: true,
+            options: [
+              { label: "Core Themes", value: "core" },
+              { label: "Specialized Themes", value: "specialized" },
+              { label: "Extended Themes", value: "extended" }
+            ],
+            description: "Which theme group this category belongs to"
+          },
+          {
+            type: "string",
             name: "icon",
             label: "Icon",
             description: "FontAwesome icon name",
             required: true,
             options: [
+              // Core Theme Icons
               { label: "Hammer (Build)", value: "hammer" },
-              { label: "Users (Community)", value: "users" },
               { label: "Book (Learning)", value: "book" },
-              { label: "Target (No-Fluff)", value: "bullseye" },
-              { label: "Chart (Research)", value: "chart-line" },
-              { label: "Globe (Global)", value: "globe" },
-              { label: "Brain (AI)", value: "brain" },
+              { label: "Repeat (Iterate)", value: "repeat" },
               { label: "Lightbulb (Ideas)", value: "lightbulb" },
               { label: "Rocket (Startup)", value: "rocket" },
+              { label: "Target (Strategy)", value: "target" },
+              // Specialized Theme Icons
+              { label: "Brain (AI)", value: "brain" },
               { label: "Tools (Developer)", value: "tools" },
+              { label: "Chart Line (Research)", value: "chart-line" },
+              { label: "Cog (System)", value: "cog" },
+              { label: "Monitor (Interface)", value: "monitor" },
+              { label: "Users (Culture)", value: "users" },
+              { label: "Globe (Global)", value: "globe" },
+              { label: "Users Group (Community)", value: "users" },
+              // Extended Theme Icons
+              { label: "Briefcase (Career)", value: "briefcase" },
+              { label: "Zap (Future)", value: "zap" },
+              { label: "Dollar Sign (Business)", value: "dollar-sign" },
+              { label: "Star (Creator)", value: "star" },
+              { label: "Eye (Consumer)", value: "eye" },
+              { label: "Map (Ecosystem)", value: "map" },
+              // General Icons
+              { label: "Tag (General)", value: "tag" },
               { label: "Code (Programming)", value: "code" },
-              { label: "Cog (Other/Misc)", value: "cog" }
+              { label: "Database (Data)", value: "database" },
+              { label: "Shield (Security)", value: "shield-alt" },
+              { label: "Mobile (Mobile Dev)", value: "mobile-alt" },
+              { label: "Cloud (Cloud Tech)", value: "cloud" }
             ]
           },
           {
@@ -2600,13 +2691,19 @@ var config_default = defineConfig({
             label: "Color Theme",
             required: true,
             options: [
-              { label: "Purple", value: "purple" },
-              { label: "Green", value: "green" },
               { label: "Blue", value: "blue" },
-              { label: "Cyan", value: "cyan" },
+              { label: "Green", value: "green" },
               { label: "Orange", value: "orange" },
+              { label: "Purple", value: "purple" },
               { label: "Red", value: "red" },
+              { label: "Indigo", value: "indigo" },
+              { label: "Violet", value: "violet" },
+              { label: "Emerald", value: "emerald" },
+              { label: "Cyan", value: "cyan" },
+              { label: "Slate", value: "slate" },
               { label: "Pink", value: "pink" },
+              { label: "Teal", value: "teal" },
+              { label: "Amber", value: "amber" },
               { label: "Yellow", value: "yellow" },
               { label: "Gray", value: "gray" }
             ]
@@ -2616,6 +2713,34 @@ var config_default = defineConfig({
             name: "featured",
             label: "Featured Category",
             description: "Show this category prominently on the homepage"
+          },
+          {
+            type: "number",
+            name: "sortOrder",
+            label: "Sort Order",
+            description: "Order for displaying categories (lower numbers first)"
+          },
+          {
+            type: "object",
+            name: "seo",
+            label: "SEO Settings",
+            fields: [
+              {
+                type: "string",
+                name: "title",
+                label: "SEO Title",
+                description: "Custom title for search engines"
+              },
+              {
+                type: "string",
+                name: "description",
+                label: "SEO Description",
+                description: "Custom description for search engines",
+                ui: {
+                  component: "textarea"
+                }
+              }
+            ]
           },
           {
             type: "rich-text",
@@ -2949,6 +3074,36 @@ var config_default = defineConfig({
                 name: "categoryMappings",
                 label: "Category Color Mappings",
                 list: true,
+                ui: {
+                  defaultItem: () => ({
+                    // Core Themes
+                    categories: [
+                      { slug: "build-thinking", name: "Build Thinking", description: "Mental models, product intuition, systems mindset", icon: "hammer", color: "blue", theme: "core" },
+                      { slug: "learning-by-doing", name: "Learning by Doing", description: "Practical experiments, hands-on growth", icon: "book", color: "green", theme: "core" },
+                      { slug: "fail-iterate-ship", name: "Fail / Iterate / Ship", description: "Process-focused iteration and reflection", icon: "repeat", color: "orange", theme: "core" },
+                      { slug: "product-lessons", name: "Product Lessons", description: "Real build stories, what worked/didn't", icon: "lightbulb", color: "purple", theme: "core" },
+                      { slug: "startup-insight", name: "Startup Insight", description: "Early-stage execution, traction, team dynamics", icon: "rocket", color: "red", theme: "core" },
+                      { slug: "product-strategy", name: "Product Strategy", description: "Positioning, roadmap thinking, growth decisions", icon: "target", color: "indigo", theme: "core" },
+                      // Specialized Themes
+                      { slug: "ai-evolution", name: "AI Evolution", description: "Practical AI implementation, ethical considerations", icon: "brain", color: "violet", theme: "specialized" },
+                      { slug: "developer-stack-tools", name: "Developer Stack & Tools", description: "Tooling, platforms, workflows, engineering stacks", icon: "tools", color: "emerald", theme: "specialized" },
+                      { slug: "research-bites", name: "Research Bites", description: "Insights from data, behavior, experiments + pattern spotting", icon: "chart-line", color: "cyan", theme: "specialized" },
+                      { slug: "system-thinking", name: "System Thinking", description: "Logic frameworks, mental models, automation design", icon: "cog", color: "slate", theme: "specialized" },
+                      { slug: "the-interface", name: "The Interface", description: "UX/UI patterns, friction reduction", icon: "monitor", color: "pink", theme: "specialized" },
+                      { slug: "tech-culture", name: "Tech Culture", description: "Social impact, ethics, workplace culture + team dynamics", icon: "users", color: "teal", theme: "specialized" },
+                      { slug: "global-perspective", name: "Global Perspective", description: "Emerging regions, cross-border innovation", icon: "globe", color: "amber", theme: "specialized" },
+                      { slug: "community-innovation", name: "Community Innovation", description: "Network effects, community-led growth", icon: "users", color: "violet", theme: "specialized" },
+                      // Extended Themes
+                      { slug: "career-stacks", name: "Career Stacks", description: "Roles, skills, transitions, growth strategies", icon: "briefcase", color: "indigo", theme: "extended" },
+                      { slug: "future-stacks", name: "Future Stacks", description: "Emerging tech: AI, AR/VR, Quantum, Web3, Robotics, IoT", icon: "zap", color: "purple", theme: "extended" },
+                      { slug: "business-models-monetization", name: "Business Models & Monetization", description: "Revenue strategies, pricing, monetization", icon: "dollar-sign", color: "green", theme: "extended" },
+                      { slug: "creator-economy", name: "Creator Economy", description: "Tools, trends, case studies", icon: "star", color: "yellow", theme: "extended" },
+                      { slug: "consumer-behavior-attention", name: "Consumer Behavior & Attention", description: "Audience shifts, demand patterns, psychology", icon: "eye", color: "red", theme: "extended" },
+                      { slug: "ecosystem-shifts-market-maps", name: "Ecosystem Shifts & Market Maps", description: "Competitive changes, sector movements, market signals", icon: "map", color: "blue", theme: "extended" },
+                      { slug: "people-systems", name: "People Systems", description: "Team building, communication frameworks, organizational design", icon: "users", color: "orange", theme: "extended" }
+                    ]
+                  })
+                },
                 fields: [
                   {
                     type: "string",
@@ -2966,7 +3121,7 @@ var config_default = defineConfig({
                     type: "string",
                     name: "color",
                     label: "Category Color",
-                    description: "Hex color code for this category"
+                    description: "Theme color for this category"
                   },
                   {
                     type: "string",
@@ -2976,6 +3131,22 @@ var config_default = defineConfig({
                     ui: {
                       component: "textarea"
                     }
+                  },
+                  {
+                    type: "string",
+                    name: "icon",
+                    label: "Category Icon",
+                    description: "FontAwesome icon name"
+                  },
+                  {
+                    type: "string",
+                    name: "theme",
+                    label: "Category Theme",
+                    options: [
+                      { label: "Core", value: "core" },
+                      { label: "Specialized", value: "specialized" },
+                      { label: "Extended", value: "extended" }
+                    ]
                   }
                 ]
               }

@@ -1,0 +1,1098 @@
+---
+// src/pages/profile/following.astro - UPDATED WIDTH
+import ProfileLayout from "../../layouts/ProfileLayout.astro";
+---
+
+<ProfileLayout
+  title="Following | TinkByte"
+  description="Manage your followed topics and newsletter subscriptions"
+>
+  <div class="following-page">
+    <!-- Topics Section -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="fas fa-tags"></i>
+          Topics
+          <span class="count-badge" id="topics-count">0 following</span>
+        </h2>
+        <div class="section-actions">
+          <div class="dropdown-container">
+            <button class="dropdown-trigger" id="topics-dropdown-trigger">
+              <span>Select Topics</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="dropdown-menu" id="topics-dropdown">
+              <div class="dropdown-header">
+                <button class="select-all-btn" id="select-all-topics">
+                  <i class="fas fa-check-square"></i>
+                  Select All
+                </button>
+                <button class="clear-all-btn" id="clear-all-topics">
+                  <i class="fas fa-square"></i>
+                  Clear All
+                </button>
+              </div>
+              <div class="dropdown-items" id="topics-list">
+                <!-- Topics will be loaded here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="following-summary" id="topics-summary">
+        <p class="summary-text">
+          Select topics you want to follow for personalized content
+          recommendations.
+        </p>
+      </div>
+    </div>
+
+    <!-- Newsletters Section -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <i class="fas fa-envelope"></i>
+          Newsletter Subscriptions
+          <span class="count-badge" id="newsletters-count">0 subscribed</span>
+        </h2>
+        <div class="section-actions">
+          <div class="dropdown-container">
+            <button class="dropdown-trigger" id="newsletters-dropdown-trigger">
+              <span>Manage Subscriptions</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="dropdown-menu" id="newsletters-dropdown">
+              <div class="dropdown-header">
+                <button class="select-all-btn" id="select-all-newsletters">
+                  <i class="fas fa-check-square"></i>
+                  Subscribe All
+                </button>
+                <button class="clear-all-btn" id="clear-all-newsletters">
+                  <i class="fas fa-square"></i>
+                  Unsubscribe All
+                </button>
+              </div>
+              <div class="dropdown-items" id="newsletters-list">
+                <!-- Newsletters will be loaded here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="following-summary" id="newsletters-summary">
+        <p class="summary-text">
+          Choose which newsletters you'd like to receive in your inbox.
+        </p>
+      </div>
+    </div>
+
+    <!-- Save Changes -->
+    <div class="save-section">
+      <button type="button" class="btn-save" id="save-changes-btn">
+        <i class="fas fa-save"></i>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</ProfileLayout>
+
+<style is:global>
+  .following-page {
+    font-family: "Space Grotesk", sans-serif;
+    /* FIXED: Consistent width */
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem;
+  }
+
+  .section {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 0;
+    padding: 1.5rem;
+  }
+
+  html.dark .section {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  html.dark .section-title {
+    color: #f1f5f9;
+  }
+
+  .count-badge {
+    background: #243788;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 0;
+  }
+
+  html.dark .count-badge {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  /* Dropdown Styles */
+  .dropdown-container {
+    position: relative;
+  }
+
+  .dropdown-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    color: #243788;
+    border: 2px solid #243788;
+    border-radius: 0;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .dropdown-trigger:hover {
+    background: #243788;
+    color: white;
+  }
+
+  html.dark .dropdown-trigger {
+    color: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  html.dark .dropdown-trigger:hover {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  .dropdown-trigger.active {
+    background: #243788;
+    color: white;
+  }
+
+  html.dark .dropdown-trigger.active {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  .dropdown-trigger i {
+    transition: transform 0.2s ease;
+  }
+
+  .dropdown-trigger.active i {
+    transform: rotate(180deg);
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: white;
+    border: 2px solid #243788;
+    border-radius: 0;
+    min-width: 320px;
+    max-width: 400px;
+    max-height: 400px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1000;
+  }
+
+  html.dark .dropdown-menu {
+    background: #0f172a;
+    border-color: #475569;
+  }
+
+  .dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+    gap: 0.5rem;
+  }
+
+  html.dark .dropdown-header {
+    border-bottom-color: #334155;
+  }
+
+  .select-all-btn,
+  .clear-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: 2px solid #10b981;
+    color: #10b981;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+    border-radius: 0;
+    white-space: nowrap;
+  }
+
+  .select-all-btn:hover {
+    background: #10b981;
+    color: white;
+  }
+
+  .clear-all-btn {
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+
+  .clear-all-btn:hover {
+    background: #ef4444;
+    color: white;
+  }
+
+  .dropdown-items {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+  }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+
+  .dropdown-item:hover {
+    background: #f8fafc;
+    border-left-color: #243788;
+  }
+
+  html.dark .dropdown-item:hover {
+    background: #334155;
+    border-left-color: #b4bce1;
+  }
+
+  .dropdown-item.selected {
+    background: rgba(36, 55, 136, 0.05);
+    border-left-color: #243788;
+  }
+
+  html.dark .dropdown-item.selected {
+    background: rgba(180, 188, 225, 0.05);
+    border-left-color: #b4bce1;
+  }
+
+  .dropdown-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #64748b;
+    border-radius: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .dropdown-checkbox.checked {
+    background: #243788;
+    border-color: #243788;
+    color: white;
+  }
+
+  html.dark .dropdown-checkbox {
+    border-color: #94a3b8;
+  }
+
+  html.dark .dropdown-checkbox.checked {
+    background: #b4bce1;
+    border-color: #b4bce1;
+    color: #0f172a;
+  }
+
+  .dropdown-checkbox i {
+    font-size: 0.75rem;
+  }
+
+  .dropdown-item-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dropdown-item-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-bottom: 0.25rem;
+  }
+
+  html.dark .dropdown-item-name {
+    color: #f1f5f9;
+  }
+
+  .dropdown-item-description {
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.4;
+  }
+
+  html.dark .dropdown-item-description {
+    color: #94a3b8;
+  }
+
+  .newsletter-frequency {
+    font-size: 0.6875rem;
+    color: #10b981;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+  }
+
+  html.dark .newsletter-frequency {
+    color: #4ade80;
+  }
+
+  .topic-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 0;
+    flex-shrink: 0;
+  }
+
+  /* Following Summary */
+  .following-summary {
+    padding: 1rem;
+    background: #f8fafc;
+    border: 2px solid transparent;
+    margin-top: 1rem;
+    border-radius: 0;
+  }
+
+  html.dark .following-summary {
+    background: #0f172a;
+    border-color: #334155;
+  }
+
+  .summary-text {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  html.dark .summary-text {
+    color: #94a3b8;
+  }
+
+  /* Save Section */
+  .save-section {
+    text-align: center;
+    padding: 1.5rem;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 0;
+  }
+
+  html.dark .save-section {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .btn-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #10b981;
+    color: white;
+    border: 2px solid #10b981;
+    border-radius: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .btn-save:hover {
+    background: white;
+    color: #10b981;
+  }
+
+  html.dark .btn-save:hover {
+    background: #1e293b;
+  }
+
+  .btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Loading State */
+  .loading-state {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+
+  html.dark .loading-state {
+    color: #94a3b8;
+  }
+
+  /* Toast Notifications */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 0;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 10000;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+  }
+
+  .toast.success {
+    background: #10b981;
+    border: 2px solid #059669;
+  }
+
+  .toast.error {
+    background: #ef4444;
+    border: 2px solid #dc2626;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .following-page {
+      padding: 0.5rem;
+      gap: 1.5rem;
+    }
+
+    .section {
+      padding: 1rem;
+    }
+
+    .section-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+    }
+
+    .section-title {
+      justify-content: center;
+      text-align: center;
+    }
+
+    .dropdown-menu {
+      left: 0;
+      right: 0;
+      min-width: auto;
+      max-width: none;
+    }
+
+    .dropdown-header {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .select-all-btn,
+    .clear-all-btn {
+      justify-content: center;
+    }
+
+    .dropdown-trigger {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .following-page {
+      padding: 0.25rem;
+    }
+
+    .section {
+      padding: 0.75rem;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .dropdown-item {
+      padding: 0.5rem;
+      gap: 0.5rem;
+    }
+
+    .dropdown-item-name {
+      font-size: 0.8125rem;
+    }
+
+    .dropdown-item-description {
+      font-size: 0.6875rem;
+    }
+  }
+
+  /* Focus styles */
+  .dropdown-trigger:focus,
+  .select-all-btn:focus,
+  .clear-all-btn:focus,
+  .btn-save:focus {
+    outline: 3px solid #243788;
+    outline-offset: 2px;
+  }
+
+  html.dark .dropdown-trigger:focus,
+  html.dark .select-all-btn:focus,
+  html.dark .clear-all-btn:focus,
+  html.dark .btn-save:focus {
+    outline-color: #b4bce1;
+  }
+</style>
+
+<script>
+  import { authStore } from "../../lib/auth-store.js";
+  import {
+    getCachedTopics,
+    getCachedNewsletters,
+    dataCache,
+  } from "../../lib/data-cache.js";
+  import { supabase } from "../../lib/supabase.js";
+
+  let currentUser: any = null;
+  let followedTopics: Set<string> = new Set();
+  let subscribedNewsletters: Set<string> = new Set();
+  let allTopics: any[] = [];
+  let allNewsletters: any[] = [];
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    await loadFollowingData();
+    setupEventListeners();
+  });
+
+  async function loadFollowingData() {
+    try {
+      // Get instant data from cache
+      if (authStore.hasInstantData()) {
+        console.log("⚡ Following: Using instant cached data");
+
+        currentUser = authStore.getUser();
+
+        if (!currentUser) {
+          window.location.href = "/auth/signin";
+          return;
+        }
+
+        // Show loading state initially
+        updateCounts();
+        updateSummaries();
+
+        // Load data in background
+        loadBackgroundData();
+        return;
+      }
+
+      // No instant data, need to initialize
+      console.log("🔄 Following: Initializing auth...");
+      await authStore.initialize();
+
+      currentUser = authStore.getUser();
+      if (!currentUser) {
+        window.location.href = "/auth/signin";
+        return;
+      }
+
+      loadBackgroundData();
+    } catch (error) {
+      console.error("Error loading following data:", error);
+      showError("Failed to load following data");
+    }
+  }
+
+  async function loadBackgroundData() {
+    try {
+      // Load topics and newsletters from cache
+      const [topics, newsletters] = await Promise.all([
+        getCachedTopics(),
+        getCachedNewsletters(),
+      ]);
+
+      allTopics = topics;
+      allNewsletters = newsletters;
+
+      // Load user's followed topics
+      const { data: userTopics } = await supabase
+        .from("user_category_follows")
+        .select("category_slug")
+        .eq("user_id", currentUser.id);
+
+      followedTopics = new Set((userTopics || []).map((t) => t.category_slug));
+
+      // Load user's newsletter preferences
+      const { data: userPrefs } = await supabase
+        .from("user_preferences")
+        .select("newsletter_subscriptions, newsletter_frequency")
+        .eq("id", currentUser.id)
+        .single();
+
+      if (userPrefs?.newsletter_subscriptions) {
+        subscribedNewsletters = new Set(userPrefs.newsletter_subscriptions);
+      } else if (
+        userPrefs?.newsletter_frequency &&
+        userPrefs.newsletter_frequency !== "never"
+      ) {
+        subscribedNewsletters.add("tinkbyte-weekly");
+      }
+
+      renderTopicsDropdown();
+      renderNewslettersDropdown();
+      updateCounts();
+      updateSummaries();
+    } catch (error) {
+      console.error("Error loading background data:", error);
+      showError("Failed to load following data");
+    }
+  }
+
+  function renderTopicsDropdown() {
+    const topicsList = document.getElementById("topics-list");
+    if (!topicsList) return;
+
+    if (allTopics.length === 0) {
+      topicsList.innerHTML =
+        '<div class="loading-state">Loading topics...</div>';
+      return;
+    }
+
+    topicsList.innerHTML = allTopics
+      .map((topic) => {
+        const isFollowing = followedTopics.has(topic.slug);
+        return `
+        <div class="dropdown-item ${isFollowing ? "selected" : ""}" data-topic-slug="${topic.slug}">
+          <div class="dropdown-checkbox ${isFollowing ? "checked" : ""}">
+            ${isFollowing ? '<i class="fas fa-check"></i>' : ""}
+          </div>
+          <div class="topic-color" style="background: ${getTopicColor(topic.color)}"></div>
+          <div class="dropdown-item-content">
+            <div class="dropdown-item-name">${topic.name}</div>
+            <div class="dropdown-item-description">${topic.description || ""}</div>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+
+    topicsList.querySelectorAll(".dropdown-item").forEach((item) => {
+      item.addEventListener("click", handleTopicToggle);
+    });
+  }
+
+  function renderNewslettersDropdown() {
+    const newslettersList = document.getElementById("newsletters-list");
+    if (!newslettersList) return;
+
+    if (allNewsletters.length === 0) {
+      newslettersList.innerHTML =
+        '<div class="loading-state">Loading newsletters...</div>';
+      return;
+    }
+
+    newslettersList.innerHTML = allNewsletters
+      .map((newsletter) => {
+        const isSubscribed = subscribedNewsletters.has(newsletter.slug);
+        return `
+        <div class="dropdown-item ${isSubscribed ? "selected" : ""}" data-newsletter-slug="${newsletter.slug}">
+          <div class="dropdown-checkbox ${isSubscribed ? "checked" : ""}">
+            ${isSubscribed ? '<i class="fas fa-check"></i>' : ""}
+          </div>
+          <div class="dropdown-item-content">
+            <div class="dropdown-item-name">${newsletter.name}</div>
+            <div class="dropdown-item-description">${newsletter.description}</div>
+            <div class="newsletter-frequency">${newsletter.frequency}</div>
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+
+    newslettersList.querySelectorAll(".dropdown-item").forEach((item) => {
+      item.addEventListener("click", handleNewsletterToggle);
+    });
+  }
+
+  function handleTopicToggle(event: Event) {
+    const item = event.currentTarget as HTMLElement;
+    const topicSlug = item.getAttribute("data-topic-slug");
+    if (!topicSlug) return;
+
+    const checkbox = item.querySelector(".dropdown-checkbox");
+
+    if (followedTopics.has(topicSlug)) {
+      followedTopics.delete(topicSlug);
+      item.classList.remove("selected");
+      checkbox?.classList.remove("checked");
+      if (checkbox) checkbox.innerHTML = "";
+    } else {
+      followedTopics.add(topicSlug);
+      item.classList.add("selected");
+      checkbox?.classList.add("checked");
+      if (checkbox) checkbox.innerHTML = '<i class="fas fa-check"></i>';
+    }
+
+    updateCounts();
+    updateSummaries();
+  }
+
+  function handleNewsletterToggle(event: Event) {
+    const item = event.currentTarget as HTMLElement;
+    const newsletterSlug = item.getAttribute("data-newsletter-slug");
+    if (!newsletterSlug) return;
+
+    const checkbox = item.querySelector(".dropdown-checkbox");
+
+    if (subscribedNewsletters.has(newsletterSlug)) {
+      subscribedNewsletters.delete(newsletterSlug);
+      item.classList.remove("selected");
+      checkbox?.classList.remove("checked");
+      if (checkbox) checkbox.innerHTML = "";
+    } else {
+      subscribedNewsletters.add(newsletterSlug);
+      item.classList.add("selected");
+      checkbox?.classList.add("checked");
+      if (checkbox) checkbox.innerHTML = '<i class="fas fa-check"></i>';
+    }
+
+    updateCounts();
+    updateSummaries();
+  }
+
+  async function saveChanges() {
+    if (!currentUser) return;
+
+    try {
+      const saveBtn = document.getElementById(
+        "save-changes-btn"
+      ) as HTMLButtonElement;
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      }
+
+      await updateTopicFollows();
+      await updateNewsletterPreferences();
+
+      dataCache.delete(`user-stats-${currentUser.id}`);
+
+      showSuccess("Changes saved successfully!");
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      showError("Failed to save changes");
+    } finally {
+      const saveBtn = document.getElementById(
+        "save-changes-btn"
+      ) as HTMLButtonElement;
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+      }
+    }
+  }
+
+  async function updateTopicFollows() {
+    await supabase
+      .from("user_category_follows")
+      .delete()
+      .eq("user_id", currentUser.id);
+
+    if (followedTopics.size > 0) {
+      const follows = Array.from(followedTopics).map((topicSlug) => ({
+        user_id: currentUser.id,
+        category_slug: topicSlug,
+      }));
+
+      await supabase.from("user_category_follows").insert(follows);
+    }
+  }
+
+  async function updateNewsletterPreferences() {
+    const hasNewsletterSubscriptions = subscribedNewsletters.size > 0;
+    const subscriptionsArray = Array.from(subscribedNewsletters);
+
+    const updatedPrefs = {
+      id: currentUser.id,
+      newsletter_frequency: hasNewsletterSubscriptions ? "weekly" : "never",
+      newsletter_subscriptions: subscriptionsArray,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from("user_preferences")
+      .upsert(updatedPrefs, { onConflict: "id" });
+
+    if (error) throw error;
+  }
+
+  function getTopicColor(color: string) {
+    const colorMap: Record<string, string> = {
+      blue: "#3b82f6",
+      purple: "#8b5cf6",
+      orange: "#f97316",
+      green: "#10b981",
+      red: "#ef4444",
+      indigo: "#6366f1",
+      violet: "#8b5cf6",
+      emerald: "#10b981",
+      pink: "#ec4899",
+      cyan: "#06b6d4",
+    };
+    return colorMap[color] || "#243788";
+  }
+
+  function updateCounts() {
+    const topicsCount = document.getElementById("topics-count");
+    const newslettersCount = document.getElementById("newsletters-count");
+
+    if (topicsCount) {
+      topicsCount.textContent = `${followedTopics.size} following`;
+    }
+    if (newslettersCount) {
+      newslettersCount.textContent = `${subscribedNewsletters.size} subscribed`;
+    }
+  }
+
+  function updateSummaries() {
+    const topicsSummary = document.getElementById("topics-summary");
+    if (topicsSummary) {
+      const followedTopicNames = allTopics
+        .filter((t) => followedTopics.has(t.slug))
+        .map((t) => t.name)
+        .slice(0, 3);
+
+      if (followedTopicNames.length > 0) {
+        const remaining = followedTopics.size - followedTopicNames.length;
+        const summaryText = `Following: ${followedTopicNames.join(", ")}${
+          remaining > 0 ? ` and ${remaining} more` : ""
+        }`;
+        topicsSummary.innerHTML = `<p class="summary-text">${summaryText}</p>`;
+      } else {
+        topicsSummary.innerHTML =
+          '<p class="summary-text">Select topics you want to follow for personalized content recommendations.</p>';
+      }
+    }
+
+    const newslettersSummary = document.getElementById("newsletters-summary");
+    if (newslettersSummary) {
+      const subscribedNewsletterNames = allNewsletters
+        .filter((n) => subscribedNewsletters.has(n.slug))
+        .map((n) => n.name)
+        .slice(0, 2);
+
+      if (subscribedNewsletterNames.length > 0) {
+        const remaining =
+          subscribedNewsletters.size - subscribedNewsletterNames.length;
+        const summaryText = `Subscribed to: ${subscribedNewsletterNames.join(", ")}${
+          remaining > 0 ? ` and ${remaining} more` : ""
+        }`;
+        newslettersSummary.innerHTML = `<p class="summary-text">${summaryText}</p>`;
+      } else {
+        newslettersSummary.innerHTML =
+          '<p class="summary-text">Choose which newsletters you\'d like to receive in your inbox.</p>';
+      }
+    }
+  }
+
+  function setupEventListeners() {
+    const topicsDropdownTrigger = document.getElementById(
+      "topics-dropdown-trigger"
+    );
+    const topicsDropdown = document.getElementById("topics-dropdown");
+    const newslettersDropdownTrigger = document.getElementById(
+      "newsletters-dropdown-trigger"
+    );
+    const newslettersDropdown = document.getElementById("newsletters-dropdown");
+
+    topicsDropdownTrigger?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleDropdown(topicsDropdownTrigger, topicsDropdown);
+      closeDropdown(newslettersDropdownTrigger, newslettersDropdown);
+    });
+
+    newslettersDropdownTrigger?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleDropdown(newslettersDropdownTrigger, newslettersDropdown);
+      closeDropdown(topicsDropdownTrigger, topicsDropdown);
+    });
+
+    document.addEventListener("click", () => {
+      closeDropdown(topicsDropdownTrigger, topicsDropdown);
+      closeDropdown(newslettersDropdownTrigger, newslettersDropdown);
+    });
+
+    topicsDropdown?.addEventListener("click", (e) => e.stopPropagation());
+    newslettersDropdown?.addEventListener("click", (e) => e.stopPropagation());
+
+    document
+      .getElementById("select-all-topics")
+      ?.addEventListener("click", () => selectAllItems("topics"));
+    document
+      .getElementById("clear-all-topics")
+      ?.addEventListener("click", () => clearAllItems("topics"));
+    document
+      .getElementById("select-all-newsletters")
+      ?.addEventListener("click", () => selectAllItems("newsletters"));
+    document
+      .getElementById("clear-all-newsletters")
+      ?.addEventListener("click", () => clearAllItems("newsletters"));
+    document
+      .getElementById("save-changes-btn")
+      ?.addEventListener("click", saveChanges);
+  }
+
+  function toggleDropdown(
+    trigger: HTMLElement | null,
+    dropdown: HTMLElement | null
+  ) {
+    if (!trigger || !dropdown) return;
+
+    const isOpen = dropdown.classList.contains("show");
+    if (isOpen) {
+      closeDropdown(trigger, dropdown);
+    } else {
+      openDropdown(trigger, dropdown);
+    }
+  }
+
+  function openDropdown(trigger: HTMLElement, dropdown: HTMLElement) {
+    trigger.classList.add("active");
+    dropdown.classList.add("show");
+  }
+
+  function closeDropdown(
+    trigger: HTMLElement | null,
+    dropdown: HTMLElement | null
+  ) {
+    if (!trigger || !dropdown) return;
+    trigger.classList.remove("active");
+    dropdown.classList.remove("show");
+  }
+
+  function selectAllItems(type: "topics" | "newsletters") {
+    if (type === "topics") {
+      allTopics.forEach((topic) => followedTopics.add(topic.slug));
+      renderTopicsDropdown();
+    } else {
+      allNewsletters.forEach((newsletter) =>
+        subscribedNewsletters.add(newsletter.slug)
+      );
+      renderNewslettersDropdown();
+    }
+    updateCounts();
+    updateSummaries();
+  }
+
+  function clearAllItems(type: "topics" | "newsletters") {
+    if (type === "topics") {
+      followedTopics.clear();
+      renderTopicsDropdown();
+    } else {
+      subscribedNewsletters.clear();
+      renderNewslettersDropdown();
+    }
+    updateCounts();
+    updateSummaries();
+  }
+
+  function showSuccess(message: string) {
+    showToast(message, "success");
+  }
+
+  function showError(message: string) {
+    showToast(message, "error");
+  }
+
+  function showToast(message: string, type: "success" | "error") {
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="fas fa-${type === "success" ? "check-circle" : "exclamation-triangle"}"></i> ${message}`;
+
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+</script>

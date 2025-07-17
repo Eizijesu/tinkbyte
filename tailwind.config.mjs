@@ -1,4 +1,4 @@
-// tailwind.config.mjs - Enhanced TinkByte Tailwind Configuration
+// tailwind.config.mjs -
 import defaultTheme from 'tailwindcss/defaultTheme';
 
 /** @type {import('tailwindcss').Config} */

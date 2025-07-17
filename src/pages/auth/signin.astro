@@ -1,0 +1,18 @@
+---
+// src/pages/auth/signin.astro
+import Layout from "../../layouts/Layout.astro";
+import AuthLayout from "../../components/auth/AuthLayout.astro";
+import SignInForm from "../../components/auth/SignInForm.astro";
+---
+
+<Layout
+  title="Sign In | TinkByte - Access Your Account"
+  description="Sign in to your TinkByte account to access premium content and join the builder community."
+>
+  <AuthLayout
+    title="Welcome Back"
+    description="Sign in to continue building the future"
+  >
+    <SignInForm />
+  </AuthLayout>
+</Layout>

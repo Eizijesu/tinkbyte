@@ -1,4 +1,5 @@
 ---
+// src/components/blog/ReactionBar.astro
 export interface Props {
   postSlug: string;
   postTitle: string;
@@ -7,33 +8,84 @@ export interface Props {
 const { postSlug, postTitle } = Astro.props;
 ---
 
-<!-- Floating Reaction Bar - TinkByte Style -->
-<div class="reaction-actions-sidebar" id="reaction-actions" data-post-slug={postSlug}>
+<div
+  class="reaction-actions-sidebar"
+  id="reaction-actions"
+  data-post-slug={postSlug}
+>
   <div class="actions-content">
-    <button class="action-btn like-btn" data-reaction="like" title="Like this article">
+    <button
+      class="action-btn like-btn"
+      data-reaction="like"
+      title="Like this article"
+    >
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M8 14s-6-3.5-6-8c0-2.5 2-4.5 4.5-4.5C7.5 1.5 8 2 8 2s.5-.5 1.5-.5C12 1.5 14 3.5 14 6c0 4.5-6 8-6 8z" stroke="currentColor" stroke-width="2" fill="none"/>
+        <path
+          d="M8 14s-6-3.5-6-8c0-2.5 2-4.5 4.5-4.5C7.5 1.5 8 2 8 2s.5-.5 1.5-.5C12 1.5 14 3.5 14 6c0 4.5-6 8-6 8z"
+          stroke="currentColor"
+          stroke-width="2"
+          fill="none"></path>
       </svg>
       <span class="reaction-count">0</span>
     </button>
-    
-    <button class="action-btn secondary save-btn" data-reaction="save" title="Save for later">
+
+    <button
+      class="action-btn secondary save-btn"
+      data-reaction="save"
+      title="Save for later"
+    >
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M3 2v12l5-3 5 3V2a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z" stroke="currentColor" stroke-width="2" fill="none"/>
+        <path
+          d="M3 2v12l5-3 5 3V2a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"
+          stroke="currentColor"
+          stroke-width="2"
+          fill="none"></path>
       </svg>
       <span>Save</span>
     </button>
-    
-    <button class="action-btn secondary share-btn" data-reaction="share" title="Share article">
+
+    <button
+      class="action-btn secondary follow-btn"
+      data-reaction="follow"
+      title="Follow for updates"
+    >
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M12 5l3 3-3 3M3 8h12M8 1v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path
+          d="M8 2v12M2 8h12"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"></path>
+      </svg>
+      <span class="follow-text">Follow</span>
+    </button>
+
+    <button
+      class="action-btn secondary share-btn"
+      data-reaction="share"
+      title="Share article"
+    >
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path
+          d="M12 5l3 3-3 3M3 8h12M8 1v6"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"></path>
       </svg>
       <span>Share</span>
     </button>
-    
-    <button class="action-btn secondary comment-btn" data-reaction="comment" title="Jump to comments">
+
+    <button
+      class="action-btn secondary comment-btn"
+      data-reaction="comment"
+      title="Jump to comments"
+    >
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3l3 3 3-3h3a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z" stroke="currentColor" stroke-width="2" fill="none"/>
+        <path
+          d="M14 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3l3 3 3-3h3a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"
+          stroke="currentColor"
+          stroke-width="2"
+          fill="none"></path>
       </svg>
       <span>Talk</span>
     </button>
@@ -41,23 +93,24 @@ const { postSlug, postTitle } = Astro.props;
 </div>
 
 <style>
-  /* Reaction Actions Sidebar - Matching Quick Actions Style */
+  /* Reaction Actions Sidebar - SMALLER VERSION */
   .reaction-actions-sidebar {
     position: fixed;
-    right: 2rem;
+    right: 1.5rem;
     top: 50%;
     transform: translateY(-50%);
     z-index: 50;
     background: var(--color-bg-primary);
-    border: 2px solid var(--color-border);
-    padding: 1rem;
+    border: 1px solid var(--color-border);
+    padding: 0.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    gap: 0.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
     opacity: 0;
     visibility: hidden;
+    border-radius: 0px;
   }
 
   .reaction-actions-sidebar.visible {
@@ -65,13 +118,11 @@ const { postSlug, postTitle } = Astro.props;
     visibility: visible;
   }
 
-  /* Updated hidden state - less aggressive */
   .reaction-actions-sidebar.hidden {
-    transform: translateY(-50%) translateX(50px);
-    opacity: 0.7;
+    transform: translateY(-50%) translateX(30px);
+    opacity: 0.5;
   }
 
-  /* Force visibility during normal reading - desktop only */
   @media (min-width: 1025px) {
     .reaction-actions-sidebar.visible:not(.hidden) {
       opacity: 1 !important;
@@ -81,65 +132,75 @@ const { postSlug, postTitle } = Astro.props;
   }
 
   :global(.dark) .reaction-actions-sidebar {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 
   .actions-content {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.25rem;
     align-items: center;
   }
 
+  /* MUCH SMALLER Button Styles */
   .action-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.75rem;
-    border: 2px solid #243788;
-    background: #243788;
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    gap: 0.125rem;
+    padding: 0.375rem 0.25rem;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    font-size: 0.625rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     font-family: inherit;
-    min-width: 60px;
+    min-width: 36px;
+    border-radius: 0px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
   .action-btn:hover {
-    background: white;
+    background: #f8fafc;
     color: #243788;
-  }
-
-  .action-btn.secondary {
-    background: white;
-    color: #243788;
-  }
-
-  .action-btn.secondary:hover {
-    background: #243788;
-    color: white;
+    border-color: #243788;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .action-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
   }
 
-  /* Active states for reactions */
+  /* SMALLER SVG Icons */
+  .action-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* SMALLER Text */
+  .action-btn span {
+    font-size: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    line-height: 1;
+  }
+
+  /* Active States - More Subtle */
   .like-btn.active {
-    background: #ef4444;
-    border-color: #ef4444;
-    color: white;
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
   }
 
   .like-btn.active:hover {
-    background: white;
-    color: #ef4444;
+    background: #fee2e2;
+    color: #b91c1c;
   }
 
   .like-btn.active svg path {
@@ -148,14 +209,14 @@ const { postSlug, postTitle } = Astro.props;
   }
 
   .save-btn.active {
-    background: #10b981;
-    border-color: #10b981;
-    color: white;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #16a34a;
   }
 
   .save-btn.active:hover {
-    background: white;
-    color: #10b981;
+    background: #dcfce7;
+    color: #15803d;
   }
 
   .save-btn.active svg path {
@@ -163,122 +224,64 @@ const { postSlug, postTitle } = Astro.props;
     stroke: currentColor;
   }
 
+  .follow-btn.active {
+    background: #faf5ff;
+    border-color: #d8b4fe;
+    color: #7c3aed;
+  }
+
+  .follow-btn.active:hover {
+    background: #f3e8ff;
+    color: #6d28d9;
+  }
+
+  .follow-btn.active svg {
+    transform: rotate(45deg);
+  }
+
+  .follow-btn.active .follow-text::after {
+    content: "ing";
+  }
+
+  .follow-btn svg {
+    transition: transform 0.3s ease;
+  }
+
   .reaction-count {
-    font-size: 0.75rem;
+    font-size: 0.5rem;
     font-weight: 600;
-    min-width: 20px;
+    min-width: 12px;
     text-align: center;
+    line-height: 1;
   }
 
-  /* Responsive Design - Fixed */
-  @media (max-width: 1024px) {
-    .reaction-actions-sidebar {
-      position: fixed;
-      bottom: 2rem;
-      right: 1rem;
-      left: 1rem;
-      top: auto;
-      transform: none;
-      flex-direction: row;
-      justify-content: center;
-      margin-bottom: 0;
-      opacity: 1 !important;
-      visibility: visible !important;
-    }
-    
-    .actions-content {
-      flex-direction: row;
-      gap: 1rem;
-      width: 100%;
-      justify-content: space-around;
-    }
-
-    /* Disable hiding on tablet/mobile */
-    .reaction-actions-sidebar.hidden {
-      transform: none !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .reaction-actions-sidebar {
-      bottom: 1.5rem;
-      right: 0.75rem;
-      left: 0.75rem;
-      padding: 0.75rem;
-    }
-    
-    .actions-content {
-      gap: 0.75rem;
-    }
-
-    .action-btn {
-      min-width: 50px;
-      padding: 0.5rem;
-      font-size: 0.6875rem;
-    }
-
-    .action-btn svg {
-      width: 14px;
-      height: 14px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .reaction-actions-sidebar {
-      bottom: 1rem;
-      right: 0.5rem;
-      left: 0.5rem;
-      padding: 0.5rem;
-    }
-    
-    .actions-content {
-      gap: 0.5rem;
-    }
-
-    .action-btn {
-      min-width: 45px;
-      padding: 0.375rem;
-    }
-
-    .action-btn span {
-      font-size: 0.625rem;
-    }
-
-    .action-btn svg {
-      width: 12px;
-      height: 12px;
-    }
-  }
-
-  /* Animation for heart beat */
+  /* Subtle Heart Animation */
   @keyframes heartBeat {
-    0% { transform: scale(1); }
-    25% { transform: scale(1.2); }
-    50% { transform: scale(1); }
-    75% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
   }
 
   .like-btn.animate {
-    animation: heartBeat 0.6s ease-in-out;
+    animation: heartBeat 0.4s ease-in-out;
   }
 
-  /* Toast notification styles */
+  /* SMALLER Toast Notifications */
   .toast-notification {
     position: fixed;
-    top: 2rem;
-    right: 2rem;
+    top: 1.5rem;
+    right: 1.5rem;
     background: #10b981;
     color: white;
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
     z-index: 1002;
-    border: 2px solid #10b981;
+    border-radius: 0px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     animation: slideInRight 0.3s ease;
   }
@@ -297,105 +300,344 @@ const { postSlug, postTitle } = Astro.props;
   :global(.dark) .toast-notification {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
+
+  :global(.dark) .action-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+  }
+
+  :global(.dark) .action-btn:hover {
+    background: #334155;
+    color: #f1f5f9;
+    border-color: #64748b;
+  }
+
+  :global(.dark) .like-btn.active {
+    background: #450a0a;
+    border-color: #7f1d1d;
+    color: #fca5a5;
+  }
+
+  :global(.dark) .save-btn.active {
+    background: #052e16;
+    border-color: #166534;
+    color: #86efac;
+  }
+
+  :global(.dark) .follow-btn.active {
+    background: #2e1065;
+    border-color: #5b21b6;
+    color: #c4b5fd;
+  }
+
+  /* Responsive Design - SMALLER on mobile */
+  @media (max-width: 1024px) {
+    .reaction-actions-sidebar {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1rem;
+      left: 1rem;
+      top: auto;
+      transform: none;
+      flex-direction: row;
+      justify-content: center;
+      opacity: 1 !important;
+      visibility: visible !important;
+      padding: 0.5rem;
+      border-radius: 0px;
+    }
+
+    .actions-content {
+      flex-direction: row;
+      gap: 0.75rem;
+      width: 100%;
+      justify-content: space-around;
+    }
+
+    .reaction-actions-sidebar.hidden {
+      transform: none !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    .action-btn {
+      min-width: 32px;
+      padding: 0.375rem 0.25rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .reaction-actions-sidebar {
+      bottom: 1rem;
+      right: 0.75rem;
+      left: 0.75rem;
+      padding: 0.375rem;
+    }
+
+    .actions-content {
+      gap: 0.5rem;
+    }
+
+    .action-btn {
+      min-width: 28px;
+      padding: 0.25rem;
+    }
+
+    .action-btn svg {
+      width: 10px;
+      height: 10px;
+    }
+
+    .action-btn span {
+      font-size: 0.4375rem;
+    }
+
+    .reaction-count {
+      font-size: 0.4375rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .reaction-actions-sidebar {
+      bottom: 0.75rem;
+      right: 0.5rem;
+      left: 0.5rem;
+      padding: 0.25rem;
+    }
+
+    .actions-content {
+      gap: 0.375rem;
+    }
+
+    .action-btn {
+      min-width: 24px;
+      padding: 0.25rem;
+    }
+
+    .action-btn svg {
+      width: 8px;
+      height: 8px;
+    }
+
+    .action-btn span {
+      font-size: 0.375rem;
+    }
+  }
 </style>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  import { supabase } from "../../lib/supabase.js";
+
+  // Activity Logger Class
+  class ActivityLogger {
+    static async logActivity({ type, description, metadata = {} }) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        await supabase.from("user_activities").insert({
+          user_id: user.id,
+          activity_type: type,
+          description: description,
+          metadata: metadata,
+          created_at: new Date().toISOString(),
+        });
+
+        await this.updateProfileStats(user.id, type);
+
+        window.dispatchEvent(
+          new CustomEvent("userActivityUpdate", {
+            detail: { type, description, metadata },
+          })
+        );
+      } catch (error) {
+        console.error("Activity logging failed:", error);
+      }
+    }
+
+    static async updateProfileStats(userId: string, type: string) {
+      try {
+        const updates: any = { updated_at: new Date().toISOString() };
+
+        switch (type) {
+          case "liked_article":
+          case "read_article":
+            const { count: readsCount } = await supabase
+              .from("article_reads")
+              .select("*", { count: "exact", head: true })
+              .eq("user_id", userId);
+            updates.total_reads = readsCount || 0;
+            break;
+
+          case "posted_comment":
+            const { count: commentsCount } = await supabase
+              .from("comments")
+              .select("*", { count: "exact", head: true })
+              .eq("user_id", userId)
+              .eq("is_deleted", false);
+            updates.total_comments = commentsCount || 0;
+            break;
+        }
+
+        if (Object.keys(updates).length > 1) {
+          await supabase.from("profiles").update(updates).eq("id", userId);
+        }
+      } catch (error) {
+        console.error("Failed to update profile stats:", error);
+      }
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
     const reactionBar = document.querySelector(".reaction-actions-sidebar") as HTMLElement;
     if (!reactionBar) return;
 
     const postSlug = reactionBar.getAttribute("data-post-slug");
     if (!postSlug) return;
 
-    // Show/hide based on content area only - ALWAYS visible while reading
-    const showReactionBar = () => {
-      const scrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      
-      // Find main content area
-      const mainContent = document.querySelector('main') || 
-                         document.querySelector('article') || 
-                         document.querySelector('.post-content') ||
-                         document.querySelector('.content');
-      
-      if (mainContent) {
-        const contentRect = mainContent.getBoundingClientRect();
-        const contentTop = scrollY + contentRect.top;
-        
-        // Show when user starts reading content
-        const showThreshold = Math.max(200, contentTop - 100);
-        // Hide only at very bottom of page
-        const hideThreshold = documentHeight - windowHeight - 100;
-        
-        if (scrollY > showThreshold && scrollY < hideThreshold) {
-          reactionBar.classList.add("visible");
-        } else {
-          reactionBar.classList.remove("visible");
-        }
+    let currentUser: any = null;
+    let isAuthenticated = false;
+
+    // Initialize
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      currentUser = user;
+      isAuthenticated = !!user;
+
+      if (isAuthenticated) {
+        await loadUserReactions();
+        await trackArticleRead();
       } else {
-        // Fallback
-        const showThreshold = 200;
-        const hideThreshold = documentHeight - windowHeight - 100;
-        
-        if (scrollY > showThreshold && scrollY < hideThreshold) {
-          reactionBar.classList.add("visible");
-        } else {
-          reactionBar.classList.remove("visible");
+        loadLocalReactions();
+      }
+    } catch (error) {
+      console.error("Auth check failed:", error);
+      loadLocalReactions();
+    }
+
+    // Load user reactions from database
+    async function loadUserReactions() {
+      if (!currentUser) return;
+
+      try {
+        const [likesResult, savesResult, followsResult, likesCountResult] = await Promise.all([
+          supabase
+            .from("article_likes")
+            .select("id")
+            .eq("user_id", currentUser.id)
+            .eq("article_id", postSlug),
+          supabase
+            .from("article_saves")
+            .select("id")
+            .eq("user_id", currentUser.id)
+            .eq("article_id", postSlug),
+          supabase
+            .from("article_follows")
+            .select("id")
+            .eq("user_id", currentUser.id)
+            .eq("article_id", postSlug),
+          supabase
+            .from("article_likes")
+            .select("*", { count: "exact", head: true })
+            .eq("article_id", postSlug),
+        ]);
+
+        // Update UI based on results
+        if (likesResult.data && likesResult.data.length > 0) {
+          reactionBar.querySelector('[data-reaction="like"]')?.classList.add("active");
         }
-      }
-    };
 
-    // Only hide on very fast scrolling, then show again quickly
-    let lastScrollY = window.scrollY;
-    let scrollTimeout: NodeJS.Timeout;
-
-    window.addEventListener('scroll', () => {
-      if (window.innerWidth <= 1024) return;
-      
-      const currentScrollY = window.scrollY;
-      const scrollSpeed = Math.abs(currentScrollY - lastScrollY);
-      
-      clearTimeout(scrollTimeout);
-      
-      // Only hide on very fast scrolling
-      if (scrollSpeed > 50 && currentScrollY > lastScrollY) {
-        reactionBar.classList.add('hidden');
-        
-        // Show again quickly
-        scrollTimeout = setTimeout(() => {
-          reactionBar.classList.remove('hidden');
-        }, 500);
-      } else {
-        reactionBar.classList.remove('hidden');
-      }
-      
-      lastScrollY = currentScrollY;
-    }, { passive: true });
-
-    // Main visibility control
-    showReactionBar();
-    window.addEventListener("scroll", showReactionBar, { passive: true });
-
-    // Show immediately if already in content
-    setTimeout(showReactionBar, 100);
-
-    // Load saved reactions from localStorage
-    const savedReactions = JSON.parse(localStorage.getItem("tinkbyte-reactions") || "{}");
-    const postReactions = savedReactions[postSlug] || {};
-
-    // Initialize UI based on saved state
-    Object.keys(postReactions).forEach((reaction) => {
-      if (postReactions[reaction]) {
-        const btn = reactionBar.querySelector(`[data-reaction="${reaction}"]`) as HTMLButtonElement;
-        if (btn) {
-          btn.classList.add("active");
+        if (savesResult.data && savesResult.data.length > 0) {
+          reactionBar.querySelector('[data-reaction="save"]')?.classList.add("active");
         }
-      }
-    });
 
-    // Handle reaction clicks
-    reactionBar.addEventListener("click", (e) => {
+        if (followsResult.data && followsResult.data.length > 0) {
+          reactionBar.querySelector('[data-reaction="follow"]')?.classList.add("active");
+        }
+
+        const countEl = reactionBar.querySelector(".reaction-count");
+        if (countEl) countEl.textContent = (likesCountResult.count || 0).toString();
+      } catch (error) {
+        console.error("Failed to load user reactions:", error);
+      }
+    }
+
+    // Track article read
+    async function trackArticleRead() {
+      if (!isAuthenticated || !currentUser) return;
+
+      try {
+        const { data: existing } = await supabase
+          .from("article_reads")
+          .select("id")
+          .eq("user_id", currentUser.id)
+          .eq("article_id", postSlug)
+          .single();
+
+        if (!existing) {
+          await supabase.from("article_reads").insert({
+            user_id: currentUser.id,
+            article_id: postSlug,
+            read_percentage: 100,
+            time_spent_seconds: 0,
+            created_at: new Date().toISOString(),
+          });
+
+          await ActivityLogger.logActivity({
+            type: "read_article",
+            description: `Read article: ${document.title}`,
+            metadata: {
+              articleId: postSlug,
+              articleTitle: document.title,
+              url: window.location.href,
+            },
+          });
+        }
+      } catch (error) {
+        console.error("Error tracking article read:", error);
+      }
+    }
+
+    // Fallback to localStorage
+    function loadLocalReactions() {
+      if (!postSlug) return;
+
+      const savedReactions = JSON.parse(
+        localStorage.getItem("tinkbyte-reactions") || "{}"
+      );
+      const postReactions = savedReactions[postSlug] || {};
+
+      Object.keys(postReactions).forEach((reaction) => {
+        if (postReactions[reaction]) {
+          reactionBar
+            .querySelector(`[data-reaction="${reaction}"]`)
+            ?.classList.add("active");
+        }
+      });
+    }
+
+    // Enhanced comment scrolling
+    function scrollToComments() {
+      const commentsSection =
+        document.querySelector(".tinkbyte-comment-section") ||
+        document.querySelector("#comments-section");
+      if (commentsSection) {
+        commentsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        setTimeout(() => {
+          const newCommentBtn = document.querySelector(
+            ".add-comment-btn"
+          ) as HTMLButtonElement;
+          newCommentBtn?.click();
+        }, 800);
+
+        showToast("Scrolled to comments");
+      }
+    }
+
+    // Reaction handlers
+    reactionBar.addEventListener("click", async (e) => {
       const target = e.target as HTMLElement;
       const btn = target.closest(".action-btn") as HTMLButtonElement;
       if (!btn) return;
@@ -405,123 +647,337 @@ const { postSlug, postTitle } = Astro.props;
 
       const isActive = btn.classList.contains("active");
 
-      // Handle different reaction types
+      // Handle authentication requirement
+      if (!isAuthenticated && ["like", "save", "follow"].includes(reaction)) {
+        if (confirm("Sign in to save your reactions across devices?")) {
+          window.location.href = "/auth/signin";
+          return;
+        }
+      }
+
       switch (reaction) {
         case "like":
-          toggleLike(btn, isActive);
+          await toggleLike(btn, isActive);
           break;
         case "save":
-          toggleSave(btn, isActive);
+          await toggleSave(btn, isActive);
+          break;
+        case "follow":
+          await toggleFollow(btn, isActive);
           break;
         case "share":
-          handleShare();
+          await handleShare();
           break;
         case "comment":
           scrollToComments();
           break;
       }
-
-      // Save state (except for share and comment)
-      if (!["share", "comment"].includes(reaction)) {
-        saveReactionState(reaction, !isActive);
-      }
     });
 
-    function toggleLike(btn: HTMLButtonElement, isActive: boolean) {
+    // Toggle functions
+    async function toggleLike(btn: HTMLButtonElement, isActive: boolean) {
       const countEl = btn.querySelector(".reaction-count") as HTMLElement;
       if (!countEl) return;
 
-      let count = parseInt(countEl.textContent || "0") || 0;
+      try {
+        btn.disabled = true;
 
-      if (isActive) {
-        btn.classList.remove("active");
-        count = Math.max(0, count - 1);
-      } else {
-        btn.classList.add("active");
-        count += 1;
-        
-        // Add animation
-        btn.classList.add("animate");
-        setTimeout(() => btn.classList.remove("animate"), 600);
+        if (isAuthenticated && currentUser) {
+          if (isActive) {
+            await supabase
+              .from("article_likes")
+              .delete()
+              .eq("user_id", currentUser.id)
+              .eq("article_id", postSlug);
+            btn.classList.remove("active");
+            showToast("Like removed");
+            await ActivityLogger.logActivity({
+              type: "unliked_article",
+              description: `Unliked article: ${document.title}`,
+              metadata: { articleId: postSlug, articleTitle: document.title },
+            });
+          } else {
+            await supabase.from("article_likes").insert({
+              user_id: currentUser.id,
+              article_id: postSlug,
+              created_at: new Date().toISOString(),
+            });
+            btn.classList.add("active", "animate");
+            setTimeout(() => btn.classList.remove("animate"), 600);
+            showToast("Article liked!");
+            await ActivityLogger.logActivity({
+              type: "liked_article",
+              description: `Liked article: ${document.title}`,
+              metadata: { articleId: postSlug, articleTitle: document.title },
+            });
+          }
+
+          // Update count
+          const { count: totalLikes } = await supabase
+            .from("article_likes")
+            .select("*", { count: "exact", head: true })
+            .eq("article_id", postSlug);
+          countEl.textContent = (totalLikes || 0).toString();
+        } else {
+          // Local storage fallback
+          let count = parseInt(countEl.textContent || "0") || 0;
+          if (isActive) {
+            btn.classList.remove("active");
+            count = Math.max(0, count - 1);
+            showToast("Like removed");
+          } else {
+            btn.classList.add("active", "animate");
+            setTimeout(() => btn.classList.remove("animate"), 600);
+            count += 1;
+            showToast("Article liked!");
+          }
+          countEl.textContent = count.toString();
+          saveReactionState("like", !isActive);
+        }
+      } catch (error) {
+        console.error("Error toggling like:", error);
+        showToast("Failed to update like");
+      } finally {
+        btn.disabled = false;
       }
-
-      countEl.textContent = count.toString();
     }
 
-    function toggleSave(btn: HTMLButtonElement, isActive: boolean) {
-      if (isActive) {
-        btn.classList.remove("active");
-        showToast("Removed from saved articles");
-      } else {
-        btn.classList.add("active");
-        showToast("Article saved for later");
+    async function toggleSave(btn: HTMLButtonElement, isActive: boolean) {
+      try {
+        btn.disabled = true;
+
+        if (isAuthenticated && currentUser) {
+          if (isActive) {
+            await supabase
+              .from("article_saves")
+              .delete()
+              .eq("user_id", currentUser.id)
+              .eq("article_id", postSlug);
+            btn.classList.remove("active");
+            showToast("Removed from saved articles");
+            await ActivityLogger.logActivity({
+              type: "unsaved_article",
+              description: `Removed from saved: ${document.title}`,
+              metadata: { articleId: postSlug, articleTitle: document.title },
+            });
+          } else {
+            await supabase.from("article_saves").insert({
+              user_id: currentUser.id,
+              article_id: postSlug,
+              created_at: new Date().toISOString(),
+            });
+            btn.classList.add("active");
+            showToast("Article saved for later");
+            await ActivityLogger.logActivity({
+              type: "saved_article",
+              description: `Saved article: ${document.title}`,
+              metadata: { articleId: postSlug, articleTitle: document.title },
+            });
+          }
+        } else {
+          // Local storage fallback
+          btn.classList.toggle("active", !isActive);
+          showToast(
+            isActive ? "Removed from saved articles" : "Article saved for later"
+          );
+          saveReactionState("save", !isActive);
+        }
+      } catch (error) {
+        console.error("Error toggling save:", error);
+        showToast("Failed to update save status");
+      } finally {
+        btn.disabled = false;
       }
     }
 
-    function handleShare() {
-      if (navigator.share) {
-        navigator.share({
-          title: document.title,
-          url: window.location.href,
-        }).catch(() => copyToClipboard());
-      } else {
-        copyToClipboard();
+    async function toggleFollow(btn: HTMLButtonElement, isActive: boolean) {
+      try {
+        btn.disabled = true;
+
+        if (isAuthenticated && currentUser) {
+          if (isActive) {
+            await supabase
+              .from("article_follows")
+              .delete()
+              .eq("user_id", currentUser.id)
+              .eq("article_id", postSlug);
+            btn.classList.remove("active");
+            showToast("Unfollowed article");
+            await ActivityLogger.logActivity({
+              type: "unfollowed_article",
+              description: `Unfollowed article: ${document.title}`,
+              metadata: { articleId: postSlug, articleTitle: document.title },
+            });
+          } else {
+            await supabase.from("article_follows").insert({
+              user_id: currentUser.id,
+              article_id: postSlug,
+              created_at: new Date().toISOString(),
+            });
+            btn.classList.add("active");
+            showToast("Following article for updates!");
+            await ActivityLogger.logActivity({
+              type: "followed_article",
+              description: `Started following article: ${document.title}`,
+              metadata: { articleId: postSlug, articleTitle: document.title },
+            });
+          }
+        } else {
+          // Local storage fallback
+          btn.classList.toggle("active", !isActive);
+          showToast(
+            isActive ? "Unfollowed article" : "Following article for updates!"
+          );
+          saveReactionState("follow", !isActive);
+        }
+      } catch (error) {
+        console.error("Error toggling follow:", error);
+        showToast("Failed to update follow status");
+      } finally {
+        btn.disabled = false;
       }
     }
 
-    function copyToClipboard() {
-      navigator.clipboard?.writeText(window.location.href)
-        .then(() => showToast("Link copied to clipboard!"))
-        .catch(() => {
-          // Fallback
-          const textArea = document.createElement("textarea");
-          textArea.value = window.location.href;
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand("copy");
-          document.body.removeChild(textArea);
-          showToast("Link copied!");
-        });
+    async function handleShare() {
+      try {
+        if (isAuthenticated) {
+          await ActivityLogger.logActivity({
+            type: "shared_article",
+            description: `Shared article: ${document.title}`,
+            metadata: {
+              articleId: postSlug,
+              articleTitle: document.title,
+              url: window.location.href,
+            },
+          });
+        }
+
+        if (navigator.share) {
+          await navigator.share({
+            title: document.title,
+            url: window.location.href,
+          });
+          showToast("Article shared!");
+        } else {
+          await copyToClipboard();
+        }
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          await copyToClipboard();
+        }
+      }
     }
 
-    function showToast(message: string) {
-      const existingToast = document.querySelector(".toast-notification");
-      if (existingToast) existingToast.remove();
-
-      const toast = document.createElement("div");
-      toast.className = "toast-notification";
-      toast.textContent = message;
-      document.body.appendChild(toast);
-      
-      setTimeout(() => toast.remove(), 3000);
-    }
-
-    function scrollToComments() {
-      const commentsSection = document.querySelector("#giscus-container") || 
-                            document.querySelector(".comments-section-enhanced");
-      if (commentsSection) {
-        commentsSection.scrollIntoView({ behavior: "smooth" });
-        showToast("Scrolled to comments");
+    async function copyToClipboard() {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast("Link copied to clipboard!");
+      } catch (error) {
+        const textArea = document.createElement("textarea");
+        textArea.value = window.location.href;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        showToast("Link copied!");
       }
     }
 
     function saveReactionState(reaction: string, isActive: boolean) {
       if (!postSlug) return;
-
-      const savedReactions = JSON.parse(localStorage.getItem("tinkbyte-reactions") || "{}");
-      if (!savedReactions[postSlug]) {
-        savedReactions[postSlug] = {};
-      }
+      const savedReactions = JSON.parse(
+        localStorage.getItem("tinkbyte-reactions") || "{}"
+      );
+      if (!savedReactions[postSlug]) savedReactions[postSlug] = {};
       savedReactions[postSlug][reaction] = isActive;
-      localStorage.setItem("tinkbyte-reactions", JSON.stringify(savedReactions));
+      localStorage.setItem(
+        "tinkbyte-reactions",
+        JSON.stringify(savedReactions)
+      );
     }
 
-    // Handle orientation change
+    function showToast(message: string) {
+      const existingToast = document.querySelector(".toast-notification");
+      existingToast?.remove();
+
+      const toast = document.createElement("div");
+      toast.className = "toast-notification";
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Scroll visibility logic
+    const showReactionBar = () => {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      const mainContent =
+        document.querySelector("main") ||
+        document.querySelector("article") ||
+        document.querySelector(".post-content") ||
+        document.querySelector(".content");
+
+      if (mainContent) {
+        const contentRect = mainContent.getBoundingClientRect();
+        const contentTop = scrollY + contentRect.top;
+        const showThreshold = Math.max(200, contentTop - 100);
+        const hideThreshold = documentHeight - windowHeight - 100;
+
+        if (scrollY > showThreshold && scrollY < hideThreshold) {
+          reactionBar.classList.add("visible");
+        } else {
+          reactionBar.classList.remove("visible");
+        }
+      } else {
+        const showThreshold = 200;
+        const hideThreshold = documentHeight - windowHeight - 100;
+
+        if (scrollY > showThreshold && scrollY < hideThreshold) {
+          reactionBar.classList.add("visible");
+        } else {
+          reactionBar.classList.remove("visible");
+        }
+      }
+    };
+
+    let lastScrollY = window.scrollY;
+    let scrollTimeout: NodeJS.Timeout;
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (window.innerWidth <= 1024) return;
+
+        const currentScrollY = window.scrollY;
+        const scrollSpeed = Math.abs(currentScrollY - lastScrollY);
+
+        clearTimeout(scrollTimeout);
+
+        if (scrollSpeed > 50 && currentScrollY > lastScrollY) {
+          reactionBar.classList.add("hidden");
+          scrollTimeout = setTimeout(() => {
+            reactionBar.classList.remove("hidden");
+          }, 500);
+        } else {
+          reactionBar.classList.remove("hidden");
+        }
+
+        lastScrollY = currentScrollY;
+      },
+      { passive: true }
+    );
+
+    showReactionBar();
+    window.addEventListener("scroll", showReactionBar, { passive: true });
+    setTimeout(showReactionBar, 100);
+
     window.addEventListener("orientationchange", () => {
       setTimeout(showReactionBar, 100);
     });
 
-    // Handle window resize
     window.addEventListener("resize", () => {
       setTimeout(showReactionBar, 100);
     });

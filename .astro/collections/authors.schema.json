@@ -20,7 +20,8 @@
           "type": "string"
         },
         "email": {
-          "type": "string"
+          "type": "string",
+          "format": "email"
         },
         "social": {
           "type": "object",
@@ -82,6 +83,26 @@
         "featured": {
           "type": "boolean",
           "default": false
+        },
+        "active": {
+          "type": "boolean",
+          "default": true
+        },
+        "joinDate": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "integer",
+              "format": "unix-time"
+            }
+          ]
         },
         "$schema": {
           "type": "string"
