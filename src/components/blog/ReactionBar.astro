@@ -93,7 +93,7 @@ const { postSlug, postTitle } = Astro.props;
 </div>
 
 <style>
-  /* Reaction Actions Sidebar - SMALLER VERSION */
+  /* Reaction Actions Sidebar - Always Visible */
   .reaction-actions-sidebar {
     position: fixed;
     right: 1.5rem;
@@ -102,33 +102,16 @@ const { postSlug, postTitle } = Astro.props;
     z-index: 50;
     background: var(--color-bg-primary);
     border: 1px solid var(--color-border);
+    border-radius: 0px;
     padding: 0.5rem;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
-    opacity: 0;
-    visibility: hidden;
-    border-radius: 0px;
-  }
-
-  .reaction-actions-sidebar.visible {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .reaction-actions-sidebar.hidden {
-    transform: translateY(-50%) translateX(30px);
-    opacity: 0.5;
-  }
-
-  @media (min-width: 1025px) {
-    .reaction-actions-sidebar.visible:not(.hidden) {
-      opacity: 1 !important;
-      visibility: visible !important;
-      transform: translateY(-50%) translateX(0) !important;
-    }
+    /* Always visible */
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   :global(.dark) .reaction-actions-sidebar {
@@ -142,7 +125,7 @@ const { postSlug, postTitle } = Astro.props;
     align-items: center;
   }
 
-  /* MUCH SMALLER Button Styles */
+  /* Action buttons */
   .action-btn {
     display: flex;
     flex-direction: column;
@@ -176,13 +159,11 @@ const { postSlug, postTitle } = Astro.props;
     transform: none;
   }
 
-  /* SMALLER SVG Icons */
   .action-btn svg {
     width: 12px;
     height: 12px;
   }
 
-  /* SMALLER Text */
   .action-btn span {
     font-size: 0.5rem;
     font-weight: 600;
@@ -191,7 +172,7 @@ const { postSlug, postTitle } = Astro.props;
     line-height: 1;
   }
 
-  /* Active States - More Subtle */
+  /* Active States */
   .like-btn.active {
     background: #fef2f2;
     border-color: #fecaca;
@@ -255,7 +236,7 @@ const { postSlug, postTitle } = Astro.props;
     line-height: 1;
   }
 
-  /* Subtle Heart Animation */
+  /* Heart Animation */
   @keyframes heartBeat {
     0%,
     100% {
@@ -270,7 +251,7 @@ const { postSlug, postTitle } = Astro.props;
     animation: heartBeat 0.4s ease-in-out;
   }
 
-  /* SMALLER Toast Notifications */
+  /* Toast Notifications */
   .toast-notification {
     position: fixed;
     top: 1.5rem;
@@ -297,6 +278,7 @@ const { postSlug, postTitle } = Astro.props;
     }
   }
 
+  /* Dark theme */
   :global(.dark) .toast-notification {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
@@ -331,56 +313,42 @@ const { postSlug, postTitle } = Astro.props;
     color: #c4b5fd;
   }
 
-  /* Responsive Design - SMALLER on mobile */
+  /* Mobile - Vertical sidebar on right edge */
   @media (max-width: 1024px) {
     .reaction-actions-sidebar {
       position: fixed;
-      bottom: 1.5rem;
-      right: 1rem;
-      left: 1rem;
-      top: auto;
-      transform: none;
-      flex-direction: row;
+      right: 0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      left: auto;
+      bottom: auto;
+      flex-direction: column;
       justify-content: center;
       opacity: 1 !important;
       visibility: visible !important;
-      padding: 0.5rem;
+      padding: 0.5rem 0.25rem;
       border-radius: 0px;
+      z-index: 45;
+      width: auto;
+      max-width: 60px;
     }
 
     .actions-content {
-      flex-direction: row;
-      gap: 0.75rem;
-      width: 100%;
-      justify-content: space-around;
-    }
-
-    .reaction-actions-sidebar.hidden {
-      transform: none !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-    }
-
-    .action-btn {
-      min-width: 32px;
-      padding: 0.375rem 0.25rem;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: center;
     }
   }
 
   @media (max-width: 768px) {
     .reaction-actions-sidebar {
-      bottom: 1rem;
-      right: 0.75rem;
-      left: 0.75rem;
-      padding: 0.375rem;
-    }
-
-    .actions-content {
-      gap: 0.5rem;
+      right: 0.25rem;
+      padding: 0.375rem 0.25rem;
+      max-width: 50px;
     }
 
     .action-btn {
-      min-width: 28px;
+      min-width: 32px;
       padding: 0.25rem;
     }
 
@@ -400,10 +368,9 @@ const { postSlug, postTitle } = Astro.props;
 
   @media (max-width: 480px) {
     .reaction-actions-sidebar {
-      bottom: 0.75rem;
-      right: 0.5rem;
-      left: 0.5rem;
+      right: 0.125rem;
       padding: 0.25rem;
+      max-width: 44px;
     }
 
     .actions-content {
@@ -411,7 +378,7 @@ const { postSlug, postTitle } = Astro.props;
     }
 
     .action-btn {
-      min-width: 24px;
+      min-width: 28px;
       padding: 0.25rem;
     }
 
@@ -433,7 +400,9 @@ const { postSlug, postTitle } = Astro.props;
   class ActivityLogger {
     static async logActivity({ type, description, metadata = {} }) {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
 
         await supabase.from("user_activities").insert({
@@ -490,7 +459,9 @@ const { postSlug, postTitle } = Astro.props;
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
-    const reactionBar = document.querySelector(".reaction-actions-sidebar") as HTMLElement;
+    const reactionBar = document.querySelector(
+      ".reaction-actions-sidebar"
+    ) as HTMLElement;
     if (!reactionBar) return;
 
     const postSlug = reactionBar.getAttribute("data-post-slug");
@@ -499,9 +470,14 @@ const { postSlug, postTitle } = Astro.props;
     let currentUser: any = null;
     let isAuthenticated = false;
 
-    // Initialize
+    // Initialize - Always show the bar
+    reactionBar.style.opacity = "1";
+    reactionBar.style.visibility = "visible";
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       currentUser = user;
       isAuthenticated = !!user;
 
@@ -521,43 +497,51 @@ const { postSlug, postTitle } = Astro.props;
       if (!currentUser) return;
 
       try {
-        const [likesResult, savesResult, followsResult, likesCountResult] = await Promise.all([
-          supabase
-            .from("article_likes")
-            .select("id")
-            .eq("user_id", currentUser.id)
-            .eq("article_id", postSlug),
-          supabase
-            .from("article_saves")
-            .select("id")
-            .eq("user_id", currentUser.id)
-            .eq("article_id", postSlug),
-          supabase
-            .from("article_follows")
-            .select("id")
-            .eq("user_id", currentUser.id)
-            .eq("article_id", postSlug),
-          supabase
-            .from("article_likes")
-            .select("*", { count: "exact", head: true })
-            .eq("article_id", postSlug),
-        ]);
+        const [likesResult, savesResult, followsResult, likesCountResult] =
+          await Promise.all([
+            supabase
+              .from("article_likes")
+              .select("id")
+              .eq("user_id", currentUser.id)
+              .eq("article_id", postSlug),
+            supabase
+              .from("article_saves")
+              .select("id")
+              .eq("user_id", currentUser.id)
+              .eq("article_id", postSlug),
+            supabase
+              .from("article_follows")
+              .select("id")
+              .eq("user_id", currentUser.id)
+              .eq("article_id", postSlug),
+            supabase
+              .from("article_likes")
+              .select("*", { count: "exact", head: true })
+              .eq("article_id", postSlug),
+          ]);
 
         // Update UI based on results
         if (likesResult.data && likesResult.data.length > 0) {
-          reactionBar.querySelector('[data-reaction="like"]')?.classList.add("active");
+          reactionBar
+            .querySelector('[data-reaction="like"]')
+            ?.classList.add("active");
         }
 
         if (savesResult.data && savesResult.data.length > 0) {
-          reactionBar.querySelector('[data-reaction="save"]')?.classList.add("active");
+          reactionBar
+            .querySelector('[data-reaction="save"]')
+            ?.classList.add("active");
         }
 
         if (followsResult.data && followsResult.data.length > 0) {
-          reactionBar.querySelector('[data-reaction="follow"]')?.classList.add("active");
+          reactionBar
+            .querySelector('[data-reaction="follow"]')
+            ?.classList.add("active");
         }
 
         const countEl = reactionBar.querySelector(".reaction-count");
-        if (countEl) countEl.textContent = (likesCountResult.count || 0).toString();
+        if (countEl)
+          countEl.textContent = (likesCountResult.count || 0).toString();
       } catch (error) {
         console.error("Failed to load user reactions:", error);
       }
@@ -674,6 +658,52 @@ const { postSlug, postTitle } = Astro.props;
       }
     });
 
+    async function trackReactionForAnalytics(
+      action: string,
+      articleSlug: string
+    ) {
+      if (!isAuthenticated || !currentUser) return;
+
+      try {
+        // Update article reaction counts in real-time
+        const { data: articleData } = await supabase
+          .from("articles")
+          .select("like_count, view_count")
+          .eq("slug", articleSlug)
+          .single();
+
+        if (articleData) {
+          let updateData: any = {};
+
+          if (action === "like") {
+            // Get current like count from database
+            const { count: currentLikes } = await supabase
+              .from("article_likes")
+              .select("*", { count: "exact", head: true })
+              .eq("article_id", articleSlug);
+
+            updateData.like_count = currentLikes || 0;
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            await supabase
+              .from("articles")
+              .update(updateData)
+              .eq("slug", articleSlug);
+          }
+        }
+
+        // Trigger real-time update for admin dashboard
+        window.dispatchEvent(
+          new CustomEvent("articleEngagementUpdate", {
+            detail: { action, articleSlug, userId: currentUser.id },
+          })
+        );
+      } catch (error) {
+        console.error("Analytics tracking error:", error);
+      }
+    }
+
     // Toggle functions
     async function toggleLike(btn: HTMLButtonElement, isActive: boolean) {
       const countEl = btn.querySelector(".reaction-count") as HTMLElement;
@@ -705,6 +735,7 @@ const { postSlug, postTitle } = Astro.props;
             btn.classList.add("active", "animate");
             setTimeout(() => btn.classList.remove("animate"), 600);
             showToast("Article liked!");
+
             await ActivityLogger.logActivity({
               type: "liked_article",
               description: `Liked article: ${document.title}`,
@@ -908,78 +939,7 @@ const { postSlug, postTitle } = Astro.props;
       setTimeout(() => toast.remove(), 3000);
     }
 
-    // Scroll visibility logic
-    const showReactionBar = () => {
-      const scrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-
-      const mainContent =
-        document.querySelector("main") ||
-        document.querySelector("article") ||
-        document.querySelector(".post-content") ||
-        document.querySelector(".content");
-
-      if (mainContent) {
-        const contentRect = mainContent.getBoundingClientRect();
-        const contentTop = scrollY + contentRect.top;
-        const showThreshold = Math.max(200, contentTop - 100);
-        const hideThreshold = documentHeight - windowHeight - 100;
-
-        if (scrollY > showThreshold && scrollY < hideThreshold) {
-          reactionBar.classList.add("visible");
-        } else {
-          reactionBar.classList.remove("visible");
-        }
-      } else {
-        const showThreshold = 200;
-        const hideThreshold = documentHeight - windowHeight - 100;
-
-        if (scrollY > showThreshold && scrollY < hideThreshold) {
-          reactionBar.classList.add("visible");
-        } else {
-          reactionBar.classList.remove("visible");
-        }
-      }
-    };
-
-    let lastScrollY = window.scrollY;
-    let scrollTimeout: NodeJS.Timeout;
-
-    window.addEventListener(
-      "scroll",
-      () => {
-        if (window.innerWidth <= 1024) return;
-
-        const currentScrollY = window.scrollY;
-        const scrollSpeed = Math.abs(currentScrollY - lastScrollY);
-
-        clearTimeout(scrollTimeout);
-
-        if (scrollSpeed > 50 && currentScrollY > lastScrollY) {
-          reactionBar.classList.add("hidden");
-          scrollTimeout = setTimeout(() => {
-            reactionBar.classList.remove("hidden");
-          }, 500);
-        } else {
-          reactionBar.classList.remove("hidden");
-        }
-
-        lastScrollY = currentScrollY;
-      },
-      { passive: true }
-    );
-
-    showReactionBar();
-    window.addEventListener("scroll", showReactionBar, { passive: true });
-    setTimeout(showReactionBar, 100);
-
-    window.addEventListener("orientationchange", () => {
-      setTimeout(showReactionBar, 100);
-    });
-
-    window.addEventListener("resize", () => {
-      setTimeout(showReactionBar, 100);
-    });
+    // No scroll logic - always visible
+    console.log("✅ Reaction bar initialized - Always visible");
   });
 </script>

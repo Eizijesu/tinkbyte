@@ -2,6 +2,7 @@
 // src/components/ui/Header.astro - SIMPLIFIED AUTH FIX
 import Logo from "./Logo.astro";
 import ThemeToggle from "./ThemeToggle.astro";
+import NotificationBell from "./NotificationBell.astro";
 import { SITE } from "../../config/site";
 import { getCollection } from "astro:content";
 
@@ -139,6 +140,9 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
             </svg>
           </button>
+          
+          <!-- ADD NOTIFICATION BELL HERE -->
+          <NotificationBell />
           <ThemeToggle />
           
           <!-- Dynamic Auth Button - Will be updated by JavaScript -->
@@ -734,6 +738,420 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
     transform: rotate(180deg);
   }
 
+  /* Notification Bell Styles */
+.notification-container {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-bell {
+  background: none;
+  border: 2px solid transparent;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0;
+  transition: all 0.3s ease;
+  font-family: "Space Grotesk", sans-serif;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-bell:hover {
+  background: #f8fafc;
+  color: #243788;
+  border-color: #243788;
+  transform: translateY(-1px);
+}
+
+:global(.dark) .notification-bell {
+  color: #94a3b8;
+}
+
+:global(.dark) .notification-bell:hover {
+  background: #334155;
+  color: #b4bce1;
+  border-color: #b4bce1;
+}
+
+.notification-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid white;
+  line-height: 1;
+  z-index: 1;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+:global(.dark) .notification-count {
+  border-color: #0f172a;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 360px;
+  max-width: 90vw;
+  max-height: 400px;
+  background: white;
+  border: 2px solid #243788;
+  border-radius: 0;
+  box-shadow: 0 8px 32px rgba(36, 55, 136, 0.15);
+  z-index: 9999;
+  overflow: hidden;
+  display: none;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+}
+
+:global(.dark) .notification-dropdown {
+  background: #0f172a;
+  border-color: #475569;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.notification-dropdown.show {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.notification-header {
+  padding: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  flex-shrink: 0;
+}
+
+:global(.dark) .notification-header {
+  border-bottom-color: #334155;
+  background: #1e293b;
+}
+
+.notification-header h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #243788;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+:global(.dark) .notification-header h3 {
+  color: #e2e8f0;
+}
+
+.mark-all-read {
+  background: none;
+  border: 1px solid #64748b;
+  color: #64748b;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  transition: all 0.2s ease;
+  border-radius: 0;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.mark-all-read:hover {
+  background: #243788;
+  color: white;
+  border-color: #243788;
+}
+
+:global(.dark) .mark-all-read {
+  color: #94a3b8;
+  border-color: #94a3b8;
+}
+
+:global(.dark) .mark-all-read:hover {
+  background: #b4bce1;
+  color: #0f172a;
+  border-color: #b4bce1;
+}
+
+.notification-list {
+  max-height: 320px;
+  overflow-y: auto;
+  background: white;
+  min-height: 100px;
+}
+
+:global(.dark) .notification-list {
+  background: #0f172a;
+}
+
+/* Custom scrollbar for notifications */
+.notification-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+:global(.dark) .notification-list::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+:global(.dark) .notification-list::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+/* Notification Items */
+.notification-item {
+  padding: 0.875rem;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  background: white;
+}
+
+:global(.dark) .notification-item {
+  border-bottom-color: #334155;
+  background: #0f172a;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+  transform: translateX(2px);
+}
+
+:global(.dark) .notification-item:hover {
+  background: #1e293b;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item.unread {
+  background: rgba(59, 130, 246, 0.05);
+  border-left: 3px solid #3b82f6;
+}
+
+:global(.dark) .notification-item.unread {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.notification-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid #e2e8f0;
+}
+
+:global(.dark) .notification-avatar {
+  border-color: #334155;
+}
+
+.notification-text {
+  flex: 1;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.notification-message {
+  color: #1e293b;
+  margin-bottom: 0.375rem;
+  font-weight: 500;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.notification-message strong {
+  color: #243788;
+  font-weight: 700;
+}
+
+:global(.dark) .notification-message {
+  color: #e2e8f0;
+}
+
+:global(.dark) .notification-message strong {
+  color: #b4bce1;
+}
+
+.notification-time {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: "Space Grotesk", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+:global(.dark) .notification-time {
+  color: #94a3b8;
+}
+
+/* Loading and Empty States */
+.notification-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  color: #64748b;
+  background: white;
+  min-height: 120px;
+}
+
+:global(.dark) .notification-loading {
+  color: #94a3b8;
+  background: #0f172a;
+}
+
+.notification-loading p {
+  margin: 0;
+  font-size: 0.875rem;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.notification-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  color: #64748b;
+  text-align: center;
+  background: white;
+  min-height: 200px;
+}
+
+:global(.dark) .notification-empty {
+  color: #94a3b8;
+  background: #0f172a;
+}
+
+.notification-empty p {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.notification-empty p:first-of-type {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+:global(.dark) .notification-empty p:first-of-type {
+  color: #e2e8f0;
+}
+
+.notification-empty p:last-of-type {
+  font-size: 0.875rem;
+  opacity: 0.7;
+}
+
+.notification-empty svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.3;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+:global(.dark) .notification-empty svg {
+  color: #94a3b8;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e2e8f0;
+  border-top: 2px solid #243788;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+:global(.dark) .loading-spinner {
+  border-color: #334155;
+  border-top-color: #b4bce1;
+}
+
+/* Mobile responsiveness for notifications */
+@media (max-width: 640px) {
+  .notification-dropdown {
+    width: calc(100vw - 2rem);
+    right: 1rem;
+    left: auto;
+  }
+  
+  .notification-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .notification-empty {
+    padding: 1.5rem;
+    min-height: 160px;
+  }
+
+  .notification-empty svg {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Focus styles for notifications */
+.notification-bell:focus {
+  outline: 3px solid #243788;
+  outline-offset: 2px;
+}
+
+:global(.dark) .notification-bell:focus {
+  outline-color: #b4bce1;
+}
+
+.mark-all-read:focus {
+  outline: 2px solid #243788;
+  outline-offset: 1px;
+}
+
+:global(.dark) .mark-all-read:focus {
+  outline-color: #b4bce1;
+}
+
   /* Account Menu - Simplified */
   .account-menu {
     position: absolute;
@@ -1139,6 +1557,253 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
     border-color: #b4bce1;
   }
 
+  /* Notification Bell Styles */
+.notification-container {
+  position: relative;
+}
+
+.notification-bell {
+  background: none;
+  border: 2px solid transparent;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0;
+  transition: all 0.3s ease;
+  font-family: "Space Grotesk", sans-serif;
+  position: relative;
+}
+
+.notification-bell:hover {
+  background: #f8fafc;
+  color: #243788;
+  border-color: #243788;
+  transform: translateY(-1px);
+}
+
+:global(.dark) .notification-bell {
+  color: #94a3b8;
+}
+
+:global(.dark) .notification-bell:hover {
+  background: #334155;
+  color: #b4bce1;
+  border-color: #b4bce1;
+}
+
+.notification-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border: 2px solid white;
+}
+
+:global(.dark) .notification-count {
+  border-color: #0f172a;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 360px;
+  max-width: 90vw;
+  max-height: 400px;
+  background: white;
+  border: 2px solid #243788;
+  border-radius: 0;
+  box-shadow: 0 8px 32px rgba(36, 55, 136, 0.15);
+  z-index: 9999;
+  overflow: hidden;
+  display: none;
+}
+
+:global(.dark) .notification-dropdown {
+  background: #0f172a;
+  border-color: #475569;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.notification-dropdown.show {
+  display: block;
+  animation: fadeInUp 0.3s ease;
+}
+
+.notification-header {
+  padding: 16px;
+  border-bottom: 2px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+:global(.dark) .notification-header {
+  border-bottom-color: #334155;
+}
+
+.notification-header h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #243788;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+:global(.dark) .notification-header h3 {
+  color: #e2e8f0;
+}
+
+.mark-all-read {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.mark-all-read:hover {
+  color: #243788;
+}
+
+:global(.dark) .mark-all-read {
+  color: #94a3b8;
+}
+
+:global(.dark) .mark-all-read:hover {
+  color: #b4bce1;
+}
+
+.notification-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+:global(.dark) .notification-item {
+  border-bottom-color: #334155;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+:global(.dark) .notification-item:hover {
+  background: #1e293b;
+}
+
+.notification-item.unread {
+  background: rgba(59, 130, 246, 0.05);
+  border-left: 3px solid #3b82f6;
+}
+
+:global(.dark) .notification-item.unread {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.notification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.notification-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.notification-text {
+  flex: 1;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.notification-message {
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+:global(.dark) .notification-message {
+  color: #e2e8f0;
+}
+
+.notification-time {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+:global(.dark) .notification-time {
+  color: #94a3b8;
+}
+
+.notification-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  color: #64748b;
+}
+
+:global(.dark) .notification-loading {
+  color: #94a3b8;
+}
+
+.notification-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  color: #64748b;
+  text-align: center;
+}
+
+:global(.dark) .notification-empty {
+  color: #94a3b8;
+}
+
+.notification-empty svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.5;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .notification-dropdown {
+    width: calc(100vw - 2rem);
+    right: 1rem;
+  }
+}
+
   /* Mobile Topics */
   .mobile-topics {
     margin-top: 1.5rem;
@@ -1369,78 +2034,115 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
 </style>
 
 <script>
-  import { auth } from "../../lib/auth.js";
+  import { authManager } from "../../lib/auth.js";
+  import { TinkByteAPI } from "../../lib/supabase.js";
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    console.log("🔄 Header: Initializing auth state...");
-    
-    try {
-      // Initialize auth first
-      await auth.initialize();
-      
-      // Set up auth state listener with better error handling
-      const unsubscribe = auth.onAuthChange((user, profile) => {
-        try {
-          updateAuthUI(user, profile);
-        } catch (error) {
-          console.error("❌ Header: Error updating auth UI:", error);
-        }
-      });
+  // Enhanced event listener interface to handle both Element and Document
+  interface EventListenerRecord {
+    target: Element | Document;
+    event: string;
+    handler: EventListener;
+  }
 
-      // Cleanup on page unload
-      window.addEventListener("beforeunload", () => {
-        try {
-          unsubscribe();
-        } catch (error) {
-          console.error("❌ Header: Error during cleanup:", error);
-        }
-      });
+  // Header Management Singleton
+  class HeaderManager {
+    private static instance: HeaderManager;
+    private initialized = false;
+    private authUnsubscribe: (() => void) | null = null;
+    private notificationInterval: NodeJS.Timeout | null = null;
+    private eventListeners: EventListenerRecord[] = [];
 
-    } catch (error) {
-      console.error("❌ Header: Auth initialization failed:", error);
-      // Show signin button as fallback
-      showSigninButton();
+    static getInstance(): HeaderManager {
+      if (!HeaderManager.instance) {
+        HeaderManager.instance = new HeaderManager();
+      }
+      return HeaderManager.instance;
     }
 
-    function updateAuthUI(user: any, profile: any) {
-      const signinBtn = document.getElementById('signin-btn');
-      const accountDropdown = document.getElementById('account-dropdown');
-      const mobileSigninSection = document.getElementById('mobile-signin-section');
-      const mobileAccountSection = document.getElementById('mobile-account-section');
+    async initialize(): Promise<void> {
+      if (this.initialized) return;
+
+      try {
+        console.log("🔄 Header: Initializing auth state...");
+        
+        // Initialize auth manager singleton
+        await authManager.initialize();
+        
+        // Set up auth state listener with better error handling
+        this.authUnsubscribe = authManager.onAuthChange((user, profile) => {
+          try {
+            this.updateAuthUI(user, profile);
+          } catch (error) {
+            console.error("❌ Header: Error updating auth UI:", error);
+          }
+        });
+
+        // Setup event listeners
+        this.setupEventListeners();
+        
+        // Setup cleanup
+        this.setupCleanup();
+
+        this.initialized = true;
+        console.log("✅ Header: Initialized successfully");
+
+      } catch (error) {
+        console.error("❌ Header: Auth initialization failed:", error);
+        // Show signin button as fallback
+        this.showSigninButton();
+      }
+    }
+
+    private updateAuthUI(user: any, profile: any): void {
+      const elements = {
+        signinBtn: document.getElementById('signin-btn'),
+        accountDropdown: document.getElementById('account-dropdown'),
+        mobileSigninSection: document.getElementById('mobile-signin-section'),
+        mobileAccountSection: document.getElementById('mobile-account-section')
+      };
 
       if (user) {
         console.log('✅ Header: User signed in:', user.email);
         
         // Hide sign in button, show account dropdown
-        if (signinBtn) signinBtn.style.display = 'none';
-        if (accountDropdown) accountDropdown.style.display = 'block';
-        if (mobileSigninSection) mobileSigninSection.style.display = 'none';
-        if (mobileAccountSection) mobileAccountSection.style.display = 'flex';
+        if (elements.signinBtn) elements.signinBtn.style.display = 'none';
+        if (elements.accountDropdown) elements.accountDropdown.style.display = 'block';
+        if (elements.mobileSigninSection) elements.mobileSigninSection.style.display = 'none';
+        if (elements.mobileAccountSection) elements.mobileAccountSection.style.display = 'flex';
         
         // Update account info
-        updateAccountInfo(user, profile);
+        this.updateAccountInfo(user, profile);
+        
+        // Setup notification system for authenticated users
+        setTimeout(() => {
+          this.setupNotificationSystem();
+        }, 100);
       } else {
         console.log('❌ Header: User not signed in');
-        showSigninButton();
+        this.showSigninButton();
       }
     }
 
-    function showSigninButton() {
-      const signinBtn = document.getElementById('signin-btn');
-      const accountDropdown = document.getElementById('account-dropdown');
-      const mobileSigninSection = document.getElementById('mobile-signin-section');
-      const mobileAccountSection = document.getElementById('mobile-account-section');
+    private showSigninButton(): void {
+      const elements = {
+        signinBtn: document.getElementById('signin-btn'),
+        accountDropdown: document.getElementById('account-dropdown'),
+        mobileSigninSection: document.getElementById('mobile-signin-section'),
+        mobileAccountSection: document.getElementById('mobile-account-section'),
+        notificationContainer: document.getElementById('notification-container')
+      };
 
       // Show sign in button, hide account dropdown
-      if (signinBtn) signinBtn.style.display = 'inline-flex';
-      if (accountDropdown) accountDropdown.style.display = 'none';
-      if (mobileSigninSection) mobileSigninSection.style.display = 'flex';
-      if (mobileAccountSection) mobileAccountSection.style.display = 'none';
+      if (elements.signinBtn) elements.signinBtn.style.display = 'inline-flex';
+      if (elements.accountDropdown) elements.accountDropdown.style.display = 'none';
+      if (elements.mobileSigninSection) elements.mobileSigninSection.style.display = 'flex';
+      if (elements.mobileAccountSection) elements.mobileAccountSection.style.display = 'none';
+      if (elements.notificationContainer) elements.notificationContainer.style.display = 'none';
     }
 
-    function updateAccountInfo(user: any, profile: any) {
+    private updateAccountInfo(user: any, profile: any): void {
       try {
-        const displayName = auth.getDisplayName();
+        const displayName = authManager.getDisplayName();
 
         // Update desktop dropdown
         const accountName = document.getElementById('account-name');
@@ -1458,13 +2160,270 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
       }
     }
 
-    // Setup event listeners
-    setupEventListeners();
-  });
+    // Enhanced notification system
+    private async setupNotificationSystem(): Promise<void> {
+      try {
+        const elements = {
+          container: document.getElementById('notification-container'),
+          bell: document.getElementById('notification-bell'),
+          dropdown: document.getElementById('notification-dropdown'),
+          count: document.getElementById('notification-count'),
+          list: document.getElementById('notification-list'),
+          markAllRead: document.getElementById('mark-all-read')
+        };
 
-  function setupEventListeners() {
-    try {
-      // Account dropdown functionality
+        if (!elements.container || !elements.bell || !elements.dropdown) {
+          return; // Elements not found, skip setup
+        }
+
+        // Only show notifications for authenticated users
+        const isAuthenticated = await authManager.isAuthenticated();
+        if (!isAuthenticated) {
+          elements.container.style.display = 'none';
+          return;
+        }
+
+        elements.container.style.display = 'block';
+
+        // Load initial notification count
+        await this.loadNotificationCount();
+
+        // Set up click handlers
+        this.addEventListenerWithCleanup(elements.bell, 'click', async (e: Event) => {
+          e.stopPropagation();
+          
+          if (elements.dropdown!.classList.contains('show')) {
+            elements.dropdown!.classList.remove('show');
+          } else {
+            await this.loadNotifications();
+            elements.dropdown!.classList.add('show');
+          }
+        });
+
+        // Close dropdown when clicking outside
+        this.addEventListenerWithCleanup(document, 'click', (e: Event) => {
+          const target = e.target as HTMLElement;
+          if (!elements.container!.contains(target)) {
+            elements.dropdown!.classList.remove('show');
+          }
+        });
+
+        // Mark all as read
+        if (elements.markAllRead) {
+          this.addEventListenerWithCleanup(elements.markAllRead, 'click', async () => {
+            await this.markAllNotificationsAsRead();
+          });
+        }
+
+        // Poll for new notifications every 30 seconds
+        this.notificationInterval = setInterval(() => {
+          this.loadNotificationCount();
+        }, 30000);
+
+      } catch (error) {
+        console.error('❌ Error setting up notification system:', error);
+      }
+    }
+
+    private async loadNotificationCount(): Promise<void> {
+      try {
+        const result = await TinkByteAPI.getUnreadNotificationCount();
+        
+        const notificationCount = document.getElementById('notification-count');
+        if (notificationCount && result.success) {
+          const count = result.count || 0;
+          if (count > 0) {
+            notificationCount.textContent = count > 99 ? '99+' : count.toString();
+            notificationCount.style.display = 'flex';
+          } else {
+            notificationCount.style.display = 'none';
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error loading notification count:', error);
+      }
+    }
+
+    private async loadNotifications(): Promise<void> {
+      try {
+        const notificationList = document.getElementById('notification-list');
+        if (!notificationList) return;
+
+        // Show loading
+        notificationList.innerHTML = `
+          <div class="notification-loading">
+            <div class="loading-spinner"></div>
+            <p>Loading notifications...</p>
+          </div>
+        `;
+
+        const result = await TinkByteAPI.getUserNotifications(20);
+
+        if (result.success && result.data && result.data.length > 0) {
+          const notifications = result.data;
+          let hasUnread = false;
+
+          notificationList.innerHTML = notifications.map((notification: any) => {
+            const isUnread = !notification.is_read;
+            if (isUnread) hasUnread = true;
+
+            const timeAgo = this.getTimeAgo(new Date(notification.created_at));
+            const commenterName = notification.comments?.profiles?.display_name || 'Someone';
+            const commenterAvatar = this.getAvatarUrl(notification.comments?.profiles);
+
+            return `
+              <div class="notification-item ${isUnread ? 'unread' : ''}" data-notification-id="${notification.id}" data-comment-id="${notification.comment_id}">
+                <div class="notification-content">
+                  <img src="${commenterAvatar}" alt="${commenterName}" class="notification-avatar" />
+                  <div class="notification-text">
+                    <div class="notification-message">
+                      <strong>${commenterName}</strong> mentioned you in a comment
+                    </div>
+                    <div class="notification-time">${timeAgo}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          // Show/hide mark all read button
+          const markAllRead = document.getElementById('mark-all-read');
+          if (markAllRead) {
+            markAllRead.style.display = hasUnread ? 'block' : 'none';
+          }
+
+          // Add click handlers for notifications
+          notificationList.querySelectorAll('.notification-item').forEach((item) => {
+            const htmlItem = item as HTMLElement;
+            this.addEventListenerWithCleanup(htmlItem, 'click', async () => {
+              const notificationId = htmlItem.dataset.notificationId;
+              
+              // Mark as read
+              if (htmlItem.classList.contains('unread') && notificationId) {
+                await this.markNotificationAsRead(notificationId);
+                htmlItem.classList.remove('unread');
+                await this.loadNotificationCount();
+              }
+
+              // Close the dropdown
+              const dropdown = document.getElementById('notification-dropdown');
+              if (dropdown) {
+                dropdown.classList.remove('show');
+              }
+            });
+          });
+
+        } else {
+          // No notifications
+          notificationList.innerHTML = `
+            <div class="notification-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <p>No notifications yet</p>
+              <p style="font-size: 0.75rem; opacity: 0.7;">You'll see mentions and replies here</p>
+            </div>
+          `;
+
+          const markAllRead = document.getElementById('mark-all-read');
+          if (markAllRead) {
+            markAllRead.style.display = 'none';
+          }
+        }
+
+      } catch (error) {
+        console.error('❌ Error loading notifications:', error);
+        const notificationList = document.getElementById('notification-list');
+        if (notificationList) {
+          notificationList.innerHTML = `
+            <div class="notification-empty">
+              <p>Failed to load notifications</p>
+              <button onclick="window.headerManager.loadNotifications()" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: #243788; color: white; border: none; cursor: pointer;">
+                Try Again
+              </button>
+            </div>
+          `;
+        }
+      }
+    }
+
+    private async markNotificationAsRead(notificationId: string): Promise<void> {
+      try {
+        await TinkByteAPI.markNotificationAsRead(notificationId);
+      } catch (error) {
+        console.error('❌ Error marking notification as read:', error);
+      }
+    }
+
+    private async markAllNotificationsAsRead(): Promise<void> {
+      try {
+        const unreadItems = document.querySelectorAll('.notification-item.unread');
+        
+        for (const item of unreadItems) {
+          const htmlItem = item as HTMLElement;
+          const notificationId = htmlItem.dataset.notificationId;
+          if (notificationId) {
+            await this.markNotificationAsRead(notificationId);
+            htmlItem.classList.remove('unread');
+          }
+        }
+
+        // Update count and hide button
+        await this.loadNotificationCount();
+        const markAllRead = document.getElementById('mark-all-read');
+        if (markAllRead) {
+          markAllRead.style.display = 'none';
+        }
+
+      } catch (error) {
+        console.error('❌ Error marking all notifications as read:', error);
+      }
+    }
+
+    private getTimeAgo(date: Date): string {
+      const now = new Date();
+      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+      if (diffInSeconds < 60) return 'just now';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+      if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+      return date.toLocaleDateString();
+    }
+
+    private getAvatarUrl(profile: any): string {
+      if (!profile) return '/images/avatars/preset-1.svg';
+      
+      if (profile.avatar_type === 'uploaded' && profile.avatar_url) {
+        return profile.avatar_url;
+      }
+      
+      if (profile.avatar_type === 'google' && profile.avatar_url) {
+        return profile.avatar_url;
+      }
+      
+      const presetId = profile.avatar_preset_id || 1;
+      return `/images/avatars/preset-${presetId}.svg`;
+    }
+
+    private setupEventListeners(): void {
+      try {
+        // Account dropdown functionality
+        this.setupAccountDropdown();
+        
+        // Sign out functionality
+        this.setupSignoutHandlers();
+        
+        // Setup existing mobile menu and dropdown functionality
+        this.setupExistingEventListeners();
+
+      } catch (error) {
+        console.error("❌ Header: Error setting up event listeners:", error);
+      }
+    }
+
+    private setupAccountDropdown(): void {
       const accountDropdownBtn = document.getElementById('account-dropdown-btn');
       const accountMenu = document.getElementById('account-menu');
       const accountDropdown = document.getElementById('account-dropdown');
@@ -1485,11 +2444,21 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
           }, 300);
         };
 
-        accountDropdown.addEventListener('mouseenter', showAccountMenu);
-        accountDropdown.addEventListener('mouseleave', hideAccountMenu);
-      }
+        this.addEventListenerWithCleanup(accountDropdown, 'mouseenter', showAccountMenu);
+        this.addEventListenerWithCleanup(accountDropdown, 'mouseleave', hideAccountMenu);
 
-      // Sign out functionality with better error handling
+        // Close account menu when clicking outside
+        this.addEventListenerWithCleanup(document, 'click', (e: Event) => {
+          const target = e.target as Node;
+          if (!accountDropdown.contains(target)) {
+            accountMenu.style.display = 'none';
+            accountDropdownBtn.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+    }
+
+    private setupSignoutHandlers(): void {
       const signoutBtn = document.getElementById('signout-btn');
       const mobileSignoutBtn = document.getElementById('mobile-signout-btn');
 
@@ -1500,14 +2469,13 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
           button.textContent = 'Signing out...';
           button.setAttribute('disabled', 'true');
 
-          const result = await auth.signOut();
+          const result = await authManager.signOut();
           
           if (result.success) {
             console.log('✅ Header: User signed out successfully');
             // Force immediate redirect
             window.location.href = '/';
           } else {
-            console.error('❌ Header: Sign out failed:', result.error);
             // Force redirect anyway
             window.location.href = '/';
           }
@@ -1518,90 +2486,86 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
         }
       };
 
-      signoutBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        handleSignout(signoutBtn);
-      });
+      if (signoutBtn) {
+        this.addEventListenerWithCleanup(signoutBtn, 'click', (e: Event) => {
+          e.preventDefault();
+          handleSignout(signoutBtn);
+        });
+      }
 
-      mobileSignoutBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        handleSignout(mobileSignoutBtn);
-      });
-
-      // Close account menu when clicking outside
-      document.addEventListener('click', (e) => {
-        const target = e.target as Node;
-        if (accountMenu && accountDropdown && !accountDropdown.contains(target)) {
-          accountMenu.style.display = 'none';
-          accountDropdownBtn?.setAttribute('aria-expanded', 'false');
-        }
-      });
-
-      // Setup existing mobile menu and dropdown functionality
-      setupExistingEventListeners();
-
-    } catch (error) {
-      console.error("❌ Header: Error setting up event listeners:", error);
+      if (mobileSignoutBtn) {
+        this.addEventListenerWithCleanup(mobileSignoutBtn, 'click', (e: Event) => {
+          e.preventDefault();
+          handleSignout(mobileSignoutBtn);
+        });
+      }
     }
-  }
 
-  function setupExistingEventListeners() {
-    try {
-      // Mobile menu toggle
-      const mobileMenuButton = document.querySelector(".mobile-menu-button") as HTMLButtonElement;
-      const mobileMenu = document.querySelector(".mobile-menu") as HTMLElement;
+    private setupExistingEventListeners(): void {
+      try {
+        // Mobile menu toggle
+        const mobileMenuButton = document.querySelector(".mobile-menu-button") as HTMLButtonElement;
+        const mobileMenu = document.querySelector(".mobile-menu") as HTMLElement;
 
-      if (mobileMenuButton && mobileMenu) {
-        mobileMenuButton.addEventListener("click", () => {
-          mobileMenu.classList.toggle("hidden");
-          const isExpanded = !mobileMenu.classList.contains("hidden");
-          mobileMenuButton.setAttribute("aria-expanded", isExpanded.toString());
+        if (mobileMenuButton && mobileMenu) {
+          this.addEventListenerWithCleanup(mobileMenuButton, "click", () => {
+            mobileMenu.classList.toggle("hidden");
+            const isExpanded = !mobileMenu.classList.contains("hidden");
+            mobileMenuButton.setAttribute("aria-expanded", isExpanded.toString());
 
-          const icon = mobileMenuButton.querySelector("svg") as SVGElement;
-          if (icon) {
-            if (isExpanded) {
-              icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>`;
-            } else {
-              icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>`;
+            const icon = mobileMenuButton.querySelector("svg") as SVGElement;
+            if (icon) {
+              if (isExpanded) {
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>`;
+              } else {
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>`;
+              }
             }
-          }
-        });
+          });
+        }
+
+        // Topics dropdown functionality
+        const dropdownTrigger = document.querySelector(".dropdown-trigger") as HTMLButtonElement;
+        const dropdownMenu = document.querySelector(".dropdown-menu-compact") as HTMLElement;
+        const navDropdown = document.querySelector(".nav-dropdown") as HTMLElement;
+
+        if (dropdownTrigger && dropdownMenu && navDropdown) {
+          let hoverTimeout: NodeJS.Timeout;
+
+          const showDropdown = () => {
+            clearTimeout(hoverTimeout);
+            dropdownMenu.style.display = "block";
+            dropdownTrigger.setAttribute("aria-expanded", "true");
+          };
+
+          const hideDropdown = () => {
+            hoverTimeout = setTimeout(() => {
+              dropdownMenu.style.display = "none";
+              dropdownTrigger.setAttribute("aria-expanded", "false");
+            }, 300);
+          };
+
+          this.addEventListenerWithCleanup(navDropdown, "mouseenter", showDropdown);
+          this.addEventListenerWithCleanup(navDropdown, "mouseleave", hideDropdown);
+        }
+
+        // Search functionality
+        const searchToggle = document.querySelector(".search-toggle");
+        if (searchToggle) {
+          this.addEventListenerWithCleanup(searchToggle, "click", () => {
+            window.location.href = "/search";
+          });
+        }
+
+        // Add active state to current page navigation
+        this.setActiveNavigation();
+
+      } catch (error) {
+        console.error("❌ Header: Error setting up existing event listeners:", error);
       }
+    }
 
-      // Topics dropdown functionality
-      const dropdownTrigger = document.querySelector(".dropdown-trigger") as HTMLButtonElement;
-      const dropdownMenu = document.querySelector(".dropdown-menu-compact") as HTMLElement;
-      const navDropdown = document.querySelector(".nav-dropdown") as HTMLElement;
-
-      if (dropdownTrigger && dropdownMenu && navDropdown) {
-        let hoverTimeout: NodeJS.Timeout;
-
-        const showDropdown = () => {
-          clearTimeout(hoverTimeout);
-          dropdownMenu.style.display = "block";
-          dropdownTrigger.setAttribute("aria-expanded", "true");
-        };
-
-        const hideDropdown = () => {
-          hoverTimeout = setTimeout(() => {
-            dropdownMenu.style.display = "none";
-            dropdownTrigger.setAttribute("aria-expanded", "false");
-          }, 300);
-        };
-
-        navDropdown.addEventListener("mouseenter", showDropdown);
-        navDropdown.addEventListener("mouseleave", hideDropdown);
-      }
-
-      // Search functionality
-      const searchToggle = document.querySelector(".search-toggle");
-      if (searchToggle) {
-        searchToggle.addEventListener("click", () => {
-          window.location.href = "/search";
-        });
-      }
-
-      // Add active state to current page navigation
+    private setActiveNavigation(): void {
       const currentPath = window.location.pathname;
       const navLinks = document.querySelectorAll(".nav-link, .mobile-nav-link");
 
@@ -1611,9 +2575,74 @@ const allTopicsMobile = allTopics.map(topic => topic.name);
           link.classList.add("active");
         }
       });
+    }
 
-    } catch (error) {
-      console.error("❌ Header: Error setting up existing event listeners:", error);
+    // FIXED: Helper method to track event listeners for cleanup
+    private addEventListenerWithCleanup(
+      target: Element | Document, 
+      event: string, 
+      handler: EventListener
+    ): void {
+      target.addEventListener(event, handler);
+      this.eventListeners.push({ target, event, handler });
+    }
+
+    private setupCleanup(): void {
+      // Cleanup on page unload
+      window.addEventListener("beforeunload", () => {
+        this.cleanup();
+      });
+
+      // Cleanup on page hide (for mobile)
+      window.addEventListener("pagehide", () => {
+        this.cleanup();
+      });
+    }
+
+    private cleanup(): void {
+      try {
+        // Unsubscribe from auth changes
+        if (this.authUnsubscribe) {
+          this.authUnsubscribe();
+          this.authUnsubscribe = null;
+        }
+
+        // Clear notification interval
+        if (this.notificationInterval) {
+          clearInterval(this.notificationInterval);
+          this.notificationInterval = null;
+        }
+
+        // Remove all event listeners
+        this.eventListeners.forEach(({ target, event, handler }) => {
+          target.removeEventListener(event, handler);
+        });
+        this.eventListeners = [];
+
+        console.log("✅ Header: Cleanup completed");
+      } catch (error) {
+        console.error("❌ Header: Error during cleanup:", error);
+      }
+    }
+
+    // Public methods for external access
+    public async refreshNotifications(): Promise<void> {
+      await this.loadNotifications();
+    }
+
+    public async refreshNotificationCount(): Promise<void> {
+      await this.loadNotificationCount();
     }
   }
+
+  // Initialize header manager
+  const headerManager = HeaderManager.getInstance();
+
+  // Make it globally available for debugging and button access
+  (window as any).headerManager = headerManager;
+
+  // Initialize when DOM is ready
+  document.addEventListener("DOMContentLoaded", () => {
+    headerManager.initialize();
+  });
 </script>

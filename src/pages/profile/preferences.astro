@@ -359,269 +359,305 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 </style>
 
 <script>
+  import { authManager } from "../../lib/auth.js";
   import { supabase } from "../../lib/supabase.js";
-  import { authStore } from "../../lib/auth-store.js";
 
-  let currentUser: any = null;
+  class PreferencesManager {
+    private authManager = authManager;
+    private currentUser: any = null;
+    private initialized = false;
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    await loadUserPreferences();
-    setupEventListeners();
-  });
+    constructor() {
+      this.init();
+    }
 
-  async function loadUserPreferences() {
-    try {
-      // Get instant data from cache
-      if (authStore.hasInstantData()) {
-        console.log("⚡ Preferences: Using instant cached data");
+    async init() {
+      if (this.initialized) return;
 
-        currentUser = authStore.getUser();
+      try {
+        console.log("🚀 Preferences: Starting initialization...");
 
-        if (!currentUser) {
+        // Initialize auth manager
+        await this.authManager.initialize();
+
+        // Check authentication
+        this.currentUser = this.authManager.getUser();
+        if (!this.currentUser) {
+          console.log("❌ Not authenticated, redirecting to signin");
           window.location.href = "/auth/signin";
           return;
         }
 
-        // Load preferences in background
-        loadBackgroundData();
-        return;
+        console.log("✅ User authenticated:", this.currentUser.email);
+
+        // Load user preferences
+        await this.loadUserPreferences();
+        this.setupEventListeners();
+
+        this.initialized = true;
+        console.log("✅ Preferences: Initialization complete");
+      } catch (error) {
+        console.error("❌ Preferences: Initialization failed:", error);
+        // Show error but don't redirect
+        this.showToast("Failed to load preferences", "error");
       }
-
-      // No instant data, need to initialize
-      console.log("🔄 Preferences: Initializing auth...");
-      await authStore.initialize();
-
-      currentUser = authStore.getUser();
-
-      if (!currentUser) {
-        window.location.href = "/auth/signin";
-        return;
-      }
-
-      loadBackgroundData();
-    } catch (error) {
-      console.error("Error loading preferences:", error);
     }
-  }
 
-  async function loadBackgroundData() {
-    try {
-      const { data: userPrefs } = await supabase
-        .from("user_preferences")
-        .select("*")
-        .eq("id", currentUser.id)
-        .single();
+    async loadUserPreferences() {
+      try {
+        console.log("📊 Loading user preferences...");
 
-      if (userPrefs) {
-        updateUI(userPrefs);
-      } else {
-        await createDefaultPreferences(currentUser.id);
+        const { data: userPrefs, error } = await supabase
+          .from("user_preferences")
+          .select("*")
+          .eq("id", this.currentUser.id)
+          .single();
+
+        if (error && error.code !== "PGRST116") {
+          throw error;
+        }
+
+        if (userPrefs) {
+          console.log("✅ Preferences loaded:", userPrefs);
+          this.updateUI(userPrefs);
+        } else {
+          console.log("📝 Creating default preferences...");
+          await this.createDefaultPreferences();
+        }
+      } catch (error) {
+        console.error("❌ Error loading preferences:", error);
+        throw error;
       }
-    } catch (error) {
-      console.error("Error loading background data:", error);
     }
-  }
 
-  async function createDefaultPreferences(userId: string) {
-    try {
-      const defaultPrefs = {
-        id: userId,
-        email_notifications: true,
-        comment_notifications: true,
-        newsletter_frequency: "weekly",
-        theme_preference: "system",
-        language: "en",
-        profile_visibility: "public",
-        show_email: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+    async createDefaultPreferences() {
+      try {
+        const defaultPrefs = {
+          id: this.currentUser.id,
+          email_notifications: true,
+          comment_notifications: true,
+          newsletter_frequency: "weekly",
+          theme_preference: "system",
+          language: "en",
+          profile_visibility: "public",
+          show_email: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
 
-      const { error } = await supabase
-        .from("user_preferences")
-        .insert(defaultPrefs);
+        const { error } = await supabase
+          .from("user_preferences")
+          .insert(defaultPrefs);
 
-      if (!error) {
-        updateUI(defaultPrefs);
+        if (error) throw error;
+
+        console.log("✅ Default preferences created");
+        this.updateUI(defaultPrefs);
+      } catch (error) {
+        console.error("❌ Error creating default preferences:", error);
+        throw error;
       }
-    } catch (error) {
-      console.error("Error creating default preferences:", error);
     }
-  }
 
-  function updateUI(prefs: any) {
-    const emailNotifications = document.getElementById(
-      "email-notifications"
-    ) as HTMLInputElement;
-    if (emailNotifications)
-      emailNotifications.checked = prefs.email_notifications ?? true;
+    updateUI(prefs: any) {
+      try {
+        const emailNotifications = document.getElementById(
+          "email-notifications"
+        ) as HTMLInputElement;
+        if (emailNotifications)
+          emailNotifications.checked = prefs.email_notifications ?? true;
 
-    const commentNotifications = document.getElementById(
-      "comment-notifications"
-    ) as HTMLInputElement;
-    if (commentNotifications)
-      commentNotifications.checked = prefs.comment_notifications ?? true;
+        const commentNotifications = document.getElementById(
+          "comment-notifications"
+        ) as HTMLInputElement;
+        if (commentNotifications)
+          commentNotifications.checked = prefs.comment_notifications ?? true;
 
-    const newsletterFrequency = document.getElementById(
-      "newsletter-frequency"
-    ) as HTMLSelectElement;
-    if (newsletterFrequency)
-      newsletterFrequency.value = prefs.newsletter_frequency || "weekly";
+        const newsletterFrequency = document.getElementById(
+          "newsletter-frequency"
+        ) as HTMLSelectElement;
+        if (newsletterFrequency)
+          newsletterFrequency.value = prefs.newsletter_frequency || "weekly";
 
-    const themePreference = document.getElementById(
-      "theme-preference"
-    ) as HTMLSelectElement;
-    if (themePreference)
-      themePreference.value = prefs.theme_preference || "system";
+        const themePreference = document.getElementById(
+          "theme-preference"
+        ) as HTMLSelectElement;
+        if (themePreference)
+          themePreference.value = prefs.theme_preference || "system";
 
-    const languagePreference = document.getElementById(
-      "language-preference"
-    ) as HTMLSelectElement;
-    if (languagePreference) languagePreference.value = prefs.language || "en";
+        const languagePreference = document.getElementById(
+          "language-preference"
+        ) as HTMLSelectElement;
+        if (languagePreference)
+          languagePreference.value = prefs.language || "en";
 
-    const profileVisibility = document.getElementById(
-      "profile-visibility"
-    ) as HTMLSelectElement;
-    if (profileVisibility)
-      profileVisibility.value = prefs.profile_visibility || "public";
+        const profileVisibility = document.getElementById(
+          "profile-visibility"
+        ) as HTMLSelectElement;
+        if (profileVisibility)
+          profileVisibility.value = prefs.profile_visibility || "public";
 
-    const showEmail = document.getElementById("show-email") as HTMLInputElement;
-    if (showEmail) showEmail.checked = prefs.show_email ?? false;
-  }
+        const showEmail = document.getElementById(
+          "show-email"
+        ) as HTMLInputElement;
+        if (showEmail) showEmail.checked = prefs.show_email ?? false;
 
-  function setupEventListeners() {
-    const saveBtn = document.getElementById(
-      "save-preferences-btn"
-    ) as HTMLButtonElement;
-    saveBtn?.addEventListener("click", savePreferences);
+        console.log("✅ UI updated with preferences");
+      } catch (error) {
+        console.error("❌ Error updating UI:", error);
+      }
+    }
 
-    const themeSelect = document.getElementById(
-      "theme-preference"
-    ) as HTMLSelectElement;
-    themeSelect?.addEventListener("change", handleThemeChange);
-  }
+    setupEventListeners() {
+      const saveBtn = document.getElementById(
+        "save-preferences-btn"
+      ) as HTMLButtonElement;
+      saveBtn?.addEventListener("click", () => this.savePreferences());
 
-  async function savePreferences() {
-    if (!currentUser) return;
-
-    const saveBtn = document.getElementById(
-      "save-preferences-btn"
-    ) as HTMLButtonElement;
-    if (!saveBtn) return;
-
-    const originalContent = saveBtn.innerHTML;
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-    try {
-      const emailNotifications = document.getElementById(
-        "email-notifications"
-      ) as HTMLInputElement;
-      const commentNotifications = document.getElementById(
-        "comment-notifications"
-      ) as HTMLInputElement;
-      const newsletterFrequency = document.getElementById(
-        "newsletter-frequency"
-      ) as HTMLSelectElement;
-      const themePreference = document.getElementById(
+      const themeSelect = document.getElementById(
         "theme-preference"
       ) as HTMLSelectElement;
-      const languagePreference = document.getElementById(
-        "language-preference"
-      ) as HTMLSelectElement;
-      const profileVisibility = document.getElementById(
-        "profile-visibility"
-      ) as HTMLSelectElement;
-      const showEmail = document.getElementById(
-        "show-email"
-      ) as HTMLInputElement;
-
-      const formData = {
-        id: currentUser.id,
-        email_notifications: emailNotifications?.checked ?? true,
-        comment_notifications: commentNotifications?.checked ?? true,
-        newsletter_frequency: newsletterFrequency?.value || "weekly",
-        theme_preference: themePreference?.value || "system",
-        language: languagePreference?.value || "en",
-        profile_visibility: profileVisibility?.value || "public",
-        show_email: showEmail?.checked ?? false,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error } = await supabase
-        .from("user_preferences")
-        .upsert(formData, { onConflict: "id" });
-
-      if (error) throw error;
-
-      showToast("Preferences saved successfully!");
-    } catch (error: any) {
-      console.error("Error saving preferences:", error);
-      showToast("Failed to save preferences", "error");
-    } finally {
-      saveBtn.disabled = false;
-      saveBtn.innerHTML = originalContent;
+      themeSelect?.addEventListener("change", (e) => this.handleThemeChange(e));
     }
-  }
 
-  function handleThemeChange(event: Event) {
-    const theme = (event.target as HTMLSelectElement).value;
-
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else if (theme === "light") {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    } else {
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
-      ).matches;
-      if (prefersDark) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
+    async savePreferences() {
+      if (!this.currentUser) {
+        this.showToast("Not authenticated", "error");
+        return;
       }
-      localStorage.setItem("theme", "system");
+
+      const saveBtn = document.getElementById(
+        "save-preferences-btn"
+      ) as HTMLButtonElement;
+      if (!saveBtn) return;
+
+      const originalContent = saveBtn.innerHTML;
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+      try {
+        const emailNotifications = document.getElementById(
+          "email-notifications"
+        ) as HTMLInputElement;
+        const commentNotifications = document.getElementById(
+          "comment-notifications"
+        ) as HTMLInputElement;
+        const newsletterFrequency = document.getElementById(
+          "newsletter-frequency"
+        ) as HTMLSelectElement;
+        const themePreference = document.getElementById(
+          "theme-preference"
+        ) as HTMLSelectElement;
+        const languagePreference = document.getElementById(
+          "language-preference"
+        ) as HTMLSelectElement;
+        const profileVisibility = document.getElementById(
+          "profile-visibility"
+        ) as HTMLSelectElement;
+        const showEmail = document.getElementById(
+          "show-email"
+        ) as HTMLInputElement;
+
+        const formData = {
+          id: this.currentUser.id,
+          email_notifications: emailNotifications?.checked ?? true,
+          comment_notifications: commentNotifications?.checked ?? true,
+          newsletter_frequency: newsletterFrequency?.value || "weekly",
+          theme_preference: themePreference?.value || "system",
+          language: languagePreference?.value || "en",
+          profile_visibility: profileVisibility?.value || "public",
+          show_email: showEmail?.checked ?? false,
+          updated_at: new Date().toISOString(),
+        };
+
+        console.log("💾 Saving preferences:", formData);
+
+        const { error } = await supabase
+          .from("user_preferences")
+          .upsert(formData, { onConflict: "id" });
+
+        if (error) throw error;
+
+        console.log("✅ Preferences saved successfully");
+        this.showToast("Preferences saved successfully!");
+      } catch (error: any) {
+        console.error("❌ Error saving preferences:", error);
+        this.showToast("Failed to save preferences", "error");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalContent;
+      }
+    }
+
+    handleThemeChange(event: Event) {
+      const theme = (event.target as HTMLSelectElement).value;
+
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("theme", "dark");
+      } else if (theme === "light") {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem("theme", "light");
+      } else {
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        if (prefersDark) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+        localStorage.setItem("theme", "system");
+      }
+
+      console.log("🎨 Theme changed to:", theme);
+    }
+
+    showToast(message: string, type: "success" | "error" = "success") {
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${type === "success" ? "#10b981" : "#ef4444"};
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        z-index: 10000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      `;
+
+      toast.innerHTML = `
+        <i class="fas fa-${type === "success" ? "check-circle" : "exclamation-triangle"}"></i>
+        ${message}
+      `;
+
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "translateX(0)";
+      }, 100);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(100%)";
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
     }
   }
 
-  function showToast(message: string, type: "success" | "error" = "success") {
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 1rem 1.5rem;
-      background: ${type === "success" ? "#10b981" : "#ef4444"};
-      color: white;
-      font-weight: 600;
-      font-size: 0.875rem;
-      z-index: 10000;
-      opacity: 0;
-      transform: translateX(100%);
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    `;
-
-    toast.innerHTML = `
-      <i class="fas fa-${type === "success" ? "check-circle" : "exclamation-triangle"}"></i>
-      ${message}
-    `;
-
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = "1";
-      toast.style.transform = "translateX(0)";
-    }, 100);
-
-    setTimeout(() => {
-      toast.style.opacity = "0";
-      toast.style.transform = "translateX(100%)";
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }
+  // Initialize when DOM is ready
+  document.addEventListener("DOMContentLoaded", () => {
+    new PreferencesManager();
+  });
 </script>

@@ -1,0 +1,933 @@
+---
+export interface Props {
+  position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
+  theme?: "light" | "dark" | "auto";
+  showOnPages?: string[];
+  hideOnPages?: string[];
+}
+
+const {
+  position = "bottom-right",
+  theme = "auto",
+  showOnPages = [],
+  hideOnPages = [],
+} = Astro.props;
+---
+
+<div
+  id="feedback-widget"
+  class={`feedback-widget ${position} ${theme}`}
+  data-show-pages={JSON.stringify(showOnPages)}
+  data-hide-pages={JSON.stringify(hideOnPages)}
+>
+  <!-- Feedback Button -->
+  <button id="feedback-trigger" class="feedback-trigger" title="Send Feedback">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <path
+        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+      ></path>
+    </svg>
+    <span>Feedback</span>
+  </button>
+
+  <!-- Feedback Form Modal -->
+  <div id="feedback-modal" class="feedback-modal" style="display: none;">
+    <div class="feedback-form-container">
+      <div class="feedback-form-header">
+        <h3>Send Feedback</h3>
+        <button id="close-feedback" class="close-button">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="feedback-form" class="feedback-form">
+        <div class="form-group">
+          <label for="feedback-type">What type of feedback is this?</label>
+          <select id="feedback-type" name="type" required>
+            <option value="">Select feedback type</option>
+            <option value="bug">Bug Report</option>
+            <option value="feature_request">Feature Request</option>
+            <option value="general">General Feedback</option>
+            <option value="complaint">Complaint</option>
+            <option value="suggestion">Suggestion</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="feedback-message">Your feedback</label>
+          <textarea
+            id="feedback-message"
+            name="message"
+            rows="4"
+            placeholder="Please describe your feedback in detail..."
+            required
+            maxlength="1000"></textarea>
+          <div class="character-count">
+            <span id="char-count">0</span>/1000 characters
+          </div>
+        </div>
+
+        <!-- Optional fields for better context -->
+        <div class="form-group">
+          <label for="feedback-email">Email (optional)</label>
+          <input
+            type="email"
+            id="feedback-email"
+            name="email"
+            placeholder="your@email.com (for follow-up)"
+          />
+          <small>We'll only use this to follow up on your feedback</small>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="include-url" checked />
+            <span class="checkmark"></span>
+            Include current page URL for context
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="cancel-feedback" class="secondary-button"
+            >Cancel</button
+          >
+          <button type="submit" id="submit-feedback" class="primary-button">
+            <span class="btn-text">Send Feedback</span>
+            <div class="btn-spinner" style="display: none;">
+              <div class="spinner"></div>
+            </div>
+          </button>
+        </div>
+      </form>
+
+      <!-- Success State -->
+      <div
+        id="feedback-success"
+        class="feedback-success"
+        style="display: none;"
+      >
+        <div class="success-icon">
+          <svg
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22,4 12,14.01 9,11.01"></polyline>
+          </svg>
+        </div>
+        <h3>Thank you!</h3>
+        <p>
+          Your feedback has been submitted successfully. We appreciate you
+          taking the time to help us improve TinkByte.
+        </p>
+        <button id="close-success" class="primary-button">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Keep all your existing styles exactly the same -->
+<style>
+  /* All your existing CSS stays exactly the same */
+  .feedback-widget {
+    position: fixed;
+    z-index: 60;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    top: 4rem;
+    right: 1rem;
+  }
+
+  .feedback-widget.bottom-right {
+    bottom: 20px;
+    right: 20px;
+    top: auto;
+  }
+
+  .feedback-widget.bottom-left {
+    bottom: 20px;
+    left: 20px;
+    top: auto;
+    right: auto;
+  }
+
+  .feedback-widget.top-right {
+    top: 20px;
+    right: 20px;
+  }
+
+  .feedback-widget.top-left {
+    top: 20px;
+    left: 20px;
+    right: auto;
+  }
+
+  .feedback-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0;
+    width: 48px;
+    height: 48px;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 0px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    transition: all 0.2s ease;
+  }
+
+  .feedback-trigger:hover {
+    background: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+  }
+
+  .feedback-trigger svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .feedback-trigger span {
+    display: none;
+  }
+
+  .feedback-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 1rem;
+  }
+
+  .feedback-form-container {
+    background: white;
+    padding: 1rem;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 0px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  .feedback-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .feedback-form-header h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #6b7280;
+    transition: color 0.2s ease;
+    border-radius: 0px;
+  }
+
+  .close-button:hover {
+    color: #374151;
+  }
+
+  .feedback-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-group label {
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.875rem;
+  }
+
+  .form-group select,
+  .form-group input,
+  .form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+  }
+
+  .form-group select:focus,
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  }
+
+  .character-count {
+    text-align: right;
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  .checkbox-label {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #374151;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    margin: 0;
+  }
+
+  .form-group small {
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .primary-button,
+  .secondary-button {
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0px;
+    min-width: 80px;
+    justify-content: center;
+  }
+
+  .primary-button {
+    background: #4f46e5;
+    color: white;
+    border: none;
+  }
+
+  .primary-button:hover:not(:disabled) {
+    background: #4338ca;
+  }
+
+  .primary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .secondary-button {
+    background: transparent;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+  }
+
+  .secondary-button:hover {
+    background: #f9fafb;
+    color: #374151;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .feedback-success {
+    text-align: center;
+    padding: 1.25rem 0;
+  }
+
+  .success-icon {
+    color: #10b981;
+    margin-bottom: 1rem;
+  }
+
+  .feedback-success h3 {
+    color: #111827;
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .feedback-success p {
+    color: #6b7280;
+    margin: 0 0 1.5rem 0;
+    line-height: 1.5;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .feedback-widget {
+      top: 5rem;
+      right: 1.5rem;
+    }
+
+    .feedback-form-container {
+      padding: 1.5rem;
+    }
+
+    .feedback-form-header h3 {
+      font-size: 1.25rem;
+    }
+
+    .form-actions {
+      flex-wrap: nowrap;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .feedback-trigger {
+      width: auto;
+      height: auto;
+      padding: 12px 16px;
+      gap: 8px;
+    }
+
+    .feedback-trigger span {
+      display: inline;
+    }
+
+    .feedback-trigger svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .feedback-form-container {
+      padding: 2rem;
+      width: 90%;
+    }
+
+    .feedback-form-header h3 {
+      font-size: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .feedback-widget.bottom-right {
+      bottom: 2rem;
+      right: 2rem;
+      top: auto;
+    }
+
+    .feedback-widget.bottom-left {
+      bottom: 2rem;
+      left: 2rem;
+      top: auto;
+      right: auto;
+    }
+
+    .feedback-widget.top-right {
+      top: 2rem;
+      right: 2rem;
+    }
+
+    .feedback-widget.top-left {
+      top: 2rem;
+      left: 2rem;
+      right: auto;
+    }
+  }
+
+  :global(.dark) .feedback-form-container,
+  .feedback-widget.dark .feedback-form-container {
+    background: #1f2937;
+    color: #f9fafb;
+  }
+
+  :global(.dark) .feedback-form-header,
+  .feedback-widget.dark .feedback-form-header {
+    border-bottom-color: #374151;
+  }
+
+  :global(.dark) .feedback-form-header h3,
+  :global(.dark) .feedback-success h3,
+  .feedback-widget.dark .feedback-form-header h3,
+  .feedback-widget.dark .feedback-success h3 {
+    color: #f9fafb;
+  }
+
+  :global(.dark) .form-group label,
+  .feedback-widget.dark .form-group label {
+    color: #d1d5db;
+  }
+
+  :global(.dark) .form-group select,
+  :global(.dark) .form-group input,
+  :global(.dark) .form-group textarea,
+  .feedback-widget.dark .form-group select,
+  .feedback-widget.dark .form-group input,
+  .feedback-widget.dark .form-group textarea {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  :global(.dark) .checkbox-label,
+  .feedback-widget.dark .checkbox-label {
+    color: #d1d5db;
+  }
+
+  :global(.dark) .secondary-button,
+  .feedback-widget.dark .secondary-button {
+    color: #d1d5db;
+    border-color: #4b5563;
+  }
+
+  :global(.dark) .secondary-button:hover,
+  .feedback-widget.dark .secondary-button:hover {
+    background: #374151;
+    color: #f9fafb;
+  }
+
+  :global(.dark) .form-group small,
+  .feedback-widget.dark .form-group small {
+    color: #9ca3af;
+  }
+
+  :global(.dark) .character-count,
+  .feedback-widget.dark .character-count {
+    color: #9ca3af;
+  }
+
+  :global(.dark) .feedback-success p,
+  .feedback-widget.dark .feedback-success p {
+    color: #d1d5db;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .feedback-widget.auto .feedback-form-container {
+      background: #1f2937;
+      color: #f9fafb;
+    }
+
+    .feedback-widget.auto .feedback-form-header {
+      border-bottom-color: #374151;
+    }
+
+    .feedback-widget.auto .feedback-form-header h3,
+    .feedback-widget.auto .feedback-success h3 {
+      color: #f9fafb;
+    }
+
+    .feedback-widget.auto .form-group label {
+      color: #d1d5db;
+    }
+
+    .feedback-widget.auto .form-group select,
+    .feedback-widget.auto .form-group input,
+    .feedback-widget.auto .form-group textarea {
+      background: #374151;
+      border-color: #4b5563;
+      color: #f9fafb;
+    }
+
+    .feedback-widget.auto .checkbox-label {
+      color: #d1d5db;
+    }
+
+    .feedback-widget.auto .secondary-button {
+      color: #d1d5db;
+      border-color: #4b5563;
+    }
+
+    .feedback-widget.auto .secondary-button:hover {
+      background: #374151;
+      color: #f9fafb;
+    }
+
+    .feedback-widget.auto .form-group small {
+      color: #9ca3af;
+    }
+
+    .feedback-widget.auto .character-count {
+      color: #9ca3af;
+    }
+
+    .feedback-widget.auto .feedback-success p {
+      color: #d1d5db;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .feedback-trigger,
+    .primary-button,
+    .secondary-button,
+    .close-button {
+      transition: none;
+    }
+
+    .spinner {
+      animation: none;
+    }
+
+    .feedback-trigger:hover {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  declare global {
+    interface Window {
+      gtag?: (...args: any[]) => void;
+    }
+  }
+
+  class FeedbackWidget {
+    private widget: HTMLElement;
+    private trigger: HTMLElement;
+    private modal: HTMLElement;
+    private form: HTMLFormElement;
+    private isSubmitting = false;
+    private authManager: any = null;
+
+    constructor() {
+      this.widget = document.getElementById("feedback-widget")!;
+      this.trigger = document.getElementById("feedback-trigger")!;
+      this.modal = document.getElementById("feedback-modal")!;
+      this.form = document.getElementById("feedback-form") as HTMLFormElement;
+
+      this.init();
+    }
+
+    private async init() {
+      if (!this.shouldShowOnCurrentPage()) {
+        this.widget.style.display = "none";
+        return;
+      }
+
+      await this.initializeAuth();
+      this.setupEventListeners();
+      this.setupCharacterCounter();
+      this.prefillEmailIfLoggedIn();
+    }
+
+    private async initializeAuth() {
+      try {
+        // Use your existing auth manager singleton
+        const { authManager } = await import("../../lib/auth.js");
+        this.authManager = authManager;
+
+        // Initialize if not already done
+        await this.authManager.initialize();
+
+        console.log("📡 Auth manager initialized for feedback");
+      } catch (error) {
+        console.error("❌ Failed to initialize auth manager:", error);
+      }
+    }
+
+    private shouldShowOnCurrentPage(): boolean {
+      const showPages = JSON.parse(this.widget.dataset.showPages || "[]");
+      const hidePages = JSON.parse(this.widget.dataset.hidePages || "[]");
+      const currentPath = window.location.pathname;
+
+      if (
+        hidePages.length > 0 &&
+        hidePages.some((page: string) => currentPath.includes(page))
+      ) {
+        return false;
+      }
+
+      if (
+        showPages.length > 0 &&
+        !showPages.some((page: string) => currentPath.includes(page))
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
+    private prefillEmailIfLoggedIn() {
+      if (this.authManager) {
+        const user = this.authManager.getUser();
+        if (user?.email) {
+          const emailInput = document.getElementById(
+            "feedback-email"
+          ) as HTMLInputElement;
+          if (emailInput) {
+            emailInput.value = user.email;
+            emailInput.readOnly = true;
+            emailInput.style.backgroundColor = "#f3f4f6";
+          }
+        }
+      }
+    }
+
+    private setupEventListeners() {
+      this.trigger.addEventListener("click", () => this.openModal());
+      document
+        .getElementById("close-feedback")
+        ?.addEventListener("click", () => this.closeModal());
+      document
+        .getElementById("cancel-feedback")
+        ?.addEventListener("click", () => this.closeModal());
+      document
+        .getElementById("close-success")
+        ?.addEventListener("click", () => this.closeModal());
+
+      this.modal.addEventListener("click", (e) => {
+        if (e.target === this.modal) this.closeModal();
+      });
+
+      this.form.addEventListener("submit", (e) => this.handleSubmit(e));
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && this.modal.style.display !== "none") {
+          this.closeModal();
+        }
+      });
+    }
+
+    private setupCharacterCounter() {
+      const textarea = document.getElementById(
+        "feedback-message"
+      ) as HTMLTextAreaElement;
+      const counter = document.getElementById("char-count")!;
+
+      textarea.addEventListener("input", () => {
+        const length = textarea.value.length;
+        counter.textContent = length.toString();
+
+        if (length > 900) {
+          counter.style.color = "#ef4444";
+        } else if (length > 800) {
+          counter.style.color = "#f59e0b";
+        } else {
+          counter.style.color = "#6b7280";
+        }
+      });
+    }
+
+    private openModal() {
+      this.modal.style.display = "flex";
+      document.body.style.overflow = "hidden";
+
+      this.form.reset();
+      (document.getElementById("feedback-form") as HTMLElement).style.display =
+        "block";
+      (
+        document.getElementById("feedback-success") as HTMLElement
+      ).style.display = "none";
+
+      // Re-prefill email if user is logged in
+      this.prefillEmailIfLoggedIn();
+
+      setTimeout(() => {
+        (document.getElementById("feedback-type") as HTMLSelectElement).focus();
+      }, 100);
+    }
+
+    private closeModal() {
+      this.modal.style.display = "none";
+      document.body.style.overflow = "";
+    }
+
+    private async handleSubmit(e: Event) {
+      e.preventDefault();
+
+      if (this.isSubmitting || !this.authManager) return;
+
+      this.isSubmitting = true;
+      this.setSubmitButtonLoading(true);
+
+      try {
+        const formData = new FormData(this.form);
+        const includeUrl = (
+          document.getElementById("include-url") as HTMLInputElement
+        ).checked;
+        const email = (
+          document.getElementById("feedback-email") as HTMLInputElement
+        ).value;
+
+        // Get current user info if available
+        const currentUser = this.authManager.getUser();
+        const currentProfile = this.authManager.getProfile();
+
+        const feedbackData = {
+          type: formData.get("type") as string,
+          message: formData.get("message") as string,
+          user_id: currentUser?.id || null, // Use actual user ID if logged in
+          metadata: {
+            url: includeUrl ? window.location.href : null,
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            referrer: document.referrer || null,
+            email: email || null,
+            viewport: {
+              width: window.innerWidth,
+              height: window.innerHeight,
+            },
+            language: navigator.language,
+            user_info: currentUser
+              ? {
+                  display_name:
+                    currentProfile?.display_name ||
+                    this.authManager.getDisplayName(),
+                  is_authenticated: true,
+                }
+              : {
+                  is_authenticated: false,
+                },
+          },
+        };
+
+        // Validate required fields
+        if (!feedbackData.type || !feedbackData.message) {
+          throw new Error("Please select feedback type and enter your message");
+        }
+
+        console.log("📝 Submitting feedback...", {
+          type: feedbackData.type,
+          hasEmail: !!email,
+          hasUrl: !!feedbackData.metadata.url,
+          isAuthenticated: !!currentUser,
+        });
+
+        // Use the existing Supabase client from auth manager
+        const { data, error } = await this.authManager.supabase
+          .from("feedback")
+          .insert({
+            type: feedbackData.type,
+            message: feedbackData.message,
+            user_id: feedbackData.user_id,
+            metadata: feedbackData.metadata,
+            status: "pending",
+            created_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error("❌ Database error:", error);
+          throw new Error(`Submission failed: ${error.message}`);
+        }
+
+        console.log("✅ Feedback submitted successfully:", data);
+        this.showSuccessState();
+
+        // Track successful submission
+        if (typeof window !== "undefined" && window.gtag) {
+          window.gtag("event", "feedback_submitted", {
+            feedback_type: feedbackData.type,
+            has_email: !!email,
+            is_authenticated: !!currentUser,
+          });
+        }
+      } catch (error: any) {
+        console.error("❌ Feedback submission error:", error);
+        this.showError(
+          error.message || "Failed to submit feedback. Please try again."
+        );
+      } finally {
+        this.isSubmitting = false;
+        this.setSubmitButtonLoading(false);
+      }
+    }
+
+    private setSubmitButtonLoading(loading: boolean) {
+      const button = document.getElementById(
+        "submit-feedback"
+      ) as HTMLButtonElement;
+      const text = button.querySelector(".btn-text") as HTMLElement;
+      const spinner = button.querySelector(".btn-spinner") as HTMLElement;
+
+      button.disabled = loading;
+      text.style.display = loading ? "none" : "block";
+      spinner.style.display = loading ? "flex" : "none";
+    }
+
+    private showSuccessState() {
+      (document.getElementById("feedback-form") as HTMLElement).style.display =
+        "none";
+      (
+        document.getElementById("feedback-success") as HTMLElement
+      ).style.display = "block";
+    }
+
+    private showError(message: string) {
+      const notification = document.createElement("div");
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; padding: 12px 16px;
+        background: #ef4444; color: white; border-radius: 8px;
+        font-size: 14px; font-weight: 500; z-index: 10001;
+        animation: slideIn 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 5000);
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => new FeedbackWidget());
+  } else {
+    new FeedbackWidget();
+  }
+</script>

@@ -1,0 +1,120 @@
+---
+// src/pages/legal/index.astro
+import Layout from "../../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+const legalPages = await getCollection("legal");
+---
+
+<Layout
+  title="Legal Information | TinkByte"
+  description="Access TinkByte's legal documents including privacy policy, terms of service, and cookie policy."
+>
+  <div class="legal-directory-container">
+    <div class="max-w-4xl mx-auto py-12 lg:py-16 px-4 sm:px-6">
+      <header class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          Legal Information
+        </h1>
+        <p class="text-xl text-gray-600 dark:text-gray-300">
+          Important legal documents and policies for TinkByte
+        </p>
+      </header>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {
+          legalPages.map((page) => (
+            <a href={`/legal/${page.slug}`} class="legal-card group">
+              <div class="legal-card-icon">
+                {page.data.pageType === "privacy" && (
+                  <i class="fas fa-shield-alt" />
+                )}
+                {page.data.pageType === "terms" && (
+                  <i class="fas fa-file-contract" />
+                )}
+                {page.data.pageType === "cookies" && (
+                  <i class="fas fa-cookie-bite" />
+                )}
+                {page.data.pageType === "contact" && (
+                  <i class="fas fa-envelope" />
+                )}
+              </div>
+              <h3 class="legal-card-title">{page.data.title}</h3>
+              <p class="legal-card-description">{page.data.description}</p>
+              <div class="legal-card-meta">
+                Last updated:{" "}
+                {new Date(
+                  page.data.updatedDate || page.data.pubDate
+                ).toLocaleDateString()}
+              </div>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .legal-directory-container {
+    font-family: "Space Grotesk", sans-serif;
+    background: var(--color-bg-primary);
+    min-height: 100vh;
+  }
+
+  .legal-card {
+    display: block;
+    padding: 2rem;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .legal-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-color: #243788;
+  }
+
+  .legal-card-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #243788, #3b82f6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .legal-card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .legal-card-description {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+
+  .legal-card-meta {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

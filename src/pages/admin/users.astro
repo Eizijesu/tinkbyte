@@ -1,415 +1,130 @@
 ---
-// src/pages/admin/users.astro - FIXED with complete data fetching
+// src/pages/admin/users.astro - SINGLETON VERSION
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import { supabase } from "../../lib/supabase";
 
-// Enhanced interface with all missing fields
-interface UserProfile {
-  id: string;
-  display_name?: string;
-  email?: string;
-  avatar_type?: string;
-  avatar_preset_id?: number;
-  avatar_url?: string;
-  reputation_score?: number;
-  is_admin?: boolean;
-  is_blocked?: boolean;
-  membership_type?: string;
-  total_comments?: number;
-  total_reads?: number;
-  total_articles?: number;
-  followers_count?: number;
-  following_count?: number;
-  created_at: string;
-  emailVerified?: boolean;
-  lastLogin?: string;
-  membershipType?: string;
-  authStatus?: string;
-  // New engagement fields
-  articleLikes?: number;
-  articleSaves?: number;
-  articleFollows?: number;
-  authorFollows?: number;
-  categoryFollows?: number;
-  newsletterSubscriptions?: number;
-}
-
-// Get profiles with comprehensive data
-const { data: profiles, error: profilesError } = await supabase
-  .from("profiles")
-  .select("*")
-  .order("created_at", { ascending: false })
-  .limit(100);
-
-let users: UserProfile[] = [];
-
-if (profiles && profiles.length > 0) {
-  users = await Promise.all(
-    profiles.map(async (profile): Promise<UserProfile> => {
-      let email = "No email available";
-      let emailVerified = false;
-      let lastLogin: string | null = null;
-      let authStatus = "unknown";
-
-      try {
-        // Get auth user data
-        const { data: authData, error: authError } =
-          await supabase.auth.admin.getUserById(profile.id);
-
-        if (authData?.user && !authError) {
-          const authUser = authData.user;
-          email = authUser.email || "No email";
-          emailVerified = !!authUser.email_confirmed_at;
-          lastLogin = authUser.last_sign_in_at || null;
-          authStatus = "active";
-        }
-      } catch (error) {
-        console.log(`Failed to fetch auth data for user ${profile.id}:`, error);
-      }
-
-      // Get comprehensive engagement data
-      const [
-        { count: articleLikes },
-        { count: articleSaves },
-        { count: articleFollows },
-        { count: authorFollows },
-        { count: categoryFollows },
-        { count: newsletterSubs },
-      ] = await Promise.all([
-        supabase
-          .from("article_likes")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", profile.id),
-        supabase
-          .from("article_saves")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", profile.id),
-        supabase
-          .from("article_follows")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", profile.id),
-        supabase
-          .from("author_follows")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", profile.id),
-        supabase
-          .from("user_category_follows")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", profile.id),
-        supabase
-          .from("newsletter_subscriptions")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", profile.id),
-      ]);
-
-      return {
-        ...profile,
-        email,
-        emailVerified,
-        lastLogin: lastLogin || undefined,
-        authStatus,
-        membershipType: profile.membership_type || "free",
-        // Enhanced engagement data
-        articleLikes: articleLikes || 0,
-        articleSaves: articleSaves || 0,
-        articleFollows: articleFollows || 0,
-        authorFollows: authorFollows || 0,
-        categoryFollows: categoryFollows || 0,
-        newsletterSubscriptions: newsletterSubs || 0,
-      } as UserProfile;
-    })
-  );
-}
-
+// Static data - will be populated by client-side JavaScript
+const users = [];
 const stats = {
-  total: users.length || 0,
-  premium: users.filter((u) => u.membershipType === "premium").length || 0,
-  blocked: users.filter((u) => u.is_blocked).length || 0,
-  admins: users.filter((u) => u.is_admin).length || 0,
-  newThisMonth:
-    users.filter((u) => {
-      const created = new Date(u.created_at);
-      const monthAgo = new Date();
-      monthAgo.setMonth(monthAgo.getMonth() - 1);
-      return created > monthAgo;
-    }).length || 0,
-  withEmail: users.filter((u) => u.email !== "No email available").length || 0,
+  total: 0,
+  premium: 0,
+  blocked: 0,
+  admins: 0,
+  newThisMonth: 0,
+  withEmail: 0,
 };
 ---
 
 <AdminLayout title="User Management - TinkByte Admin">
   <div class="users-container">
-    <!-- Enhanced Header with Export -->
-    <div class="users-header">
-      <div class="header-content">
-        <h1>User Management</h1>
-        <p>Manage user accounts, permissions, and engagement data</p>
-      </div>
-      <div class="header-actions">
-        <button class="export-btn" id="export-users-btn">
-          <i class="fas fa-download"></i>
-          Export Users
-        </button>
-        <button class="refresh-btn" id="refresh-users-btn">
-          <i class="fas fa-sync-alt"></i>
-          Refresh
-        </button>
-      </div>
+    <!-- Loading State -->
+    <div id="loading-state" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Loading users...</p>
     </div>
 
-    <!-- Enhanced Stats -->
-    <div class="users-stats">
-      <div class="stat-item">
-        <span class="stat-number">{stats.total}</span>
-        <span class="stat-label">Total Users</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">{stats.withEmail}</span>
-        <span class="stat-label">With Email</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">{stats.admins}</span>
-        <span class="stat-label">Admins</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">{stats.blocked}</span>
-        <span class="stat-label">Blocked</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-number">{stats.newThisMonth}</span>
-        <span class="stat-label">New This Month</span>
-      </div>
-    </div>
-
-    <!-- Search and Filters -->
-    <div class="users-controls">
-      <div class="search-section">
-        <div class="search-input-container">
-          <i class="fas fa-search"></i>
-          <input type="text" placeholder="Search users..." id="user-search" />
+    <!-- Main Content (hidden until loaded) -->
+    <div id="main-content" class="main-content" style="display: none;">
+      <!-- Enhanced Header with Export -->
+      <div class="users-header">
+        <div class="header-content">
+          <h1>User Management</h1>
+          <p>Manage user accounts, permissions, and engagement data</p>
+        </div>
+        <div class="header-actions">
+          <button class="export-btn" id="export-users-btn">
+            <i class="fas fa-download"></i>
+            Export Users
+          </button>
+          <button class="refresh-btn" id="refresh-users-btn">
+            <i class="fas fa-sync-alt"></i>
+            Refresh
+          </button>
         </div>
       </div>
-      <div class="filter-section">
-        <select id="status-filter" class="filter-select">
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="blocked">Blocked</option>
-          <option value="admin">Admin</option>
-        </select>
-        <select id="membership-filter" class="filter-select">
-          <option value="">All Memberships</option>
-          <option value="free">Free</option>
-          <option value="premium">Premium</option>
-        </select>
-        <select id="engagement-filter" class="filter-select">
-          <option value="">All Engagement</option>
-          <option value="high">High Engagement</option>
-          <option value="medium">Medium Engagement</option>
-          <option value="low">Low Engagement</option>
-        </select>
+
+      <!-- Enhanced Stats -->
+      <div class="users-stats">
+        <div class="stat-item">
+          <span class="stat-number" id="stat-total">0</span>
+          <span class="stat-label">Total Users</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="stat-with-email">0</span>
+          <span class="stat-label">With Email</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="stat-admins">0</span>
+          <span class="stat-label">Admins</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="stat-blocked">0</span>
+          <span class="stat-label">Blocked</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="stat-new-month">0</span>
+          <span class="stat-label">New This Month</span>
+        </div>
       </div>
-    </div>
+      <button class="fix-emails-btn" id="fix-emails-btn">
+        <i class="fas fa-wrench"></i>
+        Fix Google User Emails
+      </button>
 
-    <!-- Enhanced Users Table -->
-    <div class="users-table-container">
-      <table class="users-table">
-        <thead>
-          <tr>
-            <th><input type="checkbox" id="select-all" /></th>
-            <th>User</th>
-            <th>Email</th>
-            <th>Membership</th>
-            <th>Status</th>
-            <th>Joined</th>
-            <th>Engagement</th>
-            <th>Following</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            users.map((user, index) => {
-              const displayName =
-                user.display_name ||
-                user.email?.split("@")[0] ||
-                `User ${index + 1}`;
-              const userEmail = user.email || "No email";
+      <!-- Search and Filters -->
+      <div class="users-controls">
+        <div class="search-section">
+          <div class="search-input-container">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search users..." id="user-search" />
+          </div>
+        </div>
+        <div class="filter-section">
+          <select id="status-filter" class="filter-select">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
+            <option value="admin">Admin</option>
+          </select>
+          <select id="membership-filter" class="filter-select">
+            <option value="">All Memberships</option>
+            <option value="free">Free</option>
+            <option value="premium">Premium</option>
+          </select>
+          <select id="engagement-filter" class="filter-select">
+            <option value="">All Engagement</option>
+            <option value="high">High Engagement</option>
+            <option value="medium">Medium Engagement</option>
+            <option value="low">Low Engagement</option>
+          </select>
+        </div>
+      </div>
 
-              return (
-                <tr class="user-row" data-user-id={user.id}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      class="user-select"
-                      value={user.id}
-                    />
-                  </td>
-                  <td>
-                    <div class="user-info">
-                      <div class="user-avatar">
-                        {user.avatar_type === "preset" ? (
-                          <div
-                            class="avatar-preset"
-                            data-preset={user.avatar_preset_id || 1}
-                          >
-                            {displayName.charAt(0).toUpperCase()}
-                          </div>
-                        ) : user.avatar_url ? (
-                          <img src={user.avatar_url} alt="Avatar" />
-                        ) : (
-                          <div class="avatar-preset">
-                            {displayName.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      <div class="user-details">
-                        <span class="user-name">{displayName}</span>
-                        <span class="user-reputation">
-                          Rep: {user.reputation_score || 0}
-                        </span>
-                        {user.is_admin && (
-                          <span class="admin-badge">ADMIN</span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="email-info">
-                      <span class="user-email">{userEmail}</span>
-                      {user.emailVerified && (
-                        <i
-                          class="fas fa-check-circle verified-icon"
-                          title="Email Verified"
-                        />
-                      )}
-                      {user.email === "No email available" && (
-                        <i
-                          class="fas fa-exclamation-triangle warning-icon"
-                          title="No Email"
-                        />
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <span class={`membership-badge ${user.membershipType}`}>
-                      {(user.membershipType || "free").charAt(0).toUpperCase() +
-                        (user.membershipType || "free").slice(1)}
-                    </span>
-                  </td>
-                  <td>
-                    <span
-                      class={`status-badge ${user.is_blocked ? "blocked" : user.is_admin ? "admin" : "active"}`}
-                    >
-                      {user.is_blocked
-                        ? "Blocked"
-                        : user.is_admin
-                          ? "Admin"
-                          : "Active"}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="date-info">
-                      <span class="join-date">
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </span>
-                      {user.lastLogin && (
-                        <span class="last-login">
-                          Last: {new Date(user.lastLogin).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <div class="engagement-stats">
-                      <span class="engagement-item" title="Comments">
-                        <i class="fas fa-comment" /> {user.total_comments || 0}
-                      </span>
-                      <span class="engagement-item" title="Articles Read">
-                        <i class="fas fa-eye" /> {user.total_reads || 0}
-                      </span>
-                      <span class="engagement-item" title="Article Likes">
-                        <i class="fas fa-heart" /> {user.articleLikes || 0}
-                      </span>
-                      <span class="engagement-item" title="Article Saves">
-                        <i class="fas fa-bookmark" /> {user.articleSaves || 0}
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="following-stats">
-                      <span class="following-item" title="Following Authors">
-                        <i class="fas fa-user-plus" /> {user.authorFollows || 0}
-                      </span>
-                      <span class="following-item" title="Following Categories">
-                        <i class="fas fa-tags" /> {user.categoryFollows || 0}
-                      </span>
-                      <span
-                        class="following-item"
-                        title="Newsletter Subscriptions"
-                      >
-                        <i class="fas fa-envelope" />{" "}
-                        {user.newsletterSubscriptions || 0}
-                      </span>
-                      <span class="following-item" title="Followers">
-                        <i class="fas fa-users" /> {user.followers_count || 0}
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="user-actions">
-                      <button
-                        class="action-btn view"
-                        data-action="view"
-                        data-user-id={user.id}
-                        title="View Profile"
-                      >
-                        <i class="fas fa-eye" />
-                      </button>
-                      <button
-                        class="action-btn edit"
-                        data-action="edit"
-                        data-user-id={user.id}
-                        title="Edit User"
-                      >
-                        <i class="fas fa-edit" />
-                      </button>
-                      {user.is_blocked ? (
-                        <button
-                          class="action-btn unblock"
-                          data-action="unblock"
-                          data-user-id={user.id}
-                          title="Unblock User"
-                        >
-                          <i class="fas fa-unlock" />
-                        </button>
-                      ) : (
-                        <button
-                          class="action-btn block"
-                          data-action="block"
-                          data-user-id={user.id}
-                          title="Block User"
-                        >
-                          <i class="fas fa-ban" />
-                        </button>
-                      )}
-                      {!user.is_admin && (
-                        <button
-                          class="action-btn delete"
-                          data-action="delete"
-                          data-user-id={user.id}
-                          title="Delete User"
-                        >
-                          <i class="fas fa-trash" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })
-          }
-        </tbody>
-      </table>
+      <!-- Enhanced Users Table -->
+      <div class="users-table-container">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="select-all" /></th>
+              <th>User</th>
+              <th>Email</th>
+              <th>Membership</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th>Engagement</th>
+              <th>Following</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body">
+            <!-- Users will be populated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination-container" id="pagination-container">
+        <!-- Pagination controls will be populated by JavaScript -->
+      </div>
     </div>
 
     <!-- Enhanced User Details Modal -->
@@ -526,992 +241,416 @@ const stats = {
         </button>
       </div>
     </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="error-state" style="display: none;">
+      <div class="error-content">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Failed to load users</h3>
+        <p id="error-message">An error occurred while loading user data.</p>
+        <button class="retry-btn" id="retry-btn">
+          <i class="fas fa-redo"></i>
+          Retry
+        </button>
+      </div>
+    </div>
   </div>
 </AdminLayout>
 
-<style>
-  .users-container {
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
-  .success-info {
-    background: rgba(35, 134, 54, 0.1);
-    border: 1px solid #238636;
-    color: #238636;
-    padding: 1rem;
-    margin-bottom: 2rem;
-    font-size: 0.875rem;
-  }
-
-  .success-info h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1rem;
-  }
-
-  .success-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-
-  .success-details p {
-    margin: 0;
-    padding: 0.25rem 0;
-    border-bottom: 1px solid rgba(35, 134, 54, 0.2);
-  }
-
-  .users-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #21262d;
-  }
-
-  .users-header h1 {
-    color: #f0f6fc;
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
-  }
-
-  .users-stats {
-    display: flex;
-    gap: 2rem;
-  }
-
-  .stat-item {
-    text-align: center;
-    padding: 1rem;
-    background: #161b22;
-    border: 1px solid #21262d;
-    min-width: 80px;
-  }
-
-  .stat-number {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #4285f4;
-    display: block;
-  }
-
-  .stat-label {
-    font-size: 0.875rem;
-    color: #8b949e;
-    margin-top: 0.25rem;
-  }
-
-  .users-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding: 1rem;
-    background: #161b22;
-    border: 1px solid #21262d;
-  }
-
-  .search-section {
-    flex: 1;
-    max-width: 400px;
-  }
-
-  .search-input-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-
-  .search-input-container i {
-    position: absolute;
-    left: 12px;
-    color: #8b949e;
-    z-index: 1;
-  }
-
-  #user-search {
-    width: 100%;
-    padding: 0.75rem 1rem 0.75rem 2.5rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    color: #f0f6fc;
-    font-size: 0.875rem;
-  }
-
-  #user-search:focus {
-    outline: none;
-    border-color: #4285f4;
-  }
-
-  #user-search::placeholder {
-    color: #8b949e;
-  }
-
-  .filter-section {
-    display: flex;
-    gap: 1rem;
-  }
-
-  .filter-select {
-    padding: 0.75rem 1rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    color: #f0f6fc;
-    font-size: 0.875rem;
-    cursor: pointer;
-  }
-
-  .filter-select:focus {
-    outline: none;
-    border-color: #4285f4;
-  }
-
-  .users-table-container {
-    background: #161b22;
-    border: 1px solid #21262d;
-    overflow-x: auto;
-  }
-
-  .users-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .users-table th {
-    background: #21262d;
-    color: #f0f6fc;
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-    font-size: 0.875rem;
-    border-bottom: 1px solid #30363d;
-  }
-
-  .users-table td {
-    padding: 1rem;
-    border-bottom: 1px solid #21262d;
-    vertical-align: middle;
-  }
-
-  .user-row:hover {
-    background: #21262d;
-  }
-
-  .user-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .user-avatar {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-  }
-
-  .user-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .avatar-preset {
-    width: 100%;
-    height: 100%;
-    background: #4285f4;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1.25rem;
-  }
-
-  .user-details {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .user-name {
-    color: #f0f6fc;
-    font-weight: 600;
-    font-size: 0.875rem;
-  }
-
-  .user-reputation {
-    color: #8b949e;
-    font-size: 0.75rem;
-  }
-
-  .admin-badge {
-    background: rgba(66, 133, 244, 0.1);
-    color: #4285f4;
-    padding: 0.125rem 0.5rem;
-    font-size: 0.625rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border: 1px solid #4285f4;
-    margin-top: 0.25rem;
-    align-self: flex-start;
-  }
-
-  .user-email {
-    color: #8b949e;
-    font-size: 0.875rem;
-  }
-
-  .verified-icon {
-    color: #10b981;
-    margin-left: 0.5rem;
-    font-size: 0.875rem;
-  }
-
-  .membership-badge {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .membership-badge.free {
-    background: rgba(139, 148, 158, 0.1);
-    color: #8b949e;
-    border: 1px solid #8b949e;
-  }
-
-  .membership-badge.premium {
-    background: rgba(66, 133, 244, 0.1);
-    color: #4285f4;
-    border: 1px solid #4285f4;
-  }
-
-  .status-badge {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .status-badge.active {
-    background: rgba(35, 134, 54, 0.1);
-    color: #238636;
-    border: 1px solid #238636;
-  }
-
-  .status-badge.admin {
-    background: rgba(66, 133, 244, 0.1);
-    color: #4285f4;
-    border: 1px solid #4285f4;
-  }
-
-  .status-badge.blocked {
-    background: rgba(218, 54, 51, 0.1);
-    color: #da3633;
-    border: 1px solid #da3633;
-  }
-
-  .join-date {
-    color: #8b949e;
-    font-size: 0.875rem;
-  }
-
-  .last-login {
-    display: block;
-    font-size: 0.75rem;
-    color: #8b949e;
-    margin-top: 0.25rem;
-  }
-
-  .activity-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .activity-item {
-    color: #8b949e;
-    font-size: 0.75rem;
-  }
-
-  .user-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .action-btn {
-    width: 32px;
-    height: 32px;
-    background: #21262d;
-    border: 1px solid #30363d;
-    color: #f0f6fc;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-  }
-
-  .action-btn:hover {
-    background: #30363d;
-  }
-
-  .action-btn.view:hover {
-    background: #4285f4;
-    border-color: #4285f4;
-  }
-
-  .action-btn.edit:hover {
-    background: #fb8500;
-    border-color: #fb8500;
-  }
-
-  .action-btn.block:hover {
-    background: #da3633;
-    border-color: #da3633;
-  }
-
-  .action-btn.unblock:hover {
-    background: #238636;
-    border-color: #238636;
-  }
-
-  .action-btn.delete:hover {
-    background: #da3633;
-    border-color: #da3633;
-  }
-
-  .bulk-actions-bar {
-    position: fixed;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #161b22;
-    border: 1px solid #21262d;
-    padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-  }
-
-  .bulk-info {
-    color: #f0f6fc;
-    font-weight: 600;
-  }
-
-  .bulk-buttons {
-    display: flex;
-    gap: 1rem;
-  }
-
-  .bulk-btn {
-    padding: 0.5rem 1rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    color: #f0f6fc;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .bulk-btn:hover {
-    background: #30363d;
-  }
-
-  .bulk-btn.block-bulk:hover {
-    background: #da3633;
-    border-color: #da3633;
-  }
-
-  .bulk-btn.unblock-bulk:hover {
-    background: #238636;
-    border-color: #238636;
-  }
-
-  .bulk-btn.delete-bulk:hover {
-    background: #da3633;
-    border-color: #da3633;
-  }
-
-  /* Modal Styles */
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-
-  .modal-content {
-    background: #161b22;
-    border: 1px solid #21262d;
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem;
-    border-bottom: 1px solid #21262d;
-  }
-
-  .modal-header h3 {
-    color: #f0f6fc;
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0;
-  }
-
-  .modal-close {
-    background: none;
-    border: none;
-    color: #8b949e;
-    cursor: pointer;
-    font-size: 1.25rem;
-    padding: 0.5rem;
-  }
-
-  .modal-close:hover {
-    color: #f0f6fc;
-  }
-
-  .modal-body {
-    padding: 1.5rem;
-  }
-
-  /* Light mode styles */
-  :global(.light) .success-info {
-    background: rgba(34, 197, 94, 0.1);
-    border-color: #22c55e;
-    color: #059669;
-  }
-
-  :global(.light) .success-details p {
-    border-bottom-color: rgba(34, 197, 94, 0.2);
-  }
-
-  :global(.light) .users-header {
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .users-header h1 {
-    color: #1f2937;
-  }
-
-  :global(.light) .stat-item {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .stat-number {
-    color: #243788;
-  }
-
-  :global(.light) .stat-label {
-    color: #6b7280;
-  }
-
-  :global(.light) .users-controls {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) #user-search {
-    background: white;
-    border-color: #d1d5db;
-    color: #1f2937;
-  }
-
-  :global(.light) #user-search:focus {
-    border-color: #243788;
-  }
-
-  :global(.light) .filter-select {
-    background: white;
-    border-color: #d1d5db;
-    color: #1f2937;
-  }
-
-  :global(.light) .filter-select:focus {
-    border-color: #243788;
-  }
-
-  :global(.light) .users-table-container {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .users-table th {
-    background: #f8fafc;
-    color: #1f2937;
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .users-table td {
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .user-row:hover {
-    background: #f8fafc;
-  }
-
-  :global(.light) .user-name {
-    color: #1f2937;
-  }
-
-  :global(.light) .user-reputation {
-    color: #6b7280;
-  }
-
-  :global(.light) .admin-badge {
-    background: rgba(36, 55, 136, 0.1);
-    color: #243788;
-    border-color: #243788;
-  }
-
-  :global(.light) .user-email {
-    color: #6b7280;
-  }
-
-  :global(.light) .join-date {
-    color: #6b7280;
-  }
-
-  :global(.light) .last-login {
-    color: #6b7280;
-  }
-
-  :global(.light) .activity-item {
-    color: #6b7280;
-  }
-
-  :global(.light) .action-btn {
-    background: white;
-    border-color: #d1d5db;
-    color: #1f2937;
-  }
-
-  :global(.light) .action-btn:hover {
-    background: #f9fafb;
-  }
-
-  :global(.light) .bulk-actions-bar {
-    background: white;
-    border-color: #e2e8f0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  :global(.light) .bulk-info {
-    color: #1f2937;
-  }
-
-  :global(.light) .bulk-btn {
-    background: white;
-    border-color: #d1d5db;
-    color: #1f2937;
-  }
-
-  :global(.light) .bulk-btn:hover {
-    background: #f9fafb;
-  }
-
-  :global(.light) .modal-content {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .modal-header {
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .modal-header h3 {
-    color: #1f2937;
-  }
-
-  :global(.light) .modal-close {
-    color: #6b7280;
-  }
-
-  :global(.light) .modal-close:hover {
-    color: #1f2937;
-  }
-
-  /* Mobile responsive */
-  @media (max-width: 768px) {
-    .users-header {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: flex-start;
-    }
-
-    .users-stats {
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .users-controls {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: stretch;
-    }
-
-    .filter-section {
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .users-table-container {
-      overflow-x: scroll;
-    }
-
-    .users-table {
-      min-width: 800px;
-    }
-
-    .bulk-actions-bar {
-      left: 1rem;
-      right: 1rem;
-      transform: none;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .bulk-buttons {
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .success-details {
-      grid-template-columns: 1fr;
-    }
-  }
-  /* Enhanced styles for new features */
-  .users-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #21262d;
-  }
-
-  .header-content h1 {
-    color: #f0f6fc;
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0 0 0.5rem 0;
-  }
-
-  .header-content p {
-    color: #8b949e;
-    margin: 0;
-    font-size: 1rem;
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 1rem;
-  }
-
-  .export-btn,
-  .refresh-btn {
-    padding: 0.75rem 1rem;
-    border: 1px solid #30363d;
-    background: #21262d;
-    color: #f0f6fc;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-  }
-
-  .export-btn:hover {
-    background: #238636;
-    border-color: #238636;
-  }
-
-  .refresh-btn:hover {
-    background: #4285f4;
-    border-color: #4285f4;
-  }
-
-  .email-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .verified-icon {
-    color: #238636;
-    font-size: 0.875rem;
-  }
-
-  .warning-icon {
-    color: #fb8500;
-    font-size: 0.875rem;
-  }
-
-  .engagement-stats,
-  .following-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .engagement-item,
-  .following-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #8b949e;
-    font-size: 0.75rem;
-  }
-
-  .engagement-item i,
-  .following-item i {
-    width: 12px;
-    color: #4285f4;
-  }
-
-  .export-options {
-    padding: 1rem 0;
-  }
-
-  .export-options h4 {
-    color: #f0f6fc;
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 1.5rem 0 1rem 0;
-  }
-
-  .export-format-options,
-  .export-data-options {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .export-option {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: #f0f6fc;
-    cursor: pointer;
-    padding: 0.5rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    transition: all 0.2s ease;
-  }
-
-  .export-option:hover {
-    background: #30363d;
-  }
-
-  .export-option input {
-    accent-color: #4285f4;
-  }
-
-  .export-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #21262d;
-  }
-
-  .cancel-btn {
-    padding: 0.75rem 1.5rem;
-    background: transparent;
-    color: #8b949e;
-    border: 1px solid #30363d;
-    cursor: pointer;
-    font-weight: 500;
-  }
-
-  .cancel-btn:hover {
-    background: #21262d;
-    color: #f0f6fc;
-  }
-
-  /* Light mode styles for new elements */
-  :global(.light) .header-content h1 {
-    color: #1f2937;
-  }
-
-  :global(.light) .header-content p {
-    color: #6b7280;
-  }
-
-  :global(.light) .export-btn,
-  :global(.light) .refresh-btn {
-    background: white;
-    border-color: #d1d5db;
-    color: #1f2937;
-  }
-
-  :global(.light) .export-btn:hover {
-    background: #059669;
-    border-color: #059669;
-    color: white;
-  }
-
-  :global(.light) .refresh-btn:hover {
-    background: #243788;
-    border-color: #243788;
-    color: white;
-  }
-
-  :global(.light) .export-options h4 {
-    color: #1f2937;
-  }
-
-  :global(.light) .export-option {
-    background: #f9fafb;
-    border-color: #e2e8f0;
-    color: #1f2937;
-  }
-
-  :global(.light) .export-option:hover {
-    background: #e2e8f0;
-  }
-
-  :global(.light) .export-actions {
-    border-top-color: #e2e8f0;
-  }
-
-  :global(.light) .cancel-btn {
-    color: #6b7280;
-    border-color: #d1d5db;
-  }
-
-  :global(.light) .cancel-btn:hover {
-    background: #f9fafb;
-    color: #1f2937;
-  }
-
-  /* Mobile responsive enhancements */
-  @media (max-width: 768px) {
-    .users-header {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: flex-start;
-    }
-
-    .header-actions {
-      width: 100%;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .export-btn,
-    .refresh-btn {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .engagement-stats,
-    .following-stats {
-      gap: 0.125rem;
-    }
-
-    .engagement-item,
-    .following-item {
-      font-size: 0.6875rem;
-    }
-
-    .export-format-options,
-    .export-data-options {
-      gap: 0.5rem;
-    }
-
-    .export-actions {
-      flex-direction: column;
-    }
-
-    .cancel-btn,
-    .export-btn {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-</style>
-
 <script>
-  import { ClientAdminAuth } from "../../lib/admin/auth.js";
+  import { adminAPIManager } from "../../lib/admin-api.js";
+  import { adminAuthManager } from "../../lib/admin/auth.js";
+  import { AuthState } from "../../lib/supabase.js";
 
   // Enhanced TypeScript interfaces
-  interface UserActionElement extends HTMLButtonElement {
-    dataset: DOMStringMap;
-  }
-
-  interface UserSelectElement extends HTMLInputElement {
-    value: string;
-    checked: boolean;
-  }
-
-  interface UserData {
+  interface UserWithEngagement {
     id: string;
     display_name?: string;
     email?: string;
-    membership_type?: string;
+    avatar_type?: string;
+    avatar_preset_id?: number;
+    avatar_url?: string;
+    reputation_score?: number;
     is_admin?: boolean;
     is_blocked?: boolean;
-    created_at: string;
-    lastLogin?: string;
+    membership_type?: string;
     total_comments?: number;
     total_reads?: number;
-    articleLikes?: number;
-    articleSaves?: number;
-    authorFollows?: number;
-    categoryFollows?: number;
-    newsletterSubscriptions?: number;
     followers_count?: number;
-    reputation_score?: number;
+    following_count?: number;
+    created_at: string;
+    engagement?:
+      | {
+          articleLikes?: number;
+          articleSaves?: number;
+          articleFollows?: number;
+          authorFollows?: number;
+          categoryFollows?: number;
+          newsletterSubscriptions?: number;
+          totalComments?: number;
+          commentLikes?: number;
+          commentBookmarks?: number;
+        }
+      | Record<string, any>;
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    setupUserManagement();
-    setupExportFunctionality();
+  interface PaginationInfo {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  }
+
+  // Global state
+  let currentUsers: UserWithEngagement[] = [];
+  let currentPagination: PaginationInfo = {
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  };
+  let currentFilters = {
+    search: "",
+    status: "",
+    membership: "",
+    engagement: "",
+    sortBy: "created_at",
+    sortOrder: "desc",
+  };
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      console.log("🚀 Initializing user management...");
+      await initializeUserManagement();
+    } catch (error) {
+      console.error("❌ Failed to initialize user management:", error);
+      showError(`Failed to initialize user management: ${error.message}`);
+    }
   });
 
-  function setupUserManagement() {
-    // Search functionality
+  async function initializeUserManagement() {
+    try {
+      // Initialize singleton managers
+      await adminAuthManager.initialize();
+      await adminAPIManager.initialize();
+
+      console.log("✅ Singleton managers initialized");
+
+      // Wait for auth state to be ready
+      const authState = AuthState.getInstance();
+      await authState.initialize();
+
+      // Load users data
+      await loadUsers();
+      setupEventListeners();
+
+      console.log("✅ User management initialized successfully");
+    } catch (error) {
+      console.error("❌ Failed to initialize user management:", error);
+      throw error;
+    }
+  }
+
+  async function loadUsers(options = {}) {
+    try {
+      console.log("🔄 Loading users...");
+      showLoading(true);
+
+      const loadOptions = {
+        ...currentFilters,
+        page: currentPagination.page,
+        limit: currentPagination.limit,
+        ...options,
+      };
+
+      console.log("📋 Load options:", loadOptions);
+
+      // Use singleton manager instead of static AdminAPI
+      const response = await adminAPIManager.getUsers(loadOptions);
+      console.log("📊 API response:", response);
+
+      if (response.success && response.data) {
+        currentUsers = response.data;
+        currentPagination = response.pagination || currentPagination;
+
+        console.log(`📈 Loaded ${currentUsers.length} users`);
+
+        renderUsers();
+        renderPagination();
+        updateStats();
+
+        showLoading(false);
+        showMainContent(true);
+      } else {
+        throw new Error(response.error || "Failed to load users");
+      }
+    } catch (error) {
+      console.error("❌ Error loading users:", error);
+      showError(`Failed to load users: ${error.message}`);
+      showLoading(false);
+    }
+  }
+
+  function renderUsers() {
+    const tbody = document.getElementById("users-table-body");
+    if (!tbody) {
+      console.error("❌ Users table body not found");
+      return;
+    }
+
+    if (currentUsers.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="9" class="no-users">
+            <div style="text-align: center; padding: 2rem; color: #8b949e;">
+              <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+              <p>No users found matching your criteria</p>
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = currentUsers
+      .map((user, index) => {
+        const displayName =
+          user.display_name || user.email?.split("@")[0] || `User ${index + 1}`;
+
+        // Enhanced email handling
+        const userEmail = user.email;
+        const emailDisplay = userEmail || "No email available";
+        const hasEmail = userEmail && userEmail !== "No email available";
+
+        // Debug info for email source
+        const emailSource = (user as any).email_source || "unknown";
+
+        const engagement = user.engagement || {};
+
+        return `
+          <tr class="user-row" data-user-id="${user.id}">
+            <td>
+              <input type="checkbox" class="user-select" value="${user.id}" />
+            </td>
+            <td>
+              <div class="user-info">
+                <div class="user-avatar">
+                  ${
+                    user.avatar_type === "google" && user.avatar_url
+                      ? `<img src="${user.avatar_url}" alt="Avatar" />`
+                      : user.avatar_type === "uploaded" && user.avatar_url
+                        ? `<img src="${user.avatar_url}" alt="Avatar" />`
+                        : `<div class="avatar-preset" data-preset="${user.avatar_preset_id || 1}">
+                      ${displayName.charAt(0).toUpperCase()}
+                    </div>`
+                  }
+                </div>
+                <div class="user-details">
+                  <span class="user-name">${displayName}</span>
+                  <span class="user-reputation">Rep: ${user.reputation_score || 0}</span>
+                  ${user.is_admin ? '<span class="admin-badge">ADMIN</span>' : ""}
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="email-info">
+                <span class="user-email" title="Email source: ${emailSource}">${emailDisplay}</span>
+                ${
+                  hasEmail
+                    ? '<i class="fas fa-check-circle verified-icon" title="Email Available"></i>'
+                    : '<i class="fas fa-exclamation-triangle warning-icon" title="No Email"></i>'
+                }
+              </div>
+            </td>
+            <td>
+              <span class="membership-badge ${user.membership_type || "free"}">
+                ${(user.membership_type || "free").charAt(0).toUpperCase() + (user.membership_type || "free").slice(1)}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge ${user.is_blocked ? "blocked" : user.is_admin ? "admin" : "active"}">
+                ${user.is_blocked ? "Blocked" : user.is_admin ? "Admin" : "Active"}
+              </span>
+            </td>
+            <td>
+              <div class="date-info">
+                <span class="join-date">${new Date(user.created_at).toLocaleDateString()}</span>
+              </div>
+            </td>
+            <td>
+              <div class="engagement-stats">
+                <span class="engagement-item" title="Comments">
+                  <i class="fas fa-comment"></i> ${user.total_comments || 0}
+                </span>
+                <span class="engagement-item" title="Articles Read">
+                  <i class="fas fa-eye"></i> ${user.total_reads || 0}
+                </span>
+                <span class="engagement-item" title="Article Likes">
+                  <i class="fas fa-heart"></i> ${(engagement as any)?.articleLikes || 0}
+                </span>
+                <span class="engagement-item" title="Article Saves">
+                  <i class="fas fa-bookmark"></i> ${(engagement as any)?.articleSaves || 0}
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="following-stats">
+                <span class="following-item" title="Following Authors">
+                  <i class="fas fa-user-plus"></i> ${(engagement as any)?.authorFollows || 0}
+                </span>
+                <span class="following-item" title="Following Categories">
+                  <i class="fas fa-tags"></i> ${(engagement as any)?.categoryFollows || 0}
+                </span>
+                <span class="following-item" title="Newsletter Subscriptions">
+                  <i class="fas fa-envelope"></i> ${(engagement as any)?.newsletterSubscriptions || 0}
+                </span>
+                <span class="following-item" title="Followers">
+                  <i class="fas fa-users"></i> ${user.followers_count || 0}
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="user-actions">
+                <button class="action-btn view" data-action="view" data-user-id="${user.id}" title="View Profile">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="action-btn edit" data-action="edit" data-user-id="${user.id}" title="Edit User">
+                  <i class="fas fa-edit"></i>
+                </button>
+                ${
+                  user.is_blocked
+                    ? `<button class="action-btn unblock" data-action="unblock" data-user-id="${user.id}" title="Unblock User">
+                    <i class="fas fa-unlock"></i>
+                  </button>`
+                    : `<button class="action-btn block" data-action="block" data-user-id="${user.id}" title="Block User">
+                    <i class="fas fa-ban"></i>
+                  </button>`
+                }
+                ${
+                  !user.is_admin
+                    ? `<button class="action-btn delete" data-action="delete" data-user-id="${user.id}" title="Delete User">
+                    <i class="fas fa-trash"></i>
+                  </button>`
+                    : ""
+                }
+              </div>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    // Attach action button event listeners
+    attachActionButtonListeners();
+    console.log(`✅ Rendered ${currentUsers.length} users`);
+  }
+
+  function renderPagination() {
+    const container = document.getElementById("pagination-container");
+    if (!container) return;
+
+    const { page, totalPages, hasNext, hasPrev, total, limit } =
+      currentPagination;
+
+    if (totalPages <= 1) {
+      container.style.display = "none";
+      return;
+    }
+
+    container.style.display = "flex";
+
+    const startItem = (page - 1) * limit + 1;
+    const endItem = Math.min(page * limit, total);
+
+    container.innerHTML = `
+      <button class="pagination-btn" id="prev-page" ${!hasPrev ? "disabled" : ""}>
+        <i class="fas fa-chevron-left"></i> Previous
+      </button>
+      
+      <div class="pagination-info">
+        Showing ${startItem}-${endItem} of ${total} users (Page ${page} of ${totalPages})
+      </div>
+      
+      <button class="pagination-btn" id="next-page" ${!hasNext ? "disabled" : ""}>
+        Next <i class="fas fa-chevron-right"></i>
+      </button>
+    `;
+
+    // Attach pagination event listeners
+    const prevBtn = document.getElementById("prev-page");
+    const nextBtn = document.getElementById("next-page");
+
+    prevBtn?.addEventListener("click", () => {
+      if (hasPrev) {
+        currentPagination.page = page - 1;
+        loadUsers();
+      }
+    });
+
+    nextBtn?.addEventListener("click", () => {
+      if (hasNext) {
+        currentPagination.page = page + 1;
+        loadUsers();
+      }
+    });
+  }
+
+  function updateStats() {
+    const stats = {
+      total: currentPagination.total,
+      withEmail: currentUsers.filter(
+        (u) => u.email && u.email !== "No email available"
+      ).length,
+      admins: currentUsers.filter((u) => u.is_admin).length,
+      blocked: currentUsers.filter((u) => u.is_blocked).length,
+      newThisMonth: currentUsers.filter((u) => {
+        const created = new Date(u.created_at);
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        return created > monthAgo;
+      }).length,
+    };
+
+    // Update stat displays
+    const statElements = {
+      "stat-total": stats.total,
+      "stat-with-email": stats.withEmail,
+      "stat-admins": stats.admins,
+      "stat-blocked": stats.blocked,
+      "stat-new-month": stats.newThisMonth,
+    };
+
+    Object.entries(statElements).forEach(([id, value]) => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.textContent = value.toString();
+      }
+    });
+
+    console.log("📊 Stats updated:", stats);
+  }
+
+  function setupEventListeners() {
+    console.log("🎯 Setting up event listeners...");
+
+    // Search functionality with debounce
     const searchInput = document.getElementById(
       "user-search"
     ) as HTMLInputElement;
     searchInput?.addEventListener(
       "input",
       debounce((e) => {
-        const searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
-        filterUsers(searchTerm);
+        currentFilters.search = (e.target as HTMLInputElement).value;
+        currentPagination.page = 1;
+        loadUsers();
       }, 300)
     );
 
-    // Enhanced filter functionality
+    // Filter functionality
     const statusFilter = document.getElementById(
       "status-filter"
     ) as HTMLSelectElement;
@@ -1522,314 +661,293 @@ const stats = {
       "engagement-filter"
     ) as HTMLSelectElement;
 
-    statusFilter?.addEventListener("change", applyFilters);
-    membershipFilter?.addEventListener("change", applyFilters);
-    engagementFilter?.addEventListener("change", applyFilters);
+    statusFilter?.addEventListener("change", () => {
+      currentFilters.status = statusFilter.value;
+      currentPagination.page = 1;
+      loadUsers();
+    });
+
+    membershipFilter?.addEventListener("change", () => {
+      currentFilters.membership = membershipFilter.value;
+      currentPagination.page = 1;
+      loadUsers();
+    });
+
+    engagementFilter?.addEventListener("change", () => {
+      currentFilters.engagement = engagementFilter.value;
+      applyClientSideEngagementFilter(engagementFilter.value);
+    });
 
     // Refresh functionality
     const refreshBtn = document.getElementById("refresh-users-btn");
     refreshBtn?.addEventListener("click", () => {
-      window.location.reload();
+      console.log("🔄 Refreshing users...");
+      currentPagination.page = 1;
+      loadUsers();
     });
 
     // Select all functionality
     const selectAllCheckbox = document.getElementById(
       "select-all"
     ) as HTMLInputElement;
-    const userCheckboxes = document.querySelectorAll(
-      ".user-select"
-    ) as NodeListOf<UserSelectElement>;
-
     selectAllCheckbox?.addEventListener("change", () => {
+      const userCheckboxes = document.querySelectorAll(
+        ".user-select"
+      ) as NodeListOf<HTMLInputElement>;
       userCheckboxes.forEach((checkbox) => {
         checkbox.checked = selectAllCheckbox.checked;
       });
       updateBulkActionsBar();
     });
 
-    userCheckboxes.forEach((checkbox) => {
-      checkbox.addEventListener("change", updateBulkActionsBar);
+    // Fix Google emails button
+    const fixEmailsBtn = document.getElementById("fix-emails-btn");
+    fixEmailsBtn?.addEventListener("click", async () => {
+      if (
+        !confirm(
+          "This will update profiles for users who signed up with Google. Continue?"
+        )
+      ) {
+        return;
+      }
+
+      const btn = fixEmailsBtn as HTMLButtonElement;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fixing...';
+
+      try {
+        // Use singleton manager
+        const result = await adminAPIManager.fixGoogleUserEmails();
+
+        if (result.success) {
+          showNotification(
+            result.message || "Google user emails fixed!",
+            "success"
+          );
+          // Reload users to see the changes
+          await loadUsers();
+        } else {
+          showNotification(result.error || "Failed to fix emails", "error");
+        }
+      } catch (error) {
+        console.error("Fix emails error:", error);
+        showNotification("An error occurred", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-wrench"></i> Fix Google User Emails';
+      }
     });
 
-    // User action buttons with enhanced confirmation
-    const actionButtons = document.querySelectorAll(
-      ".action-btn"
-    ) as NodeListOf<UserActionElement>;
+    // Setup other components
+    setupBulkActions();
+    setupModals();
+    setupExportFunctionality();
+
+    // Error retry
+    const retryBtn = document.getElementById("retry-btn");
+    retryBtn?.addEventListener("click", () => {
+      console.log("🔄 Retrying...");
+      loadUsers();
+    });
+
+    console.log("✅ Event listeners setup complete");
+  }
+
+  function attachActionButtonListeners() {
+    const actionButtons = document.querySelectorAll(".action-btn");
     actionButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const action = button.dataset.action;
-        const userId = button.dataset.userId;
+      button.addEventListener("click", async (e) => {
+        const target = e.currentTarget as HTMLButtonElement;
+        const action = target.dataset.action;
+        const userId = target.dataset.userId;
 
         if (action && userId) {
-          if (action === "delete") {
-            if (
-              confirm(
-                "⚠️ Are you sure you want to DELETE this user? This action CANNOT be undone and will remove all their data permanently."
-              )
-            ) {
-              handleUserAction(userId, action);
-            }
-          } else if (action === "block") {
-            if (
-              confirm(
-                "Are you sure you want to BLOCK this user? They will lose access to their account."
-              )
-            ) {
-              handleUserAction(userId, action);
-            }
-          } else {
-            handleUserAction(userId, action);
-          }
+          await handleUserAction(userId, action);
         }
       });
     });
 
-    // Modal functionality
-    const modal = document.getElementById("user-modal");
-    const modalClose = document.getElementById("modal-close");
-
-    modalClose?.addEventListener("click", () => {
-      if (modal) modal.style.display = "none";
-    });
-
-    modal?.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.style.display = "none";
-      }
-    });
-
-    // Bulk action buttons
-    setupBulkActions();
-  }
-
-  function setupExportFunctionality() {
-    const exportBtn = document.getElementById("export-users-btn");
-    const exportModal = document.getElementById("export-modal");
-    const exportModalClose = document.getElementById("export-modal-close");
-    const exportCancel = document.getElementById("export-cancel");
-    const exportConfirm = document.getElementById("export-confirm");
-
-    exportBtn?.addEventListener("click", () => {
-      if (exportModal) exportModal.style.display = "flex";
-    });
-
-    exportModalClose?.addEventListener("click", () => {
-      if (exportModal) exportModal.style.display = "none";
-    });
-
-    exportCancel?.addEventListener("click", () => {
-      if (exportModal) exportModal.style.display = "none";
-    });
-
-    exportModal?.addEventListener("click", (e) => {
-      if (e.target === exportModal) {
-        exportModal.style.display = "none";
-      }
-    });
-
-    exportConfirm?.addEventListener("click", () => {
-      performExport();
-      if (exportModal) exportModal.style.display = "none";
+    // User select checkboxes
+    const userCheckboxes = document.querySelectorAll(".user-select");
+    userCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", updateBulkActionsBar);
     });
   }
 
-  function performExport() {
-    const format =
-      (
-        document.querySelector(
-          'input[name="export-format"]:checked'
-        ) as HTMLInputElement
-      )?.value || "csv";
-    const selectedData = Array.from(
-      document.querySelectorAll('input[name="export-data"]:checked')
-    ).map((input) => (input as HTMLInputElement).value);
+  async function handleUserAction(userId: string, action: string) {
+    console.log(`🎯 Handling user action: ${action} for user ${userId}`);
 
-    // Get user data from table
-    const userRows = document.querySelectorAll(".user-row");
-    const userData: any[] = [];
+    if (action === "view") {
+      await showUserDetails(userId);
+      return;
+    }
 
-    userRows.forEach((row) => {
-      const userId = row.getAttribute("data-user-id");
-      const userName = row.querySelector(".user-name")?.textContent || "";
-      const userEmail = row.querySelector(".user-email")?.textContent || "";
-      const userStatus = row.querySelector(".status-badge")?.textContent || "";
-      const userMembership =
-        row.querySelector(".membership-badge")?.textContent || "";
-      const joinDate = row.querySelector(".join-date")?.textContent || "";
-      const lastLogin = row.querySelector(".last-login")?.textContent || "";
+    if (action === "edit") {
+      showNotification("Edit user functionality coming soon", "info");
+      return;
+    }
 
-      // Get engagement data
-      const engagementItems = row.querySelectorAll(".engagement-item");
-      const followingItems = row.querySelectorAll(".following-item");
-
-      const user: any = {};
-
-      if (selectedData.includes("basic")) {
-        user.id = userId;
-        user.name = userName;
-        user.email = userEmail;
-        user.status = userStatus;
-        user.membership = userMembership;
+    // Confirmation for destructive actions
+    if (action === "delete") {
+      if (
+        !confirm(
+          "⚠️ Are you sure you want to DELETE this user? This action CANNOT be undone and will remove all their data permanently."
+        )
+      ) {
+        return;
       }
-
-      if (selectedData.includes("engagement")) {
-        user.comments =
-          engagementItems[0]?.textContent?.match(/\d+/)?.[0] || "0";
-        user.reads = engagementItems[1]?.textContent?.match(/\d+/)?.[0] || "0";
-        user.likes = engagementItems[2]?.textContent?.match(/\d+/)?.[0] || "0";
-        user.saves = engagementItems[3]?.textContent?.match(/\d+/)?.[0] || "0";
+    } else if (action === "block") {
+      if (
+        !confirm(
+          "Are you sure you want to BLOCK this user? They will lose access to their account."
+        )
+      ) {
+        return;
       }
+    }
 
-      if (selectedData.includes("following")) {
-        user.following_authors =
-          followingItems[0]?.textContent?.match(/\d+/)?.[0] || "0";
-        user.following_categories =
-          followingItems[1]?.textContent?.match(/\d+/)?.[0] || "0";
-        user.newsletter_subs =
-          followingItems[2]?.textContent?.match(/\d+/)?.[0] || "0";
-        user.followers =
-          followingItems[3]?.textContent?.match(/\d+/)?.[0] || "0";
+    try {
+      console.log(`🔄 Performing ${action} on user ${userId}...`);
+
+      // Use singleton manager
+      const response = await adminAPIManager.performUserAction(userId, action);
+
+      if (response.success) {
+        showNotification(
+          response.message || `User ${action}ed successfully`,
+          "success"
+        );
+
+        if (action === "delete") {
+          currentUsers = currentUsers.filter((u) => u.id !== userId);
+          renderUsers();
+          updateStats();
+        } else {
+          await loadUsers();
+        }
+      } else {
+        showNotification(response.error || `Failed to ${action} user`, "error");
       }
-
-      if (selectedData.includes("dates")) {
-        user.joined_date = joinDate;
-        user.last_login = lastLogin || "Never";
-      }
-
-      userData.push(user);
-    });
-
-    // Generate and download file
-    if (format === "csv") {
-      downloadCSV(userData);
-    } else {
-      downloadJSON(userData);
+    } catch (error) {
+      console.error(`❌ User action error:`, error);
+      showNotification("An error occurred", "error");
     }
   }
 
-  function downloadCSV(data: any[]) {
-    if (data.length === 0) return;
+  async function showUserDetails(userId: string) {
+    try {
+      console.log(`👤 Loading details for user ${userId}...`);
 
-    const headers = Object.keys(data[0]);
-    const csvContent = [
-      headers.join(","),
-      ...data.map((row) =>
-        headers.map((header) => `"${row[header] || ""}"`).join(",")
-      ),
-    ].join("\n");
+      // Use singleton manager
+      const response = await adminAPIManager.getUserDetails(userId);
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `tinkbyte-users-${new Date().toISOString().split("T")[0]}.csv`
-    );
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+      if (response.success && response.data) {
+        const user = response.data;
+        const modal = document.getElementById("user-modal");
+        const modalBody = document.getElementById("modal-body");
 
-  function downloadJSON(data: any[]) {
-    const jsonContent = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonContent], {
-      type: "application/json;charset=utf-8;",
-    });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `tinkbyte-users-${new Date().toISOString().split("T")[0]}.json`
-    );
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+        if (modal && modalBody) {
+          modalBody.innerHTML = `
+            <div class="user-detail-section">
+              <h4>Basic Information</h4>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <span class="detail-label">Name:</span>
+                  <span class="detail-value">${user.display_name || "Not set"}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Email:</span>
+                  <span class="detail-value">${user.email || "No email"}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Status:</span>
+                  <span class="detail-value">${user.is_blocked ? "Blocked" : user.is_admin ? "Admin" : "Active"}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Membership:</span>
+                  <span class="detail-value">${(user.membership_type || "free").charAt(0).toUpperCase() + (user.membership_type || "free").slice(1)}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Joined:</span>
+                  <span class="detail-value">${new Date(user.created_at).toLocaleDateString()}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Reputation:</span>
+                  <span class="detail-value">${user.reputation_score || 0}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="user-detail-section">
+              <h4>Engagement Statistics</h4>
+              <div class="engagement-grid">
+                <div class="engagement-detail">
+                  <i class="fas fa-comment"></i> Comments: ${user.total_comments || 0}
+                </div>
+                <div class="engagement-detail">
+                  <i class="fas fa-eye"></i> Articles Read: ${user.total_reads || 0}
+                </div>
+                <div class="engagement-detail">
+                  <i class="fas fa-heart"></i> Article Likes: ${user.engagement?.articleLikes || 0}
+                </div>
+                <div class="engagement-detail">
+                  <i class="fas fa-bookmark"></i> Article Saves: ${user.engagement?.articleSaves || 0}
+                </div>
+              </div>
+            </div>
 
-  function applyFilters() {
-    const statusFilter = document.getElementById(
-      "status-filter"
-    ) as HTMLSelectElement;
-    const membershipFilter = document.getElementById(
-      "membership-filter"
-    ) as HTMLSelectElement;
-    const engagementFilter = document.getElementById(
-      "engagement-filter"
-    ) as HTMLSelectElement;
+            <div class="user-detail-section">
+              <h4>Following & Connections</h4>
+              <div class="following-grid">
+                <div class="following-detail">
+                  <i class="fas fa-user-plus"></i> Following Authors: ${user.engagement?.authorFollows || 0}
+                </div>
+                <div class="following-detail">
+                  <i class="fas fa-tags"></i> Following Categories: ${user.engagement?.categoryFollows || 0}
+                </div>
+                <div class="following-detail">
+                  <i class="fas fa-envelope"></i> Newsletter Subscriptions: ${user.engagement?.newsletterSubscriptions || 0}
+                </div>
+                <div class="following-detail">
+                  <i class="fas fa-users"></i> Followers: ${user.followers_count || 0}
+                </div>
+              </div>
+            </div>
 
-    const statusValue = statusFilter?.value || "";
-    const membershipValue = membershipFilter?.value || "";
-    const engagementValue = engagementFilter?.value || "";
-
-    const userRows = document.querySelectorAll(".user-row");
-
-    userRows.forEach((row) => {
-      const statusBadge = row.querySelector(".status-badge");
-      const membershipBadge = row.querySelector(".membership-badge");
-      const engagementItems = row.querySelectorAll(".engagement-item");
-
-      const statusMatch =
-        !statusValue ||
-        statusBadge?.textContent?.toLowerCase().includes(statusValue);
-      const membershipMatch =
-        !membershipValue ||
-        membershipBadge?.textContent?.toLowerCase().includes(membershipValue);
-
-      let engagementMatch = true;
-      if (engagementValue) {
-        const totalEngagement = Array.from(engagementItems).reduce(
-          (sum, item) => {
-            const count = parseInt(item.textContent?.match(/\d+/)?.[0] || "0");
-            return sum + count;
-          },
-          0
-        );
-
-        if (engagementValue === "high") engagementMatch = totalEngagement > 50;
-        else if (engagementValue === "medium")
-          engagementMatch = totalEngagement > 10 && totalEngagement <= 50;
-        else if (engagementValue === "low")
-          engagementMatch = totalEngagement <= 10;
+            ${
+              user.engagement?.comments && user.engagement.comments.length > 0
+                ? `
+              <div class="user-detail-section">
+                <h4>Recent Comments</h4>
+                <div class="recent-comments">
+                  ${user.engagement.comments
+                    .slice(0, 5)
+                    .map(
+                      (comment: any) => `
+                    <div class="comment-preview">
+                      <p class="comment-content">${comment.content.substring(0, 100)}${comment.content.length > 100 ? "..." : ""}</p>
+                      <small class="comment-meta">
+                        On: ${comment.articles?.title || "Unknown Article"}  
+                        ${new Date(comment.created_at).toLocaleDateString()}
+                      </small>
+                    </div>
+                  `
+                    )
+                    .join("")}
+                </div>
+              </div>
+            `
+                : ""
+            }
+          `;
+          modal.style.display = "flex";
+        }
+      } else {
+        showNotification("Failed to load user details", "error");
       }
-
-      (row as HTMLElement).style.display =
-        statusMatch && membershipMatch && engagementMatch ? "" : "none";
-    });
-  }
-
-  function filterUsers(searchTerm: string) {
-    const userRows = document.querySelectorAll(".user-row");
-    userRows.forEach((row) => {
-      const userName =
-        row.querySelector(".user-name")?.textContent?.toLowerCase() || "";
-      const userEmail =
-        row.querySelector(".user-email")?.textContent?.toLowerCase() || "";
-      const matches =
-        userName.includes(searchTerm) || userEmail.includes(searchTerm);
-      (row as HTMLElement).style.display = matches ? "" : "none";
-    });
-  }
-
-  function updateBulkActionsBar() {
-    const selectedCheckboxes = document.querySelectorAll(
-      ".user-select:checked"
-    ) as NodeListOf<UserSelectElement>;
-    const bulkActionsBar = document.getElementById(
-      "bulk-actions-bar"
-    ) as HTMLElement;
-    const selectedCount = document.getElementById(
-      "selected-count"
-    ) as HTMLElement;
-
-    if (selectedCheckboxes.length > 0) {
-      bulkActionsBar.style.display = "flex";
-      selectedCount.textContent = selectedCheckboxes.length.toString();
-    } else {
-      bulkActionsBar.style.display = "none";
+    } catch (error) {
+      console.error("❌ Error loading user details:", error);
+      showNotification("Failed to load user details", "error");
     }
   }
 
@@ -1881,229 +999,271 @@ const stats = {
     });
   }
 
-  function exportSelectedUsers(userIds: string[]) {
-    // Filter table data for selected users only
-    const userRows = document.querySelectorAll(".user-row");
-    const selectedData: any[] = [];
+  async function bulkUserAction(userIds: string[], action: string) {
+    try {
+      console.log(`🔄 Bulk ${action} for ${userIds.length} users...`);
 
-    userRows.forEach((row) => {
-      const userId = row.getAttribute("data-user-id");
-      if (userIds.includes(userId!)) {
-        const userName = row.querySelector(".user-name")?.textContent || "";
-        const userEmail = row.querySelector(".user-email")?.textContent || "";
-        const userStatus =
-          row.querySelector(".status-badge")?.textContent || "";
-        const userMembership =
-          row.querySelector(".membership-badge")?.textContent || "";
-        const joinDate = row.querySelector(".join-date")?.textContent || "";
+      // Use singleton manager
+      const response = await adminAPIManager.bulkUserAction(userIds, action);
 
-        selectedData.push({
-          id: userId,
-          name: userName,
-          email: userEmail,
-          status: userStatus,
-          membership: userMembership,
-          joined_date: joinDate,
-        });
+      if (response.success) {
+        showNotification(
+          response.message ||
+            `${userIds.length} users ${action}ed successfully`,
+          "success"
+        );
+
+        if (action === "delete") {
+          currentUsers = currentUsers.filter((u) => !userIds.includes(u.id));
+          renderUsers();
+          updateStats();
+        } else {
+          await loadUsers();
+        }
+
+        const bulkActionsBar = document.getElementById("bulk-actions-bar");
+        if (bulkActionsBar) bulkActionsBar.style.display = "none";
+
+        const selectAllCheckbox = document.getElementById(
+          "select-all"
+        ) as HTMLInputElement;
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+      } else {
+        showNotification(
+          response.error || `Failed to ${action} users`,
+          "error"
+        );
       }
-    });
-
-    downloadCSV(selectedData);
+    } catch (error) {
+      console.error("❌ Bulk user action error:", error);
+      showNotification("An error occurred", "error");
+    }
   }
 
   function getSelectedUsers(): string[] {
     const checkboxes = document.querySelectorAll(
       ".user-select:checked"
-    ) as NodeListOf<UserSelectElement>;
+    ) as NodeListOf<HTMLInputElement>;
     return Array.from(checkboxes).map((checkbox) => checkbox.value);
   }
 
-  async function handleUserAction(userId: string, action: string) {
-    if (action === "view") {
-      showUserDetails(userId);
-      return;
-    }
+  function updateBulkActionsBar() {
+    const selectedCheckboxes = document.querySelectorAll(
+      ".user-select:checked"
+    );
+    const bulkActionsBar = document.getElementById("bulk-actions-bar");
+    const selectedCount = document.getElementById("selected-count");
 
-    try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
-      }
-
-      const session = JSON.parse(adminSession);
-      const response = await fetch("/api/admin/users/action", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify({ userId, action }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        showNotification(
-          result.message || `User ${action}ed successfully`,
-          "success"
-        );
-        if (action === "delete") {
-          const userRow = document.querySelector(
-            `[data-user-id="${userId}"]`
-          ) as HTMLElement;
-          userRow?.remove();
-        } else {
-          setTimeout(() => window.location.reload(), 1000);
-        }
-      } else {
-        showNotification(result.error || `Failed to ${action} user`, "error");
-      }
-    } catch (error) {
-      console.error("User action error:", error);
-      showNotification("An error occurred", "error");
+    if (selectedCheckboxes.length > 0) {
+      if (bulkActionsBar) bulkActionsBar.style.display = "flex";
+      if (selectedCount)
+        selectedCount.textContent = selectedCheckboxes.length.toString();
+    } else {
+      if (bulkActionsBar) bulkActionsBar.style.display = "none";
     }
   }
 
-  function showUserDetails(userId: string) {
-    const userRow = document.querySelector(`[data-user-id="${userId}"]`);
-    if (!userRow) return;
+  function setupModals() {
+    const userModal = document.getElementById("user-modal");
+    const userModalClose = document.getElementById("modal-close");
 
-    const userName =
-      userRow.querySelector(".user-name")?.textContent || "Unknown User";
-    const userEmail =
-      userRow.querySelector(".user-email")?.textContent || "No email";
-    const userStatus =
-      userRow.querySelector(".status-badge")?.textContent || "Unknown";
-    const userMembership =
-      userRow.querySelector(".membership-badge")?.textContent || "Free";
-    const joinDate =
-      userRow.querySelector(".join-date")?.textContent || "Unknown";
-    const lastLogin =
-      userRow.querySelector(".last-login")?.textContent || "Never";
+    userModalClose?.addEventListener("click", () => {
+      if (userModal) userModal.style.display = "none";
+    });
 
-    // Get engagement data
-    const engagementItems = userRow.querySelectorAll(".engagement-item");
-    const followingItems = userRow.querySelectorAll(".following-item");
+    userModal?.addEventListener("click", (e) => {
+      if (e.target === userModal) {
+        userModal.style.display = "none";
+      }
+    });
 
-    const modal = document.getElementById("user-modal");
-    const modalBody = document.getElementById("modal-body");
+    const exportModal = document.getElementById("export-modal");
+    const exportModalClose = document.getElementById("export-modal-close");
+    const exportCancel = document.getElementById("export-cancel");
 
-    if (modal && modalBody) {
-      modalBody.innerHTML = `
-        <div class="user-detail-section">
-          <h4>Basic Information</h4>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <span class="detail-label">Name:</span>
-              <span class="detail-value">${userName}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Email:</span>
-              <span class="detail-value">${userEmail}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Status:</span>
-              <span class="detail-value">${userStatus}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Membership:</span>
-              <span class="detail-value">${userMembership}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Joined:</span>
-              <span class="detail-value">${joinDate}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Last Login:</span>
-              <span class="detail-value">${lastLogin}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="user-detail-section">
-          <h4>Engagement Summary</h4>
-          <div class="engagement-grid">
-            ${Array.from(engagementItems)
-              .map(
-                (item) => `
-              <div class="engagement-detail">
-                ${item.innerHTML}
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        </div>
+    exportModalClose?.addEventListener("click", () => {
+      if (exportModal) exportModal.style.display = "none";
+    });
 
-        <div class="user-detail-section">
-          <h4>Following & Connections</h4>
-          <div class="following-grid">
-            ${Array.from(followingItems)
-              .map(
-                (item) => `
-              <div class="following-detail">
-                ${item.innerHTML}
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        </div>
-      `;
-      modal.style.display = "flex";
+    exportCancel?.addEventListener("click", () => {
+      if (exportModal) exportModal.style.display = "none";
+    });
+
+    exportModal?.addEventListener("click", (e) => {
+      if (e.target === exportModal) {
+        exportModal.style.display = "none";
+      }
+    });
+  }
+
+  function setupExportFunctionality() {
+    const exportBtn = document.getElementById("export-users-btn");
+    const exportModal = document.getElementById("export-modal");
+    const exportConfirm = document.getElementById("export-confirm");
+
+    exportBtn?.addEventListener("click", () => {
+      if (exportModal) exportModal.style.display = "flex";
+    });
+
+    exportConfirm?.addEventListener("click", async () => {
+      await performExport();
+      if (exportModal) exportModal.style.display = "none";
+    });
+  }
+
+  async function performExport() {
+    try {
+      console.log("📥 Starting export...");
+      const format =
+        (
+          document.querySelector(
+            'input[name="export-format"]:checked'
+          ) as HTMLInputElement
+        )?.value || "csv";
+
+      // Use singleton manager
+      const response = await adminAPIManager.exportUsers(
+        format as "csv" | "json"
+      );
+
+      if (response.success && response.data) {
+        if (format === "csv") {
+          downloadFile(
+            response.data as string,
+            `tinkbyte-users-${new Date().toISOString().split("T")[0]}.csv`,
+            "text/csv"
+          );
+        } else {
+          const jsonData = JSON.stringify(response.data, null, 2);
+          downloadFile(
+            jsonData,
+            `tinkbyte-users-${new Date().toISOString().split("T")[0]}.json`,
+            "application/json"
+          );
+        }
+
+        showNotification("Export completed successfully", "success");
+      } else {
+        showNotification(response.error || "Export failed", "error");
+      }
+    } catch (error) {
+      console.error("❌ Export error:", error);
+      showNotification("Export failed", "error");
     }
   }
 
-  async function bulkUserAction(userIds: string[], action: string) {
-    try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
+  function exportSelectedUsers(userIds: string[]) {
+    console.log(`📥 Exporting ${userIds.length} selected users...`);
+
+    const selectedData = currentUsers
+      .filter((user) => userIds.includes(user.id))
+      .map((user) => ({
+        id: user.id,
+        name: user.display_name || "Unknown",
+        email: user.email || "No email",
+        status: user.is_blocked
+          ? "Blocked"
+          : user.is_admin
+            ? "Admin"
+            : "Active",
+        membership: user.membership_type || "free",
+        joined_date: new Date(user.created_at).toLocaleDateString(),
+        comments: user.total_comments || 0,
+        reads: user.total_reads || 0,
+        reputation: user.reputation_score || 0,
+      }));
+
+    const csvContent = [
+      "ID,Name,Email,Status,Membership,Joined Date,Comments,Reads,Reputation",
+      ...selectedData.map(
+        (row) =>
+          `"${row.id}","${row.name}","${row.email}","${row.status}","${row.membership}","${row.joined_date}","${row.comments}","${row.reads}","${row.reputation}"`
+      ),
+    ].join("\n");
+
+    downloadFile(
+      csvContent,
+      `tinkbyte-selected-users-${new Date().toISOString().split("T")[0]}.csv`,
+      "text/csv"
+    );
+  }
+
+  function downloadFile(
+    content: string,
+    filename: string,
+    contentType: string
+  ) {
+    const blob = new Blob([content], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    console.log(`💾 Downloaded: ${filename}`);
+  }
+
+  function applyClientSideEngagementFilter(engagementValue: string) {
+    const userRows = document.querySelectorAll(".user-row");
+
+    userRows.forEach((row) => {
+      if (!engagementValue) {
+        (row as HTMLElement).style.display = "";
+        return;
       }
 
-      const session = JSON.parse(adminSession);
-      const response = await fetch("/api/admin/users/bulk-action", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`,
+      const engagementItems = row.querySelectorAll(".engagement-item");
+      const totalEngagement = Array.from(engagementItems).reduce(
+        (sum, item) => {
+          const count = parseInt(item.textContent?.match(/\d+/)?.[0] || "0");
+          return sum + count;
         },
-        body: JSON.stringify({ userIds, action }),
-      });
+        0
+      );
 
-      const result = await response.json();
+      let showRow = false;
+      if (engagementValue === "high") showRow = totalEngagement > 50;
+      else if (engagementValue === "medium")
+        showRow = totalEngagement > 10 && totalEngagement <= 50;
+      else if (engagementValue === "low") showRow = totalEngagement <= 10;
 
-      if (result.success) {
-        showNotification(
-          result.message || `${userIds.length} users ${action}ed successfully`,
-          "success"
-        );
-        if (action === "delete") {
-          userIds.forEach((userId) => {
-            const userRow = document.querySelector(
-              `[data-user-id="${userId}"]`
-            ) as HTMLElement;
-            userRow?.remove();
-          });
-        } else {
-          setTimeout(() => window.location.reload(), 1000);
-        }
-        const bulkActionsBar = document.getElementById(
-          "bulk-actions-bar"
-        ) as HTMLElement;
-        bulkActionsBar.style.display = "none";
-      } else {
-        showNotification(result.error || `Failed to ${action} users`, "error");
-      }
-    } catch (error) {
-      console.error("Bulk user action error:", error);
-      showNotification("An error occurred", "error");
+      (row as HTMLElement).style.display = showRow ? "" : "none";
+    });
+  }
+
+  // Utility functions
+  function showLoading(show: boolean) {
+    const loadingState = document.getElementById("loading-state");
+    if (loadingState) {
+      loadingState.style.display = show ? "flex" : "none";
     }
+  }
+
+  function showMainContent(show: boolean) {
+    const mainContent = document.getElementById("main-content");
+    if (mainContent) {
+      mainContent.style.display = show ? "block" : "none";
+    }
+  }
+
+  function showError(message: string) {
+    const errorState = document.getElementById("error-state");
+    const errorMessage = document.getElementById("error-message");
+
+    if (errorState) errorState.style.display = "flex";
+    if (errorMessage) errorMessage.textContent = message;
+
+    showLoading(false);
+    showMainContent(false);
   }
 
   function showNotification(
     message: string,
-    type: "success" | "error" = "success"
+    type: "success" | "error" | "info" = "success"
   ) {
     const notification = document.createElement("div");
     notification.className = `notification ${type}`;
@@ -2116,11 +1276,12 @@ const stats = {
       color: white;
       font-weight: 500;
       z-index: 10000;
-      background: ${type === "success" ? "#238636" : "#da3633"};
+      background: ${type === "success" ? "#238636" : type === "error" ? "#da3633" : "#4285f4"};
       animation: slideIn 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     `;
     document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), 3000);
+    setTimeout(() => notification.remove(), 4000);
   }
 
   function debounce(func: Function, wait: number) {
@@ -2134,4 +1295,20 @@ const stats = {
       timeout = setTimeout(later, wait);
     };
   }
+
+  // Add CSS animation for notifications
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 </script>

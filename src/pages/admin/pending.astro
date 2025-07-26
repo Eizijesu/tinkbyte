@@ -1,0 +1,731 @@
+---
+// src/pages/admin/pending.astro
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Pending Comments - TinkByte Admin">
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="spinner-square"></div>
+      <span>Loading pending comments...</span>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  <div id="error-banner" class="error-banner" style="display: none;">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span id="error-message">An error occurred</span>
+    <button class="retry-btn" id="retry-btn">
+      <i class="fas fa-redo"></i>
+      Retry
+    </button>
+  </div>
+
+  <div class="pending-container">
+    <!-- Page Header -->
+    <div class="pending-header">
+      <div class="header-content">
+        <h1>Pending Comments</h1>
+        <p>Review and moderate comments awaiting approval</p>
+      </div>
+      <div class="header-actions">
+        <button class="bulk-approve-btn" id="bulk-approve-all" disabled>
+          <i class="fas fa-check-double"></i>
+          Approve All Selected
+        </button>
+        <button class="export-btn" id="export-pending">
+          <i class="fas fa-download"></i>
+          Export Report
+        </button>
+      </div>
+    </div>
+
+    <!-- Pending Stats -->
+    <div class="pending-stats-grid">
+      <div class="stat-card urgent">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="total-pending">-</div>
+          <div class="stat-label">Total Pending</div>
+          <div class="stat-action">
+            <span id="pending-trend">Loading...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon">
+          <i class="fas fa-user-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="guest-comments">-</div>
+          <div class="stat-label">Guest Comments</div>
+          <div class="stat-action">
+            <span id="guest-percentage">-</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card info">
+        <div class="stat-icon">
+          <i class="fas fa-history"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="avg-wait-time">-</div>
+          <div class="stat-label">Avg Wait Time</div>
+          <div class="stat-action">
+            <span>hours</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">
+          <i class="fas fa-tachometer-alt"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="processing-rate">-</div>
+          <div class="stat-label">Processing Rate</div>
+          <div class="stat-action">
+            <span>per hour</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters and Controls -->
+    <div class="pending-controls">
+      <div class="controls-left">
+        <div class="search-container">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            id="comment-search"
+            placeholder="Search comments..."
+          />
+        </div>
+        <select id="article-filter" class="filter-select">
+          <option value="">All Articles</option>
+        </select>
+        <select id="user-type-filter" class="filter-select">
+          <option value="">All Users</option>
+          <option value="registered">Registered Users</option>
+          <option value="guest">Guest Users</option>
+        </select>
+      </div>
+      <div class="controls-right">
+        <select id="sort-order" class="filter-select">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="longest">Longest Wait</option>
+        </select>
+        <button class="refresh-btn" id="refresh-comments">
+          <i class="fas fa-sync-alt"></i>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Bulk Selection Bar -->
+    <div
+      class="bulk-selection-bar"
+      id="bulk-selection-bar"
+      style="display: none;"
+    >
+      <div class="selection-info">
+        <input type="checkbox" id="select-all-comments" />
+        <span id="selected-count">0</span> comments selected
+      </div>
+      <div class="bulk-actions">
+        <button class="bulk-btn approve" id="bulk-approve-selected">
+          <i class="fas fa-check"></i>
+          Approve Selected
+        </button>
+        <button class="bulk-btn reject" id="bulk-reject-selected">
+          <i class="fas fa-times"></i>
+          Reject Selected
+        </button>
+        <button class="bulk-btn flag" id="bulk-flag-selected">
+          <i class="fas fa-flag"></i>
+          Flag Selected
+        </button>
+      </div>
+    </div>
+
+    <!-- Comments List -->
+    <div class="pending-comments-list" id="pending-comments-list">
+      <!-- Comments will be loaded dynamically -->
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" id="pagination-container">
+      <!-- Pagination will be loaded here -->
+    </div>
+  </div>
+
+  <!-- Quick Action Modal -->
+  <div id="quick-action-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="action-modal-title">Moderate Comment</h3>
+        <button class="modal-close" id="action-modal-close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="comment-preview" id="comment-preview">
+          <!-- Comment preview will be shown here -->
+        </div>
+        <div class="action-form" id="action-form">
+          <div class="form-group">
+            <label for="moderation-reason">
+              Reason (optional for approval, required for rejection/flagging)
+            </label>
+            <textarea
+              id="moderation-reason"
+              rows="3"
+              placeholder="Provide a reason for this action..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="cancel-btn" id="action-cancel"
+              >Cancel</button
+            >
+            <button type="button" class="confirm-btn" id="action-confirm">
+              <span id="action-confirm-text">Confirm</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  import { adminAPIManager } from "../../lib/admin-api.js";
+  import { adminAuthManager } from "../../lib/admin/auth.js";
+  
+  import {
+    CommentRenderer,
+    NotificationManager,
+    UIHelpers,
+  } from "../../lib/admin/comment-utils.js";
+
+  interface PendingStats {
+    totalPending: number;
+    guestComments: number;
+    avgWaitTime: number;
+    processingRate: number;
+    guestPercentage: number;
+    pendingTrend: string;
+  }
+
+  class PendingCommentsManager {
+    private static instance: PendingCommentsManager;
+    private isInitialized: boolean = false;
+    private isLoading: boolean = false;
+    private currentPage: number = 1;
+    private pageSize: number = 20;
+    private totalPages: number = 0;
+    private pendingComments: any[] = [];
+    private stats: any = null;
+
+    private constructor() {}
+
+    static getInstance(): PendingCommentsManager {
+      if (!PendingCommentsManager.instance) {
+        PendingCommentsManager.instance = new PendingCommentsManager();
+      }
+      return PendingCommentsManager.instance;
+    }
+
+    async initialize(): Promise<void> {
+      if (this.isInitialized) return;
+
+      try {
+        console.log("🚀 Initializing Pending Comments Manager...");
+
+        // Initialize admin API manager
+        await adminAPIManager.initialize();
+
+        // Setup event listeners
+        this.setupEventListeners();
+
+        // Load initial data
+        await this.loadPendingComments();
+        await this.loadStats();
+
+        this.isInitialized = true;
+        console.log("✅ Pending Comments Manager initialized successfully");
+      } catch (error) {
+        console.error(
+          "❌ Pending Comments Manager initialization failed:",
+          error
+        );
+        this.showError(
+          error.message || "Failed to initialize pending comments system"
+        );
+        throw error;
+      }
+    }
+
+    private async loadPendingComments(): Promise<void> {
+      if (this.isLoading) return;
+
+      try {
+        this.showLoading();
+        this.hideError();
+
+        console.log(
+          "🔄 Loading pending comments using singleton API manager..."
+        );
+
+        const result = await adminAPIManager.getComments({
+          status: "pending",
+          page: this.currentPage,
+          limit: this.pageSize,
+          sortBy: "created_at",
+          sortOrder: "desc",
+        });
+
+        if (result.success) {
+          this.pendingComments = result.data || [];
+
+          if (result.pagination) {
+            this.totalPages = result.pagination.totalPages;
+            this.updatePagination(result.pagination);
+          }
+
+          this.updateCommentsDisplay();
+          console.log(
+            "✅ Pending comments loaded successfully:",
+            this.pendingComments.length,
+            "comments"
+          );
+        } else {
+          throw new Error(result.error || "Failed to load pending comments");
+        }
+      } catch (error: any) {
+        console.error("❌ Pending comments loading error:", error);
+        this.showError(error.message || "Failed to load pending comments");
+      } finally {
+        this.hideLoading();
+      }
+    }
+
+    private async loadStats(): Promise<void> {
+      try {
+        const result = await adminAPIManager.getComments({
+          status: "pending",
+          limit: 1000, // Get all for stats calculation
+        });
+
+        if (result.success && result.data) {
+          const comments = result.data;
+          const now = new Date();
+
+          const guestComments = comments.filter((c: any) => !c.user_id).length;
+          const totalPending = comments.length;
+
+          // Calculate average wait time in hours
+          const waitTimes = comments.map((c: any) => {
+            const created = new Date(c.created_at);
+            return (now.getTime() - created.getTime()) / (1000 * 60 * 60);
+          });
+          const avgWaitTime =
+            waitTimes.length > 0
+              ? Math.round(
+                  waitTimes.reduce((a, b) => a + b, 0) / waitTimes.length
+                )
+              : 0;
+
+          const processingRate = Math.round(totalPending / 24);
+
+          this.stats = {
+            totalPending,
+            guestComments,
+            avgWaitTime,
+            processingRate,
+            guestPercentage:
+              totalPending > 0
+                ? Math.round((guestComments / totalPending) * 100)
+                : 0,
+            pendingTrend:
+              totalPending > 50
+                ? "High volume"
+                : totalPending > 20
+                  ? "Moderate"
+                  : "Low volume",
+          };
+
+          this.updateStatsDisplay();
+        }
+      } catch (error) {
+        console.error("Load stats error:", error);
+      }
+    }
+
+    private updateStatsDisplay(): void {
+      if (!this.stats) return;
+
+      const elements = {
+        totalPending: document.getElementById("total-pending"),
+        guestComments: document.getElementById("guest-comments"),
+        avgWaitTime: document.getElementById("avg-wait-time"),
+        processingRate: document.getElementById("processing-rate"),
+        guestPercentage: document.getElementById("guest-percentage"),
+        pendingTrend: document.getElementById("pending-trend"),
+      };
+
+      if (elements.totalPending)
+        elements.totalPending.textContent = this.stats.totalPending.toString();
+      if (elements.guestComments)
+        elements.guestComments.textContent =
+          this.stats.guestComments.toString();
+      if (elements.avgWaitTime)
+        elements.avgWaitTime.textContent = this.stats.avgWaitTime.toString();
+      if (elements.processingRate)
+        elements.processingRate.textContent =
+          this.stats.processingRate.toString();
+      if (elements.guestPercentage)
+        elements.guestPercentage.textContent = `${this.stats.guestPercentage}% guest`;
+      if (elements.pendingTrend)
+        elements.pendingTrend.textContent = this.stats.pendingTrend;
+    }
+
+    private updateCommentsDisplay(): void {
+      const container = document.getElementById("pending-comments-list");
+      if (!container) return;
+
+      if (this.pendingComments.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-check-circle"></i>
+            <h3>No Pending Comments</h3>
+            <p>All comments have been reviewed! Great job keeping up with moderation.</p>
+            <button class="refresh-btn" onclick="window.location.reload()">
+              <i class="fas fa-sync-alt"></i>
+              Refresh Page
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const commentsHTML = this.pendingComments
+        .map((comment) => {
+          const userProfile = comment.profiles;
+          const displayName =
+            userProfile?.display_name ||
+            comment.guest_name ||
+            (userProfile?.email ? userProfile.email.split("@")[0] : null) ||
+            "Anonymous User";
+
+          const isGuest = !comment.user_id;
+          const hasProfile = !!userProfile;
+
+          return `
+            <div class="comment-item pending" data-comment-id="${comment.id}">
+              <div class="comment-header">
+                <div class="comment-checkbox">
+                  <input type="checkbox" class="comment-select" value="${comment.id}" />
+                </div>
+                <div class="user-info">
+                  <div class="user-avatar">
+                    ${
+                      hasProfile && userProfile.avatar_url
+                        ? `<img src="${userProfile.avatar_url}" alt="Avatar" />`
+                        : `<div class="avatar-preset ${isGuest ? "guest-avatar" : ""}">
+                          ${displayName.charAt(0).toUpperCase()}
+                        </div>`
+                    }
+                  </div>
+                  <div class="user-details">
+                    <span class="user-name">
+                      ${displayName}
+                      ${isGuest ? '<span class="guest-badge">GUEST</span>' : ""}
+                      ${hasProfile && userProfile.is_admin ? '<span class="admin-badge">ADMIN</span>' : ""}
+                    </span>
+                    <span class="user-rep">
+                      ${isGuest ? "Guest User" : `Rep: ${userProfile?.reputation_score || 0}`}
+                    </span>
+                  </div>
+                </div>
+                <div class="comment-meta">
+                  <span class="comment-date">
+                    ${new Date(comment.created_at).toLocaleDateString()}
+                  </span>
+                  <span class="article-title">
+                    ${comment.articles?.title || "Unknown Article"}
+                  </span>
+                </div>
+              </div>
+
+              <div class="comment-content">
+                <p>${comment.content}</p>
+                ${
+                  comment.mention_users?.length > 0
+                    ? `
+                  <div class="mentions">
+                    <i class="fas fa-at"></i>
+                    <span>Mentions: ${comment.mention_users.length} users</span>
+                  </div>
+                `
+                    : ""
+                }
+              </div>
+
+              <div class="comment-actions">
+                <button class="action-btn approve" data-action="approve" data-comment-id="${comment.id}">
+                  <div class="btn-spinner" style="display: none;">
+                    <div class="spinner-square small"></div>
+                  </div>
+                  <i class="fas fa-check"></i>
+                  Approve
+                </button>
+                <button class="action-btn reject" data-action="reject" data-comment-id="${comment.id}">
+                  <div class="btn-spinner" style="display: none;">
+                    <div class="spinner-square small"></div>
+                  </div>
+                  <i class="fas fa-times"></i>
+                  Reject
+                </button>
+                <button class="action-btn flag" data-action="flag" data-comment-id="${comment.id}">
+                  <div class="btn-spinner" style="display: none;">
+                    <div class="spinner-square small"></div>
+                  </div>
+                  <i class="fas fa-flag"></i>
+                  Flag
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+
+      container.innerHTML = commentsHTML;
+      this.attachActionListeners();
+    }
+
+    private updatePagination(pagination: any): void {
+      const container = document.getElementById("pagination-container");
+      if (!container) return;
+
+      const { page, totalPages, hasNext, hasPrev } = pagination;
+
+      if (totalPages <= 1) {
+        container.innerHTML = "";
+        return;
+      }
+
+      let paginationHTML = `
+        <div class="pagination">
+          <button class="pagination-btn ${!hasPrev ? "disabled" : ""}" 
+                  onclick="pendingManager?.goToPage(${page - 1})" 
+                  ${!hasPrev ? "disabled" : ""}>
+            <i class="fas fa-chevron-left"></i>
+            Previous
+          </button>
+          
+          <div class="pagination-info">
+            Page ${page} of ${totalPages}
+          </div>
+          
+          <button class="pagination-btn ${!hasNext ? "disabled" : ""}" 
+                  onclick="pendingManager?.goToPage(${page + 1})" 
+                  ${!hasNext ? "disabled" : ""}>
+            Next
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      `;
+
+      container.innerHTML = paginationHTML;
+    }
+
+    private attachActionListeners(): void {
+      const actionButtons = document.querySelectorAll(".action-btn");
+      actionButtons.forEach((button) => {
+        button.addEventListener("click", async (e) => {
+          const btn = e.currentTarget as HTMLButtonElement;
+          const action = btn.dataset.action;
+          const commentId = btn.dataset.commentId;
+
+          if (action && commentId) {
+            await this.moderateComment(commentId, action, btn);
+          }
+        });
+      });
+    }
+
+    private async moderateComment(
+      commentId: string,
+      action: string,
+      buttonElement: HTMLButtonElement
+    ): Promise<void> {
+      const spinner = buttonElement.querySelector(
+        ".btn-spinner"
+      ) as HTMLElement;
+      const icon = buttonElement.querySelector("i") as HTMLElement;
+
+      // Show loading state
+      buttonElement.disabled = true;
+      if (spinner) spinner.style.display = "flex";
+      if (icon) icon.style.display = "none";
+
+      try {
+        const reason =
+          action === "reject" || action === "flag"
+            ? prompt(`Please provide a reason for ${action}ing this comment:`)
+            : null;
+
+        if ((action === "reject" || action === "flag") && !reason) {
+          return;
+        }
+
+        // Use singleton API manager
+        const result = await adminAPIManager.moderateComment(
+          commentId,
+          action,
+          reason || undefined
+        );
+
+        if (result.success) {
+          // Remove comment from UI
+          const commentElement = document.querySelector(
+            `[data-comment-id="${commentId}"]`
+          ) as HTMLElement;
+          if (commentElement) {
+            commentElement.style.opacity = "0.5";
+            setTimeout(() => {
+              commentElement.remove();
+              this.updateStatsAfterAction();
+            }, 300);
+          }
+
+          this.showNotification(
+            result.message || `Comment ${action}ed successfully`,
+            "success"
+          );
+        } else {
+          this.showNotification(
+            result.error || `Failed to ${action} comment`,
+            "error"
+          );
+        }
+      } catch (error) {
+        console.error("Moderation error:", error);
+        this.showNotification("An error occurred", "error");
+      } finally {
+        // Hide loading state
+        buttonElement.disabled = false;
+        if (spinner) spinner.style.display = "none";
+        if (icon) icon.style.display = "inline";
+      }
+    }
+
+    private updateStatsAfterAction(): void {
+      // Reload stats after action
+      setTimeout(() => {
+        this.loadStats();
+      }, 500);
+    }
+
+    private setupEventListeners(): void {
+      // Retry button
+      const retryBtn = document.getElementById("retry-btn");
+      if (retryBtn) {
+        retryBtn.addEventListener("click", async () => {
+          await this.loadPendingComments();
+        });
+      }
+
+      // Bulk actions would go here
+      // ... (implement bulk action listeners)
+    }
+
+    public async goToPage(page: number): Promise<void> {
+      if (page < 1 || page > this.totalPages || page === this.currentPage)
+        return;
+
+      this.currentPage = page;
+      await this.loadPendingComments();
+    }
+
+    private showLoading(): void {
+      this.isLoading = true;
+      const overlay = document.getElementById("loading-overlay");
+      if (overlay) overlay.style.display = "flex";
+    }
+
+    private hideLoading(): void {
+      this.isLoading = false;
+      const overlay = document.getElementById("loading-overlay");
+      if (overlay) overlay.style.display = "none";
+    }
+
+    private showError(message: string): void {
+      const banner = document.getElementById("error-banner");
+      const messageEl = document.getElementById("error-message");
+      if (banner && messageEl) {
+        messageEl.textContent = message;
+        banner.style.display = "flex";
+      }
+    }
+
+    private hideError(): void {
+      const banner = document.getElementById("error-banner");
+      if (banner) banner.style.display = "none";
+    }
+
+    private showNotification(
+      message: string,
+      type: "success" | "error" = "success"
+    ): void {
+      const notification = document.createElement("div");
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem;
+        color: white; font-weight: 500; z-index: 10000; border-radius: 4px;
+        background: ${type === "success" ? "#238636" : "#da3633"};
+        animation: slideIn 0.3s ease;
+      `;
+
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    }
+
+    public destroy(): void {
+      this.isInitialized = false;
+    }
+  }
+
+  // Initialize singleton manager
+  let pendingManager: PendingCommentsManager | null = null;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      console.log("🚀 Pending comments page initializing...");
+
+      pendingManager = PendingCommentsManager.getInstance();
+      await pendingManager.initialize();
+
+      // Make globally available for pagination
+      (window as any).pendingManager = pendingManager;
+
+      console.log("✅ Pending comments page initialized successfully");
+    } catch (error) {
+      console.error("❌ Pending comments page initialization failed:", error);
+    }
+  });
+
+  // Cleanup on page unload
+  window.addEventListener("beforeunload", () => {
+    if (pendingManager) {
+      pendingManager.destroy();
+    }
+  });
+</script>

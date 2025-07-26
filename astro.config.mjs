@@ -1,4 +1,4 @@
-// astro.config.mjs - Enhanced TinkByte Configuration (FIXED)
+// astro.config.mjs - FIXED VERSION
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
@@ -14,10 +14,16 @@ import remarkGfm from 'remark-gfm';
 export default defineConfig({
   // Site configuration
   site: 'https://tinkbyte.com',
+
+  redirects: {
+    '/privacy': '/legal/privacy-policy',
+    '/terms': '/legal/terms-of-service',
+    '/cookies': '/legal/cookie-policy',
+    '/legal/contact': '/contact', 
+  },
   
   // Integrations
   integrations: [
-    // MDX for enhanced markdown with React components
     mdx({
       syntaxHighlight: 'shiki',
       shikiConfig: {
@@ -45,24 +51,18 @@ export default defineConfig({
       ],
     }),
     
-    // React for interactive components
-    react(),
     
-    // Tailwind CSS with custom configuration
+    react(),
     tailwind({
       applyBaseStyles: false,
       configFile: './tailwind.config.mjs',
     }),
-    
-    // Sitemap generation
     sitemap({
       changefreq: 'weekly',
       priority: 0.7,
       lastmod: new Date(),
       entryLimit: 45000,
     }),
-    
-    // Robots.txt generation
     robotsTxt({
       sitemap: 'https://tinkbyte.com/sitemap-index.xml',
       policy: [
@@ -111,14 +111,12 @@ export default defineConfig({
     extendMarkdownConfig: false,
   },
 
-  // Vite configuration for enhanced development (MERGED - NO DUPLICATES)
+  // Vite configuration - CLEANED UP
   vite: {
-    // ADD THIS RESOLVE SECTION FOR THE SUPABASE FIX
     resolve: {
       alias: {
         '/lib/supabase': '/src/lib/supabase.js',
         '/lib/auth': '/src/lib/auth.js',
-        // Add other common problematic paths
         '@/lib/supabase': '/src/lib/supabase.js',
         '@/lib/auth': '/src/lib/auth.js',
       }
@@ -148,8 +146,10 @@ export default defineConfig({
       fs: {
         allow: ['..'],
       },
+       middlewareMode: false,
     },
-    // Global component registration
+    
+    // Clean define section - removed problematic env var aliases
     define: {
       'globalThis.astroMDXComponents': JSON.stringify({
         ImageBlock: true,

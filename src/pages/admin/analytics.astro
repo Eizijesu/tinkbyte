@@ -1,226 +1,113 @@
 ---
-// src/pages/admin/analytics.astro - COMPLETE WORKING VERSION
+// src/pages/admin/analytics.astro - CLEANED VERSION
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import { supabase } from "../../lib/supabase";
 
-// TypeScript interfaces
-interface AnalyticsData {
-  totalComments: number;
-  weeklyComments: number;
-  monthlyComments: number;
-  pendingComments: number;
-  flaggedComments: number;
-  approvedComments: number;
-  totalUsers: number;
-  activeUsers: number;
-  newUsersThisWeek: number;
-  newUsersThisMonth: number;
-  moderationEfficiency: number;
-  averageResponseTime: number;
-}
-
-interface UserStat {
-  id: string;
-  display_name: string;
-  total_comments: number;
-  total_reads: number;
-  reputation_score: number;
-  created_at: string;
-}
-
-interface RecentActivity {
-  id: string;
-  activity_type: string;
-  description: string;
-  created_at: string;
-  user_id: string;
-  metadata: any;
-}
-
-interface CommentTrend {
-  date: string;
-  count: number;
-}
-
-// Calculate date ranges
-const now = new Date();
-const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-const last90Days = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-
-// Get comment statistics
-const { data: allComments } = await supabase
-  .from("comments")
-  .select("id, created_at, moderation_status, user_id")
-  .eq("is_deleted", false);
-
-const { data: weeklyComments } = await supabase
-  .from("comments")
-  .select("id, created_at")
-  .eq("is_deleted", false)
-  .gte("created_at", lastWeek.toISOString());
-
-const { data: monthlyComments } = await supabase
-  .from("comments")
-  .select("id, created_at")
-  .eq("is_deleted", false)
-  .gte("created_at", lastMonth.toISOString());
-
-const { data: pendingComments } = await supabase
-  .from("comments")
-  .select("id, created_at")
-  .eq("moderation_status", "pending")
-  .eq("is_deleted", false);
-
-const { data: flaggedComments } = await supabase
-  .from("comments")
-  .select("id, created_at")
-  .eq("moderation_status", "flagged")
-  .eq("is_deleted", false);
-
-const { data: approvedComments } = await supabase
-  .from("comments")
-  .select("id, created_at")
-  .eq("moderation_status", "approved")
-  .eq("is_deleted", false);
-
-// Get user statistics with proper joins
-const { data: allUsers } = await supabase
-  .from("profiles")
-  .select(
-    "id, display_name, total_comments, total_reads, reputation_score, created_at"
-  )
-  .order("total_comments", { ascending: false });
-
-const { data: newUsersWeek } = await supabase
-  .from("profiles")
-  .select("id, created_at")
-  .gte("created_at", lastWeek.toISOString());
-
-const { data: newUsersMonth } = await supabase
-  .from("profiles")
-  .select("id, created_at")
-  .gte("created_at", lastMonth.toISOString());
-
-// Get active users (users who commented in the last 30 days)
-const { data: activeUsers } = await supabase
-  .from("comments")
-  .select("user_id")
-  .eq("is_deleted", false)
-  .gte("created_at", lastMonth.toISOString())
-  .not("user_id", "is", null);
-
-const uniqueActiveUsers = [
-  ...new Set(activeUsers?.map((c) => c.user_id) || []),
-];
-
-// Get top contributors with names
-const { data: topContributors } = await supabase
-  .from("profiles")
-  .select("id, display_name, total_comments, total_reads, reputation_score")
-  .gt("total_comments", 0)
-  .order("total_comments", { ascending: false })
-  .limit(10);
-
-// Get recent activity
-const { data: recentActivity } = await supabase
-  .from("user_activities")
-  .select("*")
-  .order("created_at", { ascending: false })
-  .limit(20);
-
-// Get moderation actions for efficiency calculation
-const { data: moderationActions } = await supabase
-  .from("comment_moderation")
-  .select("action, created_at, resolved_at")
-  .gte("created_at", lastMonth.toISOString());
-
-// Calculate metrics
-const totalComments = allComments?.length || 0;
-const weeklyGrowth = weeklyComments?.length || 0;
-const monthlyGrowth = monthlyComments?.length || 0;
-const pendingCount = pendingComments?.length || 0;
-const flaggedCount = flaggedComments?.length || 0;
-const approvedCount = approvedComments?.length || 0;
-
-// Calculate moderation efficiency
-const totalModerationActions = moderationActions?.length || 0;
-const resolvedActions =
-  moderationActions?.filter((a) => a.resolved_at)?.length || 0;
-const moderationEfficiency =
-  totalModerationActions > 0
-    ? Math.round((resolvedActions / totalModerationActions) * 100)
-    : 0;
-
-// Calculate average response time (in hours)
-const avgResponseTime =
-  moderationActions?.reduce((acc, action) => {
-    if (action.resolved_at) {
-      const responseTime =
-        new Date(action.resolved_at).getTime() -
-        new Date(action.created_at).getTime();
-      return acc + responseTime / (1000 * 60 * 60); // Convert to hours
-    }
-    return acc;
-  }, 0) || 0;
-
-const averageResponseTime =
-  totalModerationActions > 0
-    ? Math.round(avgResponseTime / totalModerationActions)
-    : 0;
-
-// Generate chart data for the last 7 days
-const chartData: CommentTrend[] = [];
-for (let i = 6; i >= 0; i--) {
-  const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-  const dateStr = date.toISOString().split("T")[0];
-  const dayComments =
-    allComments?.filter((c) => c.created_at.startsWith(dateStr))?.length || 0;
-
-  chartData.push({
-    date: date.toLocaleDateString("en-US", { weekday: "short" }),
-    count: dayComments,
-  });
-}
-
-// Compile analytics data
-const analyticsData: AnalyticsData = {
-  totalComments,
-  weeklyComments: weeklyGrowth,
-  monthlyComments: monthlyGrowth,
-  pendingComments: pendingCount,
-  flaggedComments: flaggedCount,
-  approvedComments: approvedCount,
-  totalUsers: allUsers?.length || 0,
-  activeUsers: uniqueActiveUsers.length,
-  newUsersThisWeek: newUsersWeek?.length || 0,
-  newUsersThisMonth: newUsersMonth?.length || 0,
-  moderationEfficiency,
-  averageResponseTime,
+// Fallback data for static generation
+const fallbackStats = {
+  users: {
+    total: 0,
+    active: 0,
+    blocked: 0,
+    admins: 0,
+    newLast30Days: 0,
+    newLast7Days: 0,
+  },
+  comments: { total: 0, pending: 0, flagged: 0, approved: 0, last30Days: 0 },
+  content: {
+    totalArticles: 0,
+    publishedArticles: 0,
+    totalCategories: 0,
+    totalAuthors: 0,
+    totalPodcasts: 0,
+  },
+  newsletter: {
+    totalNewsletters: 0,
+    totalSubscribers: 0,
+    activeSubscribers: 0,
+  },
+  generatedAt: new Date().toISOString(),
 };
 
-// Calculate growth percentages
+const fallbackAnalytics = {
+  period: "30d",
+  growth: Array.from({ length: 7 }, (_, i) => ({
+    date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString(),
+    users: 0,
+    comments: 0,
+    subscribers: 0,
+    articles: 0,
+  })),
+  topUsers: [],
+  topArticles: [],
+  topCategories: [],
+  generatedAt: new Date().toISOString(),
+};
+
+const stats = fallbackStats;
+const analytics = fallbackAnalytics;
+
 const weeklyGrowthPercent =
-  monthlyGrowth > 0 ? Math.round((weeklyGrowth / monthlyGrowth) * 100) : 0;
+  stats.comments.last30Days > 0
+    ? Math.round((stats.users.newLast7Days / stats.comments.last30Days) * 100)
+    : 0;
 const userGrowthPercent =
-  allUsers && allUsers.length > 0
-    ? Math.round((analyticsData.newUsersThisMonth / allUsers.length) * 100)
+  stats.users.total > 0
+    ? Math.round((stats.users.newLast30Days / stats.users.total) * 100)
+    : 0;
+const moderationEfficiency =
+  stats.comments.total > 0
+    ? Math.round((stats.comments.approved / stats.comments.total) * 100)
+    : 0;
+const engagementRate =
+  stats.users.total > 0
+    ? Math.round((stats.users.active / stats.users.total) * 100)
     : 0;
 
-console.log("Analytics Debug:", {
-  totalComments,
-  weeklyGrowth,
-  monthlyGrowth,
-  pendingCount,
-  flaggedCount,
-  topContributors: topContributors?.length,
-  recentActivity: recentActivity?.length,
-  analyticsData,
-});
+const chartData = analytics.growth.slice(-7).map((day) => ({
+  date: new Date(day.date).toLocaleDateString("en-US", { weekday: "short" }),
+  count: day.comments,
+}));
+
+while (chartData.length < 7) {
+  chartData.unshift({ date: "N/A", count: 0 });
+}
+
+console.log("📈 Analytics page initialized with fallback data");
 ---
 
 <AdminLayout title="Analytics Dashboard - TinkByte Admin">
   <div class="analytics-dashboard">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+      <div class="loading-spinner">
+        <div class="spinner-square"></div>
+        <span>Loading analytics...</span>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="error-banner" class="error-banner" style="display: none;">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+      </svg>
+      <span id="error-message">Unable to load analytics data</span>
+      <button id="retry-btn" class="retry-btn">
+        <span class="btn-text">Retry</span>
+        <div class="btn-spinner" style="display: none;">
+          <div class="spinner-square small"></div>
+        </div>
+      </button>
+    </div>
+
     <!-- Header -->
     <div class="dashboard-header">
       <div class="header-content">
@@ -262,17 +149,17 @@ console.log("Analytics Debug:", {
     <!-- Time Range Selector -->
     <div class="time-range-selector">
       <div class="range-buttons">
-        <button class="range-btn active" data-range="7d">7 Days</button>
-        <button class="range-btn" data-range="30d">30 Days</button>
+        <button class="range-btn" data-range="7d">7 Days</button>
+        <button class="range-btn active" data-range="30d">30 Days</button>
         <button class="range-btn" data-range="90d">90 Days</button>
       </div>
-      <div class="last-updated">
-        Last updated: {new Date().toLocaleString()}
+      <div class="last-updated" id="last-updated">
+        Last updated: {new Date(stats.generatedAt).toLocaleString()}
       </div>
     </div>
 
     <!-- Key Metrics Grid -->
-    <div class="metrics-grid">
+    <div class="metrics-grid" id="metrics-grid">
       <div class="metric-card primary">
         <div class="metric-header">
           <svg
@@ -289,7 +176,9 @@ console.log("Analytics Debug:", {
           </svg>
           <h3>Total Comments</h3>
         </div>
-        <div class="metric-value">{analyticsData.totalComments}</div>
+        <div class="metric-value" data-metric="total-comments">
+          {stats.comments.total}
+        </div>
         <div class="metric-change positive">
           <svg
             width="16"
@@ -302,7 +191,9 @@ console.log("Analytics Debug:", {
             <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
             <polyline points="17,6 23,6 23,12"></polyline>
           </svg>
-          +{weeklyGrowthPercent}% this week ({analyticsData.weeklyComments} new)
+          <span data-metric="weekly-growth"
+            >+{weeklyGrowthPercent}% this month ({stats.comments.last30Days} recent)</span
+          >
         </div>
       </div>
 
@@ -321,9 +212,46 @@ console.log("Analytics Debug:", {
           </svg>
           <h3>Pending Moderation</h3>
         </div>
-        <div class="metric-value">{analyticsData.pendingComments}</div>
+        <div class="metric-value" data-metric="pending-comments">
+          {stats.comments.pending}
+        </div>
         <div class="metric-change neutral">
-          Avg response: {analyticsData.averageResponseTime}h
+          <span data-metric="flagged-count"
+            >{stats.comments.flagged} flagged for review</span
+          >
+        </div>
+      </div>
+
+      <div class="metric-card success">
+        <div class="metric-header">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M8 14s-6-3.5-6-8c0-2.5 2-4.5 4.5-4.5C7.5 1.5 8 2 8 2s.5-.5 1.5-.5C12 1.5 14 3.5 14 6c0 4.5-6 8-6 8z"
+            ></path>
+          </svg>
+          <h3>Article Engagement</h3>
+        </div>
+        <div class="metric-value" data-metric="total-article-likes">0</div>
+        <div class="metric-change positive">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+            <polyline points="17,6 23,6 23,12"></polyline>
+          </svg>
+          <span data-metric="total-article-saves">0 saves</span>
         </div>
       </div>
 
@@ -341,7 +269,9 @@ console.log("Analytics Debug:", {
           </svg>
           <h3>Moderation Efficiency</h3>
         </div>
-        <div class="metric-value">{analyticsData.moderationEfficiency}%</div>
+        <div class="metric-value" data-metric="moderation-efficiency">
+          {moderationEfficiency}%
+        </div>
         <div class="metric-change positive">
           <svg
             width="16"
@@ -354,7 +284,9 @@ console.log("Analytics Debug:", {
             <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
             <polyline points="17,6 23,6 23,12"></polyline>
           </svg>
-          {analyticsData.flaggedComments} flagged
+          <span data-metric="approved-count"
+            >{stats.comments.approved} approved</span
+          >
         </div>
       </div>
 
@@ -375,7 +307,9 @@ console.log("Analytics Debug:", {
           </svg>
           <h3>Active Users</h3>
         </div>
-        <div class="metric-value">{analyticsData.activeUsers}</div>
+        <div class="metric-value" data-metric="active-users">
+          {stats.users.active}
+        </div>
         <div class="metric-change positive">
           <svg
             width="16"
@@ -388,41 +322,9 @@ console.log("Analytics Debug:", {
             <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
             <polyline points="17,6 23,6 23,12"></polyline>
           </svg>
-          +{userGrowthPercent}% this month ({analyticsData.newUsersThisMonth} new)
-        </div>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
+          <span data-metric="user-growth"
+            >+{userGrowthPercent}% this month ({stats.users.newLast30Days} new)</span
           >
-            <path
-              d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
-            ></path>
-            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-          </svg>
-          <h3>Total Users</h3>
-        </div>
-        <div class="metric-value">{analyticsData.totalUsers}</div>
-        <div class="metric-change positive">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
-            <polyline points="17,6 23,6 23,12"></polyline>
-          </svg>
-          +{analyticsData.newUsersThisWeek} this week
         </div>
       </div>
     </div>
@@ -436,15 +338,14 @@ console.log("Analytics Debug:", {
             <button class="chart-btn active" data-chart="comments"
               >Comments</button
             >
-            <button class="chart-btn" data-chart="moderation">Moderation</button
-            >
+            <button class="chart-btn" data-chart="users">Users</button>
           </div>
         </div>
         <div class="chart-placeholder" id="activity-chart">
           <div class="chart-mock">
-            <div class="chart-bars">
+            <div class="chart-bars" id="chart-bars">
               {
-                chartData.map((day, index) => {
+                chartData.map((day) => {
                   const maxCount = Math.max(...chartData.map((d) => d.count));
                   const height =
                     maxCount > 0 ? (day.count / maxCount) * 100 : 20;
@@ -458,7 +359,7 @@ console.log("Analytics Debug:", {
                 })
               }
             </div>
-            <div class="chart-labels">
+            <div class="chart-labels" id="chart-labels">
               {chartData.map((day) => <span>{day.date}</span>)}
             </div>
           </div>
@@ -470,65 +371,30 @@ console.log("Analytics Debug:", {
           <h3>Moderation Status</h3>
         </div>
         <div class="chart-placeholder" id="moderation-chart">
-          <div class="moderation-stats">
+          <div class="moderation-stats" id="moderation-stats">
             <div class="stat-item">
               <div class="stat-color approved"></div>
               <span class="stat-label">Approved</span>
-              <span class="stat-value">{analyticsData.approvedComments}</span>
+              <span class="stat-value" data-metric="stat-approved"
+                >{stats.comments.approved}</span
+              >
             </div>
             <div class="stat-item">
               <div class="stat-color pending"></div>
               <span class="stat-label">Pending</span>
-              <span class="stat-value">{analyticsData.pendingComments}</span>
+              <span class="stat-value" data-metric="stat-pending"
+                >{stats.comments.pending}</span
+              >
             </div>
             <div class="stat-item">
               <div class="stat-color flagged"></div>
               <span class="stat-label">Flagged</span>
-              <span class="stat-value">{analyticsData.flaggedComments}</span>
+              <span class="stat-value" data-metric="stat-flagged"
+                >{stats.comments.flagged}</span
+              >
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="activity-section">
-      <div class="activity-header">
-        <h3>Recent Activity</h3>
-        <a href="/admin/moderation" class="view-all-link">View All</a>
-      </div>
-      <div class="activity-list">
-        {
-          recentActivity && recentActivity.length > 0 ? (
-            recentActivity.slice(0, 10).map((activity) => (
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 6v6l4 2" />
-                  </svg>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-description">{activity.description}</div>
-                  <div class="activity-time">
-                    {new Date(activity.created_at).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div class="empty-activity">
-              <p>No recent activity found</p>
-            </div>
-          )
-        }
       </div>
     </div>
 
@@ -538,10 +404,10 @@ console.log("Analytics Debug:", {
         <h3>Top Contributors</h3>
         <a href="/admin/users" class="view-all-link">View All Users</a>
       </div>
-      <div class="contributors-list">
+      <div class="contributors-list" id="contributors-list">
         {
-          topContributors && topContributors.length > 0 ? (
-            topContributors.map((user, index) => (
+          analytics.topUsers && analytics.topUsers.length > 0 ? (
+            analytics.topUsers.slice(0, 10).map((user: any, index: number) => (
               <div class="contributor-item">
                 <div class="contributor-rank">#{index + 1}</div>
                 <div class="contributor-info">
@@ -560,7 +426,7 @@ console.log("Analytics Debug:", {
             ))
           ) : (
             <div class="empty-contributors">
-              <p>No contributors found</p>
+              <p>Loading contributor data...</p>
             </div>
           )
         }
@@ -592,19 +458,21 @@ console.log("Analytics Debug:", {
           </div>
           <div class="insight-content">
             <div class="insight-title">Community Health</div>
-            <div class="insight-value">
+            <div class="insight-value" data-metric="community-health">
               {
-                analyticsData.moderationEfficiency > 80
+                moderationEfficiency > 80
                   ? "Excellent"
-                  : analyticsData.moderationEfficiency > 60
+                  : moderationEfficiency > 60
                     ? "Good"
-                    : analyticsData.moderationEfficiency > 40
+                    : moderationEfficiency > 40
                       ? "Fair"
                       : "Needs Attention"
               }
             </div>
             <div class="insight-description">
-              Based on moderation efficiency and response time
+              Based on moderation efficiency (<span
+                data-metric="efficiency-percent">{moderationEfficiency}%</span
+              >)
             </div>
           </div>
         </div>
@@ -626,19 +494,21 @@ console.log("Analytics Debug:", {
           </div>
           <div class="insight-content">
             <div class="insight-title">Growth Trend</div>
-            <div class="insight-value">
+            <div class="insight-value" data-metric="growth-trend">
               {
-                weeklyGrowthPercent > 20
+                userGrowthPercent > 20
                   ? "📈 High Growth"
-                  : weeklyGrowthPercent > 10
+                  : userGrowthPercent > 10
                     ? "📊 Steady Growth"
-                    : weeklyGrowthPercent > 0
+                    : userGrowthPercent > 0
                       ? "📉 Slow Growth"
                       : "📉 No Growth"
               }
             </div>
             <div class="insight-description">
-              Weekly comment growth: {weeklyGrowthPercent}%
+              Monthly user growth: <span data-metric="monthly-growth"
+                >{userGrowthPercent}%</span
+              >
             </div>
           </div>
         </div>
@@ -660,15 +530,8 @@ console.log("Analytics Debug:", {
           </div>
           <div class="insight-content">
             <div class="insight-title">Engagement Rate</div>
-            <div class="insight-value">
-              {
-                analyticsData.totalUsers > 0
-                  ? Math.round(
-                      (analyticsData.activeUsers / analyticsData.totalUsers) *
-                        100
-                    ) + "%"
-                  : "0%"
-              }
+            <div class="insight-value" data-metric="engagement-rate">
+              {engagementRate}%
             </div>
             <div class="insight-description">Active users vs total users</div>
           </div>
@@ -678,841 +541,207 @@ console.log("Analytics Debug:", {
   </div>
 </AdminLayout>
 
-<style>
-    .analytics-dashboard {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-      background: #0d1117;
-      min-height: 100vh;
-      color: #f0f6fc;
-    }
-  
-    .dashboard-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid #21262d;
-    }
-  
-    .header-content h1 {
-      color: #f0f6fc;
-      font-size: 2rem;
-      font-weight: 700;
-      margin: 0 0 0.5rem 0;
-    }
-  
-    .header-content p {
-      color: #8b949e;
-      margin: 0;
-    }
-  
-    .header-actions {
-      display: flex;
-      gap: 1rem;
-    }
-  
-    .nav-button,
-    .export-button {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1rem;
-      background: #21262d;
-      border: 1px solid #30363d;
-      color: #f0f6fc;
-      text-decoration: none;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-  
-    .nav-button:hover,
-    .export-button:hover {
-      background: #30363d;
-      border-color: #4285f4;
-    }
-  
-    .time-range-selector {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      padding: 1rem;
-      background: #161b22;
-      border: 1px solid #21262d;
-    }
-  
-    .range-buttons {
-      display: flex;
-      gap: 0.5rem;
-    }
-  
-    .range-btn {
-      padding: 0.5rem 1rem;
-      background: transparent;
-      border: 1px solid #30363d;
-      color: #8b949e;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-  
-    .range-btn.active {
-      background: #4285f4;
-      border-color: #4285f4;
-      color: white;
-    }
-  
-    .range-btn:hover:not(.active) {
-      background: #21262d;
-      color: #f0f6fc;
-    }
-  
-    .last-updated {
-      font-size: 0.875rem;
-      color: #8b949e;
-    }
-  
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-  
-    .metric-card {
-      background: #161b22;
-      border: 1px solid #21262d;
-      padding: 1.5rem;
-      transition: all 0.2s ease;
-    }
-  
-    .metric-card.primary {
-      border-color: #4285f4;
-      background: linear-gradient(135deg, #161b22 0%, #1a1f2e 100%);
-    }
-  
-    .metric-card:hover {
-      border-color: #4285f4;
-      transform: translateY(-2px);
-    }
-  
-    .metric-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-  
-    .metric-header svg {
-      color: #4285f4;
-    }
-  
-    .metric-header h3 {
-      color: #f0f6fc;
-      font-size: 1rem;
-      font-weight: 600;
-      margin: 0;
-    }
-  
-    .metric-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #f0f6fc;
-      margin-bottom: 0.5rem;
-    }
-  
-    .metric-change {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-    }
-  
-    .metric-change.positive {
-      color: #238636;
-    }
-  
-    .metric-change.negative {
-      color: #da3633;
-    }
-  
-    .metric-change.neutral {
-      color: #8b949e;
-    }
-  
-    .charts-section {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-  
-    .chart-container {
-      background: #161b22;
-      border: 1px solid #21262d;
-      padding: 1.5rem;
-    }
-  
-    .chart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-  
-    .chart-header h3 {
-      color: #f0f6fc;
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin: 0;
-    }
-  
-    .chart-controls {
-      display: flex;
-      gap: 0.5rem;
-    }
-  
-    .chart-btn {
-      padding: 0.5rem 1rem;
-      background: transparent;
-      border: 1px solid #30363d;
-      color: #8b949e;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-    }
-  
-    .chart-btn.active {
-      background: #4285f4;
-      border-color: #4285f4;
-      color: white;
-    }
-  
-    .chart-placeholder {
-      height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-  
-    .chart-mock {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-  
-    .chart-bars {
-      display: flex;
-      align-items: end;
-      gap: 1rem;
-      height: 250px;
-      padding: 1rem 0;
-    }
-  
-    .bar {
-      flex: 1;
-      background: linear-gradient(to top, #4285f4, #64b5f6);
-      min-height: 20px;
-      transition: all 0.3s ease;
-    }
-  
-    .bar:hover {
-      background: linear-gradient(to top, #3367d6, #4285f4);
-    }
-  
-    .chart-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.875rem;
-      color: #8b949e;
-      padding: 0 0.5rem;
-    }
-  
-    .moderation-stats {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      width: 100%;
-    }
-  
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      background: #21262d;
-      border: 1px solid #30363d;
-    }
-  
-    .stat-color {
-      width: 16px;
-      height: 16px;
-    }
-  
-    .stat-color.approved {
-      background: #238636;
-    }
-  
-    .stat-color.flagged {
-      background: #da3633;
-    }
-  
-    .stat-color.hidden {
-      background: #8b949e;
-    }
-  
-    .stat-label {
-      flex: 1;
-      color: #f0f6fc;
-      font-weight: 500;
-    }
-  
-    .stat-value {
-      color: #4285f4;
-      font-weight: 700;
-    }
-  
-    .activity-section,
-    .contributors-section {
-      background: #161b22;
-      border: 1px solid #21262d;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-  
-    .activity-header,
-    .contributors-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-  
-    .activity-header h3,
-    .contributors-header h3 {
-      color: #f0f6fc;
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin: 0;
-    }
-  
-    .view-all-link {
-      color: #4285f4;
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s ease;
-    }
-  
-    .view-all-link:hover {
-      color: #64b5f6;
-    }
-  
-    .activity-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-  
-    .activity-item {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      background: #21262d;
-      border: 1px solid #30363d;
-    }
-  
-    .activity-icon {
-      width: 40px;
-      height: 40px;
-      background: #4285f4;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-  
-    .activity-content {
-      flex: 1;
-    }
-  
-    .activity-description {
-      color: #f0f6fc;
-      font-weight: 500;
-      margin-bottom: 0.25rem;
-    }
-  
-    .activity-time {
-      color: #8b949e;
-      font-size: 0.875rem;
-    }
-  
-    .contributors-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-  
-    .contributor-item {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem;
-      background: #21262d;
-      border: 1px solid #30363d;
-    }
-  
-    .contributor-rank {
-      width: 40px;
-      height: 40px;
-      background: #4285f4;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-  
-    .contributor-info {
-      flex: 1;
-    }
-  
-    .contributor-name {
-      color: #f0f6fc;
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-    }
-  
-    .contributor-stats {
-      color: #8b949e;
-      font-size: 0.875rem;
-    }
-  
-    .contributor-badge {
-      background: #64b5f6;
-      color: white;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-weight: 500;
-    }
-  
-    .empty-activity,
-    .empty-contributors {
-      text-align: center;
-      color: #8b949e;
-      padding: 2rem;
-    }
-  
-    .insights-section {
-      background: #161b22;
-      border: 1px solid #21262d;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-  
-    .insights-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-  
-    .insights-header h3 {
-      color: #f0f6fc;
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin: 0;
-    }
-  
-    .insights-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-    }
-  
-    .insight-card {
-      background: #21262d;
-      border: 1px solid #30363d;
-      padding: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      transition: all 0.2s ease;
-    }
-  
-    .insight-card:hover {
-      border-color: #4285f4;
-      transform: translateY(-2px);
-    }
-  
-    .insight-icon {
-      width: 40px;
-      height: 40px;
-      background: #4285f4;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-  
-    .insight-content {
-      flex: 1;
-    }
-  
-    .insight-title {
-      color: #f0f6fc;
-      font-size: 1rem;
-      font-weight: 600;
-      margin: 0 0 0.25rem 0;
-    }
-  
-    .insight-value {
-      color: #64b5f6;
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-    }
-  
-    .insight-description {
-      color: #8b949e;
-      font-size: 0.875rem;
-    }
-  
-    /* Light mode styles */
-    :global(.light) .analytics-dashboard {
-      background: white;
-      color: #374151;
-    }
-  
-    :global(.light) .dashboard-header {
-      border-bottom-color: #e2e8f0;
-    }
-  
-    :global(.light) .header-content h1 {
-      color: #374151;
-    }
-  
-    :global(.light) .header-content p {
-      color: #6b7280;
-    }
-  
-    :global(.light) .nav-button,
-    :global(.light) .export-button {
-      background: white;
-      border-color: #d1d5db;
-      color: #374151;
-    }
-  
-    :global(.light) .nav-button:hover,
-    :global(.light) .export-button:hover {
-      background: #f9fafb;
-      border-color: #243788;
-    }
-  
-    :global(.light) .time-range-selector {
-      background: #f8f9fa;
-      border-color: #e2e8f0;
-    }
-  
-    :global(.light) .range-btn {
-      border-color: #d1d5db;
-      color: #6b7280;
-    }
-  
-    :global(.light) .range-btn.active {
-      background: #243788;
-      border-color: #243788;
-    }
-  
-    :global(.light) .range-btn:hover:not(.active) {
-      background: #e2e8f0;
-      color: #374151;
-    }
-  
-    :global(.light) .last-updated {
-      color: #6b7280;
-    }
-  
-    :global(.light) .metric-card {
-      background: white;
-      border-color: #e2e8f0;
-    }
-  
-    :global(.light) .metric-card.primary {
-      border-color: #243788;
-      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    }
-  
-    :global(.light) .metric-card:hover {
-      border-color: #243788;
-    }
-  
-    :global(.light) .metric-header svg {
-      color: #243788;
-    }
-  
-    :global(.light) .metric-header h3 {
-      color: #374151;
-    }
-  
-    :global(.light) .metric-value {
-      color: #374151;
-    }
-  
-    :global(.light) .chart-container {
-      background: white;
-      border-color: #e2e8f0;
-    }
-  
-    :global(.light) .chart-header h3 {
-      color: #374151;
-    }
-  
-    :global(.light) .chart-btn {
-      border-color: #d1d5db;
-      color: #6b7280;
-    }
-  
-    :global(.light) .chart-btn.active {
-      background: #243788;
-      border-color: #243788;
-    }
-  
-    :global(.light) .bar {
-      background: linear-gradient(to top, #243788, #4285f4);
-    }
-  
-    :global(.light) .bar:hover {
-      background: linear-gradient(to top, #1e293b, #243788);
-    }
-  
-    :global(.light) .chart-labels {
-      color: #6b7280;
-    }
-  
-    :global(.light) .stat-item {
-      background: #f9fafb;
-      border-color: #e2e8f0;
-    }
-  
-    :global(.light) .stat-label {
-      color: #374151;
-    }
-  
-    :global(.light) .stat-value {
-      color: #243788;
-    }
-  
-    :global(.light) .activity-section,
-    :global(.light) .contributors-section {
-      background: white;
-      border-color: #e2e8f0;
-    }
-  
-    :global(.light) .activity-header h3,
-    :global(.light) .contributors-header h3 {
-      color: #374151;
-    }
-  
-    :global(.light) .view-all-link {
-      color: #243788;
-    }
-  
-    :global(.light) .view-all-link:hover {
-      color: #1e293b;
-    }
-  
-    :global(.light) .activity-item,
-    :global(.light) .contributor-item {
-      background: #f9fafb;
-      border-color: #e2e8f0;
-    }
-  
-    :global(.light) .activity-icon,
-    :global(.light) .contributor-rank {
-      background: #243788;
-    }
-  
-    :global(.light) .activity-description,
-    :global(.light) .contributor-name {
-      color: #374151;
-    }
-  
-    :global(.light) .activity-time,
-    :global(.light) .contributor-stats {
-      color: #6b7280;
-    }
-  
-    /* Responsive Design */
-    @media (max-width: 768px) {
-      .analytics-dashboard {
-        padding: 1rem;
-      }
-  
-      .dashboard-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-      }
-  
-      .header-actions {
-        flex-direction: column;
-        gap: 0.5rem;
-        width: 100%;
-      }
-  
-      .nav-button,
-      .export-button {
-        width: 100%;
-        justify-content: center;
-      }
-  
-      .time-range-selector {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-      }
-  
-      .range-buttons {
-        width: 100%;
-        justify-content: center;
-      }
-  
-      .metrics-grid {
-        grid-template-columns: 1fr;
-      }
-  
-      .charts-section {
-        grid-template-columns: 1fr;
-      }
-  
-      .chart-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-      }
-  
-      .activity-header,
-      .contributors-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-      }
-    }
-  </style>
-
 <script>
-  // Fixed TypeScript interfaces
-  interface RangeButtonElement extends HTMLButtonElement {
-    dataset: DOMStringMap;
-  }
+  import { adminAPIManager } from "../../lib/admin-api.js";
+  import { adminAuthManager } from "../../lib/admin/auth.js";
 
-  interface ChartButtonElement extends HTMLButtonElement {
-    dataset: DOMStringMap;
-  }
+  // Global state
+  let isLoading = false;
+  let currentData: any = null;
 
-  document.addEventListener("DOMContentLoaded", () => {
-    // Time range selector with proper typing
-    const rangeButtons = document.querySelectorAll(
-      ".range-btn"
-    ) as NodeListOf<RangeButtonElement>;
-    rangeButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        rangeButtons.forEach((btn) => btn.classList.remove("active"));
-        button.classList.add("active");
-
-        const range = button.dataset.range;
-        if (range) {
-          loadDataForRange(range);
-        }
-      });
-    });
-
-    // Chart controls with proper typing
-    const chartButtons = document.querySelectorAll(
-      ".chart-btn"
-    ) as NodeListOf<ChartButtonElement>;
-    chartButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        chartButtons.forEach((btn) => btn.classList.remove("active"));
-        button.classList.add("active");
-
-        const chartType = button.dataset.chart;
-        if (chartType) {
-          updateChart(chartType);
-        }
-      });
-    });
-
-    // Export functionality
-    const exportBtn = document.getElementById("export-btn");
-    exportBtn?.addEventListener("click", () => {
-      exportAnalyticsData();
-    });
-
-    // Auto-refresh data every 5 minutes
-    setInterval(
-      () => {
-        refreshData();
-      },
-      5 * 60 * 1000
-    );
-  });
-
-  async function loadDataForRange(range: string) {
+  function isLocalStorageAvailable(): boolean {
     try {
-      const response = await fetch(`/api/admin/analytics?range=${range}`);
-      const data = await response.json();
-
-      if (data.success) {
-        updateMetrics(data.metrics);
-        updateCharts(data.charts);
-      }
-    } catch (error) {
-      console.error("Error loading data:", error);
+      return typeof window !== "undefined" && window.localStorage !== undefined;
+    } catch (e) {
+      return false;
     }
   }
 
-  function updateChart(chartType: string) {
-    const chartPlaceholder = document.getElementById("activity-chart");
-    if (!chartPlaceholder) return;
-
-    // Chart update logic here
-    console.log(`Updating chart to show: ${chartType}`);
+  function showLoading(): void {
+    isLoading = true;
+    const overlay = document.getElementById("loading-overlay");
+    if (overlay) (overlay as HTMLElement).style.display = "flex";
   }
 
-  function updateMetrics(metrics: any) {
-    console.log("Updating metrics:", metrics);
+  function hideLoading(): void {
+    isLoading = false;
+    const overlay = document.getElementById("loading-overlay");
+    if (overlay) (overlay as HTMLElement).style.display = "none";
   }
 
-  function updateCharts(charts: any) {
-    console.log("Updating charts:", charts);
+  function showError(message: string): void {
+    const banner = document.getElementById("error-banner");
+    const messageEl = document.getElementById("error-message");
+    if (banner && messageEl) {
+      messageEl.textContent = message;
+      (banner as HTMLElement).style.display = "flex";
+    }
   }
 
-  async function exportAnalyticsData() {
+  function hideError(): void {
+    const banner = document.getElementById("error-banner");
+    if (banner) (banner as HTMLElement).style.display = "none";
+  }
+
+  function updateMetrics(data: any): void {
+    if (!data) return;
+
+    const metrics = {
+      "total-comments": data.comments?.total || 0,
+      "pending-comments": data.comments?.pending || 0,
+      "active-users": data.users?.active || 0,
+      "total-users": data.users?.total || 0,
+      "published-articles": data.content?.publishedArticles || 0,
+      "active-subscribers": data.newsletter?.activeSubscribers || 0,
+      "stat-approved": data.comments?.approved || 0,
+      "stat-pending": data.comments?.pending || 0,
+      "stat-flagged": data.comments?.flagged || 0,
+      "total-article-likes": data.engagement?.totalArticleLikes || 0,
+      "total-article-saves": data.engagement?.totalArticleSaves || 0,
+      "total-comment-reactions": data.engagement?.totalCommentReactions || 0,
+      "avg-engagement": data.engagement?.avgEngagementPerArticle || 0,
+    };
+
+    Object.entries(metrics).forEach(([key, value]) => {
+      const elements = document.querySelectorAll(`[data-metric="${key}"]`);
+      elements.forEach((el) => {
+        if (el) el.textContent = value.toString();
+      });
+    });
+
+    const lastUpdated = document.getElementById("last-updated");
+    if (lastUpdated && data.generatedAt) {
+      lastUpdated.textContent = `Last updated: ${new Date(data.generatedAt).toLocaleString()}`;
+    }
+  }
+
+  async function loadAnalyticsData(range: string = "30d"): Promise<void> {
+    if (isLoading) return;
+
     try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
+      showLoading();
+      hideError();
+
+      console.log("🔄 Loading analytics data using singleton manager...");
+
+      // Initialize the singleton manager
+      await adminAPIManager.initialize();
+
+      const [dashboardResult, analyticsResult] = await Promise.all([
+        adminAPIManager.getDashboardStats(),
+        adminAPIManager.getAnalyticsData(range),
+      ]);
+
+      if (dashboardResult.success && dashboardResult.data) {
+        currentData = dashboardResult.data;
+        updateMetrics(currentData);
+        console.log("✅ Dashboard stats loaded successfully:", currentData);
+      } else {
+        throw new Error(
+          dashboardResult.error || "Failed to load dashboard stats"
+        );
       }
 
-      const session = JSON.parse(adminSession);
-      const response = await fetch("/api/admin/analytics/export", {
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
+      if (analyticsResult.success && analyticsResult.data) {
+        updateChartData(analyticsResult.data);
+        updateContributors(analyticsResult.data.topUsers || []);
+        console.log(
+          "✅ Analytics data loaded successfully:",
+          analyticsResult.data
+        );
+      } else {
+        console.warn("⚠️ Analytics data not available:", analyticsResult.error);
+      }
+    } catch (error: any) {
+      console.error("❌ Analytics loading error:", error);
+
+      // Handle authentication errors
+      if (
+        error.message.includes("session") ||
+        error.message.includes("authenticated")
+      ) {
+        setTimeout(() => {
+          window.location.href = `/auth/admin-signin?error=${encodeURIComponent(error.message)}`;
+        }, 2000);
+      }
+
+      showError(
+        error.message || "Failed to load analytics data. Using fallback data."
+      );
+    } finally {
+      hideLoading();
+    }
+  }
+
+  function updateChartData(data: any): void {
+    if (!data?.growth || data.growth.length === 0) return;
+
+    const chartBars = document.getElementById("chart-bars");
+    const chartLabels = document.getElementById("chart-labels");
+
+    if (!chartBars || !chartLabels) return;
+
+    const recentData = data.growth.slice(-7);
+    const maxCount = Math.max(...recentData.map((d: any) => d.comments));
+
+    chartBars.innerHTML = "";
+    chartLabels.innerHTML = "";
+
+    recentData.forEach((day: any) => {
+      const height = maxCount > 0 ? (day.comments / maxCount) * 100 : 20;
+      const dayName = new Date(day.date).toLocaleDateString("en-US", {
+        weekday: "short",
       });
 
-      if (response.ok) {
-        const blob = await response.blob();
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      bar.style.height = `${height}%`;
+      bar.title = `${dayName}: ${day.comments} comments`;
+      chartBars.appendChild(bar);
+
+      const label = document.createElement("span");
+      label.textContent = dayName;
+      chartLabels.appendChild(label);
+    });
+  }
+
+  function updateContributors(users: any[]): void {
+    const contributorsList = document.getElementById("contributors-list");
+    if (!contributorsList) return;
+
+    if (!users || users.length === 0) {
+      contributorsList.innerHTML =
+        '<div class="empty-contributors"><p>No contributors data available</p></div>';
+      return;
+    }
+
+    contributorsList.innerHTML = users
+      .slice(0, 10)
+      .map(
+        (user: any, index: number) => `
+      <div class="contributor-item">
+        <div class="contributor-rank">#${index + 1}</div>
+        <div class="contributor-info">
+          <div class="contributor-name">${user.display_name || `User ${index + 1}`}</div>
+          <div class="contributor-stats">${user.total_comments || 0} comments • ${user.reputation_score || 0} reputation</div>
+        </div>
+        <div class="contributor-badge">${user.total_reads || 0} reads</div>
+      </div>
+    `
+      )
+      .join("");
+  }
+
+  async function exportData(): Promise<void> {
+    try {
+      showLoading();
+
+      // Use singleton manager
+      await adminAPIManager.initialize();
+      const result = await adminAPIManager.exportUsers("csv");
+
+      if (result.success && typeof result.data === "string") {
+        const blob = new Blob([result.data], { type: "text/csv" });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -1521,64 +750,129 @@ console.log("Analytics Debug:", {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-
         showNotification("Analytics data exported successfully", "success");
       } else {
-        throw new Error("Failed to export data");
+        throw new Error(result.error || "Failed to export data");
       }
-    } catch (error) {
-      console.error("Error exporting data:", error);
+    } catch (error: any) {
+      console.error("Export error:", error);
       showNotification("Failed to export analytics data", "error");
+    } finally {
+      hideLoading();
     }
-  }
-
-  async function refreshData() {
-    const activeRange = document.querySelector(
-      ".range-btn.active"
-    ) as RangeButtonElement;
-    const range = activeRange?.dataset.range || "7d";
-    await loadDataForRange(range);
   }
 
   function showNotification(
     message: string,
     type: "success" | "error" = "success"
-  ) {
+  ): void {
     const notification = document.createElement("div");
-    notification.className = `notification ${type}`;
     notification.textContent = message;
     notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 1rem 1.5rem;
-        color: white;
-        font-weight: 500;
-        z-index: 10000;
-        background: ${type === "success" ? "#238636" : "#da3633"};
-        animation: slideIn 0.3s ease;
-      `;
-
+      position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem;
+      color: white; font-weight: 500; z-index: 10000; border-radius: 4px;
+      background: ${type === "success" ? "#238636" : "#da3633"};
+      animation: slideIn 0.3s ease;
+    `;
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 3000);
   }
+
+  // Initialize when DOM is loaded
+  document.addEventListener("DOMContentLoaded", async () => {
+    console.log("🚀 Analytics dashboard initialized");
+
+    try {
+      // Verify authentication first
+      await adminAuthManager.initialize();
+      const user = await adminAuthManager.getCurrentUser();
+
+      if (!user) {
+        throw new Error("Authentication required");
+      }
+
+      console.log("✅ Admin authenticated, loading analytics data...");
+      await loadAnalyticsData();
+    } catch (error: any) {
+      console.error("❌ Analytics initialization error:", error);
+      showError("Authentication required. Please refresh the page.");
+
+      // Redirect to sign in after delay
+      setTimeout(() => {
+        window.location.href = `/auth/admin-signin?error=${encodeURIComponent(error.message)}`;
+      }, 3000);
+    }
+
+    // Time range buttons
+    const rangeButtons = document.querySelectorAll(
+      ".range-btn"
+    ) as NodeListOf<HTMLButtonElement>;
+    rangeButtons.forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (isLoading) return;
+        rangeButtons.forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
+        const range = (button as HTMLElement).dataset.range;
+        if (range) {
+          console.log(`📊 Loading data for range: ${range}`);
+          await loadAnalyticsData(range);
+        }
+      });
+    });
+
+    // Chart controls
+    const chartButtons = document.querySelectorAll(
+      ".chart-btn"
+    ) as NodeListOf<HTMLButtonElement>;
+    chartButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        chartButtons.forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
+        console.log(
+          "📈 Chart type changed:",
+          (button as HTMLElement).dataset.chart
+        );
+      });
+    });
+
+    // Export button
+    const exportBtn = document.getElementById(
+      "export-btn"
+    ) as HTMLButtonElement;
+    if (exportBtn) {
+      exportBtn.addEventListener("click", exportData);
+    }
+
+    // Retry button
+    const retryBtn = document.getElementById("retry-btn") as HTMLButtonElement;
+    if (retryBtn) {
+      retryBtn.addEventListener("click", async () => {
+        const btnText = retryBtn.querySelector(".btn-text") as HTMLElement;
+        const btnSpinner = retryBtn.querySelector(
+          ".btn-spinner"
+        ) as HTMLElement;
+
+        if (btnText) btnText.style.display = "none";
+        if (btnSpinner) btnSpinner.style.display = "flex";
+
+        await loadAnalyticsData();
+
+        if (btnText) btnText.style.display = "block";
+        if (btnSpinner) btnSpinner.style.display = "none";
+      });
+    }
+  });
 
   // Add animation styles
   if (!document.getElementById("analytics-animations")) {
     const style = document.createElement("style");
     style.id = "analytics-animations";
     style.textContent = `
-        @keyframes slideIn {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `;
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+    `;
     document.head.appendChild(style);
   }
 </script>

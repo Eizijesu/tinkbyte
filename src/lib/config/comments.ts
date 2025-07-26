@@ -1,4 +1,4 @@
-// src/lib/config/comments.ts - Complete config
+// src/lib/config/comments.ts
 export const COMMENT_CONFIG = {
   // Threading
   maxThreadDepth: 5,
@@ -37,7 +37,7 @@ export const COMMENT_CONFIG = {
   allowEdit: true,
   trackEditHistory: true,
   
-  editReasons: [  // Remove as const here
+  editReasons: [
     'Fix typo',
     'Clarify meaning', 
     'Add information',
@@ -93,32 +93,25 @@ export const COMMENT_CONFIG = {
   RATE_LIMITING: {
     COMMENTS_PER_MINUTE: 5
   }
-}; // Remove as const from here
+};
 
-export const THREAD_COLORS = {
-  light: [
-    '#6366f1', // Level 1 - Indigo
-    '#10b981', // Level 2 - Emerald  
-    '#f59e0b', // Level 3 - Amber
-    '#ef4444', // Level 4 - Red
-    '#8b5cf6'  // Level 5 - Violet
-  ],
-  dark: [
-    '#818cf8', // Level 1 - Indigo (lighter)
-    '#34d399', // Level 2 - Emerald (lighter)
-    '#fbbf24', // Level 3 - Amber (lighter)
-    '#f87171', // Level 4 - Red (lighter)
-    '#a78bfa'  // Level 5 - Violet (lighter)
-  ]
-} as const; // Keep as const here since it's used for type inference
-
+// Move REACTION_TYPES to the main config
 export const REACTION_TYPES = {
   helpful: { emoji: '👍', label: 'Helpful' },
   insightful: { emoji: '💡', label: 'Insightful' },
   great: { emoji: '🔥', label: 'Great' },
   love: { emoji: '❤️', label: 'Love' },
   thinking: { emoji: '🤔', label: 'Thinking' }
-} as const; // Keep as const here since it's used for type inference
+} as const;
+
+export const THREAD_COLORS = {
+  light: [
+    '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
+  ],
+  dark: [
+    '#818cf8', '#34d399', '#fbbf24', '#f87171', '#a78bfa'
+  ]
+} as const;
 
 export const AVATAR_PRESETS = [
   '/images/avatars/preset-1.svg',
@@ -127,7 +120,7 @@ export const AVATAR_PRESETS = [
   '/images/avatars/preset-4.svg',
   '/images/avatars/preset-5.svg',
   '/images/avatars/preset-6.svg'
-]; // Remove as const here if you need it to be mutable
+];
 
 // Export types
 export type ThreadColor = typeof THREAD_COLORS;

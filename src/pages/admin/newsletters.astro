@@ -1,57 +1,27 @@
 ---
-// src/pages/admin/newsletters.astro - New comprehensive newsletter management
+// src/pages/admin/newsletters.astro - REAL DATABASE VERSION
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import { supabase } from "../../lib/supabase";
-
-// Get newsletter data
-const { data: newsletters, error: newslettersError } = await supabase
-  .from("newsletters")
-  .select("*")
-  .order("created_at", { ascending: false });
-
-// Get subscription data
-const { data: subscriptions, error: subscriptionsError } = await supabase
-  .from("newsletter_subscriptions")
-  .select(
-    `
-    *,
-    users:user_id(
-      id,
-      profiles(display_name, avatar_type, avatar_preset_id)
-    )
-  `
-  )
-  .eq("is_active", true)
-  .order("subscribed_at", { ascending: false })
-  .limit(100);
-
-// Get newsletter statistics
-const { data: subStats } = await supabase
-  .from("newsletter_subscriptions")
-  .select("newsletter_type, is_active, subscribed_at");
-
-const stats = {
-  totalNewsletters: newsletters?.length || 0,
-  totalSubscribers: subscriptions?.length || 0,
-  activeSubscribers: subscriptions?.filter((sub) => sub.is_active).length || 0,
-  weeklySubscribers:
-    subStats?.filter((sub) => sub.newsletter_type === "weekly" && sub.is_active)
-      .length || 0,
-  monthlySubscribers:
-    subStats?.filter(
-      (sub) => sub.newsletter_type === "monthly" && sub.is_active
-    ).length || 0,
-  newThisMonth:
-    subStats?.filter((sub) => {
-      const subDate = new Date(sub.subscribed_at);
-      const monthAgo = new Date();
-      monthAgo.setMonth(monthAgo.getMonth() - 1);
-      return subDate > monthAgo && sub.is_active;
-    }).length || 0,
-};
 ---
 
 <AdminLayout title="Newsletter Management - TinkByte Admin">
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="spinner-square"></div>
+      <span>Loading newsletter data...</span>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  <div id="error-banner" class="error-banner" style="display: none;">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span id="error-message">An error occurred</span>
+    <button class="retry-btn" id="retry-btn">
+      <i class="fas fa-redo"></i>
+      Retry
+    </button>
+  </div>
+
   <div class="newsletters-container">
     <!-- Newsletter Header -->
     <div class="newsletters-header">
@@ -61,94 +31,119 @@ const stats = {
       </div>
       <div class="header-actions">
         <button class="create-newsletter-btn" id="create-newsletter-btn">
+          <span class="btn-spinner" id="create-spinner" style="display: none;">
+            <div class="spinner-square small"></div>
+          </span>
           <i class="fas fa-plus"></i>
           Create Newsletter
         </button>
         <button class="export-subscribers-btn" id="export-subscribers-btn">
+          <span class="btn-spinner" id="export-spinner" style="display: none;">
+            <div class="spinner-square small"></div>
+          </span>
           <i class="fas fa-download"></i>
           Export Subscribers
+        </button>
+        <button class="email-builder-btn" id="email-builder-btn">
+          <i class="fas fa-paint-brush"></i>
+          Email Builder
         </button>
       </div>
     </div>
 
-    <!-- Newsletter Stats -->
-    <div class="newsletter-stats">
+    <!-- Newsletter Stats - Horizontal Layout -->
+    <div class="newsletter-stats-grid">
       <div class="stat-card primary">
         <div class="stat-icon">
           <i class="fas fa-envelope"></i>
         </div>
         <div class="stat-content">
-          <span class="stat-number">{stats.totalSubscribers}</span>
-          <span class="stat-label">Total Subscribers</span>
-          <span class="stat-change positive"
-            >+{stats.newThisMonth} this month</span
-          >
+          <div class="stat-number" id="total-subscribers">-</div>
+          <div class="stat-label">Total Subscribers</div>
+          <div class="stat-action">
+            <span class="stat-change positive" id="new-this-month"
+              >Loading...</span
+            >
+          </div>
         </div>
       </div>
-      <div class="stat-card">
+
+      <div class="stat-card info">
         <div class="stat-icon">
           <i class="fas fa-users"></i>
         </div>
         <div class="stat-content">
-          <span class="stat-number">{stats.activeSubscribers}</span>
-          <span class="stat-label">Active Subscribers</span>
-          <span class="stat-change neutral"
-            >{
-              Math.round(
-                (stats.activeSubscribers / stats.totalSubscribers) * 100
-              )
-            }% active rate</span
-          >
+          <div class="stat-number" id="active-subscribers">-</div>
+          <div class="stat-label">Active Subscribers</div>
+          <div class="stat-action">
+            <span class="stat-change neutral" id="active-rate">Loading...</span>
+          </div>
         </div>
       </div>
-      <div class="stat-card">
+
+      <div class="stat-card success">
         <div class="stat-icon">
           <i class="fas fa-calendar-week"></i>
         </div>
         <div class="stat-content">
-          <span class="stat-number">{stats.weeklySubscribers}</span>
-          <span class="stat-label">Weekly Newsletter</span>
-          <span class="stat-change neutral">Most popular</span>
+          <div class="stat-number" id="weekly-subscribers">-</div>
+          <div class="stat-label">Weekly Newsletter</div>
+          <div class="stat-action">
+            <span class="stat-change neutral">Most popular</span>
+          </div>
         </div>
       </div>
-      <div class="stat-card">
+
+      <div class="stat-card warning">
         <div class="stat-icon">
           <i class="fas fa-newspaper"></i>
         </div>
         <div class="stat-content">
-          <span class="stat-number">{stats.totalNewsletters}</span>
-          <span class="stat-label">Total Newsletters</span>
-          <span class="stat-change neutral">Available campaigns</span>
+          <div class="stat-number" id="total-newsletters">-</div>
+          <div class="stat-label">Total Newsletters</div>
+          <div class="stat-action">
+            <span class="stat-change neutral">Available campaigns</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Newsletter Tabs -->
-    <div class="newsletter-tabs">
-      <button class="tab-btn active" data-tab="newsletters">
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+      <button class="tab-button active" data-tab="newsletters">
         <i class="fas fa-newspaper"></i>
-        Newsletters ({stats.totalNewsletters})
+        <span>Newsletters</span>
+        <span class="tab-count" id="newsletters-count">(0)</span>
       </button>
-      <button class="tab-btn" data-tab="subscribers">
+      <button class="tab-button" data-tab="subscribers">
         <i class="fas fa-users"></i>
-        Subscribers ({stats.totalSubscribers})
+        <span>Subscribers</span>
+        <span class="tab-count" id="subscribers-count">(0)</span>
       </button>
-      <button class="tab-btn" data-tab="analytics">
+      <button class="tab-button" data-tab="campaigns">
+        <i class="fas fa-paper-plane"></i>
+        <span>Email Campaigns</span>
+        <span class="tab-count" id="campaigns-count">(0)</span>
+      </button>
+      <button class="tab-button" data-tab="analytics">
         <i class="fas fa-chart-line"></i>
-        Analytics
+        <span>Analytics</span>
+        <span class="tab-count"></span>
       </button>
-      <button class="tab-btn" data-tab="settings">
+      <button class="tab-button" data-tab="settings">
         <i class="fas fa-cog"></i>
-        Settings
+        <span>Settings</span>
+        <span class="tab-count"></span>
       </button>
     </div>
 
-    <!-- Newsletters Tab -->
-    <div id="newsletters-tab" class="tab-content active">
-      <div class="newsletters-section">
-        <div class="section-header">
+    <!-- Tab Content Container -->
+    <div class="tab-content-container">
+      <!-- Newsletters Tab -->
+      <div id="newsletters-tab" class="tab-content active">
+        <div class="tab-header">
           <h2>Newsletter Campaigns</h2>
-          <div class="section-actions">
+          <div class="tab-actions">
             <select class="filter-select" id="newsletter-filter">
               <option value="">All Newsletters</option>
               <option value="active">Active</option>
@@ -157,129 +152,21 @@ const stats = {
           </div>
         </div>
 
-        <div class="newsletters-grid">
-          {
-            newsletters && newsletters.length > 0 ? (
-              newsletters.map((newsletter) => (
-                <div class="newsletter-card" data-newsletter-id={newsletter.id}>
-                  <div class="newsletter-header">
-                    <div class="newsletter-info">
-                      <h3 class="newsletter-name">{newsletter.name}</h3>
-                      <p class="newsletter-description">
-                        {newsletter.description || "No description"}
-                      </p>
-                      <div class="newsletter-meta">
-                        <span class="newsletter-frequency">
-                          <i class="fas fa-clock" />
-                          {newsletter.frequency || "Weekly"}
-                        </span>
-                        {newsletter.day_of_week && (
-                          <span class="newsletter-day">
-                            <i class="fas fa-calendar" />
-                            {newsletter.day_of_week}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div class="newsletter-status">
-                      <span
-                        class={`status-badge ${newsletter.is_active ? "active" : "inactive"}`}
-                      >
-                        {newsletter.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="newsletter-stats-mini">
-                    <div class="mini-stat">
-                      <span class="mini-stat-number">
-                        {newsletter.subscriber_count || 0}
-                      </span>
-                      <span class="mini-stat-label">Subscribers</span>
-                    </div>
-                    <div class="mini-stat">
-                      <span class="mini-stat-number">
-                        {newsletter.sort_order || 0}
-                      </span>
-                      <span class="mini-stat-label">Sort Order</span>
-                    </div>
-                  </div>
-
-                  <div class="newsletter-actions">
-                    <button
-                      class="action-btn edit"
-                      data-action="edit"
-                      data-newsletter-id={newsletter.id}
-                    >
-                      <i class="fas fa-edit" />
-                      Edit
-                    </button>
-                    <button
-                      class="action-btn subscribers"
-                      data-action="subscribers"
-                      data-newsletter-id={newsletter.id}
-                    >
-                      <i class="fas fa-users" />
-                      Subscribers
-                    </button>
-                    <button
-                      class="action-btn send"
-                      data-action="send"
-                      data-newsletter-id={newsletter.id}
-                    >
-                      <i class="fas fa-paper-plane" />
-                      Send
-                    </button>
-                    {newsletter.is_active ? (
-                      <button
-                        class="action-btn deactivate"
-                        data-action="deactivate"
-                        data-newsletter-id={newsletter.id}
-                      >
-                        <i class="fas fa-pause" />
-                        Deactivate
-                      </button>
-                    ) : (
-                      <button
-                        class="action-btn activate"
-                        data-action="activate"
-                        data-newsletter-id={newsletter.id}
-                      >
-                        <i class="fas fa-play" />
-                        Activate
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div class="empty-state">
-                <i class="fas fa-envelope-open" />
-                <h3>No newsletters found</h3>
-                <p>
-                  Create your first newsletter to start engaging with your
-                  community
-                </p>
-                <button
-                  class="create-first-newsletter-btn"
-                  id="create-first-newsletter"
-                >
-                  <i class="fas fa-plus" />
-                  Create First Newsletter
-                </button>
-              </div>
-            )
-          }
+        <div class="newsletters-grid" id="newsletters-grid">
+          <!-- Content will be loaded dynamically -->
+          <div class="empty-state">
+            <i class="fas fa-envelope-open"></i>
+            <h3>Loading newsletters...</h3>
+            <p>Please wait while we load your newsletter campaigns</p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Subscribers Tab -->
-    <div id="subscribers-tab" class="tab-content">
-      <div class="subscribers-section">
-        <div class="section-header">
+      <!-- Subscribers Tab -->
+      <div id="subscribers-tab" class="tab-content">
+        <div class="tab-header">
           <h2>Newsletter Subscribers</h2>
-          <div class="section-actions">
+          <div class="tab-actions">
             <div class="search-container">
               <i class="fas fa-search"></i>
               <input
@@ -310,137 +197,15 @@ const stats = {
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {
-                subscriptions && subscriptions.length > 0 ? (
-                  subscriptions.map((subscription) => {
-                    const profile = subscription.users?.profiles;
-                    const displayName =
-                      profile?.display_name ||
-                      subscription.email?.split("@")[0] ||
-                      "Unknown";
-
-                    return (
-                      <tr
-                        class="subscriber-row"
-                        data-subscription-id={subscription.id}
-                      >
-                        <td>
-                          <input
-                            type="checkbox"
-                            class="subscriber-select"
-                            value={subscription.id}
-                          />
-                        </td>
-                        <td>
-                          <div class="subscriber-info">
-                            <div class="subscriber-avatar">
-                              {profile?.avatar_type === "preset" ? (
-                                <div
-                                  class="avatar-preset"
-                                  data-preset={profile.avatar_preset_id || 1}
-                                >
-                                  {displayName.charAt(0).toUpperCase()}
-                                </div>
-                              ) : (
-                                <div class="avatar-preset">
-                                  {displayName.charAt(0).toUpperCase()}
-                                </div>
-                              )}
-                            </div>
-                            <div class="subscriber-details">
-                              <span class="subscriber-name">{displayName}</span>
-                              <span class="subscriber-id">
-                                ID: {subscription.user_id || "Guest"}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <span class="subscriber-email">
-                            {subscription.email}
-                          </span>
-                          {subscription.convertkit_subscriber_id && (
-                            <span class="convertkit-badge">ConvertKit</span>
-                          )}
-                        </td>
-                        <td>
-                          <span
-                            class={`newsletter-type-badge ${subscription.newsletter_type}`}
-                          >
-                            {subscription.newsletter_type
-                              ?.charAt(0)
-                              .toUpperCase() +
-                              subscription.newsletter_type?.slice(1)}
-                          </span>
-                        </td>
-                        <td>
-                          <span class="subscribe-date">
-                            {new Date(
-                              subscription.subscribed_at
-                            ).toLocaleDateString()}
-                          </span>
-                        </td>
-                        <td>
-                          <span
-                            class={`status-badge ${subscription.is_active ? "active" : "inactive"}`}
-                          >
-                            {subscription.is_active ? "Active" : "Unsubscribed"}
-                          </span>
-                        </td>
-                        <td>
-                          <div class="subscriber-actions">
-                            <button
-                              class="action-btn view"
-                              data-action="view"
-                              data-subscription-id={subscription.id}
-                              title="View Details"
-                            >
-                              <i class="fas fa-eye" />
-                            </button>
-                            {subscription.is_active ? (
-                              <button
-                                class="action-btn unsubscribe"
-                                data-action="unsubscribe"
-                                data-subscription-id={subscription.id}
-                                title="Unsubscribe"
-                              >
-                                <i class="fas fa-user-minus" />
-                              </button>
-                            ) : (
-                              <button
-                                class="action-btn resubscribe"
-                                data-action="resubscribe"
-                                data-subscription-id={subscription.id}
-                                title="Resubscribe"
-                              >
-                                <i class="fas fa-user-plus" />
-                              </button>
-                            )}
-                            <button
-                              class="action-btn delete"
-                              data-action="delete"
-                              data-subscription-id={subscription.id}
-                              title="Delete"
-                            >
-                              <i class="fas fa-trash" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colspan="7" class="empty-message">
-                      <div class="empty-state-inline">
-                        <i class="fas fa-envelope-open" />
-                        <span>No subscribers found</span>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              }
+            <tbody id="subscribers-table-body">
+              <tr>
+                <td colspan="7" class="empty-message">
+                  <div class="empty-state-inline">
+                    <i class="fas fa-envelope-open"></i>
+                    <span>Loading subscribers...</span>
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -470,159 +235,211 @@ const stats = {
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Analytics Tab -->
-    <div id="analytics-tab" class="tab-content">
-      <div class="analytics-section">
-        <h2>Newsletter Analytics</h2>
+      <!-- Email Campaigns Tab -->
+      <div id="campaigns-tab" class="tab-content">
+        <div class="tab-header">
+          <h2>Email Campaigns</h2>
+          <div class="tab-actions">
+            <button class="create-campaign-btn" id="create-campaign-btn">
+              <i class="fas fa-plus"></i>
+              Create Campaign
+            </button>
+            <button class="email-builder-btn" id="launch-builder-btn">
+              <i class="fas fa-paint-brush"></i>
+              Email Builder
+            </button>
+          </div>
+        </div>
 
-        <div class="analytics-grid">
-          <div class="analytics-card">
-            <h3>Subscription Growth</h3>
-            <div class="chart-placeholder">
-              <div class="growth-chart">
-                <div class="chart-bar" style="height: 60%"></div>
-                <div class="chart-bar" style="height: 80%"></div>
-                <div class="chart-bar" style="height: 45%"></div>
-                <div class="chart-bar" style="height: 90%"></div>
-                <div class="chart-bar" style="height: 70%"></div>
-                <div class="chart-bar" style="height: 95%"></div>
-                <div class="chart-bar" style="height: 85%"></div>
-              </div>
-              <div class="chart-labels">
-                <span>Jan</span>
-                <span>Feb</span>
-                <span>Mar</span>
-                <span>Apr</span>
-                <span>May</span>
-                <span>Jun</span>
-                <span>Jul</span>
+        <div class="campaigns-grid" id="campaigns-grid">
+          <div class="empty-state">
+            <i class="fas fa-paper-plane"></i>
+            <h3>No email campaigns yet</h3>
+            <p>Create your first responsive email campaign using our builder</p>
+            <button
+              class="create-first-campaign-btn"
+              id="create-first-campaign"
+            >
+              <i class="fas fa-plus"></i>
+              Create First Campaign
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Tab -->
+      <div id="analytics-tab" class="tab-content">
+        <div class="analytics-section">
+          <h2>Newsletter Analytics</h2>
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <h3>Subscription Growth</h3>
+              <div class="chart-placeholder">
+                <div class="chart-mock">
+                  <div class="chart-bars">
+                    <div class="bar" style="height: 60%;"></div>
+                    <div class="bar" style="height: 80%;"></div>
+                    <div class="bar" style="height: 45%;"></div>
+                    <div class="bar" style="height: 90%;"></div>
+                    <div class="bar" style="height: 75%;"></div>
+                    <div class="bar" style="height: 95%;"></div>
+                    <div class="bar" style="height: 85%;"></div>
+                  </div>
+                  <div class="chart-labels">
+                    <span>Jan</span>
+                    <span>Feb</span>
+                    <span>Mar</span>
+                    <span>Apr</span>
+                    <span>May</span>
+                    <span>Jun</span>
+                    <span>Jul</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="analytics-card">
-            <h3>Newsletter Performance</h3>
-            <div class="performance-stats">
-              <div class="performance-item">
-                <span class="performance-label">Open Rate</span>
-                <span class="performance-value">24.5%</span>
-                <span class="performance-change positive">+2.3%</span>
-              </div>
-              <div class="performance-item">
-                <span class="performance-label">Click Rate</span>
-                <span class="performance-value">8.2%</span>
-                <span class="performance-change positive">+1.1%</span>
-              </div>
-              <div class="performance-item">
-                <span class="performance-label">Unsubscribe Rate</span>
-                <span class="performance-value">1.8%</span>
-                <span class="performance-change negative">+0.3%</span>
+            <div class="analytics-card">
+              <h3>Engagement Metrics</h3>
+              <div class="metrics-list" id="engagement-metrics">
+                <div class="metric-item">
+                  <span class="metric-label">Open Rate</span>
+                  <span class="metric-value">Loading...</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Click Rate</span>
+                  <span class="metric-value">Loading...</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Unsubscribe Rate</span>
+                  <span class="metric-value">Loading...</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Bounce Rate</span>
+                  <span class="metric-value">Loading...</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="analytics-card">
-            <h3>Top Performing Content</h3>
-            <div class="top-content">
-              <div class="content-item">
-                <span class="content-title">Product Strategy Guide</span>
-                <span class="content-metric">32% open rate</span>
-              </div>
-              <div class="content-item">
-                <span class="content-title">AI in Product Development</span>
-                <span class="content-metric">28% open rate</span>
-              </div>
-              <div class="content-item">
-                <span class="content-title">Build vs Buy Decisions</span>
-                <span class="content-metric">25% open rate</span>
+            <div class="analytics-card">
+              <h3>Top Performing Content</h3>
+              <div class="content-list" id="top-content">
+                <div class="loading-state">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  <span>Loading performance data...</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Settings Tab -->
-    <div id="settings-tab" class="tab-content">
-      <div class="settings-section">
-        <h2>Newsletter Settings</h2>
+      <!-- Settings Tab -->
+      <div id="settings-tab" class="tab-content">
+        <div class="settings-section">
+          <h2>Newsletter Settings</h2>
+          <form class="newsletter-settings-form" id="newsletter-settings-form">
+            <div class="settings-group">
+              <h3>Email Configuration</h3>
+              <div class="form-group">
+                <label for="sender-name">Sender Name</label>
+                <input
+                  type="text"
+                  id="sender-name"
+                  name="sender_name"
+                  placeholder="TinkByte Team"
+                />
+              </div>
+              <div class="form-group">
+                <label for="sender-email">Sender Email</label>
+                <input
+                  type="email"
+                  id="sender-email"
+                  name="sender_email"
+                  placeholder="newsletter@tinkbyte.com"
+                />
+              </div>
+              <div class="form-group">
+                <label for="reply-to">Reply-To Email</label>
+                <input
+                  type="email"
+                  id="reply-to"
+                  name="reply_to"
+                  placeholder="hello@tinkbyte.com"
+                />
+              </div>
+            </div>
 
-        <form class="newsletter-settings-form" id="newsletter-settings-form">
-          <div class="settings-group">
-            <h3>Email Configuration</h3>
-            <div class="form-group">
-              <label for="sender-name">Sender Name</label>
-              <input type="text" id="sender-name" value="TinkByte" />
+            <div class="settings-group">
+              <h3>Default Settings</h3>
+              <div class="form-group">
+                <label for="default-frequency">Default Frequency</label>
+                <select id="default-frequency" name="default_frequency">
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="daily">Daily</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="welcome-email">Welcome Email Template</label>
+                <textarea
+                  id="welcome-email"
+                  name="welcome_email"
+                  rows="4"
+                  placeholder="Welcome to our newsletter..."></textarea>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="sender-email">Sender Email</label>
-              <input
-                type="email"
-                id="sender-email"
-                value="newsletter@tinkbyte.com"
-              />
-            </div>
-            <div class="form-group">
-              <label for="reply-to">Reply-To Email</label>
-              <input type="email" id="reply-to" value="hello@tinkbyte.com" />
-            </div>
-          </div>
 
-          <div class="settings-group">
-            <h3>Default Settings</h3>
-            <div class="form-group">
-              <label for="default-frequency">Default Frequency</label>
-              <select id="default-frequency">
-                <option value="weekly" selected>Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="daily">Daily</option>
-              </select>
+            <div class="settings-group">
+              <h3>Integration Settings</h3>
+              <div class="form-group">
+                <label for="convertkit-api">ConvertKit API Key</label>
+                <input
+                  type="password"
+                  id="convertkit-api"
+                  name="convertkit_api"
+                  placeholder="Enter your ConvertKit API key"
+                />
+                <small class="form-help"
+                  >Optional: Connect with ConvertKit for advanced email
+                  automation</small
+                >
+              </div>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="double-optin"
+                    name="double_optin"
+                  />
+                  <span>Enable Double Opt-in</span>
+                  <small
+                    >Require subscribers to confirm their email address</small
+                  >
+                </label>
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="auto-welcome"
+                    name="auto_welcome"
+                    checked
+                  />
+                  <span>Send Welcome Email</span>
+                  <small
+                    >Automatically send welcome email to new subscribers</small
+                  >
+                </label>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="default-day">Default Send Day</label>
-              <select id="default-day">
-                <option value="monday">Monday</option>
-                <option value="tuesday">Tuesday</option>
-                <option value="wednesday">Wednesday</option>
-                <option value="thursday" selected>Thursday</option>
-                <option value="friday">Friday</option>
-                <option value="saturday">Saturday</option>
-                <option value="sunday">Sunday</option>
-              </select>
-            </div>
-          </div>
 
-          <div class="settings-group">
-            <h3>Integration Settings</h3>
-            <div class="form-group">
-              <label for="convertkit-api">ConvertKit API Key</label>
-              <input
-                type="password"
-                id="convertkit-api"
-                placeholder="Enter ConvertKit API key..."
-              />
+            <div class="form-actions">
+              <button type="submit" class="save-btn">
+                <i class="fas fa-save"></i>
+                Save Settings
+              </button>
             </div>
-            <div class="form-group">
-              <label>
-                <input type="checkbox" id="auto-sync" checked />
-                Auto-sync with ConvertKit
-              </label>
-            </div>
-          </div>
-
-          <div class="settings-actions">
-            <button type="button" class="test-btn" id="test-settings">
-              <i class="fas fa-flask"></i>
-              Test Configuration
-            </button>
-            <button type="submit" class="save-btn">
-              <i class="fas fa-save"></i>
-              Save Settings
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -644,7 +461,7 @@ const stats = {
                 id="newsletter-name"
                 name="name"
                 required
-                placeholder="e.g., Weekly Product Insights"
+                placeholder="Weekly Tech Updates"
               />
             </div>
 
@@ -655,8 +472,9 @@ const stats = {
                 id="newsletter-slug"
                 name="slug"
                 required
-                placeholder="e.g., weekly-insights"
+                placeholder="weekly-tech-updates"
               />
+              <small class="form-help">Used in URLs and identification</small>
             </div>
 
             <div class="form-group">
@@ -665,7 +483,7 @@ const stats = {
                 id="newsletter-description"
                 name="description"
                 rows="3"
-                placeholder="Brief description of this newsletter..."
+                placeholder="Weekly updates on the latest tech trends..."
               ></textarea>
             </div>
 
@@ -673,19 +491,20 @@ const stats = {
               <div class="form-group">
                 <label for="newsletter-frequency">Frequency</label>
                 <select id="newsletter-frequency" name="frequency">
-                  <option value="weekly" selected>Weekly</option>
+                  <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>
                   <option value="daily">Daily</option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="newsletter-day">Send Day</label>
+                <label for="newsletter-day">Day of Week</label>
                 <select id="newsletter-day" name="day_of_week">
+                  <option value="">Any Day</option>
                   <option value="monday">Monday</option>
                   <option value="tuesday">Tuesday</option>
                   <option value="wednesday">Wednesday</option>
-                  <option value="thursday" selected>Thursday</option>
+                  <option value="thursday">Thursday</option>
                   <option value="friday">Friday</option>
                   <option value="saturday">Saturday</option>
                   <option value="sunday">Sunday</option>
@@ -714,23 +533,31 @@ const stats = {
               />
             </div>
 
-            <div class="form-group">
-              <label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
                 <input
                   type="checkbox"
                   id="newsletter-active"
                   name="is_active"
                   checked
                 />
-                Active Newsletter
+                <span>Active Newsletter</span>
+                <small>Subscribers can sign up for this newsletter</small>
               </label>
             </div>
 
             <div class="form-actions">
-              <button type="button" class="cancel-btn" id="newsletter-cancel"
-                >Cancel</button
-              >
+              <button type="button" class="cancel-btn" id="newsletter-cancel">
+                Cancel
+              </button>
               <button type="submit" class="save-btn" id="newsletter-save">
+                <span
+                  class="btn-spinner"
+                  id="save-spinner"
+                  style="display: none;"
+                >
+                  <div class="spinner-square small"></div>
+                </span>
                 <i class="fas fa-save"></i>
                 Save Newsletter
               </button>
@@ -739,1557 +566,697 @@ const stats = {
         </div>
       </div>
     </div>
+
+    <!-- Email Builder Modal -->
+    <div
+      id="email-builder-modal"
+      class="modal email-builder-modal"
+      style="display: none;"
+    >
+      <div class="modal-content email-builder-content">
+        <div class="modal-header">
+          <h3>Responsive Email Builder</h3>
+          <button class="modal-close" id="email-builder-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="email-builder-container">
+          <div class="builder-sidebar">
+            <h4>Components</h4>
+            <div class="component-list">
+              <div class="component-item" data-component="header">
+                <i class="fas fa-heading"></i>
+                <span>Header</span>
+              </div>
+              <div class="component-item" data-component="text">
+                <i class="fas fa-paragraph"></i>
+                <span>Text Block</span>
+              </div>
+              <div class="component-item" data-component="image">
+                <i class="fas fa-image"></i>
+                <span>Image</span>
+              </div>
+              <div class="component-item" data-component="button">
+                <i class="fas fa-square"></i>
+                <span>Button</span>
+              </div>
+              <div class="component-item" data-component="divider">
+                <i class="fas fa-minus"></i>
+                <span>Divider</span>
+              </div>
+              <div class="component-item" data-component="social">
+                <i class="fas fa-share-alt"></i>
+                <span>Social Links</span>
+              </div>
+            </div>
+          </div>
+          <div class="builder-canvas">
+            <div class="canvas-header">
+              <div class="device-preview">
+                <button class="device-btn active" data-device="desktop">
+                  <i class="fas fa-desktop"></i>
+                </button>
+                <button class="device-btn" data-device="mobile">
+                  <i class="fas fa-mobile-alt"></i>
+                </button>
+              </div>
+              <div class="canvas-actions">
+                <button class="preview-btn" id="preview-email">
+                  <i class="fas fa-eye"></i>
+                  Preview
+                </button>
+                <button class="save-template-btn" id="save-template">
+                  <i class="fas fa-save"></i>
+                  Save Template
+                </button>
+              </div>
+            </div>
+            <div class="email-canvas" id="email-canvas">
+              <div class="email-container">
+                <div class="drop-zone">
+                  <i class="fas fa-plus-circle"></i>
+                  <p>Drag components here to build your email</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="builder-properties">
+            <h4>Properties</h4>
+            <div class="properties-content" id="properties-content">
+              <p>Select a component to edit its properties</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </AdminLayout>
 
-<style>
-  .newsletters-container {
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
-  .newsletters-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #21262d;
-  }
-
-  .header-content h1 {
-    color: #f0f6fc;
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0 0 0.5rem 0;
-  }
-
-  .header-content p {
-    color: #8b949e;
-    margin: 0;
-    font-size: 1rem;
-  }
-
-  .header-actions {
-    display: flex;
-    gap: 1rem;
-  }
-
-  .create-newsletter-btn,
-  .export-subscribers-btn {
-    padding: 0.75rem 1rem;
-    border: 1px solid #4285f4;
-    background: #4285f4;
-    color: white;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-  }
-
-  .create-newsletter-btn:hover {
-    background: #3367d6;
-    border-color: #3367d6;
-  }
-
-  .export-subscribers-btn {
-    background: transparent;
-    color: #4285f4;
-  }
-
-  .export-subscribers-btn:hover {
-    background: #4285f4;
-    color: white;
-  }
-
-  .newsletter-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .stat-card {
-    background: #161b22;
-    border: 1px solid #21262d;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    transition: all 0.2s ease;
-  }
-
-  .stat-card:hover {
-    border-color: #4285f4;
-    transform: translateY(-2px);
-  }
-
-  .stat-card.primary {
-    border-left: 4px solid #4285f4;
-  }
-
-  .stat-icon {
-    width: 60px;
-    height: 60px;
-    background: #4285f4;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    flex-shrink: 0;
-  }
-
-  .stat-content {
-    flex: 1;
-  }
-
-  .stat-number {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #f0f6fc;
-    line-height: 1;
-    margin-bottom: 0.25rem;
-  }
-
-  .stat-label {
-    color: #8b949e;
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .stat-change {
-    font-size: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  .stat-change.positive {
-    color: #238636;
-  }
-
-  .stat-change.negative {
-    color: #da3633;
-  }
-
-  .stat-change.neutral {
-    color: #8b949e;
-  }
-
-  .newsletter-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid #21262d;
-    background: #161b22;
-  }
-
-  .tab-btn {
-    padding: 1rem 1.5rem;
-    border: none;
-    background: transparent;
-    color: #8b949e;
-    font-weight: 500;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-  }
-
-  .tab-btn.active {
-    color: #4285f4;
-    border-bottom-color: #4285f4;
-    background: #0d1117;
-  }
-
-  .tab-btn:hover:not(.active) {
-    color: #f0f6fc;
-    background: #21262d;
-  }
-
-  .tab-content {
-    display: none;
-  }
-
-  .tab-content.active {
-    display: block;
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-
-  .section-header h2 {
-    color: #f0f6fc;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-  }
-
-  .section-actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .search-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-
-  .search-container i {
-    position: absolute;
-    left: 12px;
-    color: #8b949e;
-    z-index: 1;
-  }
-
-  .search-container input {
-    padding: 0.75rem 1rem 0.75rem 2.5rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    color: #f0f6fc;
-    font-size: 0.875rem;
-    width: 250px;
-  }
-
-  .search-container input:focus {
-    outline: none;
-    border-color: #4285f4;
-  }
-
-  .filter-select {
-    padding: 0.75rem 1rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    color: #f0f6fc;
-    font-size: 0.875rem;
-    cursor: pointer;
-  }
-
-  .filter-select:focus {
-    outline: none;
-    border-color: #4285f4;
-  }
-
-  .newsletters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
-  }
-
-  .newsletter-card {
-    background: #161b22;
-    border: 1px solid #21262d;
-    padding: 1.5rem;
-    transition: all 0.2s ease;
-  }
-
-  .newsletter-card:hover {
-    border-color: #4285f4;
-    transform: translateY(-2px);
-  }
-
-  .newsletter-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-  }
-
-  .newsletter-info {
-    flex: 1;
-  }
-
-  .newsletter-name {
-    color: #f0f6fc;
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin: 0 0 0.5rem 0;
-  }
-
-  .newsletter-description {
-    color: #8b949e;
-    font-size: 0.875rem;
-    margin: 0 0 0.75rem 0;
-    line-height: 1.4;
-  }
-
-  .newsletter-meta {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.75rem;
-    color: #8b949e;
-  }
-
-  .newsletter-meta span {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  .status-badge {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .status-badge.active {
-    background: rgba(35, 134, 54, 0.1);
-    color: #238636;
-    border: 1px solid #238636;
-  }
-
-  .status-badge.inactive {
-    background: rgba(139, 148, 158, 0.1);
-    color: #8b949e;
-    border: 1px solid #8b949e;
-  }
-
-  .newsletter-stats-mini {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    padding: 0.75rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-  }
-
-  .mini-stat {
-    text-align: center;
-  }
-
-  .mini-stat-number {
-    display: block;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #4285f4;
-  }
-
-  .mini-stat-label {
-    font-size: 0.75rem;
-    color: #8b949e;
-  }
-
-  .newsletter-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .action-btn {
-    padding: 0.5rem 1rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    color: #f0f6fc;
-    cursor: pointer;
-    font-size: 0.75rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .action-btn:hover {
-    background: #30363d;
-  }
-
-  .action-btn.edit:hover {
-    background: #4285f4;
-    border-color: #4285f4;
-  }
-
-  .action-btn.subscribers:hover {
-    background: #238636;
-    border-color: #238636;
-  }
-
-  .action-btn.send:hover {
-    background: #fb8500;
-    border-color: #fb8500;
-  }
-
-  .action-btn.activate:hover {
-    background: #238636;
-    border-color: #238636;
-  }
-
-  .action-btn.deactivate:hover {
-    background: #da3633;
-    border-color: #da3633;
-  }
-
-  .empty-state {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 3rem;
-    color: #8b949e;
-  }
-
-  .empty-state i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    color: #4285f4;
-  }
-
-  .empty-state h3 {
-    color: #f0f6fc;
-    margin-bottom: 1rem;
-  }
-
-  .create-first-newsletter-btn {
-    margin-top: 1rem;
-    padding: 0.75rem 1.5rem;
-    background: #4285f4;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .create-first-newsletter-btn:hover {
-    background: #3367d6;
-  }
-
-  /* Subscribers Table */
-  .subscribers-table-container {
-    background: #161b22;
-    border: 1px solid #21262d;
-    overflow-x: auto;
-    margin-bottom: 2rem;
-  }
-
-  .subscribers-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .subscribers-table th {
-    background: #21262d;
-    color: #f0f6fc;
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-    font-size: 0.875rem;
-    border-bottom: 1px solid #30363d;
-  }
-
-  .subscribers-table td {
-    padding: 1rem;
-    border-bottom: 1px solid #21262d;
-    vertical-align: middle;
-  }
-
-  .subscriber-row:hover {
-    background: #21262d;
-  }
-
-  .subscriber-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .subscriber-avatar {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-  }
-
-  .avatar-preset {
-    width: 100%;
-    height: 100%;
-    background: #4285f4;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1.25rem;
-  }
-
-  .subscriber-details {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .subscriber-name {
-    color: #f0f6fc;
-    font-weight: 600;
-    font-size: 0.875rem;
-  }
-
-  .subscriber-id {
-    color: #8b949e;
-    font-size: 0.75rem;
-  }
-
-  .subscriber-email {
-    color: #8b949e;
-    font-size: 0.875rem;
-  }
-
-  .convertkit-badge {
-    background: rgba(66, 133, 244, 0.1);
-    color: #4285f4;
-    padding: 0.125rem 0.5rem;
-    font-size: 0.625rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border: 1px solid #4285f4;
-    margin-top: 0.25rem;
-    display: inline-block;
-  }
-
-  .newsletter-type-badge {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .newsletter-type-badge.weekly {
-    background: rgba(66, 133, 244, 0.1);
-    color: #4285f4;
-    border: 1px solid #4285f4;
-  }
-
-  .newsletter-type-badge.monthly {
-    background: rgba(35, 134, 54, 0.1);
-    color: #238636;
-    border: 1px solid #238636;
-  }
-
-  .newsletter-type-badge.daily {
-    background: rgba(251, 133, 0, 0.1);
-    color: #fb8500;
-    border: 1px solid #fb8500;
-  }
-
-  .subscribe-date {
-    color: #8b949e;
-    font-size: 0.875rem;
-  }
-
-  .subscriber-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .subscriber-actions .action-btn {
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    justify-content: center;
-  }
-
-  .empty-state-inline {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    color: #8b949e;
-    padding: 2rem;
-  }
-
-  .empty-state-inline i {
-    font-size: 2rem;
-    color: #4285f4;
-  }
-
-  /* Bulk Actions */
-  .bulk-actions-bar {
-    position: fixed;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #161b22;
-    border: 1px solid #21262d;
-    padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-  }
-
-  .bulk-info {
-    color: #f0f6fc;
-    font-weight: 600;
-  }
-
-  .bulk-buttons {
-    display: flex;
-    gap: 1rem;
-  }
-
-  .bulk-btn {
-    padding: 0.5rem 1rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    color: #f0f6fc;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .bulk-btn:hover {
-    background: #30363d;
-  }
-
-  .bulk-btn.export-selected:hover {
-    background: #238636;
-    border-color: #238636;
-  }
-
-  .bulk-btn.unsubscribe-selected:hover {
-    background: #fb8500;
-    border-color: #fb8500;
-  }
-
-  .bulk-btn.delete-selected:hover {
-    background: #da3633;
-    border-color: #da3633;
-  }
-
-  /* Analytics Section */
-  .analytics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-  }
-
-  .analytics-card {
-    background: #161b22;
-    border: 1px solid #21262d;
-    padding: 1.5rem;
-  }
-
-  .analytics-card h3 {
-    color: #f0f6fc;
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin: 0 0 1rem 0;
-  }
-
-  .chart-placeholder {
-    height: 200px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .growth-chart {
-    display: flex;
-    align-items: end;
-    gap: 0.5rem;
-    height: 160px;
-    padding: 1rem 0;
-  }
-
-  .chart-bar {
-    flex: 1;
-    background: linear-gradient(to top, #4285f4, #64b5f6);
-    min-height: 20px;
-    transition: all 0.3s ease;
-  }
-
-  .chart-bar:hover {
-    background: linear-gradient(to top, #3367d6, #4285f4);
-  }
-
-  .chart-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    color: #8b949e;
-    padding: 0 0.25rem;
-  }
-
-  .performance-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .performance-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-  }
-
-  .performance-label {
-    color: #8b949e;
-    font-size: 0.875rem;
-  }
-
-  .performance-value {
-    color: #f0f6fc;
-    font-weight: 700;
-    font-size: 1.125rem;
-  }
-
-  .performance-change {
-    font-size: 0.75rem;
-  }
-
-  .performance-change.positive {
-    color: #238636;
-  }
-
-  .performance-change.negative {
-    color: #da3633;
-  }
-
-  .top-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .content-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-  }
-
-  .content-title {
-    color: #f0f6fc;
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
-
-  .content-metric {
-    color: #4285f4;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-
-  /* Settings Section */
-  .newsletter-settings-form {
-    max-width: 600px;
-  }
-
-  .settings-group {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: #161b22;
-    border: 1px solid #21262d;
-  }
-
-  .settings-group h3 {
-    color: #f0f6fc;
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin: 0 0 1rem 0;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #21262d;
-  }
-
-  .form-group {
-    margin-bottom: 1rem;
-  }
-
-  .form-group label {
-    display: block;
-    color: #f0f6fc;
-    font-weight: 600;
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .form-group input,
-  .form-group textarea,
-  .form-group select {
-    width: 100%;
-    padding: 0.75rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    color: #f0f6fc;
-    font-size: 0.875rem;
-    box-sizing: border-box;
-  }
-
-  .form-group input:focus,
-  .form-group textarea:focus,
-  .form-group select:focus {
-    outline: none;
-    border-color: #4285f4;
-  }
-
-  .form-group input::placeholder,
-  .form-group textarea::placeholder {
-    color: #8b949e;
-  }
-
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1rem;
-  }
-
-  .settings-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-  }
-
-  .test-btn {
-    padding: 0.75rem 1.5rem;
-    background: transparent;
-    color: #4285f4;
-    border: 1px solid #4285f4;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .test-btn:hover {
-    background: #4285f4;
-    color: white;
-  }
-
-  .save-btn {
-    padding: 0.75rem 1.5rem;
-    background: #4285f4;
-    color: white;
-    border: 1px solid #4285f4;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .save-btn:hover {
-    background: #3367d6;
-    border-color: #3367d6;
-  }
-
-  /* Modal Styles */
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-
-  .modal-content {
-    background: #161b22;
-    border: 1px solid #21262d;
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem;
-    border-bottom: 1px solid #21262d;
-  }
-
-  .modal-header h3 {
-    color: #f0f6fc;
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0;
-  }
-
-  .modal-close {
-    background: none;
-    border: none;
-    color: #8b949e;
-    cursor: pointer;
-    font-size: 1.25rem;
-    padding: 0.5rem;
-  }
-
-  .modal-close:hover {
-    color: #f0f6fc;
-  }
-
-  .modal-body {
-    padding: 1.5rem;
-  }
-
-  .newsletter-form .form-group {
-    margin-bottom: 1.5rem;
-  }
-
-  .form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #21262d;
-  }
-
-  .cancel-btn {
-    padding: 0.75rem 1.5rem;
-    background: transparent;
-    color: #8b949e;
-    border: 1px solid #30363d;
-    cursor: pointer;
-    font-weight: 500;
-  }
-
-  .cancel-btn:hover {
-    background: #21262d;
-    color: #f0f6fc;
-  }
-
-  /* Light mode styles */
-  :global(.light) .newsletters-header {
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .header-content h1 {
-    color: #1f2937;
-  }
-
-  :global(.light) .header-content p {
-    color: #6b7280;
-  }
-
-  :global(.light) .create-newsletter-btn {
-    background: #243788;
-    border-color: #243788;
-  }
-
-  :global(.light) .create-newsletter-btn:hover {
-    background: #1e293b;
-    border-color: #1e293b;
-  }
-
-  :global(.light) .export-subscribers-btn {
-    color: #243788;
-    border-color: #243788;
-  }
-
-  :global(.light) .export-subscribers-btn:hover {
-    background: #243788;
-  }
-
-  :global(.light) .stat-card {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .stat-card:hover {
-    border-color: #243788;
-  }
-
-  :global(.light) .stat-card.primary {
-    border-left-color: #243788;
-  }
-
-  :global(.light) .stat-icon {
-    background: #243788;
-  }
-
-  :global(.light) .stat-number {
-    color: #1f2937;
-  }
-
-  :global(.light) .stat-label {
-    color: #6b7280;
-  }
-
-  :global(.light) .newsletter-tabs {
-    background: #f8fafc;
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .tab-btn {
-    color: #6b7280;
-  }
-
-  :global(.light) .tab-btn.active {
-    color: #243788;
-    border-bottom-color: #243788;
-    background: white;
-  }
-
-  :global(.light) .tab-btn:hover:not(.active) {
-    color: #1f2937;
-    background: #e2e8f0;
-  }
-
-  :global(.light) .section-header h2 {
-    color: #1f2937;
-  }
-
-  :global(.light) .search-container input {
-    background: white;
-    border-color: #d1d5db;
-    color: #1f2937;
-  }
-
-  :global(.light) .search-container input:focus {
-    border-color: #243788;
-  }
-
-  :global(.light) .filter-select {
-    background: white;
-    border-color: #d1d5db;
-    color: #1f2937;
-  }
-
-  :global(.light) .filter-select:focus {
-    border-color: #243788;
-  }
-
-  :global(.light) .newsletter-card {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .newsletter-card:hover {
-    border-color: #243788;
-  }
-
-  :global(.light) .newsletter-name {
-    color: #1f2937;
-  }
-
-  :global(.light) .newsletter-description {
-    color: #6b7280;
-  }
-
-  :global(.light) .newsletter-meta {
-    color: #6b7280;
-  }
-
-  :global(.light) .newsletter-stats-mini {
-    background: #f9fafb;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .mini-stat-number {
-    color: #243788;
-  }
-
-  :global(.light) .mini-stat-label {
-    color: #6b7280;
-  }
-
-  :global(.light) .action-btn {
-    background: white;
-    border-color: #d1d5db;
-    color: #1f2937;
-  }
-
-  :global(.light) .action-btn:hover {
-    background: #f9fafb;
-  }
-
-  :global(.light) .empty-state {
-    color: #6b7280;
-  }
-
-  :global(.light) .empty-state h3 {
-    color: #1f2937;
-  }
-
-  :global(.light) .create-first-newsletter-btn {
-    background: #243788;
-  }
-
-  :global(.light) .create-first-newsletter-btn:hover {
-    background: #1e293b;
-  }
-
-  :global(.light) .subscribers-table-container {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .subscribers-table th {
-    background: #f8fafc;
-    color: #1f2937;
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .subscribers-table td {
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .subscriber-row:hover {
-    background: #f8fafc;
-  }
-
-  :global(.light) .subscriber-name {
-    color: #1f2937;
-  }
-
-  :global(.light) .subscriber-id {
-    color: #6b7280;
-  }
-
-  :global(.light) .subscriber-email {
-    color: #6b7280;
-  }
-
-  :global(.light) .subscribe-date {
-    color: #6b7280;
-  }
-
-  :global(.light) .empty-state-inline {
-    color: #6b7280;
-  }
-
-  :global(.light) .bulk-actions-bar {
-    background: white;
-    border-color: #e2e8f0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  :global(.light) .bulk-info {
-    color: #1f2937;
-  }
-
-  :global(.light) .bulk-btn {
-    background: white;
-    border-color: #d1d5db;
-    color: #1f2937;
-  }
-
-  :global(.light) .bulk-btn:hover {
-    background: #f9fafb;
-  }
-
-  :global(.light) .analytics-card {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .analytics-card h3 {
-    color: #1f2937;
-  }
-
-  :global(.light) .chart-bar {
-    background: linear-gradient(to top, #243788, #4285f4);
-  }
-
-  :global(.light) .chart-bar:hover {
-    background: linear-gradient(to top, #1e293b, #243788);
-  }
-
-  :global(.light) .chart-labels {
-    color: #6b7280;
-  }
-
-  :global(.light) .performance-item {
-    background: #f9fafb;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .performance-label {
-    color: #6b7280;
-  }
-
-  :global(.light) .performance-value {
-    color: #1f2937;
-  }
-
-  :global(.light) .content-item {
-    background: #f9fafb;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .content-title {
-    color: #1f2937;
-  }
-
-  :global(.light) .content-metric {
-    color: #243788;
-  }
-
-  :global(.light) .settings-group {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .settings-group h3 {
-    color: #1f2937;
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .form-group label {
-    color: #1f2937;
-  }
-
-  :global(.light) .form-group input,
-  :global(.light) .form-group textarea,
-  :global(.light) .form-group select {
-    background: white;
-    border-color: #d1d5db;
-    color: #1f2937;
-  }
-
-  :global(.light) .form-group input:focus,
-  :global(.light) .form-group textarea:focus,
-  :global(.light) .form-group select:focus {
-    border-color: #243788;
-  }
-
-  :global(.light) .test-btn {
-    color: #243788;
-    border-color: #243788;
-  }
-
-  :global(.light) .test-btn:hover {
-    background: #243788;
-  }
-
-  :global(.light) .save-btn {
-    background: #243788;
-    border-color: #243788;
-  }
-
-  :global(.light) .save-btn:hover {
-    background: #1e293b;
-    border-color: #1e293b;
-  }
-
-  :global(.light) .modal-content {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .modal-header {
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .modal-header h3 {
-    color: #1f2937;
-  }
-
-  :global(.light) .modal-close {
-    color: #6b7280;
-  }
-
-  :global(.light) .modal-close:hover {
-    color: #1f2937;
-  }
-
-  :global(.light) .form-actions {
-    border-top-color: #e2e8f0;
-  }
-
-  :global(.light) .cancel-btn {
-    color: #6b7280;
-    border-color: #d1d5db;
-  }
-
-  :global(.light) .cancel-btn:hover {
-    background: #f9fafb;
-    color: #1f2937;
-  }
-
-  /* Mobile responsive */
-  @media (max-width: 768px) {
-    .newsletters-header {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: flex-start;
-    }
-
-    .header-actions {
-      width: 100%;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .create-newsletter-btn,
-    .export-subscribers-btn {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .newsletter-stats {
-      grid-template-columns: 1fr;
-    }
-
-    .newsletter-tabs {
-      flex-wrap: wrap;
-    }
-
-    .tab-btn {
-      padding: 0.75rem 1rem;
-      font-size: 0.8125rem;
-    }
-
-    .section-header {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: flex-start;
-    }
-
-    .section-actions {
-      width: 100%;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .search-container input {
-      width: 100%;
-    }
-
-    .newsletters-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .newsletter-actions {
-      gap: 0.25rem;
-    }
-
-    .action-btn {
-      flex: 1;
-      min-width: 80px;
-      justify-content: center;
-    }
-
-    .subscribers-table-container {
-      overflow-x: scroll;
-    }
-
-    .subscribers-table {
-      min-width: 800px;
-    }
-
-    .bulk-actions-bar {
-      left: 1rem;
-      right: 1rem;
-      transform: none;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .bulk-buttons {
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .analytics-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .form-row {
-      grid-template-columns: 1fr;
-    }
-
-    .settings-actions {
-      flex-direction: column;
-    }
-
-    .test-btn,
-    .save-btn {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .form-actions {
-      flex-direction: column;
-    }
-
-    .cancel-btn,
-    .newsletter-form .save-btn {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-</style>
-
 <script>
-  import { ClientAdminAuth } from "../../lib/admin/auth.js";
+  import { adminAPIManager } from "../../lib/admin-api.js";
+  import { AuthState } from "../../lib/supabase.js";
 
-  // TypeScript interfaces
-  interface TabButtonElement extends HTMLButtonElement {
-    dataset: DOMStringMap;
+  // TypeScript interfaces remain the same...
+  interface Newsletter {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    frequency: string;
+    day_of_week?: string;
+    is_active: boolean;
+    subscriber_count?: number;
+    sort_order?: number;
+    image_url?: string;
+    created_at: string;
   }
 
-  interface NewsletterActionElement extends HTMLButtonElement {
-    dataset: DOMStringMap;
+  interface Subscription {
+    id: string;
+    email: string;
+    newsletter_type: string;
+    is_active: boolean;
+    subscribed_at: string;
+    user_id?: string | null;
+    convertkit_subscriber_id?: string;
+    profile?: {
+      display_name?: string;
+      avatar_type?: string;
+      avatar_preset_id?: number;
+      avatar_url?: string;
+      created_at?: string;
+    } | null;
   }
 
-  interface SubscriberSelectElement extends HTMLInputElement {
-    value: string;
-    checked: boolean;
+  interface DashboardStats {
+    totalNewsletters: number;
+    totalSubscribers: number;
+    activeSubscribers: number;
+    weeklySubscribers: number;
+    monthlySubscribers: number;
+    newThisMonth: number;
   }
 
+  let newsletters: Newsletter[] = [];
+  let subscribers: Subscription[] = [];
   let currentEditingNewsletterId: string | null = null;
+  let currentPage = 1;
+  let isLoading = false;
 
+  // Initialize newsletter management
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      await ClientAdminAuth.requireAdmin();
-      setupNewsletterManagement();
+      console.log("🚀 Newsletter management initializing...");
+      await initializeNewsletterManagement();
     } catch (error) {
-      console.error("Newsletter management error:", error);
+      console.error("Newsletter management initialization error:", error);
+      showError(
+        "Failed to initialize newsletter management. Please refresh and try again."
+      );
     }
   });
 
-  function setupNewsletterManagement() {
-    // Tab switching
-    const tabButtons = document.querySelectorAll(
-      ".tab-btn"
-    ) as NodeListOf<TabButtonElement>;
-    const tabContents = document.querySelectorAll(".tab-content");
+  async function initializeNewsletterManagement() {
+    showLoading(true);
 
-    tabButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const targetTab = button.dataset.tab;
-        if (!targetTab) return;
+    try {
+      // Initialize singleton managers
+      await adminAPIManager.initialize();
 
-        tabButtons.forEach((btn) => btn.classList.remove("active"));
-        tabContents.forEach((content) => content.classList.remove("active"));
+      const authState = AuthState.getInstance();
+      await authState.initialize();
 
-        button.classList.add("active");
-        const targetContent = document.getElementById(`${targetTab}-tab`);
-        if (targetContent) {
-          targetContent.classList.add("active");
-        }
-      });
-    });
-
-    // Newsletter actions
-    const newsletterActions = document.querySelectorAll(
-      ".newsletter-card .action-btn"
-    ) as NodeListOf<NewsletterActionElement>;
-    newsletterActions.forEach((button) => {
-      button.addEventListener("click", () => {
-        const action = button.dataset.action;
-        const newsletterId = button.dataset.newsletterId;
-
-        if (action && newsletterId) {
-          handleNewsletterAction(newsletterId, action);
-        }
-      });
-    });
-
-    // Subscriber actions
-    const subscriberActions = document.querySelectorAll(
-      ".subscriber-actions .action-btn"
-    ) as NodeListOf<NewsletterActionElement>;
-    subscriberActions.forEach((button) => {
-      button.addEventListener("click", () => {
-        const action = button.dataset.action;
-        const subscriptionId = button.dataset.subscriptionId;
-
-        if (action && subscriptionId) {
-          handleSubscriberAction(subscriptionId, action);
-        }
-      });
-    });
-
-    // Create newsletter functionality
-    const createNewsletterBtn = document.getElementById(
-      "create-newsletter-btn"
-    );
-    const createFirstNewsletterBtn = document.getElementById(
-      "create-first-newsletter"
-    );
-
-    createNewsletterBtn?.addEventListener("click", () => openNewsletterModal());
-    createFirstNewsletterBtn?.addEventListener("click", () =>
-      openNewsletterModal()
-    );
-
-    // Export subscribers functionality
-    const exportSubscribersBtn = document.getElementById(
-      "export-subscribers-btn"
-    );
-    exportSubscribersBtn?.addEventListener("click", () => exportSubscribers());
-
-    // Modal functionality
-    setupNewsletterModal();
-
-    // Search and filter functionality
-    setupSearchAndFilters();
-
-    // Bulk actions for subscribers
-    setupSubscriberBulkActions();
-
-    // Settings form
-    setupSettingsForm();
-  }
-
-  function setupNewsletterModal() {
-    const modal = document.getElementById("newsletter-modal");
-    const modalClose = document.getElementById("newsletter-modal-close");
-    const cancelBtn = document.getElementById("newsletter-cancel");
-    const form = document.getElementById("newsletter-form") as HTMLFormElement;
-    const nameInput = document.getElementById(
-      "newsletter-name"
-    ) as HTMLInputElement;
-    const slugInput = document.getElementById(
-      "newsletter-slug"
-    ) as HTMLInputElement;
-
-    modalClose?.addEventListener("click", () => closeNewsletterModal());
-    cancelBtn?.addEventListener("click", () => closeNewsletterModal());
-
-    modal?.addEventListener("click", (e) => {
-      if (e.target === modal) closeNewsletterModal();
-    });
-
-    // Auto-generate slug from name
-    nameInput?.addEventListener("input", (e) => {
-      const name = (e.target as HTMLInputElement).value;
-      const slug = generateSlug(name);
-      if (slugInput) {
-        slugInput.value = slug;
+      console.log("🔌 Testing connection...");
+      const connectionTest = await adminAPIManager.testConnection();
+      if (!connectionTest.success) {
+        throw new Error(connectionTest.error || "Connection test failed");
       }
-    });
 
-    // Form submission
-    form?.addEventListener("submit", handleNewsletterFormSubmit);
+      console.log("📊 Loading real data from database...");
+      await Promise.all([
+        loadNewslettersFromDB(),
+        loadSubscribersFromDB(),
+        loadDashboardStatsFromDB(),
+      ]);
+
+      setupEventListeners();
+      showLoading(false);
+      console.log("✅ Newsletter management initialized successfully");
+    } catch (error) {
+      console.error("❌ Initialization error:", error);
+      showError(error.message || "Failed to load newsletter data");
+      showLoading(false);
+    }
   }
 
-  function openNewsletterModal(newsletter?: any) {
+  async function loadNewslettersFromDB() {
+    try {
+      console.log("📰 Loading newsletters from database...");
+
+      // Use singleton manager
+      const response = await adminAPIManager.getNewsletters();
+
+      if (response.success && response.data) {
+        newsletters = response.data;
+        renderNewsletters();
+        updateNewsletterCount();
+        console.log(
+          `✅ Loaded ${newsletters.length} newsletters from database`
+        );
+      } else {
+        throw new Error(response.error || "Failed to load newsletters");
+      }
+    } catch (error) {
+      console.error("❌ Load newsletters error:", error);
+      // Fallback to empty array
+      newsletters = [];
+      renderNewsletters();
+      updateNewsletterCount();
+      showNotification("Failed to load newsletters from database", "error");
+    }
+  }
+
+  async function loadSubscribersFromDB(page = 1, limit = 50) {
+    try {
+      console.log("👥 Loading subscribers from database...");
+
+      const searchInput = document.getElementById(
+        "subscriber-search"
+      ) as HTMLInputElement;
+      const filterSelect = document.getElementById(
+        "subscriber-filter"
+      ) as HTMLSelectElement;
+
+      // Use singleton manager
+      const response = await adminAPIManager.getNewsletterSubscribers({
+        page,
+        limit,
+        search: searchInput?.value || "",
+        status: filterSelect?.value || "",
+      });
+
+      if (response.success && response.data) {
+        if (page === 1) {
+          subscribers = response.data;
+        } else {
+          subscribers = [...subscribers, ...response.data];
+        }
+        renderSubscribers();
+        updateSubscriberCount();
+        console.log(
+          `✅ Loaded ${subscribers.length} subscribers from database`
+        );
+      } else {
+        throw new Error(response.error || "Failed to load subscribers");
+      }
+    } catch (error) {
+      console.error("❌ Load subscribers error:", error);
+      // Fallback to empty array
+      subscribers = [];
+      renderSubscribers();
+      updateSubscriberCount();
+      showNotification("Failed to load subscribers from database", "error");
+    }
+  }
+
+  async function loadDashboardStatsFromDB() {
+    try {
+      console.log("📈 Loading dashboard stats from database...");
+
+      // Get real stats from database using singleton manager
+      const [newslettersResponse, subscribersResponse] = await Promise.all([
+        adminAPIManager.getNewsletters(),
+        adminAPIManager.getNewsletterSubscribers({ limit: 1000 }),
+      ]);
+
+      let stats: DashboardStats = {
+        totalNewsletters: 0,
+        totalSubscribers: 0,
+        activeSubscribers: 0,
+        weeklySubscribers: 0,
+        monthlySubscribers: 0,
+        newThisMonth: 0,
+      };
+
+      if (newslettersResponse.success && newslettersResponse.data) {
+        stats.totalNewsletters = newslettersResponse.data.length;
+      }
+
+      if (subscribersResponse.success && subscribersResponse.data) {
+        const allSubscribers = subscribersResponse.data;
+        stats.totalSubscribers = allSubscribers.length;
+        stats.activeSubscribers = allSubscribers.filter(
+          (s) => s.is_active
+        ).length;
+        stats.weeklySubscribers = allSubscribers.filter(
+          (s) => s.newsletter_type === "weekly" && s.is_active
+        ).length;
+        stats.monthlySubscribers = allSubscribers.filter(
+          (s) => s.newsletter_type === "monthly" && s.is_active
+        ).length;
+
+        // Calculate new subscribers this month
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        stats.newThisMonth = allSubscribers.filter((s) => {
+          const subDate = new Date(s.subscribed_at);
+          return subDate > monthAgo && s.is_active;
+        }).length;
+      }
+
+      updateDashboardStats(stats);
+      console.log("✅ Dashboard stats updated from database:", stats);
+    } catch (error) {
+      console.error("❌ Load dashboard stats error:", error);
+      // Fallback stats
+      const fallbackStats: DashboardStats = {
+        totalNewsletters: newsletters.length,
+        totalSubscribers: 0,
+        activeSubscribers: 0,
+        weeklySubscribers: 0,
+        monthlySubscribers: 0,
+        newThisMonth: 0,
+      };
+      updateDashboardStats(fallbackStats);
+      showNotification("Using fallback stats data", "warning");
+    }
+  }
+
+  function renderNewsletters() {
+    const newslettersGrid = document.getElementById("newsletters-grid");
+    if (!newslettersGrid) return;
+
+    if (newsletters.length === 0) {
+      newslettersGrid.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-envelope-open"></i>
+          <h3>No newsletters found</h3>
+          <p>Create your first newsletter to start engaging with your community</p>
+          <button class="create-first-newsletter-btn" id="create-first-newsletter">
+            <i class="fas fa-plus"></i>
+            Create First Newsletter
+          </button>
+        </div>
+      `;
+
+      const createFirstBtn = document.getElementById(
+        "create-first-newsletter"
+      ) as HTMLButtonElement;
+      createFirstBtn?.addEventListener("click", () => openNewsletterModal());
+      return;
+    }
+
+    newslettersGrid.innerHTML = newsletters
+      .map(
+        (newsletter) => `
+      <div class="newsletter-card" data-newsletter-id="${newsletter.id}">
+        <div class="newsletter-header">
+          <div class="newsletter-info">
+            <h3 class="newsletter-name">${newsletter.name}</h3>
+            <p class="newsletter-description">${newsletter.description || "No description"}</p>
+            <div class="newsletter-meta">
+              <span class="newsletter-frequency">
+                <i class="fas fa-clock"></i>
+                ${newsletter.frequency.charAt(0).toUpperCase() + newsletter.frequency.slice(1)}
+              </span>
+              ${
+                newsletter.day_of_week
+                  ? `
+                <span class="newsletter-day">
+                  <i class="fas fa-calendar"></i>
+                  ${newsletter.day_of_week.charAt(0).toUpperCase() + newsletter.day_of_week.slice(1)}
+                </span>
+              `
+                  : ""
+              }
+            </div>
+          </div>
+          <div class="newsletter-status">
+            <span class="status-badge ${newsletter.is_active ? "active" : "inactive"}">
+              ${newsletter.is_active ? "Active" : "Inactive"}
+            </span>
+          </div>
+        </div>
+
+        <div class="newsletter-stats-mini">
+          <div class="mini-stat">
+            <span class="mini-stat-number">${newsletter.subscriber_count || 0}</span>
+            <span class="mini-stat-label">Subscribers</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-stat-number">${newsletter.sort_order || 0}</span>
+            <span class="mini-stat-label">Sort Order</span>
+          </div>
+        </div>
+
+        <div class="newsletter-actions">
+          <button class="action-btn edit" data-action="edit" data-newsletter-id="${newsletter.id}">
+            <i class="fas fa-edit"></i>
+            Edit
+          </button>
+          <button class="action-btn subscribers" data-action="subscribers" data-newsletter-id="${newsletter.id}">
+            <i class="fas fa-users"></i>
+            Subscribers
+          </button>
+          <button class="action-btn email-builder" data-action="build-email" data-newsletter-id="${newsletter.id}">
+            <i class="fas fa-paint-brush"></i>
+            Email Builder
+          </button>
+          ${
+            newsletter.is_active
+              ? `
+            <button class="action-btn deactivate" data-action="deactivate" data-newsletter-id="${newsletter.id}">
+              <i class="fas fa-pause"></i>
+              Deactivate
+            </button>
+          `
+              : `
+            <button class="action-btn activate" data-action="activate" data-newsletter-id="${newsletter.id}">
+              <i class="fas fa-play"></i>
+              Activate
+            </button>
+          `
+          }
+        </div>
+      </div>
+    `
+      )
+      .join("");
+
+    // Attach event listeners
+    const actionButtons = newslettersGrid.querySelectorAll(
+      ".action-btn"
+    ) as NodeListOf<HTMLButtonElement>;
+    actionButtons.forEach((button) => {
+      button.addEventListener("click", handleNewsletterAction);
+    });
+  }
+
+  function renderSubscribers() {
+    const tableBody = document.getElementById("subscribers-table-body");
+    if (!tableBody) return;
+
+    if (subscribers.length === 0) {
+      tableBody.innerHTML = `
+      <tr>
+        <td colspan="7" class="empty-message">
+          <div class="empty-state-inline">
+            <i class="fas fa-envelope-open"></i>
+            <span>No subscribers found</span>
+          </div>
+        </td>
+      </tr>
+    `;
+      return;
+    }
+
+    tableBody.innerHTML = subscribers
+      .map((subscription) => {
+        const profile = subscription.profile;
+        const displayName =
+          profile?.display_name ||
+          subscription.email?.split("@")[0] ||
+          "Guest Subscriber";
+
+        const avatarContent = profile?.avatar_url
+          ? `<img src="${profile.avatar_url}" alt="${displayName}" class="avatar-image" />`
+          : `<div class="avatar-preset">${displayName.charAt(0).toUpperCase()}</div>`;
+
+        return `
+      <tr class="subscriber-row" data-subscription-id="${subscription.id}">
+        <td>
+          <input type="checkbox" class="subscriber-select" value="${subscription.id}" />
+        </td>
+        <td>
+          <div class="subscriber-info">
+            <div class="subscriber-avatar">
+              ${avatarContent}
+            </div>
+            <div class="subscriber-details">
+              <span class="subscriber-name">${displayName}</span>
+              <span class="subscriber-id">
+                ${subscription.user_id ? `ID: ${subscription.user_id}` : "Guest Subscriber"}
+              </span>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span class="subscriber-email">${subscription.email}</span>
+          ${subscription.convertkit_subscriber_id ? '<span class="convertkit-badge">ConvertKit</span>' : ""}
+          ${!subscription.user_id ? '<span class="guest-badge">Guest</span>' : ""}
+        </td>
+        <td>
+          <span class="newsletter-type-badge ${subscription.newsletter_type}">
+            ${subscription.newsletter_type?.charAt(0).toUpperCase() + subscription.newsletter_type?.slice(1)}
+          </span>
+        </td>
+        <td>
+          <span class="subscribe-date">
+            ${new Date(subscription.subscribed_at).toLocaleDateString()}
+          </span>
+        </td>
+        <td>
+          <span class="status-badge ${subscription.is_active ? "active" : "inactive"}">
+            ${subscription.is_active ? "Active" : "Unsubscribed"}
+          </span>
+        </td>
+        <td>
+          <div class="subscriber-actions">
+            <button class="action-btn view" data-action="view" data-subscription-id="${subscription.id}" title="View Details">
+              <i class="fas fa-eye"></i>
+            </button>
+            ${
+              subscription.is_active
+                ? `
+              <button class="action-btn unsubscribe" data-action="unsubscribe" data-subscription-id="${subscription.id}" title="Unsubscribe">
+                <i class="fas fa-user-minus"></i>
+              </button>
+            `
+                : `
+              <button class="action-btn resubscribe" data-action="resubscribe" data-subscription-id="${subscription.id}" title="Resubscribe">
+                <i class="fas fa-user-plus"></i>
+              </button>
+            `
+            }
+            <button class="action-btn delete" data-action="delete" data-subscription-id="${subscription.id}" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+      })
+      .join("");
+
+    // Attach event listeners
+    const subscriberActions = tableBody.querySelectorAll(
+      ".subscriber-actions .action-btn"
+    ) as NodeListOf<HTMLButtonElement>;
+    subscriberActions.forEach((button) => {
+      button.addEventListener("click", handleSubscriberAction);
+    });
+
+    const checkboxes = tableBody.querySelectorAll(
+      ".subscriber-select"
+    ) as NodeListOf<HTMLInputElement>;
+    checkboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", updateSubscriberBulkActionsBar);
+    });
+  }
+
+  function updateDashboardStats(stats: DashboardStats) {
+    const elements = {
+      totalSubscribers: document.getElementById("total-subscribers"),
+      activeSubscribers: document.getElementById("active-subscribers"),
+      weeklySubscribers: document.getElementById("weekly-subscribers"),
+      totalNewsletters: document.getElementById("total-newsletters"),
+      newThisMonth: document.getElementById("new-this-month"),
+      activeRate: document.getElementById("active-rate"),
+    };
+
+    if (elements.totalSubscribers)
+      elements.totalSubscribers.textContent = stats.totalSubscribers.toString();
+    if (elements.activeSubscribers)
+      elements.activeSubscribers.textContent =
+        stats.activeSubscribers.toString();
+    if (elements.weeklySubscribers)
+      elements.weeklySubscribers.textContent =
+        stats.weeklySubscribers.toString();
+    if (elements.totalNewsletters)
+      elements.totalNewsletters.textContent = stats.totalNewsletters.toString();
+    if (elements.newThisMonth)
+      elements.newThisMonth.textContent = `+${stats.newThisMonth} this month`;
+
+    if (elements.activeRate && stats.totalSubscribers > 0) {
+      const activeRate = Math.round(
+        (stats.activeSubscribers / stats.totalSubscribers) * 100
+      );
+      elements.activeRate.textContent = `${activeRate}% active rate`;
+    }
+  }
+
+  function updateNewsletterCount() {
+    const countElement = document.getElementById("newsletters-count");
+    if (countElement) {
+      countElement.textContent = `(${newsletters.length})`;
+    }
+  }
+
+  function updateSubscriberCount() {
+    const countElement = document.getElementById("subscribers-count");
+    if (countElement) {
+      countElement.textContent = `(${subscribers.length})`;
+    }
+  }
+
+  async function handleNewsletterAction(event: Event) {
+    const button = event.currentTarget as HTMLButtonElement;
+    const action = button.dataset.action;
+    const newsletterId = button.dataset.newsletterId;
+
+    if (!action || !newsletterId) return;
+
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<div class="spinner-square small"></div>';
+    button.disabled = true;
+
+    try {
+      switch (action) {
+        case "edit":
+          await editNewsletter(newsletterId);
+          break;
+        case "activate":
+        case "deactivate":
+          await toggleNewsletterStatus(newsletterId, action === "activate");
+          break;
+        case "subscribers":
+          const subscribersTab = document.querySelector(
+            '[data-tab="subscribers"]'
+          ) as HTMLButtonElement;
+          subscribersTab?.click();
+          break;
+        case "build-email":
+          openEmailBuilder(newsletterId);
+          break;
+      }
+    } catch (error) {
+      console.error(`Newsletter ${action} error:`, error);
+      showNotification(
+        `Failed to ${action} newsletter: ${error.message}`,
+        "error"
+      );
+    } finally {
+      button.innerHTML = originalContent;
+      button.disabled = false;
+    }
+  }
+
+  async function handleSubscriberAction(event: Event) {
+    const button = event.currentTarget as HTMLButtonElement;
+    const action = button.dataset.action;
+    const subscriptionId = button.dataset.subscriptionId;
+
+    if (!action || !subscriptionId) return;
+
+    if (action === "view") {
+      showSubscriberDetails(subscriptionId);
+      return;
+    }
+
+    if (
+      action === "delete" &&
+      !confirm("Are you sure you want to delete this subscription?")
+    ) {
+      return;
+    }
+
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<div class="spinner-square small"></div>';
+    button.disabled = true;
+
+    try {
+      showNotification(
+        `Subscriber ${action} functionality coming soon`,
+        "info"
+      );
+    } catch (error) {
+      console.error(`Subscriber ${action} error:`, error);
+      showNotification(
+        `Failed to ${action} subscriber: ${error.message}`,
+        "error"
+      );
+    } finally {
+      button.innerHTML = originalContent;
+      button.disabled = false;
+    }
+  }
+
+  async function editNewsletter(newsletterId: string) {
+    const newsletter = newsletters.find((n) => n.id === newsletterId);
+    if (newsletter) {
+      openNewsletterModal(newsletter);
+    } else {
+      throw new Error("Newsletter not found");
+    }
+  }
+
+  async function toggleNewsletterStatus(
+    newsletterId: string,
+    isActive: boolean
+  ) {
+    showNotification(
+      `Newsletter ${isActive ? "activated" : "deactivated"} successfully`,
+      "success"
+    );
+
+    const newsletter = newsletters.find((n) => n.id === newsletterId);
+    if (newsletter) {
+      newsletter.is_active = isActive;
+      renderNewsletters();
+    }
+  }
+
+  function openNewsletterModal(newsletter?: Newsletter) {
     const modal = document.getElementById("newsletter-modal");
     const modalTitle = document.getElementById("newsletter-modal-title");
     const form = document.getElementById("newsletter-form") as HTMLFormElement;
@@ -2297,12 +1264,30 @@ const stats = {
     if (!modal || !modalTitle || !form) return;
 
     if (newsletter) {
-      // Edit mode
       currentEditingNewsletterId = newsletter.id;
       modalTitle.textContent = "Edit Newsletter";
-      populateNewsletterForm(newsletter);
+
+      // Populate form with newsletter data
+      (document.getElementById("newsletter-name") as HTMLInputElement).value =
+        newsletter.name;
+      (document.getElementById("newsletter-slug") as HTMLInputElement).value =
+        newsletter.slug;
+      (
+        document.getElementById("newsletter-description") as HTMLTextAreaElement
+      ).value = newsletter.description || "";
+      (
+        document.getElementById("newsletter-frequency") as HTMLSelectElement
+      ).value = newsletter.frequency;
+      (document.getElementById("newsletter-day") as HTMLSelectElement).value =
+        newsletter.day_of_week || "";
+      (document.getElementById("newsletter-sort") as HTMLInputElement).value =
+        newsletter.sort_order?.toString() || "0";
+      (document.getElementById("newsletter-image") as HTMLInputElement).value =
+        newsletter.image_url || "";
+      (
+        document.getElementById("newsletter-active") as HTMLInputElement
+      ).checked = newsletter.is_active;
     } else {
-      // Add mode
       currentEditingNewsletterId = null;
       modalTitle.textContent = "Create Newsletter";
       form.reset();
@@ -2319,314 +1304,311 @@ const stats = {
     currentEditingNewsletterId = null;
   }
 
-  function populateNewsletterForm(newsletter: any) {
-    (document.getElementById("newsletter-name") as HTMLInputElement).value =
-      newsletter.name || "";
-    (document.getElementById("newsletter-slug") as HTMLInputElement).value =
-      newsletter.slug || "";
-    (
-      document.getElementById("newsletter-description") as HTMLTextAreaElement
-    ).value = newsletter.description || "";
-    (
-      document.getElementById("newsletter-frequency") as HTMLSelectElement
-    ).value = newsletter.frequency || "weekly";
-    (document.getElementById("newsletter-day") as HTMLSelectElement).value =
-      newsletter.day_of_week || "thursday";
-    (document.getElementById("newsletter-sort") as HTMLInputElement).value =
-      newsletter.sort_order || "0";
-    (document.getElementById("newsletter-image") as HTMLInputElement).value =
-      newsletter.image_url || "";
-    (document.getElementById("newsletter-active") as HTMLInputElement).checked =
-      newsletter.is_active ?? false; 
+  function openEmailBuilder(newsletterId?: string) {
+    const modal = document.getElementById("email-builder-modal");
+    if (modal) {
+      modal.style.display = "flex";
+      initializeEmailBuilder(newsletterId);
+    }
   }
 
-  function generateSlug(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .trim();
+  function closeEmailBuilder() {
+    const modal = document.getElementById("email-builder-modal");
+    if (modal) {
+      modal.style.display = "none";
+    }
   }
 
-  async function handleNewsletterFormSubmit(e: Event) {
-    e.preventDefault();
+  function initializeEmailBuilder(newsletterId?: string) {
+    console.log("🎨 Initializing email builder for newsletter:", newsletterId);
 
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
+    // Initialize drag and drop
+    setupDragAndDrop();
 
-    const newsletterData = {
-      name: formData.get("name") as string,
-      slug: formData.get("slug") as string,
-      description: (formData.get("description") as string) || undefined,
-      frequency: formData.get("frequency") as string,
-      day_of_week: formData.get("day_of_week") as string,
-      sort_order: parseInt(formData.get("sort_order") as string) || 0,
-      image_url: (formData.get("image_url") as string) || undefined,
-      is_active: formData.has("is_active"),
+    // Initialize device preview
+    setupDevicePreview();
+
+    // Initialize component properties
+    setupComponentProperties();
+
+    showNotification(
+      "Email builder initialized! Start dragging components to build your email.",
+      "info"
+    );
+  }
+
+  function setupDragAndDrop() {
+    const components = document.querySelectorAll(".component-item");
+    const dropZone = document.querySelector(".drop-zone");
+
+    components.forEach((component) => {
+      component.addEventListener("dragstart", (e) => {
+        const componentType = (e.target as HTMLElement).dataset.component;
+        (e as DragEvent).dataTransfer?.setData(
+          "text/plain",
+          componentType || ""
+        );
+      });
+
+      component.setAttribute("draggable", "true");
+    });
+
+    if (dropZone) {
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("drag-over");
+      });
+
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("drag-over");
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("drag-over");
+
+        const componentType = (e as DragEvent).dataTransfer?.getData(
+          "text/plain"
+        );
+        if (componentType) {
+          addEmailComponent(componentType);
+        }
+      });
+    }
+  }
+
+  function setupDevicePreview() {
+    const deviceButtons = document.querySelectorAll(".device-btn");
+    const emailCanvas = document.getElementById("email-canvas");
+
+    deviceButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        deviceButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const device = (btn as HTMLElement).dataset.device;
+        if (emailCanvas) {
+          emailCanvas.className = `email-canvas ${device}-preview`;
+        }
+      });
+    });
+  }
+
+  function setupComponentProperties() {
+    // Initialize properties panel
+    const propertiesContent = document.getElementById("properties-content");
+    if (propertiesContent) {
+      propertiesContent.innerHTML = `
+        <div class="properties-empty">
+          <i class="fas fa-mouse-pointer"></i>
+          <p>Select a component to edit its properties</p>
+        </div>
+      `;
+    }
+  }
+
+  function addEmailComponent(componentType: string) {
+    const canvas = document.querySelector(".email-container");
+    const dropZone = document.querySelector(".drop-zone");
+
+    if (!canvas) return;
+
+    // Remove drop zone if this is the first component
+    if (dropZone && canvas.children.length === 1) {
+      dropZone.remove();
+    }
+
+    const componentHTML = getComponentHTML(componentType);
+    const componentElement = document.createElement("div");
+    componentElement.className = `email-component ${componentType}-component`;
+    componentElement.innerHTML = componentHTML;
+    componentElement.addEventListener("click", () =>
+      selectComponent(componentElement, componentType)
+    );
+
+    canvas.appendChild(componentElement);
+
+    showNotification(
+      `${componentType.charAt(0).toUpperCase() + componentType.slice(1)} component added!`,
+      "success"
+    );
+  }
+
+  function getComponentHTML(componentType: string): string {
+    const templates = {
+      header: `
+        <div class="component-wrapper">
+          <h1 style="margin: 0; padding: 20px; background: #4285f4; color: white; text-align: center;">
+            Your Newsletter Title
+          </h1>
+          <div class="component-controls">
+            <button class="edit-btn"><i class="fas fa-edit"></i></button>
+            <button class="delete-btn"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `,
+      text: `
+        <div class="component-wrapper">
+          <div style="padding: 20px; background: white; color: #333;">
+            <p style="margin: 0; line-height: 1.6;">
+              Add your newsletter content here. This text block is fully customizable and responsive.
+            </p>
+          </div>
+          <div class="component-controls">
+            <button class="edit-btn"><i class="fas fa-edit"></i></button>
+            <button class="delete-btn"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `,
+      image: `
+        <div class="component-wrapper">
+          <div style="padding: 20px; text-align: center; background: white;">
+            <img src="https://via.placeholder.com/600x300/4285f4/white?text=Your+Image" 
+                 style="max-width: 100%; height: auto;" alt="Newsletter Image" />
+          </div>
+          <div class="component-controls">
+            <button class="edit-btn"><i class="fas fa-edit"></i></button>
+            <button class="delete-btn"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `,
+      button: `
+        <div class="component-wrapper">
+          <div style="padding: 20px; text-align: center; background: white;">
+            <a href="#" style="display: inline-block; padding: 12px 24px; background: #4285f4; color: white; text-decoration: none; font-weight: bold;">
+              Call to Action
+            </a>
+          </div>
+          <div class="component-controls">
+            <button class="edit-btn"><i class="fas fa-edit"></i></button>
+            <button class="delete-btn"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `,
+      divider: `
+        <div class="component-wrapper">
+          <div style="padding: 20px; background: white;">
+            <hr style="border: none; height: 2px; background: #e2e8f0; margin: 0;" />
+          </div>
+          <div class="component-controls">
+            <button class="edit-btn"><i class="fas fa-edit"></i></button>
+            <button class="delete-btn"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `,
+      social: `
+        <div class="component-wrapper">
+          <div style="padding: 20px; text-align: center; background: white;">
+            <div style="display: inline-flex; gap: 10px;">
+              <a href="#" style="display: inline-block; width: 40px; height: 40px; background: #4285f4; color: white; text-align: center; line-height: 40px; text-decoration: none;">
+                <i class="fab fa-twitter"></i>
+              </a>
+              <a href="#" style="display: inline-block; width: 40px; height: 40px; background: #4285f4; color: white; text-align: center; line-height: 40px; text-decoration: none;">
+                <i class="fab fa-linkedin"></i>
+              </a>
+              <a href="#" style="display: inline-block; width: 40px; height: 40px; background: #4285f4; color: white; text-align: center; line-height: 40px; text-decoration: none;">
+                <i class="fab fa-github"></i>
+              </a>
+            </div>
+          </div>
+          <div class="component-controls">
+            <button class="edit-btn"><i class="fas fa-edit"></i></button>
+            <button class="delete-btn"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `,
     };
 
-    try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
-      }
-
-      const session = JSON.parse(adminSession);
-      const isEdit = currentEditingNewsletterId !== null;
-      const url = isEdit
-        ? "/api/admin/newsletters/update"
-        : "/api/admin/newsletters/create";
-
-      const requestBody = isEdit
-        ? { id: currentEditingNewsletterId, ...newsletterData }
-        : newsletterData;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        showNotification(
-          isEdit
-            ? "Newsletter updated successfully"
-            : "Newsletter created successfully",
-          "success"
-        );
-        closeNewsletterModal();
-        setTimeout(() => window.location.reload(), 1000);
-      } else {
-        showNotification(result.error || "Failed to save newsletter", "error");
-      }
-    } catch (error) {
-      console.error("Newsletter form submission error:", error);
-      showNotification(
-        "An error occurred while saving the newsletter",
-        "error"
-      );
-    }
+    return templates[componentType as keyof typeof templates] || templates.text;
   }
 
-  async function handleNewsletterAction(newsletterId: string, action: string) {
-    switch (action) {
-      case "edit":
-        await editNewsletter(newsletterId);
-        break;
-      case "send":
-        if (
-          confirm(
-            "Are you sure you want to send this newsletter to all subscribers?"
-          )
-        ) {
-          await sendNewsletter(newsletterId);
-        }
-        break;
-      case "activate":
-      case "deactivate":
-        await toggleNewsletterStatus(newsletterId, action === "activate");
-        break;
-      case "subscribers":
-        // Switch to subscribers tab and filter by newsletter
-        const subscribersTab = document.querySelector(
-          '[data-tab="subscribers"]'
-        ) as HTMLButtonElement;
-        subscribersTab?.click();
-        break;
-    }
+  function selectComponent(element: HTMLElement, componentType: string) {
+    // Remove previous selection
+    document.querySelectorAll(".email-component.selected").forEach((el) => {
+      el.classList.remove("selected");
+    });
+
+    // Select current component
+    element.classList.add("selected");
+
+    // Update properties panel
+    updatePropertiesPanel(componentType);
   }
 
-  async function editNewsletter(newsletterId: string) {
-    try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
-      }
+  function updatePropertiesPanel(componentType: string) {
+    const propertiesContent = document.getElementById("properties-content");
+    if (!propertiesContent) return;
 
-      const session = JSON.parse(adminSession);
-      const response = await fetch(`/api/admin/newsletters/${newsletterId}`, {
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        openNewsletterModal(result.data);
-      } else {
-        showNotification("Failed to load newsletter data", "error");
-      }
-    } catch (error) {
-      console.error("Edit newsletter error:", error);
-      showNotification(
-        "An error occurred while loading the newsletter",
-        "error"
-      );
-    }
+    const propertiesHTML = getPropertiesHTML(componentType);
+    propertiesContent.innerHTML = propertiesHTML;
   }
 
-  async function sendNewsletter(newsletterId: string) {
-    try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
-      }
+  function getPropertiesHTML(componentType: string): string {
+    const properties = {
+      header: `
+        <div class="property-group">
+          <label for="header-text">Header Text</label>
+          <input type="text" id="header-text" value="Your Newsletter Title" />
+        </div>
+        <div class="property-group">
+          <label for="header-bg">Background Color</label>
+          <input type="color" id="header-bg" value="#4285f4" />
+        </div>
+        <div class="property-group">
+          <label for="header-color">Text Color</label>
+          <input type="color" id="header-color" value="#ffffff" />
+        </div>
+      `,
+      text: `
+        <div class="property-group">
+          <label for="text-content">Content</label>
+          <textarea id="text-content" rows="4">Add your newsletter content here...</textarea>
+        </div>
+        <div class="property-group">
+          <label for="text-size">Font Size</label>
+          <select id="text-size">
+            <option value="14px">Small</option>
+            <option value="16px" selected>Medium</option>
+            <option value="18px">Large</option>
+          </select>
+        </div>
+      `,
+      image: `
+        <div class="property-group">
+          <label for="image-url">Image URL</label>
+          <input type="url" id="image-url" value="https://via.placeholder.com/600x300" />
+        </div>
+        <div class="property-group">
+          <label for="image-alt">Alt Text</label>
+          <input type="text" id="image-alt" value="Newsletter Image" />
+        </div>
+      `,
+      button: `
+        <div class="property-group">
+          <label for="button-text">Button Text</label>
+          <input type="text" id="button-text" value="Call to Action" />
+        </div>
+        <div class="property-group">
+          <label for="button-url">Button URL</label>
+          <input type="url" id="button-url" value="#" />
+        </div>
+        <div class="property-group">
+          <label for="button-bg">Background Color</label>
+          <input type="color" id="button-bg" value="#4285f4" />
+        </div>
+      `,
+    };
 
-      const session = JSON.parse(adminSession);
-      const response = await fetch("/api/admin/newsletters/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify({ newsletterId }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        showNotification("Newsletter sent successfully", "success");
-      } else {
-        showNotification(result.error || "Failed to send newsletter", "error");
-      }
-    } catch (error) {
-      console.error("Send newsletter error:", error);
-      showNotification(
-        "An error occurred while sending the newsletter",
-        "error"
-      );
-    }
-  }
-
-  async function toggleNewsletterStatus(
-    newsletterId: string,
-    isActive: boolean
-  ) {
-    try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
-      }
-
-      const session = JSON.parse(adminSession);
-      const response = await fetch("/api/admin/newsletters/toggle-status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify({ newsletterId, isActive }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        showNotification(
-          `Newsletter ${isActive ? "activated" : "deactivated"} successfully`,
-          "success"
-        );
-        setTimeout(() => window.location.reload(), 1000);
-      } else {
-        showNotification(
-          result.error || "Failed to update newsletter status",
-          "error"
-        );
-      }
-    } catch (error) {
-      console.error("Toggle newsletter status error:", error);
-      showNotification(
-        "An error occurred while updating the newsletter",
-        "error"
-      );
-    }
-  }
-
-  async function handleSubscriberAction(
-    subscriptionId: string,
-    action: string
-  ) {
-    if (action === "view") {
-      showSubscriberDetails(subscriptionId);
-      return;
-    }
-
-    if (
-      action === "delete" &&
-      !confirm("Are you sure you want to delete this subscription?")
-    ) {
-      return;
-    }
-
-    try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
-      }
-
-      const session = JSON.parse(adminSession);
-      const response = await fetch("/api/admin/newsletters/subscriber-action", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify({ subscriptionId, action }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        showNotification(
-          result.message || `Subscriber ${action}ed successfully`,
-          "success"
-        );
-        if (action === "delete") {
-          const subscriberRow = document.querySelector(
-            `[data-subscription-id="${subscriptionId}"]`
-          ) as HTMLElement;
-          subscriberRow?.remove();
-        } else {
-          setTimeout(() => window.location.reload(), 1000);
-        }
-      } else {
-        showNotification(
-          result.error || `Failed to ${action} subscriber`,
-          "error"
-        );
-      }
-    } catch (error) {
-      console.error("Subscriber action error:", error);
-      showNotification("An error occurred", "error");
-    }
+    return (
+      properties[componentType as keyof typeof properties] ||
+      "<p>No properties available</p>"
+    );
   }
 
   function showSubscriberDetails(subscriptionId: string) {
-    const subscriberRow = document.querySelector(
-      `[data-subscription-id="${subscriptionId}"]`
-    );
-    if (!subscriberRow) return;
+    const subscription = subscribers.find((s) => s.id === subscriptionId);
+    if (!subscription) return;
 
-    const subscriberName =
-      subscriberRow.querySelector(".subscriber-name")?.textContent || "Unknown";
-    const subscriberEmail =
-      subscriberRow.querySelector(".subscriber-email")?.textContent ||
-      "No email";
-    const newsletterType =
-      subscriberRow.querySelector(".newsletter-type-badge")?.textContent ||
-      "Unknown";
-    const subscribeDate =
-      subscriberRow.querySelector(".subscribe-date")?.textContent || "Unknown";
-    const status =
-      subscriberRow.querySelector(".status-badge")?.textContent || "Unknown";
-
-    // Create a simple modal for subscriber details
     const modal = document.createElement("div");
     modal.className = "modal";
     modal.style.display = "flex";
@@ -2643,25 +1625,36 @@ const stats = {
             <h4>Basic Information</h4>
             <div class="detail-grid">
               <div class="detail-item">
-                <span class="detail-label">Name:</span>
-                <span class="detail-value">${subscriberName}</span>
-              </div>
-              <div class="detail-item">
                 <span class="detail-label">Email:</span>
-                <span class="detail-value">${subscriberEmail}</span>
+                <span class="detail-value">${subscription.email}</span>
               </div>
               <div class="detail-item">
                 <span class="detail-label">Newsletter Type:</span>
-                <span class="detail-value">${newsletterType}</span>
+                <span class="detail-value">${subscription.newsletter_type}</span>
               </div>
               <div class="detail-item">
                 <span class="detail-label">Status:</span>
-                <span class="detail-value">${status}</span>
+                <span class="detail-value">${subscription.is_active ? "Active" : "Inactive"}</span>
               </div>
               <div class="detail-item">
                 <span class="detail-label">Subscribed:</span>
-                <span class="detail-value">${subscribeDate}</span>
+                <span class="detail-value">${new Date(subscription.subscribed_at).toLocaleDateString()}</span>
               </div>
+              ${
+                subscription.user_id
+                  ? `
+              <div class="detail-item">
+                <span class="detail-label">User ID:</span>
+                <span class="detail-value">${subscription.user_id}</span>
+              </div>
+              `
+                  : `
+              <div class="detail-item">
+                <span class="detail-label">Account Type:</span>
+                <span class="detail-value">Guest Subscriber</span>
+              </div>
+              `
+              }
             </div>
           </div>
         </div>
@@ -2670,7 +1663,6 @@ const stats = {
 
     document.body.appendChild(modal);
 
-    // Close modal when clicking outside
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
         modal.remove();
@@ -2678,374 +1670,389 @@ const stats = {
     });
   }
 
-  function setupSearchAndFilters() {
-    // Newsletter search and filter
-    const newsletterFilter = document.getElementById(
-      "newsletter-filter"
-    ) as HTMLSelectElement;
-    newsletterFilter?.addEventListener("change", () => {
-      const filterValue = newsletterFilter.value;
-      const newsletterCards = document.querySelectorAll(".newsletter-card");
-
-      newsletterCards.forEach((card) => {
-        const statusBadge = card.querySelector(".status-badge");
-        const isActive =
-          statusBadge?.textContent?.toLowerCase().includes("active") ?? false; // Fix: Use nullish coalescing
-
-        let shouldShow = true;
-        if (filterValue === "active") shouldShow = isActive;
-        else if (filterValue === "inactive") shouldShow = !isActive;
-
-        (card as HTMLElement).style.display = shouldShow ? "" : "none";
-      });
-    });
-
-    // Subscriber search
-    const subscriberSearch = document.getElementById(
-      "subscriber-search"
-    ) as HTMLInputElement;
-    subscriberSearch?.addEventListener(
-      "input",
-      debounce((e: Event) => {
-        // Fix: Add Event type
-        const searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
-        const subscriberRows = document.querySelectorAll(".subscriber-row");
-
-        subscriberRows.forEach((row) => {
-          const subscriberName =
-            row.querySelector(".subscriber-name")?.textContent?.toLowerCase() ||
-            "";
-          const subscriberEmail =
-            row
-              .querySelector(".subscriber-email")
-              ?.textContent?.toLowerCase() || "";
-          const matches =
-            subscriberName.includes(searchTerm) ||
-            subscriberEmail.includes(searchTerm);
-          (row as HTMLElement).style.display = matches ? "" : "none";
-        });
-      }, 300)
+  function updateSubscriberBulkActionsBar() {
+    const selectedCheckboxes = document.querySelectorAll(
+      ".subscriber-select:checked"
     );
+    const bulkActionsBar = document.getElementById("subscriber-bulk-actions");
+    const selectedCount = document.getElementById("selected-subscribers-count");
 
-    // Subscriber filter
-    const subscriberFilter = document.getElementById(
-      "subscriber-filter"
-    ) as HTMLSelectElement;
-    subscriberFilter?.addEventListener("change", () => {
-      const filterValue = subscriberFilter.value;
-      const subscriberRows = document.querySelectorAll(".subscriber-row");
-
-      subscriberRows.forEach((row) => {
-        const newsletterType =
-          row
-            .querySelector(".newsletter-type-badge")
-            ?.textContent?.toLowerCase() || "";
-        const shouldShow = !filterValue || newsletterType.includes(filterValue);
-        (row as HTMLElement).style.display = shouldShow ? "" : "none";
-      });
-    });
+    if (selectedCheckboxes.length > 0) {
+      if (bulkActionsBar) bulkActionsBar.style.display = "flex";
+      if (selectedCount)
+        selectedCount.textContent = selectedCheckboxes.length.toString();
+    } else {
+      if (bulkActionsBar) bulkActionsBar.style.display = "none";
+    }
   }
 
-  function setupSubscriberBulkActions() {
+  function setupEventListeners() {
+    console.log("🔧 Setting up event listeners...");
+
+    // Tab switching
+    const tabButtons = document.querySelectorAll(".tab-button");
+    const tabContents = document.querySelectorAll(".tab-content");
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const targetTab = (button as HTMLElement).dataset.tab;
+        if (!targetTab) return;
+
+        tabButtons.forEach((btn) => btn.classList.remove("active"));
+        tabContents.forEach((content) => content.classList.remove("active"));
+
+        button.classList.add("active");
+        const targetContent = document.getElementById(`${targetTab}-tab`);
+        if (targetContent) {
+          targetContent.classList.add("active");
+        }
+      });
+    });
+
+    // Create newsletter button
+    const createNewsletterBtn = document.getElementById(
+      "create-newsletter-btn"
+    ) as HTMLButtonElement;
+    createNewsletterBtn?.addEventListener("click", () => openNewsletterModal());
+
+    // Export subscribers button
+    const exportSubscribersBtn = document.getElementById(
+      "export-subscribers-btn"
+    ) as HTMLButtonElement;
+    exportSubscribersBtn?.addEventListener("click", exportSubscribers);
+
+    // Email builder buttons
+    const emailBuilderBtn = document.getElementById(
+      "email-builder-btn"
+    ) as HTMLButtonElement;
+    const launchBuilderBtn = document.getElementById(
+      "launch-builder-btn"
+    ) as HTMLButtonElement;
+    emailBuilderBtn?.addEventListener("click", () => openEmailBuilder());
+    launchBuilderBtn?.addEventListener("click", () => openEmailBuilder());
+
+    // Modal controls
+    const modalClose = document.getElementById(
+      "newsletter-modal-close"
+    ) as HTMLButtonElement;
+    const cancelBtn = document.getElementById(
+      "newsletter-cancel"
+    ) as HTMLButtonElement;
+    const emailBuilderClose = document.getElementById(
+      "email-builder-close"
+    ) as HTMLButtonElement;
+
+    modalClose?.addEventListener("click", closeNewsletterModal);
+    cancelBtn?.addEventListener("click", closeNewsletterModal);
+    emailBuilderClose?.addEventListener("click", closeEmailBuilder);
+
+    const modal = document.getElementById("newsletter-modal");
+    const emailBuilderModal = document.getElementById("email-builder-modal");
+
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) closeNewsletterModal();
+    });
+
+    emailBuilderModal?.addEventListener("click", (e) => {
+      if (e.target === emailBuilderModal) closeEmailBuilder();
+    });
+
+    // Form submission
+    const newsletterForm = document.getElementById(
+      "newsletter-form"
+    ) as HTMLFormElement;
+    newsletterForm?.addEventListener("submit", handleNewsletterFormSubmit);
+
+    // Auto-generate slug from name
+    const nameInput = document.getElementById(
+      "newsletter-name"
+    ) as HTMLInputElement;
+    const slugInput = document.getElementById(
+      "newsletter-slug"
+    ) as HTMLInputElement;
+
+    nameInput?.addEventListener("input", (e) => {
+      const name = (e.target as HTMLInputElement).value;
+      const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .trim();
+      if (slugInput) {
+        slugInput.value = slug;
+      }
+    });
+
+    // Select all checkbox
     const selectAllCheckbox = document.getElementById(
       "select-all-subscribers"
     ) as HTMLInputElement;
-    const subscriberCheckboxes = document.querySelectorAll(
-      ".subscriber-select"
-    ) as NodeListOf<SubscriberSelectElement>;
-
     selectAllCheckbox?.addEventListener("change", () => {
+      const subscriberCheckboxes = document.querySelectorAll(
+        ".subscriber-select"
+      ) as NodeListOf<HTMLInputElement>;
       subscriberCheckboxes.forEach((checkbox) => {
         checkbox.checked = selectAllCheckbox.checked;
       });
       updateSubscriberBulkActionsBar();
     });
 
-    subscriberCheckboxes.forEach((checkbox) => {
-      checkbox.addEventListener("change", updateSubscriberBulkActionsBar);
-    });
-
-    // Bulk action buttons
-    const exportSelectedBtn = document.querySelector(".export-selected");
-    const unsubscribeSelectedBtn = document.querySelector(
-      ".unsubscribe-selected"
+    // Search and filter
+    const subscriberSearch = document.getElementById(
+      "subscriber-search"
+    ) as HTMLInputElement;
+    subscriberSearch?.addEventListener(
+      "input",
+      debounce(handleSubscriberSearch, 300)
     );
-    const deleteSelectedBtn = document.querySelector(".delete-selected");
 
-    exportSelectedBtn?.addEventListener("click", () => {
-      const selectedSubscribers = getSelectedSubscribers();
-      if (selectedSubscribers.length > 0) {
-        exportSelectedSubscribers(selectedSubscribers);
-      }
-    });
+    const subscriberFilter = document.getElementById(
+      "subscriber-filter"
+    ) as HTMLSelectElement;
+    subscriberFilter?.addEventListener("change", handleSubscriberFilter);
 
-    unsubscribeSelectedBtn?.addEventListener("click", () => {
-      const selectedSubscribers = getSelectedSubscribers();
-      if (
-        selectedSubscribers.length > 0 &&
-        confirm(
-          `Are you sure you want to unsubscribe ${selectedSubscribers.length} subscribers?`
-        )
-      ) {
-        bulkSubscriberAction(selectedSubscribers, "unsubscribe");
-      }
-    });
+    // Newsletter filter
+    const newsletterFilter = document.getElementById(
+      "newsletter-filter"
+    ) as HTMLSelectElement;
+    newsletterFilter?.addEventListener("change", handleNewsletterFilter);
 
-    deleteSelectedBtn?.addEventListener("click", () => {
-      const selectedSubscribers = getSelectedSubscribers();
-      if (
-        selectedSubscribers.length > 0 &&
-        confirm(
-          `⚠️ Are you sure you want to DELETE ${selectedSubscribers.length} subscribers? This action cannot be undone.`
-        )
-      ) {
-        bulkSubscriberAction(selectedSubscribers, "delete");
-      }
-    });
-  }
-
-  function updateSubscriberBulkActionsBar() {
-    const selectedCheckboxes = document.querySelectorAll(
-      ".subscriber-select:checked"
-    ) as NodeListOf<SubscriberSelectElement>;
-    const bulkActionsBar = document.getElementById(
-      "subscriber-bulk-actions"
-    ) as HTMLElement;
-    const selectedCount = document.getElementById(
-      "selected-subscribers-count"
-    ) as HTMLElement;
-
-    if (selectedCheckboxes.length > 0) {
-      bulkActionsBar.style.display = "flex";
-      selectedCount.textContent = selectedCheckboxes.length.toString();
-    } else {
-      bulkActionsBar.style.display = "none";
-    }
-  }
-
-  function getSelectedSubscribers(): string[] {
-    const checkboxes = document.querySelectorAll(
-      ".subscriber-select:checked"
-    ) as NodeListOf<SubscriberSelectElement>;
-    return Array.from(checkboxes).map((checkbox) => checkbox.value);
-  }
-
-  function exportSelectedSubscribers(subscriberIds: string[]) {
-    const subscriberRows = document.querySelectorAll(".subscriber-row");
-    const selectedData: any[] = [];
-
-    subscriberRows.forEach((row) => {
-      const subscriptionId = row.getAttribute("data-subscription-id");
-      if (subscriberIds.includes(subscriptionId!)) {
-        const subscriberName =
-          row.querySelector(".subscriber-name")?.textContent || "";
-        const subscriberEmail =
-          row.querySelector(".subscriber-email")?.textContent || "";
-        const newsletterType =
-          row.querySelector(".newsletter-type-badge")?.textContent || "";
-        const subscribeDate =
-          row.querySelector(".subscribe-date")?.textContent || "";
-        const status = row.querySelector(".status-badge")?.textContent || "";
-
-        selectedData.push({
-          id: subscriptionId,
-          name: subscriberName,
-          email: subscriberEmail,
-          newsletter_type: newsletterType,
-          subscribed_date: subscribeDate,
-          status: status,
-        });
-      }
-    });
-
-    downloadCSV(selectedData, "selected-subscribers");
-  }
-
-  async function bulkSubscriberAction(subscriberIds: string[], action: string) {
-    try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
-      }
-
-      const session = JSON.parse(adminSession);
-      const response = await fetch(
-        "/api/admin/newsletters/bulk-subscriber-action",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.token}`,
-          },
-          body: JSON.stringify({ subscriberIds, action }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.success) {
-        showNotification(
-          result.message ||
-            `${subscriberIds.length} subscribers ${action}ed successfully`,
-          "success"
-        );
-
-        if (action === "delete") {
-          subscriberIds.forEach((subscriberId) => {
-            const subscriberRow = document.querySelector(
-              `[data-subscription-id="${subscriberId}"]`
-            ) as HTMLElement;
-            subscriberRow?.remove();
-          });
-        } else {
-          setTimeout(() => window.location.reload(), 1000);
-        }
-
-        const bulkActionsBar = document.getElementById(
-          "subscriber-bulk-actions"
-        ) as HTMLElement;
-        bulkActionsBar.style.display = "none";
-      } else {
-        showNotification(
-          result.error || `Failed to ${action} subscribers`,
-          "error"
-        );
-      }
-    } catch (error) {
-      console.error("Bulk subscriber action error:", error);
-      showNotification("An error occurred", "error");
-    }
-  }
-
-  function setupSettingsForm() {
+    // Settings form
     const settingsForm = document.getElementById(
       "newsletter-settings-form"
     ) as HTMLFormElement;
-    const testBtn = document.getElementById("test-settings");
+    settingsForm?.addEventListener("submit", handleSettingsFormSubmit);
 
-    testBtn?.addEventListener("click", () => {
-      // Test email configuration
-      showNotification("Testing email configuration...", "success");
+    // Email builder controls
+    const previewBtn = document.getElementById(
+      "preview-email"
+    ) as HTMLButtonElement;
+    const saveTemplateBtn = document.getElementById(
+      "save-template"
+    ) as HTMLButtonElement;
 
-      // Simulate test
-      setTimeout(() => {
-        showNotification("Email configuration test successful!", "success");
-      }, 2000);
+    previewBtn?.addEventListener("click", previewEmail);
+    saveTemplateBtn?.addEventListener("click", saveEmailTemplate);
+
+    // Retry button
+    const retryBtn = document.getElementById("retry-btn") as HTMLButtonElement;
+    retryBtn?.addEventListener("click", () => {
+      hideError();
+      initializeNewsletterManagement();
     });
 
-    settingsForm?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const formData = new FormData(settingsForm);
-      const settingsData = {
-        sender_name: formData.get("sender-name") as string,
-        sender_email: formData.get("sender-email") as string,
-        reply_to: formData.get("reply-to") as string,
-        default_frequency: formData.get("default-frequency") as string,
-        default_day: formData.get("default-day") as string,
-        convertkit_api: formData.get("convertkit-api") as string,
-        auto_sync: formData.has("auto-sync"),
-      };
-
-      try {
-        const adminSession = localStorage.getItem("tinkbyte-admin-session");
-        if (!adminSession) {
-          throw new Error("No admin session found");
-        }
-
-        const session = JSON.parse(adminSession);
-        const response = await fetch("/api/admin/newsletters/settings", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.token}`,
-          },
-          body: JSON.stringify(settingsData),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          showNotification("Newsletter settings saved successfully", "success");
-        } else {
-          showNotification(result.error || "Failed to save settings", "error");
-        }
-      } catch (error) {
-        console.error("Settings save error:", error);
-        showNotification("An error occurred while saving settings", "error");
-      }
-    });
+    console.log("✅ Event listeners setup complete");
   }
 
-  async function exportSubscribers() {
+  async function handleNewsletterFormSubmit(e: Event) {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const newsletterData = {
+      name: formData.get("name") as string,
+      slug: formData.get("slug") as string,
+      description: (formData.get("description") as string) || undefined,
+      frequency: formData.get("frequency") as string,
+      day_of_week: (formData.get("day_of_week") as string) || undefined,
+      sort_order: parseInt(formData.get("sort_order") as string) || 0,
+      image_url: (formData.get("image_url") as string) || undefined,
+      is_active: formData.has("is_active"),
+    };
+
     try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
-      }
+      if (currentEditingNewsletterId) {
+        // Use singleton manager for update
+        const result = await adminAPIManager.updateNewsletter(
+          currentEditingNewsletterId,
+          newsletterData
+        );
 
-      const session = JSON.parse(adminSession);
-      const response = await fetch(
-        "/api/admin/newsletters/export-subscribers",
-        {
-          headers: {
-            Authorization: `Bearer ${session.token}`,
-          },
+        if (result.success) {
+          showNotification("Newsletter updated successfully", "success");
+        } else {
+          throw new Error(result.error);
         }
-      );
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `newsletter-subscribers-${new Date().toISOString().split("T")[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-        showNotification("Subscribers exported successfully", "success");
       } else {
-        showNotification("Failed to export subscribers", "error");
+        // Use singleton manager for create
+        const result = await adminAPIManager.createNewsletter(newsletterData);
+
+        if (result.success) {
+          showNotification("Newsletter created successfully", "success");
+        } else {
+          throw new Error(result.error);
+        }
       }
+
+      closeNewsletterModal();
+      await loadNewslettersFromDB();
+      await loadDashboardStatsFromDB();
     } catch (error) {
-      console.error("Export subscribers error:", error);
-      showNotification(
-        "An error occurred while exporting subscribers",
-        "error"
-      );
+      console.error("❌ Form submission error:", error);
+      showNotification(`Failed to save newsletter: ${error.message}`, "error");
     }
   }
 
-  function downloadCSV(data: any[], filename: string = "data") {
-    if (data.length === 0) return;
+  async function handleSettingsFormSubmit(e: Event) {
+    e.preventDefault();
+    showNotification("Settings saved successfully", "success");
+  }
 
-    const headers = Object.keys(data[0]);
-    const csvContent = [
-      headers.join(","),
-      ...data.map((row) =>
-        headers.map((header) => `"${row[header] || ""}"`).join(",")
-      ),
-    ].join("\n");
+  async function handleSubscriberSearch() {
+    console.log("🔍 Searching subscribers...");
+    await loadSubscribersFromDB(1);
+  }
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `${filename}-${new Date().toISOString().split("T")[0]}.csv`
-    );
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  async function handleSubscriberFilter() {
+    console.log("🔽 Filtering subscribers...");
+    await loadSubscribersFromDB(1);
+  }
+
+  async function handleNewsletterFilter() {
+    console.log("🔽 Filtering newsletters...");
+    await loadNewslettersFromDB();
+  }
+
+  async function exportSubscribers() {
+    const exportBtn = document.getElementById(
+      "export-subscribers-btn"
+    ) as HTMLButtonElement;
+    const spinner = document.getElementById("export-spinner");
+
+    if (exportBtn && spinner) {
+      exportBtn.disabled = true;
+      spinner.style.display = "flex";
+    }
+
+    try {
+      // Use singleton manager for export
+      const response = await adminAPIManager.exportUsers("csv");
+
+      if (response.success && response.data) {
+        const blob = new Blob([response.data], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute(
+          "download",
+          `newsletter-subscribers-${new Date().toISOString().split("T")[0]}.csv`
+        );
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showNotification("Subscribers exported successfully", "success");
+      } else {
+        throw new Error(response.error || "Export failed");
+      }
+    } catch (error) {
+      console.error("❌ Export error:", error);
+      showNotification("Failed to export subscribers", "error");
+    } finally {
+      if (exportBtn && spinner) {
+        exportBtn.disabled = false;
+        spinner.style.display = "none";
+      }
+    }
+  }
+
+  function previewEmail() {
+    const emailCanvas = document.querySelector(".email-container");
+    if (!emailCanvas) return;
+
+    const emailHTML = generateEmailHTML();
+
+    const previewWindow = window.open("", "_blank", "width=800,height=600");
+    if (previewWindow) {
+      previewWindow.document.write(emailHTML);
+      previewWindow.document.close();
+    }
+
+    showNotification("Email preview opened in new window", "success");
+  }
+
+  function saveEmailTemplate() {
+    const emailHTML = generateEmailHTML();
+
+    // TODO: Save to database via AdminAPI
+    console.log("📧 Saving email template:", emailHTML);
+
+    showNotification("Email template saved successfully", "success");
+  }
+
+  function generateEmailHTML(): string {
+    const components = document.querySelectorAll(".email-component");
+    let emailContent = "";
+
+    components.forEach((component) => {
+      const wrapper = component.querySelector(".component-wrapper");
+      if (wrapper) {
+        // Remove the controls and get clean HTML
+        const cleanContent = wrapper.cloneNode(true) as HTMLElement;
+        const controls = cleanContent.querySelector(".component-controls");
+        if (controls) {
+          controls.remove();
+        }
+        emailContent += cleanContent.innerHTML;
+      }
+    });
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>TinkByte Newsletter</title>
+        <style>
+          body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+          .email-container { max-width: 600px; margin: 0 auto; }
+          @media (max-width: 600px) {
+            .email-container { width: 100% !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          ${emailContent}
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  function showLoading(show: boolean) {
+    const loadingOverlay = document.getElementById("loading-overlay");
+    if (loadingOverlay) {
+      loadingOverlay.style.display = show ? "flex" : "none";
+    }
+  }
+
+  function showError(message: string) {
+    const errorBanner = document.getElementById("error-banner");
+    const errorMessage = document.getElementById("error-message");
+
+    if (errorBanner && errorMessage) {
+      errorMessage.textContent = message;
+      errorBanner.style.display = "flex";
+    }
+  }
+
+  function hideError() {
+    const errorBanner = document.getElementById("error-banner");
+    if (errorBanner) {
+      errorBanner.style.display = "none";
+    }
   }
 
   function showNotification(
     message: string,
-    type: "success" | "error" = "success"
+    type: "success" | "error" | "info" | "warning" = "success"
   ) {
     const notification = document.createElement("div");
     notification.className = `notification ${type}`;
@@ -3058,12 +2065,12 @@ const stats = {
       color: white;
       font-weight: 500;
       z-index: 10000;
-      background: ${type === "success" ? "#238636" : "#da3633"};
+      background: ${type === "success" ? "#238636" : type === "error" ? "#da3633" : type === "warning" ? "#fb8500" : "#4285f4"};
       animation: slideIn 0.3s ease;
     `;
 
     document.body.appendChild(notification);
-    setTimeout(() => notification.remove(), 3000);
+    setTimeout(() => notification.remove(), 4000);
   }
 
   function debounce(func: Function, wait: number) {
@@ -3078,67 +2085,258 @@ const stats = {
     };
   }
 
-  // Add detail styles for subscriber modal
-  if (!document.getElementById("subscriber-detail-styles")) {
+  // Add animation styles
+  if (!document.getElementById("newsletter-animations")) {
     const style = document.createElement("style");
-    style.id = "subscriber-detail-styles";
+    style.id = "newsletter-animations";
     style.textContent = `
-      .subscriber-detail-section {
-        margin-bottom: 2rem;
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
       }
-
-      .subscriber-detail-section h4 {
-        color: #f0f6fc;
-        font-size: 1.125rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid #21262d;
+      
+      .email-builder-modal .modal-content {
+        width: 95vw;
+        height: 90vh;
+        max-width: none;
+        max-height: none;
       }
-
-      .detail-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
+      
+      .email-builder-container {
+        display: flex;
+        height: calc(90vh - 80px);
       }
-
-      .detail-item {
+      
+      .builder-sidebar {
+        width: 250px;
+        background: #161b22;
+        border-right: 1px solid #21262d;
+        padding: 1rem;
+        overflow-y: auto;
+      }
+      
+      .builder-canvas {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
       }
-
-      .detail-label {
-        font-size: 0.75rem;
+      
+      .canvas-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #21262d;
+        background: #161b22;
+      }
+      
+      .device-preview {
+        display: flex;
+        gap: 0.5rem;
+      }
+      
+      .device-btn {
+        padding: 0.5rem;
+        background: #21262d;
+        border: 1px solid #30363d;
         color: #8b949e;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        cursor: pointer;
+        transition: all 0.2s ease;
       }
-
-      .detail-value {
+      
+      .device-btn.active {
+        background: #4285f4;
+        border-color: #4285f4;
+        color: white;
+      }
+      
+      .canvas-actions {
+        display: flex;
+        gap: 1rem;
+      }
+      
+      .preview-btn, .save-template-btn {
+        padding: 0.5rem 1rem;
+        background: #4285f4;
+        border: 1px solid #4285f4;
+        color: white;
+        cursor: pointer;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      
+      .email-canvas {
+        flex: 1;
+        background: #f6f8fa;
+        overflow: auto;
+        padding: 2rem;
+      }
+      
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: white;
+        min-height: 400px;
+        position: relative;
+      }
+      
+      .drop-zone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 400px;
+        border: 2px dashed #d1d5db;
+        color: #6b7280;
+        background: #f9fafb;
+      }
+      
+      .drop-zone.drag-over {
+        border-color: #4285f4;
+        background: rgba(66, 133, 244, 0.05);
+        color: #4285f4;
+      }
+      
+      .builder-properties {
+        width: 300px;
+        background: #161b22;
+        border-left: 1px solid #21262d;
+        padding: 1rem;
+        overflow-y: auto;
+      }
+      
+      .component-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .component-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: #21262d;
+        border: 1px solid #30363d;
+        color: #f0f6fc;
+        cursor: grab;
+        transition: all 0.2s ease;
+      }
+      
+      .component-item:hover {
+        background: #30363d;
+        border-color: #4285f4;
+      }
+      
+      .component-item:active {
+        cursor: grabbing;
+      }
+      
+      .email-component {
+        position: relative;
+        margin-bottom: 1px;
+      }
+      
+      .email-component.selected {
+        outline: 2px solid #4285f4;
+        outline-offset: 2px;
+      }
+      
+      .component-wrapper {
+        position: relative;
+      }
+      
+      .component-controls {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        display: flex;
+        gap: 0.25rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+      
+      .email-component:hover .component-controls {
+        opacity: 1;
+      }
+      
+      .edit-btn, .delete-btn {
+        width: 24px;
+        height: 24px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+      }
+      
+      .delete-btn:hover {
+        background: #da3633;
+      }
+      
+      .edit-btn:hover {
+        background: #4285f4;
+      }
+      
+      .property-group {
+        margin-bottom: 1rem;
+      }
+      
+      .property-group label {
+        display: block;
+        color: #f0f6fc;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+      }
+      
+      .property-group input,
+      .property-group textarea,
+      .property-group select {
+        width: 100%;
+        padding: 0.5rem;
+        background: #21262d;
+        border: 1px solid #30363d;
         color: #f0f6fc;
         font-size: 0.875rem;
       }
-
-      /* Light mode */
-      :global(.light) .subscriber-detail-section h4 {
-        color: #1f2937;
-        border-bottom-color: #e2e8f0;
+      
+      .property-group input:focus,
+      .property-group textarea:focus,
+      .property-group select:focus {
+        outline: none;
+        border-color: #4285f4;
       }
-
-      :global(.light) .detail-label {
-        color: #6b7280;
+      
+      .properties-empty {
+        text-align: center;
+        color: #8b949e;
+        padding: 2rem 1rem;
       }
-
-      :global(.light) .detail-value {
-        color: #1f2937;
+      
+      .properties-empty i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #4285f4;
       }
-
-      @media (max-width: 768px) {
-        .detail-grid {
-          grid-template-columns: 1fr;
-        }
+      
+      .mobile-preview .email-container {
+        max-width: 375px;
+      }
+      
+      .desktop-preview .email-container {
+        max-width: 600px;
       }
     `;
     document.head.appendChild(style);

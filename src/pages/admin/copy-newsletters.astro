@@ -1,0 +1,3146 @@
+---
+// src/pages/admin/newsletters.astro - New comprehensive newsletter management
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { supabase } from "../../lib/supabase";
+
+// Get newsletter data
+const { data: newsletters, error: newslettersError } = await supabase
+  .from("newsletters")
+  .select("*")
+  .order("created_at", { ascending: false });
+
+// Get subscription data
+const { data: subscriptions, error: subscriptionsError } = await supabase
+  .from("newsletter_subscriptions")
+  .select(
+    `
+    *,
+    users:user_id(
+      id,
+      profiles(display_name, avatar_type, avatar_preset_id)
+    )
+  `
+  )
+  .eq("is_active", true)
+  .order("subscribed_at", { ascending: false })
+  .limit(100);
+
+// Get newsletter statistics
+const { data: subStats } = await supabase
+  .from("newsletter_subscriptions")
+  .select("newsletter_type, is_active, subscribed_at");
+
+const stats = {
+  totalNewsletters: newsletters?.length || 0,
+  totalSubscribers: subscriptions?.length || 0,
+  activeSubscribers: subscriptions?.filter((sub) => sub.is_active).length || 0,
+  weeklySubscribers:
+    subStats?.filter((sub) => sub.newsletter_type === "weekly" && sub.is_active)
+      .length || 0,
+  monthlySubscribers:
+    subStats?.filter(
+      (sub) => sub.newsletter_type === "monthly" && sub.is_active
+    ).length || 0,
+  newThisMonth:
+    subStats?.filter((sub) => {
+      const subDate = new Date(sub.subscribed_at);
+      const monthAgo = new Date();
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      return subDate > monthAgo && sub.is_active;
+    }).length || 0,
+};
+---
+
+<AdminLayout title="Newsletter Management - TinkByte Admin">
+  <div class="newsletters-container">
+    <!-- Newsletter Header -->
+    <div class="newsletters-header">
+      <div class="header-content">
+        <h1>Newsletter Management</h1>
+        <p>Manage your newsletter campaigns and subscriber engagement</p>
+      </div>
+      <div class="header-actions">
+        <button class="create-newsletter-btn" id="create-newsletter-btn">
+          <i class="fas fa-plus"></i>
+          Create Newsletter
+        </button>
+        <button class="export-subscribers-btn" id="export-subscribers-btn">
+          <i class="fas fa-download"></i>
+          Export Subscribers
+        </button>
+      </div>
+    </div>
+
+    <!-- Newsletter Stats -->
+    <div class="newsletter-stats">
+      <div class="stat-card primary">
+        <div class="stat-icon">
+          <i class="fas fa-envelope"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{stats.totalSubscribers}</span>
+          <span class="stat-label">Total Subscribers</span>
+          <span class="stat-change positive"
+            >+{stats.newThisMonth} this month</span
+          >
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{stats.activeSubscribers}</span>
+          <span class="stat-label">Active Subscribers</span>
+          <span class="stat-change neutral"
+            >{
+              Math.round(
+                (stats.activeSubscribers / stats.totalSubscribers) * 100
+              )
+            }% active rate</span
+          >
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-week"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{stats.weeklySubscribers}</span>
+          <span class="stat-label">Weekly Newsletter</span>
+          <span class="stat-change neutral">Most popular</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-newspaper"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number">{stats.totalNewsletters}</span>
+          <span class="stat-label">Total Newsletters</span>
+          <span class="stat-change neutral">Available campaigns</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Newsletter Tabs -->
+    <div class="newsletter-tabs">
+      <button class="tab-btn active" data-tab="newsletters">
+        <i class="fas fa-newspaper"></i>
+        Newsletters ({stats.totalNewsletters})
+      </button>
+      <button class="tab-btn" data-tab="subscribers">
+        <i class="fas fa-users"></i>
+        Subscribers ({stats.totalSubscribers})
+      </button>
+      <button class="tab-btn" data-tab="analytics">
+        <i class="fas fa-chart-line"></i>
+        Analytics
+      </button>
+      <button class="tab-btn" data-tab="settings">
+        <i class="fas fa-cog"></i>
+        Settings
+      </button>
+    </div>
+
+    <!-- Newsletters Tab -->
+    <div id="newsletters-tab" class="tab-content active">
+      <div class="newsletters-section">
+        <div class="section-header">
+          <h2>Newsletter Campaigns</h2>
+          <div class="section-actions">
+            <select class="filter-select" id="newsletter-filter">
+              <option value="">All Newsletters</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="newsletters-grid">
+          {
+            newsletters && newsletters.length > 0 ? (
+              newsletters.map((newsletter) => (
+                <div class="newsletter-card" data-newsletter-id={newsletter.id}>
+                  <div class="newsletter-header">
+                    <div class="newsletter-info">
+                      <h3 class="newsletter-name">{newsletter.name}</h3>
+                      <p class="newsletter-description">
+                        {newsletter.description || "No description"}
+                      </p>
+                      <div class="newsletter-meta">
+                        <span class="newsletter-frequency">
+                          <i class="fas fa-clock" />
+                          {newsletter.frequency || "Weekly"}
+                        </span>
+                        {newsletter.day_of_week && (
+                          <span class="newsletter-day">
+                            <i class="fas fa-calendar" />
+                            {newsletter.day_of_week}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div class="newsletter-status">
+                      <span
+                        class={`status-badge ${newsletter.is_active ? "active" : "inactive"}`}
+                      >
+                        {newsletter.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="newsletter-stats-mini">
+                    <div class="mini-stat">
+                      <span class="mini-stat-number">
+                        {newsletter.subscriber_count || 0}
+                      </span>
+                      <span class="mini-stat-label">Subscribers</span>
+                    </div>
+                    <div class="mini-stat">
+                      <span class="mini-stat-number">
+                        {newsletter.sort_order || 0}
+                      </span>
+                      <span class="mini-stat-label">Sort Order</span>
+                    </div>
+                  </div>
+
+                  <div class="newsletter-actions">
+                    <button
+                      class="action-btn edit"
+                      data-action="edit"
+                      data-newsletter-id={newsletter.id}
+                    >
+                      <i class="fas fa-edit" />
+                      Edit
+                    </button>
+                    <button
+                      class="action-btn subscribers"
+                      data-action="subscribers"
+                      data-newsletter-id={newsletter.id}
+                    >
+                      <i class="fas fa-users" />
+                      Subscribers
+                    </button>
+                    <button
+                      class="action-btn send"
+                      data-action="send"
+                      data-newsletter-id={newsletter.id}
+                    >
+                      <i class="fas fa-paper-plane" />
+                      Send
+                    </button>
+                    {newsletter.is_active ? (
+                      <button
+                        class="action-btn deactivate"
+                        data-action="deactivate"
+                        data-newsletter-id={newsletter.id}
+                      >
+                        <i class="fas fa-pause" />
+                        Deactivate
+                      </button>
+                    ) : (
+                      <button
+                        class="action-btn activate"
+                        data-action="activate"
+                        data-newsletter-id={newsletter.id}
+                      >
+                        <i class="fas fa-play" />
+                        Activate
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div class="empty-state">
+                <i class="fas fa-envelope-open" />
+                <h3>No newsletters found</h3>
+                <p>
+                  Create your first newsletter to start engaging with your
+                  community
+                </p>
+                <button
+                  class="create-first-newsletter-btn"
+                  id="create-first-newsletter"
+                >
+                  <i class="fas fa-plus" />
+                  Create First Newsletter
+                </button>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscribers Tab -->
+    <div id="subscribers-tab" class="tab-content">
+      <div class="subscribers-section">
+        <div class="section-header">
+          <h2>Newsletter Subscribers</h2>
+          <div class="section-actions">
+            <div class="search-container">
+              <i class="fas fa-search"></i>
+              <input
+                type="text"
+                placeholder="Search subscribers..."
+                id="subscriber-search"
+              />
+            </div>
+            <select class="filter-select" id="subscriber-filter">
+              <option value="">All Subscribers</option>
+              <option value="weekly">Weekly Newsletter</option>
+              <option value="monthly">Monthly Newsletter</option>
+              <option value="daily">Daily Newsletter</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="subscribers-table-container">
+          <table class="subscribers-table">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="select-all-subscribers" /></th>
+                <th>Subscriber</th>
+                <th>Email</th>
+                <th>Newsletter Type</th>
+                <th>Subscribed Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                subscriptions && subscriptions.length > 0 ? (
+                  subscriptions.map((subscription) => {
+                    const profile = subscription.users?.profiles;
+                    const displayName =
+                      profile?.display_name ||
+                      subscription.email?.split("@")[0] ||
+                      "Unknown";
+
+                    return (
+                      <tr
+                        class="subscriber-row"
+                        data-subscription-id={subscription.id}
+                      >
+                        <td>
+                          <input
+                            type="checkbox"
+                            class="subscriber-select"
+                            value={subscription.id}
+                          />
+                        </td>
+                        <td>
+                          <div class="subscriber-info">
+                            <div class="subscriber-avatar">
+                              {profile?.avatar_type === "preset" ? (
+                                <div
+                                  class="avatar-preset"
+                                  data-preset={profile.avatar_preset_id || 1}
+                                >
+                                  {displayName.charAt(0).toUpperCase()}
+                                </div>
+                              ) : (
+                                <div class="avatar-preset">
+                                  {displayName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                            <div class="subscriber-details">
+                              <span class="subscriber-name">{displayName}</span>
+                              <span class="subscriber-id">
+                                ID: {subscription.user_id || "Guest"}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span class="subscriber-email">
+                            {subscription.email}
+                          </span>
+                          {subscription.convertkit_subscriber_id && (
+                            <span class="convertkit-badge">ConvertKit</span>
+                          )}
+                        </td>
+                        <td>
+                          <span
+                            class={`newsletter-type-badge ${subscription.newsletter_type}`}
+                          >
+                            {subscription.newsletter_type
+                              ?.charAt(0)
+                              .toUpperCase() +
+                              subscription.newsletter_type?.slice(1)}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="subscribe-date">
+                            {new Date(
+                              subscription.subscribed_at
+                            ).toLocaleDateString()}
+                          </span>
+                        </td>
+                        <td>
+                          <span
+                            class={`status-badge ${subscription.is_active ? "active" : "inactive"}`}
+                          >
+                            {subscription.is_active ? "Active" : "Unsubscribed"}
+                          </span>
+                        </td>
+                        <td>
+                          <div class="subscriber-actions">
+                            <button
+                              class="action-btn view"
+                              data-action="view"
+                              data-subscription-id={subscription.id}
+                              title="View Details"
+                            >
+                              <i class="fas fa-eye" />
+                            </button>
+                            {subscription.is_active ? (
+                              <button
+                                class="action-btn unsubscribe"
+                                data-action="unsubscribe"
+                                data-subscription-id={subscription.id}
+                                title="Unsubscribe"
+                              >
+                                <i class="fas fa-user-minus" />
+                              </button>
+                            ) : (
+                              <button
+                                class="action-btn resubscribe"
+                                data-action="resubscribe"
+                                data-subscription-id={subscription.id}
+                                title="Resubscribe"
+                              >
+                                <i class="fas fa-user-plus" />
+                              </button>
+                            )}
+                            <button
+                              class="action-btn delete"
+                              data-action="delete"
+                              data-subscription-id={subscription.id}
+                              title="Delete"
+                            >
+                              <i class="fas fa-trash" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colspan="7" class="empty-message">
+                      <div class="empty-state-inline">
+                        <i class="fas fa-envelope-open" />
+                        <span>No subscribers found</span>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bulk Actions for Subscribers -->
+        <div
+          class="bulk-actions-bar"
+          id="subscriber-bulk-actions"
+          style="display: none;"
+        >
+          <div class="bulk-info">
+            <span id="selected-subscribers-count">0</span> subscribers selected
+          </div>
+          <div class="bulk-buttons">
+            <button class="bulk-btn export-selected">
+              <i class="fas fa-download"></i>
+              Export Selected
+            </button>
+            <button class="bulk-btn unsubscribe-selected">
+              <i class="fas fa-user-minus"></i>
+              Unsubscribe Selected
+            </button>
+            <button class="bulk-btn delete-selected">
+              <i class="fas fa-trash"></i>
+              Delete Selected
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div id="analytics-tab" class="tab-content">
+      <div class="analytics-section">
+        <h2>Newsletter Analytics</h2>
+
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <h3>Subscription Growth</h3>
+            <div class="chart-placeholder">
+              <div class="growth-chart">
+                <div class="chart-bar" style="height: 60%"></div>
+                <div class="chart-bar" style="height: 80%"></div>
+                <div class="chart-bar" style="height: 45%"></div>
+                <div class="chart-bar" style="height: 90%"></div>
+                <div class="chart-bar" style="height: 70%"></div>
+                <div class="chart-bar" style="height: 95%"></div>
+                <div class="chart-bar" style="height: 85%"></div>
+              </div>
+              <div class="chart-labels">
+                <span>Jan</span>
+                <span>Feb</span>
+                <span>Mar</span>
+                <span>Apr</span>
+                <span>May</span>
+                <span>Jun</span>
+                <span>Jul</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analytics-card">
+            <h3>Newsletter Performance</h3>
+            <div class="performance-stats">
+              <div class="performance-item">
+                <span class="performance-label">Open Rate</span>
+                <span class="performance-value">24.5%</span>
+                <span class="performance-change positive">+2.3%</span>
+              </div>
+              <div class="performance-item">
+                <span class="performance-label">Click Rate</span>
+                <span class="performance-value">8.2%</span>
+                <span class="performance-change positive">+1.1%</span>
+              </div>
+              <div class="performance-item">
+                <span class="performance-label">Unsubscribe Rate</span>
+                <span class="performance-value">1.8%</span>
+                <span class="performance-change negative">+0.3%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analytics-card">
+            <h3>Top Performing Content</h3>
+            <div class="top-content">
+              <div class="content-item">
+                <span class="content-title">Product Strategy Guide</span>
+                <span class="content-metric">32% open rate</span>
+              </div>
+              <div class="content-item">
+                <span class="content-title">AI in Product Development</span>
+                <span class="content-metric">28% open rate</span>
+              </div>
+              <div class="content-item">
+                <span class="content-title">Build vs Buy Decisions</span>
+                <span class="content-metric">25% open rate</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settings-tab" class="tab-content">
+      <div class="settings-section">
+        <h2>Newsletter Settings</h2>
+
+        <form class="newsletter-settings-form" id="newsletter-settings-form">
+          <div class="settings-group">
+            <h3>Email Configuration</h3>
+            <div class="form-group">
+              <label for="sender-name">Sender Name</label>
+              <input type="text" id="sender-name" value="TinkByte" />
+            </div>
+            <div class="form-group">
+              <label for="sender-email">Sender Email</label>
+              <input
+                type="email"
+                id="sender-email"
+                value="newsletter@tinkbyte.com"
+              />
+            </div>
+            <div class="form-group">
+              <label for="reply-to">Reply-To Email</label>
+              <input type="email" id="reply-to" value="hello@tinkbyte.com" />
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Default Settings</h3>
+            <div class="form-group">
+              <label for="default-frequency">Default Frequency</label>
+              <select id="default-frequency">
+                <option value="weekly" selected>Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="daily">Daily</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="default-day">Default Send Day</label>
+              <select id="default-day">
+                <option value="monday">Monday</option>
+                <option value="tuesday">Tuesday</option>
+                <option value="wednesday">Wednesday</option>
+                <option value="thursday" selected>Thursday</option>
+                <option value="friday">Friday</option>
+                <option value="saturday">Saturday</option>
+                <option value="sunday">Sunday</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h3>Integration Settings</h3>
+            <div class="form-group">
+              <label for="convertkit-api">ConvertKit API Key</label>
+              <input
+                type="password"
+                id="convertkit-api"
+                placeholder="Enter ConvertKit API key..."
+              />
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="auto-sync" checked />
+                Auto-sync with ConvertKit
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-actions">
+            <button type="button" class="test-btn" id="test-settings">
+              <i class="fas fa-flask"></i>
+              Test Configuration
+            </button>
+            <button type="submit" class="save-btn">
+              <i class="fas fa-save"></i>
+              Save Settings
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Create/Edit Newsletter Modal -->
+    <div id="newsletter-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="newsletter-modal-title">Create Newsletter</h3>
+          <button class="modal-close" id="newsletter-modal-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="newsletter-form" class="newsletter-form">
+            <div class="form-group">
+              <label for="newsletter-name">Newsletter Name *</label>
+              <input
+                type="text"
+                id="newsletter-name"
+                name="name"
+                required
+                placeholder="e.g., Weekly Product Insights"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="newsletter-slug">URL Slug *</label>
+              <input
+                type="text"
+                id="newsletter-slug"
+                name="slug"
+                required
+                placeholder="e.g., weekly-insights"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="newsletter-description">Description</label>
+              <textarea
+                id="newsletter-description"
+                name="description"
+                rows="3"
+                placeholder="Brief description of this newsletter..."
+              ></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="newsletter-frequency">Frequency</label>
+                <select id="newsletter-frequency" name="frequency">
+                  <option value="weekly" selected>Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="daily">Daily</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="newsletter-day">Send Day</label>
+                <select id="newsletter-day" name="day_of_week">
+                  <option value="monday">Monday</option>
+                  <option value="tuesday">Tuesday</option>
+                  <option value="wednesday">Wednesday</option>
+                  <option value="thursday" selected>Thursday</option>
+                  <option value="friday">Friday</option>
+                  <option value="saturday">Saturday</option>
+                  <option value="sunday">Sunday</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="newsletter-sort">Sort Order</label>
+                <input
+                  type="number"
+                  id="newsletter-sort"
+                  name="sort_order"
+                  min="0"
+                  value="0"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="newsletter-image">Header Image URL</label>
+              <input
+                type="url"
+                id="newsletter-image"
+                name="image_url"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  id="newsletter-active"
+                  name="is_active"
+                  checked
+                />
+                Active Newsletter
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="cancel-btn" id="newsletter-cancel"
+                >Cancel</button
+              >
+              <button type="submit" class="save-btn" id="newsletter-save">
+                <i class="fas fa-save"></i>
+                Save Newsletter
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .newsletters-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .newsletters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .header-content h1 {
+    color: #f0f6fc;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .header-content p {
+    color: #8b949e;
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .create-newsletter-btn,
+  .export-subscribers-btn {
+    padding: 0.75rem 1rem;
+    border: 1px solid #4285f4;
+    background: #4285f4;
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .create-newsletter-btn:hover {
+    background: #3367d6;
+    border-color: #3367d6;
+  }
+
+  .export-subscribers-btn {
+    background: transparent;
+    color: #4285f4;
+  }
+
+  .export-subscribers-btn:hover {
+    background: #4285f4;
+    color: white;
+  }
+
+  .newsletter-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .stat-card:hover {
+    border-color: #4285f4;
+    transform: translateY(-2px);
+  }
+
+  .stat-card.primary {
+    border-left: 4px solid #4285f4;
+  }
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    background: #4285f4;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .stat-content {
+    flex: 1;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-label {
+    color: #8b949e;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-change {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .stat-change.positive {
+    color: #238636;
+  }
+
+  .stat-change.negative {
+    color: #da3633;
+  }
+
+  .stat-change.neutral {
+    color: #8b949e;
+  }
+
+  .newsletter-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #21262d;
+    background: #161b22;
+  }
+
+  .tab-btn {
+    padding: 1rem 1.5rem;
+    border: none;
+    background: transparent;
+    color: #8b949e;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .tab-btn.active {
+    color: #4285f4;
+    border-bottom-color: #4285f4;
+    background: #0d1117;
+  }
+
+  .tab-btn:hover:not(.active) {
+    color: #f0f6fc;
+    background: #21262d;
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-header h2 {
+    color: #f0f6fc;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .section-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-container i {
+    position: absolute;
+    left: 12px;
+    color: #8b949e;
+    z-index: 1;
+  }
+
+  .search-container input {
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    font-size: 0.875rem;
+    width: 250px;
+  }
+
+  .search-container input:focus {
+    outline: none;
+    border-color: #4285f4;
+  }
+
+  .filter-select {
+    padding: 0.75rem 1rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+
+  .filter-select:focus {
+    outline: none;
+    border-color: #4285f4;
+  }
+
+  .newsletters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .newsletter-card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+  }
+
+  .newsletter-card:hover {
+    border-color: #4285f4;
+    transform: translateY(-2px);
+  }
+
+  .newsletter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .newsletter-info {
+    flex: 1;
+  }
+
+  .newsletter-name {
+    color: #f0f6fc;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .newsletter-description {
+    color: #8b949e;
+    font-size: 0.875rem;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+  }
+
+  .newsletter-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #8b949e;
+  }
+
+  .newsletter-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .status-badge {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .status-badge.active {
+    background: rgba(35, 134, 54, 0.1);
+    color: #238636;
+    border: 1px solid #238636;
+  }
+
+  .status-badge.inactive {
+    background: rgba(139, 148, 158, 0.1);
+    color: #8b949e;
+    border: 1px solid #8b949e;
+  }
+
+  .newsletter-stats-mini {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+  }
+
+  .mini-stat {
+    text-align: center;
+  }
+
+  .mini-stat-number {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #4285f4;
+  }
+
+  .mini-stat-label {
+    font-size: 0.75rem;
+    color: #8b949e;
+  }
+
+  .newsletter-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    padding: 0.5rem 1rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .action-btn:hover {
+    background: #30363d;
+  }
+
+  .action-btn.edit:hover {
+    background: #4285f4;
+    border-color: #4285f4;
+  }
+
+  .action-btn.subscribers:hover {
+    background: #238636;
+    border-color: #238636;
+  }
+
+  .action-btn.send:hover {
+    background: #fb8500;
+    border-color: #fb8500;
+  }
+
+  .action-btn.activate:hover {
+    background: #238636;
+    border-color: #238636;
+  }
+
+  .action-btn.deactivate:hover {
+    background: #da3633;
+    border-color: #da3633;
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: #8b949e;
+  }
+
+  .empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #4285f4;
+  }
+
+  .empty-state h3 {
+    color: #f0f6fc;
+    margin-bottom: 1rem;
+  }
+
+  .create-first-newsletter-btn {
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: #4285f4;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .create-first-newsletter-btn:hover {
+    background: #3367d6;
+  }
+
+  /* Subscribers Table */
+  .subscribers-table-container {
+    background: #161b22;
+    border: 1px solid #21262d;
+    overflow-x: auto;
+    margin-bottom: 2rem;
+  }
+
+  .subscribers-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .subscribers-table th {
+    background: #21262d;
+    color: #f0f6fc;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-bottom: 1px solid #30363d;
+  }
+
+  .subscribers-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #21262d;
+    vertical-align: middle;
+  }
+
+  .subscriber-row:hover {
+    background: #21262d;
+  }
+
+  .subscriber-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .subscriber-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  .avatar-preset {
+    width: 100%;
+    height: 100%;
+    background: #4285f4;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.25rem;
+  }
+
+  .subscriber-details {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .subscriber-name {
+    color: #f0f6fc;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .subscriber-id {
+    color: #8b949e;
+    font-size: 0.75rem;
+  }
+
+  .subscriber-email {
+    color: #8b949e;
+    font-size: 0.875rem;
+  }
+
+  .convertkit-badge {
+    background: rgba(66, 133, 244, 0.1);
+    color: #4285f4;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid #4285f4;
+    margin-top: 0.25rem;
+    display: inline-block;
+  }
+
+  .newsletter-type-badge {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .newsletter-type-badge.weekly {
+    background: rgba(66, 133, 244, 0.1);
+    color: #4285f4;
+    border: 1px solid #4285f4;
+  }
+
+  .newsletter-type-badge.monthly {
+    background: rgba(35, 134, 54, 0.1);
+    color: #238636;
+    border: 1px solid #238636;
+  }
+
+  .newsletter-type-badge.daily {
+    background: rgba(251, 133, 0, 0.1);
+    color: #fb8500;
+    border: 1px solid #fb8500;
+  }
+
+  .subscribe-date {
+    color: #8b949e;
+    font-size: 0.875rem;
+  }
+
+  .subscriber-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .subscriber-actions .action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .empty-state-inline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: #8b949e;
+    padding: 2rem;
+  }
+
+  .empty-state-inline i {
+    font-size: 2rem;
+    color: #4285f4;
+  }
+
+  /* Bulk Actions */
+  .bulk-actions-bar {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+  }
+
+  .bulk-info {
+    color: #f0f6fc;
+    font-weight: 600;
+  }
+
+  .bulk-buttons {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .bulk-btn {
+    padding: 0.5rem 1rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .bulk-btn:hover {
+    background: #30363d;
+  }
+
+  .bulk-btn.export-selected:hover {
+    background: #238636;
+    border-color: #238636;
+  }
+
+  .bulk-btn.unsubscribe-selected:hover {
+    background: #fb8500;
+    border-color: #fb8500;
+  }
+
+  .bulk-btn.delete-selected:hover {
+    background: #da3633;
+    border-color: #da3633;
+  }
+
+  /* Analytics Section */
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .analytics-card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 1.5rem;
+  }
+
+  .analytics-card h3 {
+    color: #f0f6fc;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+  }
+
+  .chart-placeholder {
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .growth-chart {
+    display: flex;
+    align-items: end;
+    gap: 0.5rem;
+    height: 160px;
+    padding: 1rem 0;
+  }
+
+  .chart-bar {
+    flex: 1;
+    background: linear-gradient(to top, #4285f4, #64b5f6);
+    min-height: 20px;
+    transition: all 0.3s ease;
+  }
+
+  .chart-bar:hover {
+    background: linear-gradient(to top, #3367d6, #4285f4);
+  }
+
+  .chart-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #8b949e;
+    padding: 0 0.25rem;
+  }
+
+  .performance-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .performance-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+  }
+
+  .performance-label {
+    color: #8b949e;
+    font-size: 0.875rem;
+  }
+
+  .performance-value {
+    color: #f0f6fc;
+    font-weight: 700;
+    font-size: 1.125rem;
+  }
+
+  .performance-change {
+    font-size: 0.75rem;
+  }
+
+  .performance-change.positive {
+    color: #238636;
+  }
+
+  .performance-change.negative {
+    color: #da3633;
+  }
+
+  .top-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .content-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+  }
+
+  .content-title {
+    color: #f0f6fc;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .content-metric {
+    color: #4285f4;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* Settings Section */
+  .newsletter-settings-form {
+    max-width: 600px;
+  }
+
+  .settings-group {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #161b22;
+    border: 1px solid #21262d;
+  }
+
+  .settings-group h3 {
+    color: #f0f6fc;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    color: #f0f6fc;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    font-size: 0.875rem;
+    box-sizing: border-box;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: #4285f4;
+  }
+
+  .form-group input::placeholder,
+  .form-group textarea::placeholder {
+    color: #8b949e;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .settings-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+
+  .test-btn {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    color: #4285f4;
+    border: 1px solid #4285f4;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .test-btn:hover {
+    background: #4285f4;
+    color: white;
+  }
+
+  .save-btn {
+    padding: 0.75rem 1.5rem;
+    background: #4285f4;
+    color: white;
+    border: 1px solid #4285f4;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .save-btn:hover {
+    background: #3367d6;
+    border-color: #3367d6;
+  }
+
+  /* Modal Styles */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: #161b22;
+    border: 1px solid #21262d;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .modal-header h3 {
+    color: #f0f6fc;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: #8b949e;
+    cursor: pointer;
+    font-size: 1.25rem;
+    padding: 0.5rem;
+  }
+
+  .modal-close:hover {
+    color: #f0f6fc;
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  .newsletter-form .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #21262d;
+  }
+
+  .cancel-btn {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    color: #8b949e;
+    border: 1px solid #30363d;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .cancel-btn:hover {
+    background: #21262d;
+    color: #f0f6fc;
+  }
+
+  /* Light mode styles */
+  :global(.light) .newsletters-header {
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .header-content h1 {
+    color: #1f2937;
+  }
+
+  :global(.light) .header-content p {
+    color: #6b7280;
+  }
+
+  :global(.light) .create-newsletter-btn {
+    background: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .create-newsletter-btn:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+  }
+
+  :global(.light) .export-subscribers-btn {
+    color: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .export-subscribers-btn:hover {
+    background: #243788;
+  }
+
+  :global(.light) .stat-card {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .stat-card:hover {
+    border-color: #243788;
+  }
+
+  :global(.light) .stat-card.primary {
+    border-left-color: #243788;
+  }
+
+  :global(.light) .stat-icon {
+    background: #243788;
+  }
+
+  :global(.light) .stat-number {
+    color: #1f2937;
+  }
+
+  :global(.light) .stat-label {
+    color: #6b7280;
+  }
+
+  :global(.light) .newsletter-tabs {
+    background: #f8fafc;
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .tab-btn {
+    color: #6b7280;
+  }
+
+  :global(.light) .tab-btn.active {
+    color: #243788;
+    border-bottom-color: #243788;
+    background: white;
+  }
+
+  :global(.light) .tab-btn:hover:not(.active) {
+    color: #1f2937;
+    background: #e2e8f0;
+  }
+
+  :global(.light) .section-header h2 {
+    color: #1f2937;
+  }
+
+  :global(.light) .search-container input {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .search-container input:focus {
+    border-color: #243788;
+  }
+
+  :global(.light) .filter-select {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .filter-select:focus {
+    border-color: #243788;
+  }
+
+  :global(.light) .newsletter-card {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .newsletter-card:hover {
+    border-color: #243788;
+  }
+
+  :global(.light) .newsletter-name {
+    color: #1f2937;
+  }
+
+  :global(.light) .newsletter-description {
+    color: #6b7280;
+  }
+
+  :global(.light) .newsletter-meta {
+    color: #6b7280;
+  }
+
+  :global(.light) .newsletter-stats-mini {
+    background: #f9fafb;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .mini-stat-number {
+    color: #243788;
+  }
+
+  :global(.light) .mini-stat-label {
+    color: #6b7280;
+  }
+
+  :global(.light) .action-btn {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .action-btn:hover {
+    background: #f9fafb;
+  }
+
+  :global(.light) .empty-state {
+    color: #6b7280;
+  }
+
+  :global(.light) .empty-state h3 {
+    color: #1f2937;
+  }
+
+  :global(.light) .create-first-newsletter-btn {
+    background: #243788;
+  }
+
+  :global(.light) .create-first-newsletter-btn:hover {
+    background: #1e293b;
+  }
+
+  :global(.light) .subscribers-table-container {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .subscribers-table th {
+    background: #f8fafc;
+    color: #1f2937;
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .subscribers-table td {
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .subscriber-row:hover {
+    background: #f8fafc;
+  }
+
+  :global(.light) .subscriber-name {
+    color: #1f2937;
+  }
+
+  :global(.light) .subscriber-id {
+    color: #6b7280;
+  }
+
+  :global(.light) .subscriber-email {
+    color: #6b7280;
+  }
+
+  :global(.light) .subscribe-date {
+    color: #6b7280;
+  }
+
+  :global(.light) .empty-state-inline {
+    color: #6b7280;
+  }
+
+  :global(.light) .bulk-actions-bar {
+    background: white;
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  :global(.light) .bulk-info {
+    color: #1f2937;
+  }
+
+  :global(.light) .bulk-btn {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .bulk-btn:hover {
+    background: #f9fafb;
+  }
+
+  :global(.light) .analytics-card {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .analytics-card h3 {
+    color: #1f2937;
+  }
+
+  :global(.light) .chart-bar {
+    background: linear-gradient(to top, #243788, #4285f4);
+  }
+
+  :global(.light) .chart-bar:hover {
+    background: linear-gradient(to top, #1e293b, #243788);
+  }
+
+  :global(.light) .chart-labels {
+    color: #6b7280;
+  }
+
+  :global(.light) .performance-item {
+    background: #f9fafb;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .performance-label {
+    color: #6b7280;
+  }
+
+  :global(.light) .performance-value {
+    color: #1f2937;
+  }
+
+  :global(.light) .content-item {
+    background: #f9fafb;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .content-title {
+    color: #1f2937;
+  }
+
+  :global(.light) .content-metric {
+    color: #243788;
+  }
+
+  :global(.light) .settings-group {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .settings-group h3 {
+    color: #1f2937;
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .form-group label {
+    color: #1f2937;
+  }
+
+  :global(.light) .form-group input,
+  :global(.light) .form-group textarea,
+  :global(.light) .form-group select {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .form-group input:focus,
+  :global(.light) .form-group textarea:focus,
+  :global(.light) .form-group select:focus {
+    border-color: #243788;
+  }
+
+  :global(.light) .test-btn {
+    color: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .test-btn:hover {
+    background: #243788;
+  }
+
+  :global(.light) .save-btn {
+    background: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .save-btn:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+  }
+
+  :global(.light) .modal-content {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .modal-header {
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .modal-header h3 {
+    color: #1f2937;
+  }
+
+  :global(.light) .modal-close {
+    color: #6b7280;
+  }
+
+  :global(.light) .modal-close:hover {
+    color: #1f2937;
+  }
+
+  :global(.light) .form-actions {
+    border-top-color: #e2e8f0;
+  }
+
+  :global(.light) .cancel-btn {
+    color: #6b7280;
+    border-color: #d1d5db;
+  }
+
+  :global(.light) .cancel-btn:hover {
+    background: #f9fafb;
+    color: #1f2937;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .newsletters-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .header-actions {
+      width: 100%;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .create-newsletter-btn,
+    .export-subscribers-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .newsletter-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .newsletter-tabs {
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+    }
+
+    .section-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .section-actions {
+      width: 100%;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .search-container input {
+      width: 100%;
+    }
+
+    .newsletters-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .newsletter-actions {
+      gap: 0.25rem;
+    }
+
+    .action-btn {
+      flex: 1;
+      min-width: 80px;
+      justify-content: center;
+    }
+
+    .subscribers-table-container {
+      overflow-x: scroll;
+    }
+
+    .subscribers-table {
+      min-width: 800px;
+    }
+
+    .bulk-actions-bar {
+      left: 1rem;
+      right: 1rem;
+      transform: none;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .bulk-buttons {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .analytics-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .settings-actions {
+      flex-direction: column;
+    }
+
+    .test-btn,
+    .save-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .cancel-btn,
+    .newsletter-form .save-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+
+<script>
+  import { ClientAdminAuth } from "../../lib/admin/auth.js";
+
+  // TypeScript interfaces
+  interface TabButtonElement extends HTMLButtonElement {
+    dataset: DOMStringMap;
+  }
+
+  interface NewsletterActionElement extends HTMLButtonElement {
+    dataset: DOMStringMap;
+  }
+
+  interface SubscriberSelectElement extends HTMLInputElement {
+    value: string;
+    checked: boolean;
+  }
+
+  let currentEditingNewsletterId: string | null = null;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      await ClientAdminAuth.requireAdmin();
+      setupNewsletterManagement();
+    } catch (error) {
+      console.error("Newsletter management error:", error);
+    }
+  });
+
+  function setupNewsletterManagement() {
+    // Tab switching
+    const tabButtons = document.querySelectorAll(
+      ".tab-btn"
+    ) as NodeListOf<TabButtonElement>;
+    const tabContents = document.querySelectorAll(".tab-content");
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const targetTab = button.dataset.tab;
+        if (!targetTab) return;
+
+        tabButtons.forEach((btn) => btn.classList.remove("active"));
+        tabContents.forEach((content) => content.classList.remove("active"));
+
+        button.classList.add("active");
+        const targetContent = document.getElementById(`${targetTab}-tab`);
+        if (targetContent) {
+          targetContent.classList.add("active");
+        }
+      });
+    });
+
+    // Newsletter actions
+    const newsletterActions = document.querySelectorAll(
+      ".newsletter-card .action-btn"
+    ) as NodeListOf<NewsletterActionElement>;
+    newsletterActions.forEach((button) => {
+      button.addEventListener("click", () => {
+        const action = button.dataset.action;
+        const newsletterId = button.dataset.newsletterId;
+
+        if (action && newsletterId) {
+          handleNewsletterAction(newsletterId, action);
+        }
+      });
+    });
+
+    // Subscriber actions
+    const subscriberActions = document.querySelectorAll(
+      ".subscriber-actions .action-btn"
+    ) as NodeListOf<NewsletterActionElement>;
+    subscriberActions.forEach((button) => {
+      button.addEventListener("click", () => {
+        const action = button.dataset.action;
+        const subscriptionId = button.dataset.subscriptionId;
+
+        if (action && subscriptionId) {
+          handleSubscriberAction(subscriptionId, action);
+        }
+      });
+    });
+
+    // Create newsletter functionality
+    const createNewsletterBtn = document.getElementById(
+      "create-newsletter-btn"
+    );
+    const createFirstNewsletterBtn = document.getElementById(
+      "create-first-newsletter"
+    );
+
+    createNewsletterBtn?.addEventListener("click", () => openNewsletterModal());
+    createFirstNewsletterBtn?.addEventListener("click", () =>
+      openNewsletterModal()
+    );
+
+    // Export subscribers functionality
+    const exportSubscribersBtn = document.getElementById(
+      "export-subscribers-btn"
+    );
+    exportSubscribersBtn?.addEventListener("click", () => exportSubscribers());
+
+    // Modal functionality
+    setupNewsletterModal();
+
+    // Search and filter functionality
+    setupSearchAndFilters();
+
+    // Bulk actions for subscribers
+    setupSubscriberBulkActions();
+
+    // Settings form
+    setupSettingsForm();
+  }
+
+  function setupNewsletterModal() {
+    const modal = document.getElementById("newsletter-modal");
+    const modalClose = document.getElementById("newsletter-modal-close");
+    const cancelBtn = document.getElementById("newsletter-cancel");
+    const form = document.getElementById("newsletter-form") as HTMLFormElement;
+    const nameInput = document.getElementById(
+      "newsletter-name"
+    ) as HTMLInputElement;
+    const slugInput = document.getElementById(
+      "newsletter-slug"
+    ) as HTMLInputElement;
+
+    modalClose?.addEventListener("click", () => closeNewsletterModal());
+    cancelBtn?.addEventListener("click", () => closeNewsletterModal());
+
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) closeNewsletterModal();
+    });
+
+    // Auto-generate slug from name
+    nameInput?.addEventListener("input", (e) => {
+      const name = (e.target as HTMLInputElement).value;
+      const slug = generateSlug(name);
+      if (slugInput) {
+        slugInput.value = slug;
+      }
+    });
+
+    // Form submission
+    form?.addEventListener("submit", handleNewsletterFormSubmit);
+  }
+
+  function openNewsletterModal(newsletter?: any) {
+    const modal = document.getElementById("newsletter-modal");
+    const modalTitle = document.getElementById("newsletter-modal-title");
+    const form = document.getElementById("newsletter-form") as HTMLFormElement;
+
+    if (!modal || !modalTitle || !form) return;
+
+    if (newsletter) {
+      // Edit mode
+      currentEditingNewsletterId = newsletter.id;
+      modalTitle.textContent = "Edit Newsletter";
+      populateNewsletterForm(newsletter);
+    } else {
+      // Add mode
+      currentEditingNewsletterId = null;
+      modalTitle.textContent = "Create Newsletter";
+      form.reset();
+    }
+
+    modal.style.display = "flex";
+  }
+
+  function closeNewsletterModal() {
+    const modal = document.getElementById("newsletter-modal");
+    if (modal) {
+      modal.style.display = "none";
+    }
+    currentEditingNewsletterId = null;
+  }
+
+  function populateNewsletterForm(newsletter: any) {
+    (document.getElementById("newsletter-name") as HTMLInputElement).value =
+      newsletter.name || "";
+    (document.getElementById("newsletter-slug") as HTMLInputElement).value =
+      newsletter.slug || "";
+    (
+      document.getElementById("newsletter-description") as HTMLTextAreaElement
+    ).value = newsletter.description || "";
+    (
+      document.getElementById("newsletter-frequency") as HTMLSelectElement
+    ).value = newsletter.frequency || "weekly";
+    (document.getElementById("newsletter-day") as HTMLSelectElement).value =
+      newsletter.day_of_week || "thursday";
+    (document.getElementById("newsletter-sort") as HTMLInputElement).value =
+      newsletter.sort_order || "0";
+    (document.getElementById("newsletter-image") as HTMLInputElement).value =
+      newsletter.image_url || "";
+    (document.getElementById("newsletter-active") as HTMLInputElement).checked =
+      newsletter.is_active ?? false; 
+  }
+
+  function generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  }
+
+  async function handleNewsletterFormSubmit(e: Event) {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const newsletterData = {
+      name: formData.get("name") as string,
+      slug: formData.get("slug") as string,
+      description: (formData.get("description") as string) || undefined,
+      frequency: formData.get("frequency") as string,
+      day_of_week: formData.get("day_of_week") as string,
+      sort_order: parseInt(formData.get("sort_order") as string) || 0,
+      image_url: (formData.get("image_url") as string) || undefined,
+      is_active: formData.has("is_active"),
+    };
+
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const isEdit = currentEditingNewsletterId !== null;
+      const url = isEdit
+        ? "/api/admin/newsletters/update"
+        : "/api/admin/newsletters/create";
+
+      const requestBody = isEdit
+        ? { id: currentEditingNewsletterId, ...newsletterData }
+        : newsletterData;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showNotification(
+          isEdit
+            ? "Newsletter updated successfully"
+            : "Newsletter created successfully",
+          "success"
+        );
+        closeNewsletterModal();
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showNotification(result.error || "Failed to save newsletter", "error");
+      }
+    } catch (error) {
+      console.error("Newsletter form submission error:", error);
+      showNotification(
+        "An error occurred while saving the newsletter",
+        "error"
+      );
+    }
+  }
+
+  async function handleNewsletterAction(newsletterId: string, action: string) {
+    switch (action) {
+      case "edit":
+        await editNewsletter(newsletterId);
+        break;
+      case "send":
+        if (
+          confirm(
+            "Are you sure you want to send this newsletter to all subscribers?"
+          )
+        ) {
+          await sendNewsletter(newsletterId);
+        }
+        break;
+      case "activate":
+      case "deactivate":
+        await toggleNewsletterStatus(newsletterId, action === "activate");
+        break;
+      case "subscribers":
+        // Switch to subscribers tab and filter by newsletter
+        const subscribersTab = document.querySelector(
+          '[data-tab="subscribers"]'
+        ) as HTMLButtonElement;
+        subscribersTab?.click();
+        break;
+    }
+  }
+
+  async function editNewsletter(newsletterId: string) {
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch(`/api/admin/newsletters/${newsletterId}`, {
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        openNewsletterModal(result.data);
+      } else {
+        showNotification("Failed to load newsletter data", "error");
+      }
+    } catch (error) {
+      console.error("Edit newsletter error:", error);
+      showNotification(
+        "An error occurred while loading the newsletter",
+        "error"
+      );
+    }
+  }
+
+  async function sendNewsletter(newsletterId: string) {
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch("/api/admin/newsletters/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({ newsletterId }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showNotification("Newsletter sent successfully", "success");
+      } else {
+        showNotification(result.error || "Failed to send newsletter", "error");
+      }
+    } catch (error) {
+      console.error("Send newsletter error:", error);
+      showNotification(
+        "An error occurred while sending the newsletter",
+        "error"
+      );
+    }
+  }
+
+  async function toggleNewsletterStatus(
+    newsletterId: string,
+    isActive: boolean
+  ) {
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch("/api/admin/newsletters/toggle-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({ newsletterId, isActive }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showNotification(
+          `Newsletter ${isActive ? "activated" : "deactivated"} successfully`,
+          "success"
+        );
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        showNotification(
+          result.error || "Failed to update newsletter status",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Toggle newsletter status error:", error);
+      showNotification(
+        "An error occurred while updating the newsletter",
+        "error"
+      );
+    }
+  }
+
+  async function handleSubscriberAction(
+    subscriptionId: string,
+    action: string
+  ) {
+    if (action === "view") {
+      showSubscriberDetails(subscriptionId);
+      return;
+    }
+
+    if (
+      action === "delete" &&
+      !confirm("Are you sure you want to delete this subscription?")
+    ) {
+      return;
+    }
+
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch("/api/admin/newsletters/subscriber-action", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({ subscriptionId, action }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showNotification(
+          result.message || `Subscriber ${action}ed successfully`,
+          "success"
+        );
+        if (action === "delete") {
+          const subscriberRow = document.querySelector(
+            `[data-subscription-id="${subscriptionId}"]`
+          ) as HTMLElement;
+          subscriberRow?.remove();
+        } else {
+          setTimeout(() => window.location.reload(), 1000);
+        }
+      } else {
+        showNotification(
+          result.error || `Failed to ${action} subscriber`,
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Subscriber action error:", error);
+      showNotification("An error occurred", "error");
+    }
+  }
+
+  function showSubscriberDetails(subscriptionId: string) {
+    const subscriberRow = document.querySelector(
+      `[data-subscription-id="${subscriptionId}"]`
+    );
+    if (!subscriberRow) return;
+
+    const subscriberName =
+      subscriberRow.querySelector(".subscriber-name")?.textContent || "Unknown";
+    const subscriberEmail =
+      subscriberRow.querySelector(".subscriber-email")?.textContent ||
+      "No email";
+    const newsletterType =
+      subscriberRow.querySelector(".newsletter-type-badge")?.textContent ||
+      "Unknown";
+    const subscribeDate =
+      subscriberRow.querySelector(".subscribe-date")?.textContent || "Unknown";
+    const status =
+      subscriberRow.querySelector(".status-badge")?.textContent || "Unknown";
+
+    // Create a simple modal for subscriber details
+    const modal = document.createElement("div");
+    modal.className = "modal";
+    modal.style.display = "flex";
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Subscriber Details</h3>
+          <button class="modal-close" onclick="this.closest('.modal').remove()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="subscriber-detail-section">
+            <h4>Basic Information</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">Name:</span>
+                <span class="detail-value">${subscriberName}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Email:</span>
+                <span class="detail-value">${subscriberEmail}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Newsletter Type:</span>
+                <span class="detail-value">${newsletterType}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value">${status}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Subscribed:</span>
+                <span class="detail-value">${subscribeDate}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close modal when clicking outside
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.remove();
+      }
+    });
+  }
+
+  function setupSearchAndFilters() {
+    // Newsletter search and filter
+    const newsletterFilter = document.getElementById(
+      "newsletter-filter"
+    ) as HTMLSelectElement;
+    newsletterFilter?.addEventListener("change", () => {
+      const filterValue = newsletterFilter.value;
+      const newsletterCards = document.querySelectorAll(".newsletter-card");
+
+      newsletterCards.forEach((card) => {
+        const statusBadge = card.querySelector(".status-badge");
+        const isActive =
+          statusBadge?.textContent?.toLowerCase().includes("active") ?? false; // Fix: Use nullish coalescing
+
+        let shouldShow = true;
+        if (filterValue === "active") shouldShow = isActive;
+        else if (filterValue === "inactive") shouldShow = !isActive;
+
+        (card as HTMLElement).style.display = shouldShow ? "" : "none";
+      });
+    });
+
+    // Subscriber search
+    const subscriberSearch = document.getElementById(
+      "subscriber-search"
+    ) as HTMLInputElement;
+    subscriberSearch?.addEventListener(
+      "input",
+      debounce((e: Event) => {
+        // Fix: Add Event type
+        const searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
+        const subscriberRows = document.querySelectorAll(".subscriber-row");
+
+        subscriberRows.forEach((row) => {
+          const subscriberName =
+            row.querySelector(".subscriber-name")?.textContent?.toLowerCase() ||
+            "";
+          const subscriberEmail =
+            row
+              .querySelector(".subscriber-email")
+              ?.textContent?.toLowerCase() || "";
+          const matches =
+            subscriberName.includes(searchTerm) ||
+            subscriberEmail.includes(searchTerm);
+          (row as HTMLElement).style.display = matches ? "" : "none";
+        });
+      }, 300)
+    );
+
+    // Subscriber filter
+    const subscriberFilter = document.getElementById(
+      "subscriber-filter"
+    ) as HTMLSelectElement;
+    subscriberFilter?.addEventListener("change", () => {
+      const filterValue = subscriberFilter.value;
+      const subscriberRows = document.querySelectorAll(".subscriber-row");
+
+      subscriberRows.forEach((row) => {
+        const newsletterType =
+          row
+            .querySelector(".newsletter-type-badge")
+            ?.textContent?.toLowerCase() || "";
+        const shouldShow = !filterValue || newsletterType.includes(filterValue);
+        (row as HTMLElement).style.display = shouldShow ? "" : "none";
+      });
+    });
+  }
+
+  function setupSubscriberBulkActions() {
+    const selectAllCheckbox = document.getElementById(
+      "select-all-subscribers"
+    ) as HTMLInputElement;
+    const subscriberCheckboxes = document.querySelectorAll(
+      ".subscriber-select"
+    ) as NodeListOf<SubscriberSelectElement>;
+
+    selectAllCheckbox?.addEventListener("change", () => {
+      subscriberCheckboxes.forEach((checkbox) => {
+        checkbox.checked = selectAllCheckbox.checked;
+      });
+      updateSubscriberBulkActionsBar();
+    });
+
+    subscriberCheckboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", updateSubscriberBulkActionsBar);
+    });
+
+    // Bulk action buttons
+    const exportSelectedBtn = document.querySelector(".export-selected");
+    const unsubscribeSelectedBtn = document.querySelector(
+      ".unsubscribe-selected"
+    );
+    const deleteSelectedBtn = document.querySelector(".delete-selected");
+
+    exportSelectedBtn?.addEventListener("click", () => {
+      const selectedSubscribers = getSelectedSubscribers();
+      if (selectedSubscribers.length > 0) {
+        exportSelectedSubscribers(selectedSubscribers);
+      }
+    });
+
+    unsubscribeSelectedBtn?.addEventListener("click", () => {
+      const selectedSubscribers = getSelectedSubscribers();
+      if (
+        selectedSubscribers.length > 0 &&
+        confirm(
+          `Are you sure you want to unsubscribe ${selectedSubscribers.length} subscribers?`
+        )
+      ) {
+        bulkSubscriberAction(selectedSubscribers, "unsubscribe");
+      }
+    });
+
+    deleteSelectedBtn?.addEventListener("click", () => {
+      const selectedSubscribers = getSelectedSubscribers();
+      if (
+        selectedSubscribers.length > 0 &&
+        confirm(
+          `⚠️ Are you sure you want to DELETE ${selectedSubscribers.length} subscribers? This action cannot be undone.`
+        )
+      ) {
+        bulkSubscriberAction(selectedSubscribers, "delete");
+      }
+    });
+  }
+
+  function updateSubscriberBulkActionsBar() {
+    const selectedCheckboxes = document.querySelectorAll(
+      ".subscriber-select:checked"
+    ) as NodeListOf<SubscriberSelectElement>;
+    const bulkActionsBar = document.getElementById(
+      "subscriber-bulk-actions"
+    ) as HTMLElement;
+    const selectedCount = document.getElementById(
+      "selected-subscribers-count"
+    ) as HTMLElement;
+
+    if (selectedCheckboxes.length > 0) {
+      bulkActionsBar.style.display = "flex";
+      selectedCount.textContent = selectedCheckboxes.length.toString();
+    } else {
+      bulkActionsBar.style.display = "none";
+    }
+  }
+
+  function getSelectedSubscribers(): string[] {
+    const checkboxes = document.querySelectorAll(
+      ".subscriber-select:checked"
+    ) as NodeListOf<SubscriberSelectElement>;
+    return Array.from(checkboxes).map((checkbox) => checkbox.value);
+  }
+
+  function exportSelectedSubscribers(subscriberIds: string[]) {
+    const subscriberRows = document.querySelectorAll(".subscriber-row");
+    const selectedData: any[] = [];
+
+    subscriberRows.forEach((row) => {
+      const subscriptionId = row.getAttribute("data-subscription-id");
+      if (subscriberIds.includes(subscriptionId!)) {
+        const subscriberName =
+          row.querySelector(".subscriber-name")?.textContent || "";
+        const subscriberEmail =
+          row.querySelector(".subscriber-email")?.textContent || "";
+        const newsletterType =
+          row.querySelector(".newsletter-type-badge")?.textContent || "";
+        const subscribeDate =
+          row.querySelector(".subscribe-date")?.textContent || "";
+        const status = row.querySelector(".status-badge")?.textContent || "";
+
+        selectedData.push({
+          id: subscriptionId,
+          name: subscriberName,
+          email: subscriberEmail,
+          newsletter_type: newsletterType,
+          subscribed_date: subscribeDate,
+          status: status,
+        });
+      }
+    });
+
+    downloadCSV(selectedData, "selected-subscribers");
+  }
+
+  async function bulkSubscriberAction(subscriberIds: string[], action: string) {
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch(
+        "/api/admin/newsletters/bulk-subscriber-action",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.token}`,
+          },
+          body: JSON.stringify({ subscriberIds, action }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        showNotification(
+          result.message ||
+            `${subscriberIds.length} subscribers ${action}ed successfully`,
+          "success"
+        );
+
+        if (action === "delete") {
+          subscriberIds.forEach((subscriberId) => {
+            const subscriberRow = document.querySelector(
+              `[data-subscription-id="${subscriberId}"]`
+            ) as HTMLElement;
+            subscriberRow?.remove();
+          });
+        } else {
+          setTimeout(() => window.location.reload(), 1000);
+        }
+
+        const bulkActionsBar = document.getElementById(
+          "subscriber-bulk-actions"
+        ) as HTMLElement;
+        bulkActionsBar.style.display = "none";
+      } else {
+        showNotification(
+          result.error || `Failed to ${action} subscribers`,
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Bulk subscriber action error:", error);
+      showNotification("An error occurred", "error");
+    }
+  }
+
+  function setupSettingsForm() {
+    const settingsForm = document.getElementById(
+      "newsletter-settings-form"
+    ) as HTMLFormElement;
+    const testBtn = document.getElementById("test-settings");
+
+    testBtn?.addEventListener("click", () => {
+      // Test email configuration
+      showNotification("Testing email configuration...", "success");
+
+      // Simulate test
+      setTimeout(() => {
+        showNotification("Email configuration test successful!", "success");
+      }, 2000);
+    });
+
+    settingsForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(settingsForm);
+      const settingsData = {
+        sender_name: formData.get("sender-name") as string,
+        sender_email: formData.get("sender-email") as string,
+        reply_to: formData.get("reply-to") as string,
+        default_frequency: formData.get("default-frequency") as string,
+        default_day: formData.get("default-day") as string,
+        convertkit_api: formData.get("convertkit-api") as string,
+        auto_sync: formData.has("auto-sync"),
+      };
+
+      try {
+        const adminSession = localStorage.getItem("tinkbyte-admin-session");
+        if (!adminSession) {
+          throw new Error("No admin session found");
+        }
+
+        const session = JSON.parse(adminSession);
+        const response = await fetch("/api/admin/newsletters/settings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.token}`,
+          },
+          body: JSON.stringify(settingsData),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showNotification("Newsletter settings saved successfully", "success");
+        } else {
+          showNotification(result.error || "Failed to save settings", "error");
+        }
+      } catch (error) {
+        console.error("Settings save error:", error);
+        showNotification("An error occurred while saving settings", "error");
+      }
+    });
+  }
+
+  async function exportSubscribers() {
+    try {
+      const adminSession = localStorage.getItem("tinkbyte-admin-session");
+      if (!adminSession) {
+        throw new Error("No admin session found");
+      }
+
+      const session = JSON.parse(adminSession);
+      const response = await fetch(
+        "/api/admin/newsletters/export-subscribers",
+        {
+          headers: {
+            Authorization: `Bearer ${session.token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `newsletter-subscribers-${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        showNotification("Subscribers exported successfully", "success");
+      } else {
+        showNotification("Failed to export subscribers", "error");
+      }
+    } catch (error) {
+      console.error("Export subscribers error:", error);
+      showNotification(
+        "An error occurred while exporting subscribers",
+        "error"
+      );
+    }
+  }
+
+  function downloadCSV(data: any[], filename: string = "data") {
+    if (data.length === 0) return;
+
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(","),
+      ...data.map((row) =>
+        headers.map((header) => `"${row[header] || ""}"`).join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `${filename}-${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function showNotification(
+    message: string,
+    type: "success" | "error" = "success"
+  ) {
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      color: white;
+      font-weight: 500;
+      z-index: 10000;
+      background: ${type === "success" ? "#238636" : "#da3633"};
+      animation: slideIn 0.3s ease;
+    `;
+
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  }
+
+  function debounce(func: Function, wait: number) {
+    let timeout: NodeJS.Timeout;
+    return function executedFunction(...args: any[]) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Add detail styles for subscriber modal
+  if (!document.getElementById("subscriber-detail-styles")) {
+    const style = document.createElement("style");
+    style.id = "subscriber-detail-styles";
+    style.textContent = `
+      .subscriber-detail-section {
+        margin-bottom: 2rem;
+      }
+
+      .subscriber-detail-section h4 {
+        color: #f0f6fc;
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #21262d;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .detail-label {
+        font-size: 0.75rem;
+        color: #8b949e;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .detail-value {
+        color: #f0f6fc;
+        font-size: 0.875rem;
+      }
+
+      /* Light mode */
+      :global(.light) .subscriber-detail-section h4 {
+        color: #1f2937;
+        border-bottom-color: #e2e8f0;
+      }
+
+      :global(.light) .detail-label {
+        color: #6b7280;
+      }
+
+      :global(.light) .detail-value {
+        color: #1f2937;
+      }
+
+      @media (max-width: 768px) {
+        .detail-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+</script>

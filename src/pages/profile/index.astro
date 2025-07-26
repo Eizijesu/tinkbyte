@@ -1,5 +1,5 @@
 ---
-// src/pages/profile/index.astro - UPDATED WITH CONSISTENT WIDTH
+// src/pages/profile/index.astro - OPTIMIZED SINGLETON VERSION
 import ProfileLayout from "../../layouts/ProfileLayout.astro";
 ---
 
@@ -8,7 +8,6 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   description="Manage your TinkByte profile and preferences"
 >
   <div class="profile-page">
-    <!-- Single Column Layout -->
     <div class="profile-container">
       <!-- Profile Header Card -->
       <div class="profile-header-card">
@@ -50,9 +49,9 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         </div>
       </div>
 
-      <!-- Two Column Layout for Content -->
+      <!-- Content Grid -->
       <div class="content-grid">
-        <!-- Left Column: Profile Statistics -->
+        <!-- Profile Statistics -->
         <div class="stats-card">
           <div class="card-header">
             <h2 class="card-title">Profile Statistics</h2>
@@ -66,10 +65,8 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
               <span class="stat-number" id="total-comments">0</span>
               <span class="stat-label">Comments</span>
             </div>
-            <!-- REMOVED: Reputation section -->
           </div>
 
-          <!-- Quick Settings -->
           <div class="quick-settings">
             <h3 class="settings-title">Quick Settings</h3>
             <div class="settings-list">
@@ -89,7 +86,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
           </div>
         </div>
 
-        <!-- Right Column: Activity Timeline -->
+        <!-- Activity Timeline -->
         <div class="activity-card">
           <div class="card-header">
             <h2 class="card-title">
@@ -101,44 +98,41 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
             <div class="loading-state">Loading timeline...</div>
           </div>
         </div>
+
+        <!-- Notifications - Full Width -->
+        <div class="notifications-card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <i class="fas fa-bell"></i>
+              Recent Notifications (<span id="notification-count-profile"
+                >0</span
+              >)
+            </h2>
+            <button
+              class="clear-all-btn"
+              id="clear-all-notifications"
+              style="display: none;"
+            >
+              Clear All
+            </button>
+          </div>
+          <div class="notification-timeline" id="notification-timeline">
+            <div class="loading-state">Loading notifications...</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </ProfileLayout>
 
 <style is:global>
-  :root {
-    --tinkbyte-primary: #243788;
-    --tinkbyte-accent: #b4bce1;
-    --tinkbyte-spacing: 1rem;
-    --tinkbyte-border: 2px solid #e2e8f0;
-    --tinkbyte-radius: 0;
-    --tinkbyte-transition: all 0.2s ease;
-  }
-
-  /* Consolidate common card styles */
-  .tinkbyte-card {
-    background: white;
-    border: var(--tinkbyte-border);
-    border-radius: var(--tinkbyte-radius);
-    transition: var(--tinkbyte-transition);
-  }
-
-  .tinkbyte-card:hover {
-    border-color: var(--tinkbyte-primary);
-    transform: translateY(-2px);
-  }
-
-  html.dark .tinkbyte-card {
-    background: #1e293b;
-    border-color: #334155;
-  }
-
+  /* FIXED: Profile Container Layout */
   .profile-page {
     font-family: "Space Grotesk", sans-serif;
     background: white;
     min-height: 100vh;
     color: #1e293b;
+    width: 100%;
   }
 
   html.dark .profile-page {
@@ -146,22 +140,27 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     color: #f8fafc;
   }
 
+  /* CRITICAL FIX: Proper container constraints */
   .profile-container {
-    /* FIXED: Consistent width with other pages */
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1rem;
+    width: 100%; /* Ensure full width within max-width */
+    box-sizing: border-box; /* Include padding in width calculation */
   }
 
-  /* Profile Header Card */
+  /* FIXED: Profile Header Card - Proper width constraints */
   .profile-header-card {
     background: white;
     border: 2px solid #e2e8f0;
-    padding: 2rem;
+    padding: 1.5rem;
     border-radius: 0;
+    width: 100%; /* Stay within container */
+    box-sizing: border-box; /* Include padding and border in width */
+    overflow: hidden; /* Prevent content overflow */
   }
 
   html.dark .profile-header-card {
@@ -169,21 +168,25 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     border-color: #334155;
   }
 
+  /* FIXED: Profile Info Layout - Prevent overflow */
   .profile-info {
     display: flex;
-    gap: 2rem;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+    width: 100%;
+    max-width: 100%; /* Prevent expansion beyond container */
   }
 
   .avatar-section {
     position: relative;
-    flex-shrink: 0;
+    align-self: center;
+    flex-shrink: 0; /* Prevent shrinking */
   }
 
-  /* Square Avatar */
   .profile-avatar {
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
     border: 3px solid #e2e8f0;
     object-fit: cover;
     display: block;
@@ -194,13 +197,12 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     border-color: #334155;
   }
 
-  /* Edit Icon Only */
   .avatar-edit-btn {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 32px;
-    height: 32px;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
     background: #243788;
     color: white;
     border: 2px solid white;
@@ -208,7 +210,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     transition: all 0.2s ease;
     border-radius: 0;
   }
@@ -229,16 +231,18 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
   .profile-details {
     flex: 1;
+    min-width: 0; /* Allow text truncation if needed */
   }
 
   .profile-username {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 800;
     color: #1e293b;
     margin: 0 0 0.5rem 0;
     text-transform: uppercase;
     letter-spacing: -0.025em;
     line-height: 1.2;
+    word-break: break-word; /* Handle long usernames */
   }
 
   html.dark .profile-username {
@@ -280,9 +284,10 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     color: #94a3b8;
   }
 
+  /* FIXED: Profile Stats - Proper width constraints */
   .profile-stats {
-    flex-shrink: 0;
-    min-width: 300px;
+    width: 100%;
+    max-width: 100%; /* Prevent overflow */
   }
 
   .following-stats {
@@ -290,6 +295,8 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     padding: 1.5rem;
     border: 2px solid #e2e8f0;
     border-radius: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   html.dark .following-stats {
@@ -305,29 +312,36 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     margin-bottom: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
+    text-align: center;
   }
 
   html.dark .following-label {
     color: #94a3b8;
   }
 
+  /* FIXED: Stats Row - Prevent overflow */
   .stats-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
+    width: 100%;
   }
 
   .stat-item {
     color: #1e293b;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.025em;
-    padding: 0.5rem;
+    padding: 0.75rem 0.5rem;
     background: white;
     border: 1px solid #e2e8f0;
     text-align: center;
     border-radius: 0;
+    min-width: 0; /* Allow shrinking */
+    overflow: hidden; /* Prevent text overflow */
+    text-overflow: ellipsis; /* Add ellipsis for long text */
+    white-space: nowrap; /* Keep text on one line */
   }
 
   html.dark .stat-item {
@@ -336,492 +350,592 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     border-color: #334155;
   }
 
-  /* Content Grid */
-  .content-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-  }
-
-  .stats-card,
-  .activity-card {
-    background: white;
-    border: 2px solid #e2e8f0;
-    border-radius: 0;
-  }
-
-  html.dark .stats-card,
-  html.dark .activity-card {
-    background: #1e293b;
-    border-color: #334155;
-  }
-
-  .card-header {
-    background: #f8fafc;
-    padding: 1rem 1.5rem;
-    border-bottom: 2px solid #e2e8f0;
-  }
-
-  html.dark .card-header {
-    background: #0f172a;
-    border-bottom-color: #334155;
-  }
-
-  .card-title {
-    color: #1e293b;
-    font-size: 1rem;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-  }
-
-  html.dark .card-title {
-    color: #f8fafc;
-  }
-
-  /* Stats Grid - UPDATED: Only 2 columns now */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    padding: 1.5rem;
-  }
-
-  .stat-box {
-    background: #f8fafc;
-    padding: 1.5rem;
-    text-align: center;
-    border: 2px solid #e2e8f0;
-    transition: all 0.2s ease;
-    border-radius: 0;
-  }
-
-  .stat-box:hover {
-    border-color: #243788;
-    transform: translateY(-2px);
-  }
-
-  html.dark .stat-box {
-    background: #0f172a;
-    border-color: #334155;
-  }
-
-  html.dark .stat-box:hover {
-    border-color: #b4bce1;
-  }
-
-  .stat-number {
-    display: block;
-    font-size: 2rem;
-    font-weight: 800;
-    color: #243788;
-    margin-bottom: 0.5rem;
-    line-height: 1;
-  }
-
-  html.dark .stat-number {
-    color: #b4bce1;
-  }
-
-  .stat-label {
-    color: #64748b;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    font-weight: 600;
-  }
-
-  html.dark .stat-label {
-    color: #94a3b8;
-  }
-
-  /* Quick Settings */
-  .quick-settings {
-    padding: 1.5rem;
-    border-top: 2px solid #e2e8f0;
-  }
-
-  html.dark .quick-settings {
-    border-top-color: #334155;
-  }
-
-  .settings-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0 0 1rem 0;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-  }
-
-  html.dark .settings-title {
-    color: #f8fafc;
-  }
-
-  .settings-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .setting-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    background: #f8fafc;
-    border: 2px solid transparent;
-    color: #1e293b;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    border-radius: 0;
-  }
-
-  .setting-item:hover {
-    background: white;
-    border-color: #243788;
-    color: #243788;
-    transform: translateX(4px);
-  }
-
-  html.dark .setting-item {
-    background: #0f172a;
-    border-color: #334155;
-    color: #f8fafc;
-  }
-
-  html.dark .setting-item:hover {
-    background: #1e293b;
-    border-color: #b4bce1;
-    color: #b4bce1;
-  }
-
-  /* Activity Timeline */
-  .activity-timeline {
-    padding: 1.5rem;
-    max-height: 600px;
-    overflow-y: auto;
-  }
-
-  .timeline-date {
-    color: #64748b;
-    font-size: 0.875rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #e2e8f0;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-  }
-
-  html.dark .timeline-date {
-    color: #94a3b8;
-    border-bottom-color: #334155;
-  }
-
-  .timeline-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #e2e8f0;
-  }
-
-  .timeline-item:last-child {
-    border-bottom: none;
-  }
-
-  html.dark .timeline-item {
-    border-bottom-color: #334155;
-  }
-
-  .timeline-marker {
-    width: 8px;
-    height: 8px;
-    background: #243788;
-    flex-shrink: 0;
-    margin-top: 0.5rem;
-    border-radius: 0;
-  }
-
-  html.dark .timeline-marker {
-    background: #b4bce1;
-  }
-
-  .timeline-content {
-    flex: 1;
-  }
-
-  .timeline-action {
-    color: #1e293b;
-    font-size: 0.875rem;
-    display: block;
-    margin-bottom: 0.25rem;
-    font-weight: 600;
-    line-height: 1.3;
-  }
-
-  html.dark .timeline-action {
-    color: #f8fafc;
-  }
-
-  .timeline-meta {
-    color: #64748b;
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-
-  html.dark .timeline-meta {
-    color: #94a3b8;
-  }
-
-  .loading-state {
-    color: #64748b;
-    text-align: center;
-    padding: 2rem;
-    font-style: italic;
-    font-size: 0.875rem;
-  }
-
-  html.dark .loading-state {
-    color: #94a3b8;
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
+  /* TABLET: 768px and up - FIXED HORIZONTAL LAYOUT */
+  @media (min-width: 768px) {
     .profile-container {
-      padding: 1rem;
-      gap: 1rem;
+      padding: 1.5rem;
+      gap: 1.5rem;
     }
 
+    .profile-header-card {
+      padding: 2rem;
+    }
+
+    /* CRITICAL FIX: Horizontal layout with proper constraints */
     .profile-info {
-      flex-direction: column;
-      text-align: center;
-      gap: 1rem;
+      flex-direction: row;
+      text-align: left;
+      gap: 2rem;
+      align-items: flex-start;
+      max-width: 100%; /* Stay within container */
     }
 
-    .profile-stats {
-      min-width: auto;
-    }
-
-    .stats-row {
-      grid-template-columns: 1fr;
-    }
-
-    .content-grid {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-
-    .stats-grid {
-      grid-template-columns: 1fr;
+    .avatar-section {
+      align-self: flex-start;
+      flex-shrink: 0;
     }
 
     .profile-avatar {
-      width: 100px;
-      height: 100px;
+      width: 120px;
+      height: 120px;
+    }
+
+    .avatar-edit-btn {
+      top: 8px;
+      right: 8px;
+      width: 32px;
+      height: 32px;
+      font-size: 0.875rem;
+    }
+
+    .profile-username {
+      font-size: 2rem;
+    }
+
+    .profile-details {
+      flex: 1;
+      min-width: 0; /* Allow shrinking */
+    }
+
+    /* FIXED: Stats section width constraints */
+    .profile-stats {
+      min-width: 280px; /* Reduced from 300px */
+      max-width: 320px; /* Add max-width constraint */
+      flex-shrink: 0;
+    }
+
+    .following-label {
+      text-align: left;
+    }
+
+    .stats-row {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .stat-item {
+      font-size: 0.875rem;
+      padding: 0.5rem;
+      white-space: normal; /* Allow wrapping on larger screens */
+    }
+  }
+
+  /* DESKTOP: 1024px and up - Enhanced constraints */
+  @media (min-width: 1024px) {
+    .profile-container {
+      padding: 2rem;
+      gap: 2rem;
+    }
+
+    .profile-stats {
+      min-width: 300px;
+      max-width: 350px; /* Ensure it doesn't get too wide */
+    }
+  }
+
+  /* LARGE DESKTOP: 1200px and up - Final constraints */
+  @media (min-width: 1200px) {
+    .profile-info {
+      gap: 3rem; /* More space on very large screens */
+    }
+
+    .profile-stats {
+      max-width: 380px; /* Allow slightly more width on very large screens */
+    }
+  }
+
+  .content-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stats-card,
+  .activity-card,
+  .notifications-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  html.dark .stats-card,
+  html.dark .activity-card,
+  html.dark .notifications-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  @media (min-width: 768px) {
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .notifications-card {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .content-grid {
+      gap: 2rem;
     }
   }
 </style>
 
 <script>
-  import { authStore } from "../../lib/auth-store.js";
-  import { getCachedUserStats, dataCache } from "../../lib/data-cache.js";
-  import { ProfileUtils } from "../../lib/profile-utils.js";
-  import { supabase } from "../../lib/supabase.js";
+  import { authManager } from "../../lib/auth.js";
+  import { TinkByteAPI } from "../../lib/supabase.js";
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    await loadProfileData();
-    setupEventListeners();
-  });
+  class ProfilePageManager {
+    private authManager = authManager;
+    private initialized = false;
+    private unsubscribeAuth: (() => void) | null = null;
+    private dataCache = new Map<
+      string,
+      { data: any; timestamp: number; ttl: number }
+    >();
 
-  async function loadProfileData() {
-    try {
-      // Get instant data from cache
-      if (authStore.hasInstantData()) {
-        console.log("⚡ Profile: Using instant cached data");
+    constructor() {
+      this.init();
+    }
 
-        const user = authStore.getUser();
-        const profile = authStore.getProfile();
+    async init() {
+      if (this.initialized) return;
 
-        // Update UI immediately
-        updateProfileUI(user, profile, null);
+      try {
+        console.log("🚀 Profile Page: Starting initialization...");
+
+        // Initialize auth manager
+        await this.authManager.initialize();
+
+        // Check authentication
+        const user = this.authManager.getUser();
+        const profile = this.authManager.getProfile();
+
+        if (!user) {
+          console.log("❌ Not authenticated, redirecting to signin");
+          window.location.href = "/auth/signin";
+          return;
+        }
+
+        console.log("✅ Profile Page: User authenticated:", user.email);
+
+        // Update UI immediately with available data
+        this.updateProfileUI(user, profile, null);
 
         // Load additional data in background
-        loadBackgroundData(user!.id);
+        await this.loadBackgroundData(user.id);
 
-        return;
+        // Setup event listeners
+        this.setupEventListeners();
+
+        // Listen for auth changes
+        this.unsubscribeAuth = this.authManager.onAuthChange(
+          (user, profile) => {
+            if (!user) {
+              window.location.href = "/auth/signin";
+            } else {
+              this.updateProfileUI(user, profile, null);
+            }
+          }
+        );
+
+        this.initialized = true;
+        console.log("✅ Profile Page: Initialization complete");
+      } catch (error) {
+        console.error("❌ Profile Page: Initialization failed:", error);
+        this.showError("Failed to load profile data");
+      }
+    }
+
+    private getCachedData(key: string): any | null {
+      const cached = this.dataCache.get(key);
+      if (!cached) return null;
+
+      const now = Date.now();
+      if (now - cached.timestamp > cached.ttl) {
+        this.dataCache.delete(key);
+        return null;
       }
 
-      // No instant data, need to initialize
-      console.log("🔄 Profile: Initializing auth...");
-      await authStore.initialize();
-
-      const user = authStore.getUser();
-      const profile = authStore.getProfile();
-
-      if (!user) {
-        window.location.href = "/auth/signin";
-        return;
-      }
-
-      updateProfileUI(user, profile, null);
-      loadBackgroundData(user.id);
-    } catch (error) {
-      console.error("Error loading profile:", error);
-      showError("Failed to load profile data");
-    }
-  }
-
-  async function loadBackgroundData(userId: string) {
-    try {
-      const [stats, activities] = await Promise.all([
-        getCachedUserStats(userId),
-        loadRecentActivities(userId),
-      ]);
-
-      const user = authStore.getUser();
-      const profile = authStore.getProfile();
-
-      updateProfileUI(user, profile, stats);
-      updateActivityTimeline(activities);
-    } catch (error) {
-      console.error("Error loading background data:", error);
-    }
-  }
-
-  // Rest of your existing functions remain the same...
-  async function loadRecentActivities(userId: string) {
-    const cacheKey = `user-activities-${userId}`;
-
-    let activities = dataCache.get(cacheKey);
-    if (activities) return activities;
-
-    try {
-      const { data: userActivities } = await supabase
-        .from("user_activities")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(15);
-
-      activities = userActivities || [];
-      dataCache.set(cacheKey, activities, 2);
-      return activities;
-    } catch (error) {
-      console.error("Error loading activities:", error);
-      return [];
-    }
-  }
-
-  function updateProfileUI(user: any, profile: any, stats: any) {
-    updateElement(
-      "profile-name",
-      profile?.display_name || user.email?.split("@")[0] || "TinkByte User"
-    );
-    updateElement("profile-id", `#TB${user.id.slice(-6).toUpperCase()}`);
-    updateElement(
-      "member-since",
-      `Member since ${formatDate(user.created_at)}`
-    );
-
-    const avatarElement = document.getElementById(
-      "profile-avatar"
-    ) as HTMLImageElement;
-    if (avatarElement) {
-      avatarElement.src = authStore.getAvatarUrl();
+      return cached.data;
     }
 
-    if (stats) {
-      updateElement("follower-count", `${stats.followers} Followers`);
-      updateElement("articles-count", `${stats.followed_articles} Articles`);
-      updateElement("topics-count", `${stats.following_topics} Topics`);
-      updateElement("authors-count", `0 Authors`);
-      updateElement("users-count", `${stats.following_users} Users`);
-      updateElement("total-reads", stats.articles_read.toString());
-      updateElement("total-comments", stats.comments_posted.toString());
-    }
-  }
-
-  function updateActivityTimeline(activities: any[]) {
-    const timelineElement = document.getElementById("activity-timeline");
-    const activityCountElement = document.getElementById("activity-count");
-
-    if (!timelineElement || !activityCountElement) return;
-
-    activityCountElement.textContent = activities.length.toString();
-
-    if (activities.length === 0) {
-      timelineElement.innerHTML = `<div class="loading-state">No recent activity</div>`;
-      return;
-    }
-
-    const groupedActivities = groupActivitiesByDate(activities);
-    let timelineHTML = "";
-
-    Object.entries(groupedActivities).forEach(([date, dateActivities]) => {
-      timelineHTML += `<div class="timeline-date">${date}</div>`;
-      (dateActivities as any[]).forEach((activity) => {
-        timelineHTML += `
-        <div class="timeline-item">
-          <div class="timeline-marker"></div>
-          <div class="timeline-content">
-            <span class="timeline-action">${activity.description}</span>
-            <span class="timeline-meta">${formatTime(activity.created_at)}</span>
-          </div>
-        </div>
-      `;
+    private setCachedData(
+      key: string,
+      data: any,
+      ttlMinutes: number = 5
+    ): void {
+      this.dataCache.set(key, {
+        data,
+        timestamp: Date.now(),
+        ttl: ttlMinutes * 60 * 1000,
       });
-    });
+    }
 
-    timelineElement.innerHTML = timelineHTML;
-  }
+    private async loadBackgroundData(userId: string) {
+      try {
+        console.log("📊 Loading background data for user:", userId);
 
-  function groupActivitiesByDate(activities: any[]) {
-    return activities.reduce(
-      (groups, activity) => {
-        const date = formatDate(activity.created_at);
-        if (!groups[date]) {
-          groups[date] = [];
+        const [stats, activities] = await Promise.all([
+          this.getUserStats(userId),
+          this.getRecentActivities(userId),
+        ]);
+
+        const user = this.authManager.getUser();
+        const profile = this.authManager.getProfile();
+
+        this.updateProfileUI(user, profile, stats);
+        this.updateActivityTimeline(activities);
+
+        // Load notifications
+        await this.loadProfileNotifications();
+
+        console.log("✅ Background data loaded successfully");
+      } catch (error) {
+        console.error("❌ Error loading background data:", error);
+      }
+    }
+
+    private async getUserStats(userId: string) {
+      const cacheKey = `user-stats-${userId}`;
+      let stats = this.getCachedData(cacheKey);
+
+      if (stats) {
+        console.log("⚡ Using cached user stats");
+        return stats;
+      }
+
+      try {
+        console.log("🔄 Fetching fresh user stats");
+
+        const [followedArticles, followingTopics, followingUsers] =
+          await Promise.all([
+            TinkByteAPI.searchContent("", "users"), // Placeholder - replace with actual API calls
+            Promise.resolve({ data: [] }), // Topics following
+            Promise.resolve({ data: [] }), // Users following
+          ]);
+
+        stats = {
+          followers: 0,
+          followed_articles: 0,
+          following_topics: 0,
+          following_users: 0,
+          articles_read: 0,
+          comments_posted: 0,
+        };
+
+        this.setCachedData(cacheKey, stats, 5);
+        return stats;
+      } catch (error) {
+        console.error("Error loading user stats:", error);
+        return {
+          followers: 0,
+          followed_articles: 0,
+          following_topics: 0,
+          following_users: 0,
+          articles_read: 0,
+          comments_posted: 0,
+        };
+      }
+    }
+
+    private async getRecentActivities(userId: string) {
+      const cacheKey = `user-activities-${userId}`;
+      let activities = this.getCachedData(cacheKey);
+
+      if (activities) {
+        console.log("⚡ Using cached activities");
+        return activities;
+      }
+
+      try {
+        console.log("🔄 Fetching fresh activities");
+
+        // For now, return mock data - replace with actual API call
+        activities = [];
+
+        this.setCachedData(cacheKey, activities, 2);
+        return activities;
+      } catch (error) {
+        console.error("Error loading activities:", error);
+        return [];
+      }
+    }
+
+    private async loadProfileNotifications() {
+      try {
+        console.log("🔔 Loading profile notifications");
+
+        const result = await TinkByteAPI.getUserNotifications(15);
+
+        const notificationTimeline = document.getElementById(
+          "notification-timeline"
+        ) as HTMLElement;
+        const notificationCountProfile = document.getElementById(
+          "notification-count-profile"
+        ) as HTMLElement;
+        const clearAllBtn = document.getElementById(
+          "clear-all-notifications"
+        ) as HTMLButtonElement;
+
+        if (!notificationTimeline || !notificationCountProfile) {
+          console.warn("Notification elements not found");
+          return;
         }
-        groups[date].push(activity);
-        return groups;
-      },
-      {} as Record<string, any[]>
-    );
-  }
 
-  function setupEventListeners() {
-    const editAvatarBtn = document.getElementById("edit-avatar-btn");
-    editAvatarBtn?.addEventListener("click", () => {
-      window.location.href = "/profile/account";
-    });
-  }
+        if (result.success && result.data && result.data.length > 0) {
+          const notifications = result.data;
 
-  function updateElement(id: string, value: string) {
-    const element = document.getElementById(id);
-    if (element) {
-      element.textContent = value;
+          notificationCountProfile.textContent =
+            notifications.length.toString();
+
+          notificationTimeline.innerHTML = notifications
+            .map((notification) => {
+              const timeAgo = this.formatTime(notification.created_at);
+              const commenterName =
+                notification.comments?.profiles?.display_name || "Someone";
+              const isUnread = !notification.is_read;
+
+              return `
+                <div class="notification-timeline-item ${isUnread ? "unread" : ""}" data-notification-id="${notification.id}">
+                  <div class="notification-timeline-marker"></div>
+                  <div class="notification-timeline-content">
+                    <span class="notification-timeline-action">
+                      <strong>${commenterName}</strong> mentioned you in a comment
+                      ${isUnread ? '<span style="color: #3b82f6; font-size: 0.75rem; margin-left: 0.5rem;">NEW</span>' : ""}
+                    </span>
+                    <span class="notification-timeline-meta">${timeAgo}</span>
+                  </div>
+                </div>
+              `;
+            })
+            .join("");
+
+          // Show clear all button if there are notifications
+          if (clearAllBtn) {
+            clearAllBtn.style.display = "block";
+            clearAllBtn.addEventListener("click", () =>
+              this.clearAllNotifications()
+            );
+          }
+
+          // Add click handlers for unread notifications
+          notificationTimeline
+            .querySelectorAll(".notification-timeline-item.unread")
+            .forEach((item) => {
+              const htmlItem = item as HTMLElement;
+              htmlItem.addEventListener("click", async () => {
+                const notificationId = htmlItem.dataset.notificationId;
+                if (notificationId) {
+                  await this.markNotificationAsRead(notificationId);
+                  htmlItem.classList.remove("unread");
+                  const newBadge = htmlItem.querySelector(
+                    'span[style*="color: #3b82f6"]'
+                  );
+                  if (newBadge) newBadge.remove();
+                }
+              });
+            });
+        } else {
+          notificationTimeline.innerHTML =
+            '<div class="loading-state">No notifications yet</div>';
+          notificationCountProfile.textContent = "0";
+          if (clearAllBtn) clearAllBtn.style.display = "none";
+        }
+      } catch (error) {
+        console.error("Error loading profile notifications:", error);
+        const notificationTimeline = document.getElementById(
+          "notification-timeline"
+        ) as HTMLElement;
+        if (notificationTimeline) {
+          notificationTimeline.innerHTML =
+            '<div class="loading-state">Failed to load notifications</div>';
+        }
+      }
+    }
+
+    private async clearAllNotifications() {
+      try {
+        const unreadItems = document.querySelectorAll(
+          ".notification-timeline-item.unread"
+        );
+
+        for (const item of unreadItems) {
+          const htmlItem = item as HTMLElement;
+          const notificationId = htmlItem.dataset.notificationId;
+          if (notificationId) {
+            await TinkByteAPI.markNotificationAsRead(notificationId);
+          }
+        }
+
+        // Refresh the notifications display
+        await this.loadProfileNotifications();
+      } catch (error) {
+        console.error("Error clearing notifications:", error);
+      }
+    }
+
+    private async markNotificationAsRead(notificationId: string) {
+      try {
+        await TinkByteAPI.markNotificationAsRead(notificationId);
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+      }
+    }
+
+    private updateProfileUI(user: any, profile: any, stats: any) {
+      const displayName = this.authManager.getDisplayName();
+      const avatarUrl = this.authManager.getAvatarUrl();
+
+      this.updateElement("profile-name", displayName);
+      this.updateElement(
+        "profile-id",
+        `#TB${user?.id?.slice(-6)?.toUpperCase() || "000000"}`
+      );
+      this.updateElement(
+        "member-since",
+        `Member since ${this.formatDate(user?.created_at || new Date().toISOString())}`
+      );
+
+      const avatarElement = document.getElementById(
+        "profile-avatar"
+      ) as HTMLImageElement;
+      if (avatarElement) {
+        avatarElement.src = avatarUrl;
+      }
+
+      if (stats) {
+        this.updateElement("follower-count", `${stats.followers} Followers`);
+        this.updateElement(
+          "articles-count",
+          `${stats.followed_articles} Articles`
+        );
+        this.updateElement("topics-count", `${stats.following_topics} Topics`);
+        this.updateElement("authors-count", `0 Authors`);
+        this.updateElement("users-count", `${stats.following_users} Users`);
+        this.updateElement("total-reads", stats.articles_read.toString());
+        this.updateElement("total-comments", stats.comments_posted.toString());
+      }
+    }
+
+    private updateActivityTimeline(activities: any[]) {
+      const timelineElement = document.getElementById("activity-timeline");
+      const activityCountElement = document.getElementById("activity-count");
+
+      if (!timelineElement || !activityCountElement) return;
+
+      activityCountElement.textContent = activities.length.toString();
+
+      if (activities.length === 0) {
+        timelineElement.innerHTML = `<div class="loading-state">No recent activity</div>`;
+        return;
+      }
+
+      const groupedActivities = this.groupActivitiesByDate(activities);
+      let timelineHTML = "";
+
+      Object.entries(groupedActivities).forEach(([date, dateActivities]) => {
+        timelineHTML += `<div class="timeline-date">${date}</div>`;
+        (dateActivities as any[]).forEach((activity) => {
+          timelineHTML += `
+            <div class="timeline-item">
+              <div class="timeline-marker"></div>
+              <div class="timeline-content">
+                <span class="timeline-action">${activity.description}</span>
+                <span class="timeline-meta">${this.formatTime(activity.created_at)}</span>
+              </div>
+            </div>
+          `;
+        });
+      });
+
+      timelineElement.innerHTML = timelineHTML;
+    }
+
+    private groupActivitiesByDate(activities: any[]) {
+      return activities.reduce(
+        (groups, activity) => {
+          const date = this.formatDate(activity.created_at);
+          if (!groups[date]) {
+            groups[date] = [];
+          }
+          groups[date].push(activity);
+          return groups;
+        },
+        {} as Record<string, any[]>
+      );
+    }
+
+    private setupEventListeners() {
+      const editAvatarBtn = document.getElementById("edit-avatar-btn");
+      editAvatarBtn?.addEventListener("click", () => {
+        window.location.href = "/profile/account";
+      });
+    }
+
+    private updateElement(id: string, value: string) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.textContent = value;
+      }
+    }
+
+    private formatDate(dateString: string): string {
+      try {
+        return new Date(dateString).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      } catch {
+        return "Unknown";
+      }
+    }
+
+    private formatTime(dateString: string): string {
+      try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor(
+          (now.getTime() - date.getTime()) / 1000
+        );
+
+        if (diffInSeconds < 60) return "Just now";
+        if (diffInSeconds < 3600)
+          return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400)
+          return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 2592000)
+          return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+        return date.toLocaleDateString();
+      } catch {
+        return "Unknown";
+      }
+    }
+
+    private showError(message: string) {
+      console.error(message);
+      // You could add a toast notification here
+    }
+
+    // Cleanup method
+    destroy() {
+      if (this.unsubscribeAuth) {
+        this.unsubscribeAuth();
+        this.unsubscribeAuth = null;
+      }
+      this.dataCache.clear();
+      this.initialized = false;
     }
   }
 
-  function formatDate(dateString: string) {
-    return ProfileUtils.formatDate(dateString);
-  }
-
-  function formatTime(dateString: string) {
-    return ProfileUtils.formatTime(dateString);
-  }
-
-  function showError(message: string) {
-    console.error(message);
-  }
+  // Initialize when DOM is ready
+  document.addEventListener("DOMContentLoaded", () => {
+    new ProfilePageManager();
+  });
 </script>

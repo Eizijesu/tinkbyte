@@ -1,9 +1,76 @@
-// src/scripts/comments.js - Pure Client-Side Version
-import { supabase, TinkByteAPI, AuthState } from '../lib/supabase.js';
+// public/scripts/comments.js
+console.log('Comments script loading...');
 
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('DOM loaded, initializing comments...');
+  
+  // Try different import paths until one works
+  let supabase, TinkByteAPI, AuthState;
+  
+  try {
+    // Try path 1: Direct from src
+    const imports = await import('/src/lib/supabase.js');
+    supabase = imports.supabase;
+    TinkByteAPI = imports.TinkByteAPI;
+    AuthState = imports.AuthState;
+    console.log('✅ Supabase imported from /src/lib/supabase.js');
+    
+    // Initialize comment system AFTER successful import
+    new TinkByteCommentSystem(supabase, TinkByteAPI, AuthState);
+    
+  } catch (error1) {
+    console.log('❌ Failed path 1:', error1.message);
+    
+    try {
+      // Try path 2: Relative path
+      const imports = await import('../../src/lib/supabase.js');
+      supabase = imports.supabase;
+      TinkByteAPI = imports.TinkByteAPI;
+      AuthState = imports.AuthState;
+      console.log('✅ Supabase imported from ../../src/lib/supabase.js');
+      
+      // Initialize comment system AFTER successful import
+      new TinkByteCommentSystem(supabase, TinkByteAPI, AuthState);
+      
+    } catch (error2) {
+      console.error('❌ All import paths failed:', error1.message, error2.message);
+      
+      // Show user-friendly error
+      const errorDiv = document.createElement('div');
+      errorDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ef4444;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        z-index: 10000;
+      `;
+      errorDiv.textContent = 'Comment system failed to load. Please refresh the page.';
+      document.body.appendChild(errorDiv);
+    }
+  }
+});
+
+// Fixed TinkByteCommentSystem class
 class TinkByteCommentSystem {
-  constructor() {
+  constructor(supabase, TinkByteAPI, AuthState) {
+    console.log('TinkByteCommentSystem constructor called with:', {
+      supabase: !!supabase,
+      TinkByteAPI: !!TinkByteAPI,
+      AuthState: !!AuthState
+    });
+    
+    // Store the imported modules
+    this.supabase = supabase;
+    this.TinkByteAPI = TinkByteAPI;
+    this.AuthState = AuthState;
+    
+    // Initialize AuthState instance
     this.authState = AuthState.getInstance();
+    
+    // All your existing properties
     this.currentUser = null;
     this.profile = null;
     this.articleId = null;
@@ -19,12 +86,18 @@ class TinkByteCommentSystem {
   }
 
   async init() {
+    console.log('Initializing comment system...');
+    
     const commentSection = document.getElementById('comments-section');
-    if (!commentSection) return;
+    if (!commentSection) {
+      console.error('Comments section not found');
+      return;
+    }
     
     this.articleId = commentSection.dataset.articleId;
+    console.log('Article slug from data-article-id:', this.articleId);
     
-    // Initialize auth state first
+    // Initialize auth state
     await this.authState.initialize();
     await this.checkAuth();
     
@@ -36,23 +109,44 @@ class TinkByteCommentSystem {
     if (this.isAuthenticated) {
       await this.loadDrafts();
     }
+    
+    console.log('Comment system initialized successfully');
   }
 
   async checkAuth() {
     try {
+      console.log('🔄 Checking auth state...');
+      console.log('AuthState available:', !!this.AuthState);
+      console.log('authState instance:', !!this.authState);
+      console.log('supabase available:', !!this.supabase);
+      
+      // Check if we have all required imports
+      if (!this.AuthState || !this.supabase) {
+        console.error('❌ Required imports not available');
+        this.showGuestPrompt();
+        return;
+      }
+      
       this.currentUser = this.authState.getUser();
       this.profile = this.authState.getProfile();
       this.isAuthenticated = !!this.currentUser;
       
+      console.log('Auth check results:', {
+        currentUser: !!this.currentUser,
+        profile: !!this.profile,
+        isAuthenticated: this.isAuthenticated,
+        userEmail: this.currentUser?.email
+      });
+      
       if (this.isAuthenticated) {
-        this.showUserForm();
         console.log('✅ User authenticated:', this.currentUser.email);
+        this.showUserForm();
       } else {
         console.log('❌ No user session found');
         this.showGuestPrompt();
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('❌ Auth check failed:', error);
       this.showGuestPrompt();
     }
   }
@@ -61,26 +155,41 @@ class TinkByteCommentSystem {
     if (this.isAuthenticated) {
       this.updateUserInfo();
       this.showUserForm();
-      this.updateCommentPermissions();
     } else {
       this.showGuestPrompt();
     }
   }
 
   showGuestPrompt() {
+    console.log('Showing guest prompt...');
     const guestPrompt = document.getElementById('guest-comment-prompt');
     const userForm = document.getElementById('user-comment-form');
     
-    if (guestPrompt) guestPrompt.style.display = 'flex';
-    if (userForm) userForm.style.display = 'none';
+    if (guestPrompt) {
+      guestPrompt.style.display = 'flex';
+      console.log('Guest prompt shown');
+    }
+    
+    if (userForm) {
+      userForm.style.display = 'none';
+      console.log('User form hidden');
+    }
   }
 
   showUserForm() {
+    console.log('Showing user form...');
     const guestPrompt = document.getElementById('guest-comment-prompt');
     const userForm = document.getElementById('user-comment-form');
     
-    if (guestPrompt) guestPrompt.style.display = 'none';
-    if (userForm) userForm.style.display = 'block';
+    if (guestPrompt) {
+      guestPrompt.style.display = 'none';
+      console.log('Guest prompt hidden');
+    }
+    
+    if (userForm) {
+      userForm.style.display = 'block';
+      console.log('User form shown');
+    }
   }
 
   updateUserInfo() {
@@ -126,17 +235,21 @@ class TinkByteCommentSystem {
   }
 
   setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
     // Main comment form
     const commentForm = document.getElementById('comment-form');
     if (commentForm) {
       commentForm.addEventListener('submit', this.handleCommentSubmit.bind(this));
+      console.log('Comment form listener added');
     }
 
-    // Character count and drafts
+    // Character count
     const textarea = document.getElementById('comment-textarea');
     if (textarea) {
       textarea.addEventListener('input', this.updateCharacterCount.bind(this));
       textarea.addEventListener('input', this.saveDraft.bind(this));
+      console.log('Textarea listeners added');
     }
 
     // Formatting and emoji
@@ -159,6 +272,8 @@ class TinkByteCommentSystem {
         window.location.href = '/auth/signin';
       });
     }
+
+    console.log('Event listeners setup complete');
   }
 
   setupModalHandlers() {
@@ -381,6 +496,7 @@ class TinkByteCommentSystem {
   // Comment submission using TinkByteAPI
   async handleCommentSubmit(e) {
     e.preventDefault();
+    console.log('Comment form submitted');
     
     if (!this.isAuthenticated) {
       this.showError('Please sign in to comment');
@@ -389,29 +505,32 @@ class TinkByteCommentSystem {
 
     const form = e.target;
     const formData = new FormData(form);
-    const content = formData.get('content').trim();
+    const content = formData.get('content')?.trim();
+
+    console.log('Comment content:', content);
 
     if (!this.validateComment(content)) return;
 
     this.showLoading(form);
 
     try {
-      const result = await TinkByteAPI.addComment(
-        this.articleId, 
+      const result = await this.TinkByteAPI.addComment(
+        this.articleId,
         content, 
         this.replyingTo?.id || null
       );
 
+      console.log('Comment submission result:', result);
+
       if (result.success) {
         this.showSuccess('Comment posted successfully!');
         this.resetForm(form);
-        this.addCommentToUI(result.data);
-        this.clearDraft();
         this.updateCommentCount(1);
         
-        if (this.replyingTo) {
-          this.cancelReply();
-        }
+        // Reload page to show new comment
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         this.showError(result.error || 'Failed to post comment');
       }
@@ -422,6 +541,7 @@ class TinkByteCommentSystem {
       this.hideLoading(form);
     }
   }
+
 
   // Inline reply setup
   async handleInlineReplySetup(commentId, author) {
@@ -913,14 +1033,15 @@ class TinkByteCommentSystem {
       countElement.textContent = count;
       
       if (count > 800) {
-        countElement.style.color = 'var(--warning-color)';
+        countElement.style.color = '#f59e0b';
       } else if (count >= 1000) {
-        countElement.style.color = 'var(--error-color)';
+        countElement.style.color = '#ef4444';
       } else {
-        countElement.style.color = 'var(--text-secondary)';
+        countElement.style.color = '#6b7280';
       }
     }
   }
+
 
   // Modal methods
   showModal(modalId) {
@@ -941,7 +1062,7 @@ class TinkByteCommentSystem {
 
   // Loading states
   showLoading(container) {
-    const submitBtn = container.querySelector('.submit-btn, .submit-inline-btn, .save-edit-btn, .btn-danger');
+    const submitBtn = container.querySelector('.submit-btn');
     const btnText = submitBtn?.querySelector('.btn-text');
     const btnSpinner = submitBtn?.querySelector('.btn-spinner');
     
@@ -953,7 +1074,7 @@ class TinkByteCommentSystem {
   }
 
   hideLoading(container) {
-    const submitBtn = container.querySelector('.submit-btn, .submit-inline-btn, .save-edit-btn, .btn-danger');
+    const submitBtn = container.querySelector('.submit-btn');
     const btnText = submitBtn?.querySelector('.btn-text');
     const btnSpinner = submitBtn?.querySelector('.btn-spinner');
     
@@ -966,28 +1087,42 @@ class TinkByteCommentSystem {
 
   // Notifications
   showError(message) {
-    const errorElement = document.getElementById('error-message');
-    const errorText = errorElement?.querySelector('.error-text');
+    console.error('Comment error:', message);
     
-    if (errorElement && errorText) {
-      errorText.textContent = message;
-      errorElement.style.display = 'flex';
-      
-      setTimeout(() => {
-        errorElement.style.display = 'none';
-      }, 5000);
-    }
-  }
-
-  showSuccess(message) {
     const notification = document.createElement('div');
-    notification.className = 'comment-success-indicator';
+    notification.className = 'comment-error-notification';
     notification.textContent = message;
     notification.style.cssText = `
       position: fixed;
       top: 20px;
       right: 20px;
-      background: var(--success-color);
+      background: #ef4444;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 500;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.remove();
+    }, 5000);
+  }
+
+  showSuccess(message) {
+    console.log('Comment success:', message);
+    
+    const notification = document.createElement('div');
+    notification.className = 'comment-success-notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #10b981;
       color: white;
       padding: 12px 24px;
       border-radius: 8px;
@@ -1003,17 +1138,19 @@ class TinkByteCommentSystem {
     }, 3000);
   }
 
-  // Form management
   resetForm(form) {
     const textarea = form.querySelector('textarea');
     if (textarea) {
       textarea.value = '';
       this.updateCharacterCount();
     }
-    
-    const errorElement = document.getElementById('error-message');
-    if (errorElement) {
-      errorElement.style.display = 'none';
+  }
+
+  updateCommentCount(change) {
+    const countElement = document.getElementById('total-comments');
+    if (countElement) {
+      const currentCount = parseInt(countElement.textContent) || 0;
+      countElement.textContent = Math.max(0, currentCount + change);
     }
   }
 
@@ -1118,11 +1255,6 @@ class TinkByteCommentSystem {
     console.log('Load more comments - implement pagination');
   }
 }
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  new TinkByteCommentSystem();
-});
 
 // Close dropdowns when clicking outside
 document.addEventListener('click', (e) => {

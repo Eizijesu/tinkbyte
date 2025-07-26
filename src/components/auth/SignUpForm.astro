@@ -629,128 +629,619 @@
       text-align: center;
     }
   }
+
+  .square-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    background: transparent;
+    animation: square-spin 1s linear infinite;
+  }
+
+  @keyframes square-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(90deg);
+    }
+    50% {
+      transform: rotate(180deg);
+    }
+    75% {
+      transform: rotate(270deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  .toast-message {
+    position: fixed;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    z-index: 10000; /* Increased z-index */
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width: 400px;
+    width: 90%;
+    pointer-events: none; /* Prevent interference with other elements */
+  }
+
+  .toast-message.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .toast-content {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: rgba(34, 197, 94, 0.1);
+    border: 2px solid rgba(34, 197, 94, 0.3);
+    padding: 1rem 1.25rem;
+    border-radius: 0px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #16a34a;
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    position: relative;
+  }
+
+  .toast-content.error {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #dc2626;
+  }
+
+  .toast-content.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #d97706;
+  }
+
+  .toast-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Enhanced checkbox validation styles */
+  .checkbox-label.error .checkbox-custom {
+    border-color: #ef4444;
+    animation: shake 0.5s ease-in-out;
+  }
+
+  .form-input.error {
+    border-color: #ef4444;
+    animation: shake 0.5s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-5px);
+    }
+    75% {
+      transform: translateX(5px);
+    }
+  }
+
+  /* Dark mode toast enhancements */
+  :global(.dark) .toast-content {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.4);
+    color: #22c55e;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  :global(.dark) .toast-content.error {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+  }
+
+  :global(.dark) .toast-content.warning {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #f59e0b;
+  }
+
+  :global(.dark) .checkbox-label.error .checkbox-custom {
+    border-color: #ef4444;
+  }
+
+  :global(.dark) .form-input.error {
+    border-color: #ef4444;
+  }
+
+  /* Mobile responsive toast */
+  @media (max-width: 480px) {
+    .toast-message {
+      top: 1rem;
+      width: 95%;
+    }
+
+    .toast-content {
+      padding: 0.875rem 1rem;
+      font-size: 0.8125rem;
+    }
+  }
 </style>
 
 <script>
-  import { auth } from "../../lib/auth.js";
+  import { authManager } from "../../lib/auth.js";
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    console.log("📝 SignUpForm: Initializing...");
+  class SignUpFormManager {
+    private initialized: boolean = false;
+    private authOptions: HTMLElement | null = null;
+    private emailForm: HTMLFormElement | null = null;
+    private otpForm: HTMLFormElement | null = null;
+    private emailSignupBtn: HTMLButtonElement | null = null;
+    private googleBtn: HTMLButtonElement | null = null;
+    private backBtn: HTMLButtonElement | null = null;
+    private backToEmailBtn: HTMLButtonElement | null = null;
+    private signupBtn: HTMLButtonElement | null = null;
+    private verifyBtn: HTMLButtonElement | null = null;
+    private resendBtn: HTMLButtonElement | null = null;
+    private emailDisplay: HTMLElement | null = null;
+    private toastMessage: HTMLElement | null = null;
+    private toastText: HTMLElement | null = null;
+    private toastIcon: HTMLElement | null = null;
+    private currentEmail: string = "";
+    private currentDisplayName: string = "";
+    private resendTimer: number | null = null;
+    private activeToastTimeout: number | null = null;
 
-    // Initialize auth
-    await auth.initialize();
+    constructor() {
+      this.init();
+    }
 
-    // DOM Elements
-    const authOptions = document.getElementById("auth-options") as HTMLElement;
-    const emailForm = document.getElementById("email-form") as HTMLFormElement;
-    const otpForm = document.getElementById("otp-form") as HTMLFormElement;
-    const emailSignupBtn = document.getElementById(
-      "email-signup"
-    ) as HTMLButtonElement;
-    const googleBtn = document.getElementById(
-      "google-signup"
-    ) as HTMLButtonElement;
-    const backBtn = document.getElementById("back-btn") as HTMLButtonElement;
-    const backToEmailBtn = document.getElementById(
-      "back-to-email"
-    ) as HTMLButtonElement;
-    const signupBtn = document.getElementById(
-      "signup-btn"
-    ) as HTMLButtonElement;
-    const verifyBtn = document.getElementById(
-      "verify-btn"
-    ) as HTMLButtonElement;
-    const resendBtn = document.getElementById(
-      "resend-code"
-    ) as HTMLButtonElement;
-    const emailDisplay = document.getElementById(
-      "email-display"
-    ) as HTMLElement;
-    const toastMessage = document.getElementById(
-      "toast-message"
-    ) as HTMLElement;
-    const toastText = document.getElementById("toast-text") as HTMLElement;
-    const toastIcon = document.getElementById("toast-icon") as HTMLElement;
+    async init() {
+      if (this.initialized) return;
 
-    let currentEmail = "";
-    let resendTimer: number | null = null;
+      try {
+        console.log("📝 SignUpForm: Initializing...");
 
-    // Helper Functions
-    function showToast(message: string, type: "success" | "error" = "success") {
-      if (toastText && toastMessage && toastIcon) {
-        toastText.textContent = message;
-        toastIcon.innerHTML =
-          type === "success"
-            ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>'
-            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+        // Initialize auth manager
+        await authManager.initialize();
 
-        const toastContent = toastMessage.querySelector(
-          ".toast-content"
-        ) as HTMLElement;
-        if (toastContent) {
-          toastContent.className = `toast-content ${type === "error" ? "error" : ""}`;
-        }
+        this.setupDOM();
+        this.setupEventListeners();
+        this.setupFormValidation(); // Add this
 
-        toastMessage.style.display = "block";
-        setTimeout(() => {
-          toastMessage.style.transform = "translateX(-50%) translateY(0)";
-          toastMessage.style.opacity = "1";
-        }, 10);
-
-        setTimeout(
-          () => {
-            toastMessage.style.transform = "translateX(-50%) translateY(-20px)";
-            toastMessage.style.opacity = "0";
-            setTimeout(() => (toastMessage.style.display = "none"), 300);
-          },
-          type === "error" ? 5000 : 3000
-        );
+        this.initialized = true;
+        console.log("📝 SignUpForm: Initialized successfully");
+      } catch (error) {
+        console.error("❌ SignUpForm: Initialization failed:", error);
+        this.showToast("Failed to initialize sign up form", "error");
       }
     }
 
-    function setButtonLoading(button: HTMLButtonElement, isLoading: boolean) {
-      const btnText = button.querySelector(".btn-text") as HTMLElement;
-      const btnSpinner = button.querySelector(".btn-spinner") as HTMLElement;
-
-      button.disabled = isLoading;
-      if (btnText) btnText.style.display = isLoading ? "none" : "block";
-      if (btnSpinner) btnSpinner.style.display = isLoading ? "flex" : "none";
+    private setupDOM() {
+      this.authOptions = document.getElementById("auth-options") as HTMLElement;
+      this.emailForm = document.getElementById("email-form") as HTMLFormElement;
+      this.otpForm = document.getElementById("otp-form") as HTMLFormElement;
+      this.emailSignupBtn = document.getElementById(
+        "email-signup"
+      ) as HTMLButtonElement;
+      this.googleBtn = document.getElementById(
+        "google-signup"
+      ) as HTMLButtonElement;
+      this.backBtn = document.getElementById("back-btn") as HTMLButtonElement;
+      this.backToEmailBtn = document.getElementById(
+        "back-to-email"
+      ) as HTMLButtonElement;
+      this.signupBtn = document.getElementById(
+        "signup-btn"
+      ) as HTMLButtonElement;
+      this.verifyBtn = document.getElementById(
+        "verify-btn"
+      ) as HTMLButtonElement;
+      this.resendBtn = document.getElementById(
+        "resend-code"
+      ) as HTMLButtonElement;
+      this.emailDisplay = document.getElementById(
+        "email-display"
+      ) as HTMLElement;
+      this.toastMessage = document.getElementById(
+        "toast-message"
+      ) as HTMLElement;
+      this.toastText = document.getElementById("toast-text") as HTMLElement;
+      this.toastIcon = document.getElementById("toast-icon") as HTMLElement;
     }
 
-    function showEmailForm() {
-      if (authOptions) authOptions.style.display = "none";
-      if (emailForm) emailForm.style.display = "flex";
-      if (otpForm) otpForm.style.display = "none";
+    private setupEventListeners() {
+      this.emailSignupBtn?.addEventListener("click", () =>
+        this.showEmailForm()
+      );
+      this.backBtn?.addEventListener("click", () => this.showAuthOptions());
+      this.backToEmailBtn?.addEventListener("click", () =>
+        this.showEmailForm()
+      );
+
+      // Google signup
+      this.googleBtn?.addEventListener("click", async () => {
+        await this.handleGoogleSignUp();
+      });
+
+      // Email form submission
+      this.emailForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await this.handleEmailSignUp();
+      });
+
+      // OTP form submission
+      this.otpForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await this.handleOTPVerification();
+      });
+
+      // Resend code
+      this.resendBtn?.addEventListener("click", async () => {
+        await this.handleResendCode();
+      });
+
+      // Real-time validation
+      this.setupRealTimeValidation();
     }
 
-    function showOTPForm(email: string) {
-      currentEmail = email;
-      if (emailDisplay) emailDisplay.textContent = email;
-      if (authOptions) authOptions.style.display = "none";
-      if (emailForm) emailForm.style.display = "none";
-      if (otpForm) otpForm.style.display = "flex";
+    // NEW: Setup form validation with button state management
+    private setupFormValidation() {
+      const termsCheckbox = document.getElementById(
+        "terms-checkbox"
+      ) as HTMLInputElement;
+      const displayNameInput = document.getElementById(
+        "display-name"
+      ) as HTMLInputElement;
+      const emailInput = document.getElementById("email") as HTMLInputElement;
+
+      // Function to check if form is valid
+      const checkFormValidity = () => {
+        const displayName = displayNameInput?.value?.trim() || "";
+        const email = emailInput?.value?.trim() || "";
+        const termsAccepted = termsCheckbox?.checked || false;
+
+        const isValid =
+          displayName.length >= 2 && this.isValidEmail(email) && termsAccepted;
+
+        // Enable/disable submit button
+        if (this.signupBtn) {
+          this.signupBtn.disabled = !isValid;
+          this.signupBtn.style.opacity = isValid ? "1" : "0.6";
+        }
+      };
+
+      // Add listeners to all form inputs
+      displayNameInput?.addEventListener("input", checkFormValidity);
+      emailInput?.addEventListener("input", checkFormValidity);
+      termsCheckbox?.addEventListener("change", checkFormValidity);
+
+      // Initial check
+      checkFormValidity();
+    }
+
+    private setupRealTimeValidation() {
+      const termsCheckbox = document.getElementById(
+        "terms-checkbox"
+      ) as HTMLInputElement;
+      const checkboxLabel = termsCheckbox?.closest(
+        ".checkbox-label"
+      ) as HTMLElement;
+
+      // Clear error state when checkbox is checked
+      termsCheckbox?.addEventListener("change", () => {
+        if (termsCheckbox.checked) {
+          checkboxLabel?.classList.remove("error");
+        }
+      });
+
+      // Clear error state when form inputs are focused
+      const formInputs = this.emailForm?.querySelectorAll(".form-input");
+      formInputs?.forEach((input) => {
+        input.addEventListener("focus", () => {
+          input.classList.remove("error");
+        });
+      });
+    }
+
+    private async handleGoogleSignUp() {
+      if (!this.googleBtn) return;
+
+      try {
+        this.setButtonLoading(this.googleBtn, true);
+        console.log("📝 SignUpForm: Google signup starting...");
+
+        const result = await authManager.signInWithGoogle();
+
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+
+        console.log("📝 SignUpForm: Google signup successful, redirecting...");
+      } catch (error: any) {
+        console.error("❌ SignUpForm: Google signup error:", error);
+        this.showToast(error.message || "Google sign up failed", "error");
+        this.setButtonLoading(this.googleBtn, false);
+      }
+    }
+
+    private async handleEmailSignUp() {
+      if (!this.emailForm || !this.signupBtn) return;
+
+      // Clear previous error states
+      this.clearValidationErrors();
+
+      const formData = new FormData(this.emailForm);
+      const displayName = formData.get("displayName") as string;
+      const email = formData.get("email") as string;
+      const termsCheckbox = document.getElementById(
+        "terms-checkbox"
+      ) as HTMLInputElement;
+      const termsAccepted = termsCheckbox?.checked;
+
+      // Enhanced validation with immediate feedback
+      let hasErrors = false;
+      let firstErrorElement: HTMLElement | null = null;
+
+      if (!displayName || displayName.trim().length < 2) {
+        const displayNameInput = document.getElementById(
+          "display-name"
+        ) as HTMLInputElement;
+        displayNameInput?.classList.add("error");
+        if (!firstErrorElement) firstErrorElement = displayNameInput;
+        this.showToast(
+          "Please enter a valid full name (at least 2 characters)",
+          "error"
+        );
+        hasErrors = true;
+      }
+
+      if (!email || !this.isValidEmail(email)) {
+        const emailInput = document.getElementById("email") as HTMLInputElement;
+        emailInput?.classList.add("error");
+        if (!firstErrorElement) firstErrorElement = emailInput;
+        this.showToast("Please enter a valid email address", "error");
+        hasErrors = true;
+      }
+
+      if (!termsAccepted) {
+        const checkboxLabel = termsCheckbox?.closest(
+          ".checkbox-label"
+        ) as HTMLElement;
+        checkboxLabel?.classList.add("error");
+        if (!firstErrorElement) firstErrorElement = checkboxLabel;
+
+        this.showToast(
+          "Please accept the Terms of Service and Privacy Policy to continue",
+          "warning"
+        );
+        hasErrors = true;
+      }
+
+      if (hasErrors) {
+        // Focus the first error element
+        if (firstErrorElement) {
+          firstErrorElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+
+          // If it's an input, focus it
+          if (firstErrorElement.tagName === "INPUT") {
+            (firstErrorElement as HTMLInputElement).focus();
+          }
+        }
+        return;
+      }
+
+      this.setButtonLoading(this.signupBtn, true);
+
+      try {
+        console.log("📝 SignUpForm: Email signup for:", email);
+
+        // Store for later use
+        this.currentDisplayName = displayName.trim();
+
+        const result = await authManager.signUpWithEmail(
+          email,
+          this.currentDisplayName
+        );
+
+        if (!result.success) {
+          // Handle specific error cases
+          if (result.error?.includes("already exists")) {
+            this.showToast(
+              "An account with this email already exists. Try signing in instead.",
+              "warning"
+            );
+
+            // Optionally redirect to signin after a delay
+            setTimeout(() => {
+              window.location.href = `/auth/signin?email=${encodeURIComponent(email)}`;
+            }, 3000);
+            return;
+          }
+
+          throw new Error(result.error);
+        }
+
+        console.log("✅ SignUpForm: Verification code sent successfully");
+        this.showToast(
+          "Verification code sent to your email! Check your inbox.",
+          "success"
+        );
+        this.showOTPForm(email);
+        this.startResendTimer();
+      } catch (error: any) {
+        console.error("❌ SignUpForm: Email signup error:", error);
+        this.showToast(
+          error.message || "Sign up failed. Please try again.",
+          "error"
+        );
+      } finally {
+        this.setButtonLoading(this.signupBtn, false);
+      }
+    }
+
+    private async handleOTPVerification() {
+      if (!this.otpForm || !this.verifyBtn) return;
+
+      const formData = new FormData(this.otpForm);
+      const otp = formData.get("otp") as string;
+
+      if (!otp || otp.length !== 6) {
+        const otpInput = document.getElementById(
+          "otp-code"
+        ) as HTMLInputElement;
+        otpInput?.classList.add("error");
+        this.showToast(
+          "Please enter the complete 6-digit verification code",
+          "error"
+        );
+        return;
+      }
+
+      this.setButtonLoading(this.verifyBtn, true);
+
+      try {
+        console.log("📝 SignUpForm: Verifying OTP for:", this.currentEmail);
+
+        const result = await authManager.verifyOTP(this.currentEmail, otp);
+
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+
+        console.log("✅ SignUpForm: OTP verification successful");
+        this.showToast(
+          "Account created successfully! Redirecting to setup...",
+          "success"
+        );
+
+        setTimeout(() => {
+          window.location.href = "/profile?setup=password";
+        }, 1500);
+      } catch (error: any) {
+        console.error("❌ SignUpForm: OTP verification error:", error);
+        const otpInput = document.getElementById(
+          "otp-code"
+        ) as HTMLInputElement;
+        otpInput?.classList.add("error");
+
+        let errorMessage = "Verification failed. Please try again.";
+        if (error.message?.includes("expired")) {
+          errorMessage =
+            "Verification code has expired. Please request a new one.";
+        } else if (error.message?.includes("invalid")) {
+          errorMessage =
+            "Invalid verification code. Please check and try again.";
+        }
+
+        this.showToast(errorMessage, "error");
+      } finally {
+        this.setButtonLoading(this.verifyBtn, false);
+      }
+    }
+
+    private async handleResendCode() {
+      if (!this.currentEmail || !this.resendBtn) return;
+
+      try {
+        console.log(
+          "📝 SignUpForm: Resending verification code to:",
+          this.currentEmail
+        );
+
+        const result = await authManager.signUpWithEmail(
+          this.currentEmail,
+          this.currentDisplayName
+        );
+
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+
+        console.log("✅ SignUpForm: New verification code sent");
+        this.showToast(
+          "New verification code sent! Check your email.",
+          "success"
+        );
+        this.startResendTimer();
+      } catch (error: any) {
+        console.error("❌ SignUpForm: Resend code error:", error);
+        this.showToast("Failed to resend code. Please try again.", "error");
+      }
+    }
+
+    // Helper methods
+    private isValidEmail(email: string): boolean {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
+
+    private clearValidationErrors() {
+      // Clear error classes from all inputs
+      const errorElements = document.querySelectorAll(".error");
+      errorElements.forEach((element) => {
+        element.classList.remove("error");
+      });
+    }
+
+    private showEmailForm() {
+      if (this.authOptions) this.authOptions.style.display = "none";
+      if (this.emailForm) this.emailForm.style.display = "flex";
+      if (this.otpForm) this.otpForm.style.display = "none";
+
+      // Focus first input
+      const firstInput = this.emailForm?.querySelector(
+        "input"
+      ) as HTMLInputElement;
+      firstInput?.focus();
+    }
+
+    private showOTPForm(email: string) {
+      this.currentEmail = email;
+      if (this.emailDisplay) this.emailDisplay.textContent = email;
+      if (this.authOptions) this.authOptions.style.display = "none";
+      if (this.emailForm) this.emailForm.style.display = "none";
+      if (this.otpForm) this.otpForm.style.display = "flex";
 
       // Focus OTP input
       const otpInput = document.getElementById("otp-code") as HTMLInputElement;
-      if (otpInput) otpInput.focus();
+      if (otpInput) {
+        otpInput.focus();
+        otpInput.value = ""; // Clear any previous value
+      }
     }
 
-    function showAuthOptions() {
-      if (authOptions) authOptions.style.display = "block";
-      if (emailForm) emailForm.style.display = "none";
-      if (otpForm) otpForm.style.display = "none";
+    private showAuthOptions() {
+      if (this.authOptions) this.authOptions.style.display = "block";
+      if (this.emailForm) this.emailForm.style.display = "none";
+      if (this.otpForm) this.otpForm.style.display = "none";
+      this.clearValidationErrors();
     }
 
-    function startResendTimer() {
-      const resendText = resendBtn?.querySelector(
+    private startResendTimer() {
+      const resendText = this.resendBtn?.querySelector(
         ".resend-text"
       ) as HTMLElement;
-      const resendTimer = resendBtn?.querySelector(
+      const resendTimer = this.resendBtn?.querySelector(
         ".resend-timer"
       ) as HTMLElement;
       const timerSpan = document.getElementById("timer") as HTMLElement;
 
-      if (resendBtn) resendBtn.disabled = true;
+      if (this.resendBtn) this.resendBtn.disabled = true;
       if (resendText) resendText.style.display = "none";
       if (resendTimer) resendTimer.style.display = "block";
 
@@ -761,124 +1252,83 @@
 
         if (countdown < 0) {
           clearInterval(interval);
-          if (resendBtn) resendBtn.disabled = false;
+          if (this.resendBtn) this.resendBtn.disabled = false;
           if (resendText) resendText.style.display = "block";
           if (resendTimer) resendTimer.style.display = "none";
         }
       }, 1000);
     }
 
-    // Event Listeners
-    emailSignupBtn?.addEventListener("click", showEmailForm);
-    backBtn?.addEventListener("click", showAuthOptions);
-    backToEmailBtn?.addEventListener("click", showEmailForm);
+    private setButtonLoading(button: HTMLButtonElement, isLoading: boolean) {
+      const btnText = button.querySelector(".btn-text") as HTMLElement;
+      const btnSpinner = button.querySelector(".btn-spinner") as HTMLElement;
 
-    // Google signup
-    googleBtn?.addEventListener("click", async () => {
-      try {
-        setButtonLoading(googleBtn, true);
-        const result = await auth.signInWithGoogle();
+      button.disabled = isLoading;
+      if (btnText) btnText.style.display = isLoading ? "none" : "block";
+      if (btnSpinner) btnSpinner.style.display = isLoading ? "flex" : "none";
+    }
 
-        if (!result.success) {
-          throw new Error(result.error || "Google sign up failed");
-        }
-      } catch (error: any) {
-        showToast(error.message || "Google sign up failed", "error");
-        setButtonLoading(googleBtn, false);
-      }
-    });
+    private showToast(
+      message: string,
+      type: "success" | "error" | "warning" = "success"
+    ) {
+      if (!this.toastText || !this.toastMessage || !this.toastIcon) return;
 
-    // Email form submission
-    emailForm?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const formData = new FormData(emailForm);
-      const displayName = formData.get("displayName") as string;
-      const email = formData.get("email") as string;
-      const termsAccepted = (
-        document.getElementById("terms-checkbox") as HTMLInputElement
-      )?.checked;
-
-      if (!displayName || !email) {
-        showToast("Please fill in all fields", "error");
-        return;
+      // Clear any existing timeout
+      if (this.activeToastTimeout) {
+        clearTimeout(this.activeToastTimeout);
       }
 
-      if (!termsAccepted) {
-        showToast("Please accept the terms and conditions", "error");
-        return;
+      // Set content
+      this.toastText.textContent = message;
+
+      // Set icon based on type
+      const icons = {
+        success:
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>',
+        error:
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        warning:
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+      };
+
+      this.toastIcon.innerHTML = icons[type];
+
+      // Set toast content class
+      const toastContent = this.toastMessage.querySelector(
+        ".toast-content"
+      ) as HTMLElement;
+      if (toastContent) {
+        toastContent.className = `toast-content ${type}`;
       }
 
-      setButtonLoading(signupBtn, true);
+      // Show toast
+      this.toastMessage.style.display = "block";
+      this.toastMessage.classList.add("show");
 
-      try {
-        const result = await auth.signUpWithEmail(email, displayName);
+      // Auto-hide after delay
+      const hideDelay =
+        type === "error" ? 6000 : type === "warning" ? 5000 : 4000;
 
-        if (!result.success) {
-          throw new Error(result.error || "Sign up failed");
-        }
+      this.activeToastTimeout = window.setTimeout(() => {
+        this.hideToast();
+      }, hideDelay);
+    }
 
-        showToast("Verification code sent to your email!");
-        showOTPForm(email);
-        startResendTimer();
-      } catch (error: any) {
-        showToast(error.message || "Sign up failed", "error");
-      } finally {
-        setButtonLoading(signupBtn, false);
-      }
-    });
-
-    // OTP form submission
-    otpForm?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const formData = new FormData(otpForm);
-      const otp = formData.get("otp") as string;
-
-      if (!otp || otp.length !== 6) {
-        showToast("Please enter a valid 6-digit code", "error");
-        return;
-      }
-
-      setButtonLoading(verifyBtn, true);
-
-      try {
-        const result = await auth.verifyOTP(currentEmail, otp);
-
-        if (!result.success) {
-          throw new Error(result.error || "Invalid verification code");
-        }
-
-        showToast("Account created successfully! Redirecting...");
-
+    private hideToast() {
+      if (this.toastMessage) {
+        this.toastMessage.classList.remove("show");
         setTimeout(() => {
-          window.location.href = "/profile?setup=password";
-        }, 1500);
-      } catch (error: any) {
-        showToast(error.message || "Verification failed", "error");
-      } finally {
-        setButtonLoading(verifyBtn, false);
+          if (this.toastMessage) {
+            this.toastMessage.style.display = "none";
+          }
+        }, 300);
       }
-    });
+    }
+  }
 
-    // Resend code
-    resendBtn?.addEventListener("click", async () => {
-      if (!currentEmail) return;
-
-      try {
-        const result = await auth.signUpWithEmail(currentEmail, "");
-
-        if (result.success) {
-          showToast("New verification code sent!");
-          startResendTimer();
-        } else {
-          showToast("Failed to resend code", "error");
-        }
-      } catch (error: any) {
-        showToast("Failed to resend code", "error");
-      }
-    });
-
-    console.log("📝 SignUpForm: Initialization complete");
+  // Initialize when DOM is ready
+  document.addEventListener("DOMContentLoaded", () => {
+    new SignUpFormManager();
   });
 </script>

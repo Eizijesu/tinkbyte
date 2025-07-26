@@ -1,0 +1,1214 @@
+/* src/styles/global.css - Fixed Version */
+
+/* Import Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
+/* Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =================================
+   CSS Custom Properties
+   ================================= */
+:root {
+  /* Brand Colors */
+  --color-brand-primary: 36 55 136;
+  --color-brand-secondary: 180 188 225;
+  --color-brand-dark: 26 43 92;
+  --color-brand-light: 232 235 244;
+  
+  /* Border Radius */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  
+  /* Typography */
+  --font-size-hero: clamp(2rem, 5vw, 3.5rem);
+  --font-size-feature: clamp(1.5rem, 3vw, 2rem);
+  --font-size-section: 1.875rem;
+  
+  /* Spacing */
+  --space-magazine: 4.5rem;
+  --space-section: 6rem;
+  
+  /* Shadows */
+  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  --shadow-magazine: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --shadow-magazine-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+  --shadow-brand: 0 4px 25px -5px rgba(36, 55, 136, 0.1), 0 10px 10px -5px rgba(36, 55, 136, 0.04);
+  
+  /* Transitions */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  
+  /* Easings */
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
+    --shadow-magazine: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-magazine-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* =================================
+   FontAwesome - Optimized
+   ================================= */
+@font-face {
+  font-family: 'Font Awesome 6 Free';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-regular-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: 'Font Awesome 6 Free';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-solid-900.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: 'Font Awesome 6 Brands';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/webfonts/fa-brands-400.woff2") format("woff2");
+}
+
+.fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"] {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+  text-rendering: auto !important;
+  line-height: 1 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  display: inline-block !important;
+  text-decoration: none !important;
+  font-weight: 900 !important;
+}
+
+.fa-regular, .far { font-weight: 400 !important; }
+.fa-brands, .fab { 
+  font-weight: 400 !important; 
+  font-family: "Font Awesome 6 Brands" !important; 
+}
+
+/* =================================
+   Base Styles - Cross-Browser
+   ================================= */
+@layer base {
+  html {
+    font-family: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  body {
+    background-color: white;
+    color: rgb(17 24 39);
+    line-height: 1.6;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  .dark body {
+    background-color: rgb(17 24 39);
+    color: rgb(243 244 246);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.2;
+    font-feature-settings: "kern" 1, "liga" 1;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+    scroll-margin-top: 2rem;
+  }
+  
+  p {
+    margin-bottom: 1rem;
+    line-height: 1.75;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  pre, code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-feature-settings: "kern" 0;
+  }
+  
+  pre {
+    overflow-x: auto;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark pre {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  a {
+    color: rgb(59 130 246);
+    text-decoration: none;
+    text-decoration-skip-ink: auto;
+    transition: color var(--duration-normal) var(--ease-out);
+  }
+  
+  .dark a {
+    color: rgb(228, 228, 228);
+  }
+  
+  a:hover {
+    color: rgb(29 78 216);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+  }
+  
+  .dark a:hover {
+    color: rgb(147 197 253);
+  }
+  
+  *:focus-visible {
+    outline: 2px solid rgb(59 130 246);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  
+  input, textarea, select {
+    border: 1px solid rgb(209 213 219);
+    background-color: white;
+    color: rgb(17 24 39);
+    border-radius: var(--radius-sm);
+    transition: border-color var(--duration-normal) var(--ease-out);
+  }
+  
+  .dark input, .dark textarea, .dark select {
+    border-color: rgb(75 85 99);
+    background-color: rgb(31 41 55);
+    color: rgb(243 244 246);
+  }
+  
+  input:focus, textarea:focus, select:focus {
+    border-color: rgb(59 130 246);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  button {
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--duration-normal) var(--ease-out);
+  }
+  
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  
+  img {
+    height: auto;
+    max-width: 100%;
+    border-radius: var(--radius-md);
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+  
+  th, td {
+    border-bottom: 1px solid rgb(229 231 235);
+    padding: 0.75rem;
+    text-align: left;
+  }
+  
+  .dark th, .dark td {
+    border-color: rgb(75 85 99);
+  }
+  
+  th {
+    font-weight: 600;
+    background-color: rgb(249 250 251);
+  }
+  
+  .dark th {
+    background-color: rgb(31 41 55);
+  }
+}
+
+/* =================================
+   Component Layer
+   ================================= */
+@layer components {
+  .btn {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    transition: all var(--duration-normal) var(--ease-out);
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
+  
+  .btn:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px rgb(59 130 246), 0 0 0 4px rgba(59, 130, 246, 0.2);
+  }
+  
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .btn-primary {
+    background-color: rgb(59 130 246);
+    color: white;
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    background-color: rgb(29 78 216);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  .btn-secondary {
+    background-color: rgb(229 231 235);
+    color: rgb(17 24 39);
+  }
+  
+  .dark .btn-secondary {
+    background-color: rgb(75 85 99);
+    color: rgb(243 244 246);
+  }
+  
+  .btn-secondary:hover:not(:disabled) {
+    background-color: rgb(209 213 219);
+  }
+  
+  .dark .btn-secondary:hover:not(:disabled) {
+    background-color: rgb(55 65 81);
+  }
+  
+  .card {
+    background-color: white;
+    border: 1px solid rgb(229 231 235);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+    transition: all var(--duration-normal) var(--ease-out);
+  }
+  
+  .dark .card {
+    background-color: rgb(31 41 55);
+    border-color: rgb(75 85 99);
+  }
+  
+  .card-hover:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .magazine-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-magazine);
+    border: 1px solid rgba(36, 55, 136, 0.1);
+    transition: all var(--duration-normal) var(--ease-out);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  
+  .dark .magazine-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .magazine-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-magazine-lg);
+  }
+  
+  .prose-custom {
+    max-width: none;
+    color: rgb(55 65 81);
+    line-height: 1.7;
+    font-size: 1.125rem;
+  }
+  
+  .dark .prose-custom {
+    color: rgb(209 213 219);
+  }
+  
+  .prose-custom h1,
+  .prose-custom h2,
+  .prose-custom h3,
+  .prose-custom h4,
+  .prose-custom h5,
+  .prose-custom h6 {
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: rgb(17 24 39);
+  }
+  
+  .dark .prose-custom h1,
+  .dark .prose-custom h2,
+  .dark .prose-custom h3,
+  .dark .prose-custom h4,
+  .dark .prose-custom h5,
+  .dark .prose-custom h6 {
+    color: rgb(243 244 246);
+  }
+  
+  .prose-custom a {
+    color: rgb(59 130 246);
+  }
+  
+  .dark .prose-custom a {
+    color: rgb(96 165 250);
+  }
+  
+  .prose-custom code {
+    background-color: rgb(243 244 246);
+    padding: 0.125rem 0.25rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875em;
+  }
+  
+  .dark .prose-custom code {
+    background-color: rgb(31 41 55);
+  }
+}
+
+/* =================================
+   Utilities Layer
+   ================================= */
+@layer utilities {
+  .text-balance {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+  }
+  
+  @supports (text-wrap: balance) {
+    .text-balance {
+      text-wrap: balance;
+    }
+  }
+  
+  .text-pretty {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  @supports (text-wrap: pretty) {
+    .text-pretty {
+      text-wrap: pretty;
+    }
+  }
+  
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-clamp: 3;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgb(243 244 246);
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgb(31 41 55);
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgb(156 163 175);
+    border-radius: 3px;
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgb(75 85 99);
+  }
+  
+  .shadow-magazine { box-shadow: var(--shadow-magazine); }
+  .shadow-magazine-lg { box-shadow: var(--shadow-magazine-lg); }
+  .shadow-brand { box-shadow: var(--shadow-brand); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  
+  .animate-fade-in {
+    animation: fadeIn var(--duration-slow) var(--ease-out) forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp var(--duration-normal) var(--ease-out) forwards;
+  }
+  
+  .fade-in-observer {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out);
+  }
+  
+  .fade-in-observer.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .theme-transition {
+    transition: background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out);
+  }
+}
+
+/* =================================
+   Animation Keyframes
+   ================================= */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* =================================
+   Accessibility & Performance
+   ================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .card:hover,
+  .magazine-card:hover {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+  
+  .btn {
+    border: 2px solid currentColor;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  
+  a, a:visited {
+    text-decoration: underline;
+  }
+  
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 90%;
+  }
+  
+  pre, blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+  
+  thead {
+    display: table-header-group;
+  }
+  
+  tr, img {
+    page-break-inside: avoid;
+  }
+  
+  img {
+    max-width: 100% !important;
+  }
+  
+  p, h2, h3 {
+    page-break-after: avoid;
+  }
+}
+
+@supports (-webkit-backdrop-filter: blur(10px)) {
+  .backdrop-blur {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+}
+
+@supports not (backdrop-filter: blur(10px)) {
+  .magazine-card {
+    background: rgba(255, 255, 255, 0.95);
+  }
+  
+  .dark .magazine-card {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #374151;
+  border-radius: 3px;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background-color 0.3s ease;
+  position: relative;
+}
+
+:global(.dark) .progress-bar {
+  background: rgb(55, 65, 81);
+}
+
+.progress-fill {
+  height: 100%;
+  background: rgb(59, 130, 246);
+  transition: width 0.1s ease;
+  border-radius: 3px;
+  position: relative;
+}
+
+/* Add a subtle glow effect to the progress */
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background: rgb(59, 130, 246);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.audio-player:not(.paused) .progress-fill::after {
+  opacity: 1;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+/* Add to your global.css or main CSS file */
+
+/* Base list styles */
+.prose ul,
+.content ul,
+article ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  padding-left: 0;
+}
+
+.prose ol,
+.content ol,
+article ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  padding-left: 0;
+}
+
+.prose li,
+.content li,
+article li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+  display: list-item;
+}
+
+/* Nested lists */
+.prose ul ul,
+.content ul ul,
+article ul ul {
+  list-style-type: circle;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose ol ol,
+.content ol ol,
+article ol ol {
+  list-style-type: lower-alpha;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Ensure list items are visible */
+.prose li > p,
+.content li > p,
+article li > p {
+  margin: 0;
+}
+
+/* =================================
+   Mobile-First Responsive Utilities
+   ================================= */
+   @layer utilities {
+    /* Container queries for better mobile support */
+    .container-mobile {
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    @media (min-width: 640px) {
+      .container-mobile {
+        max-width: 640px;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+    }
+    
+    @media (min-width: 768px) {
+      .container-mobile {
+        max-width: 768px;
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+    }
+    
+    @media (min-width: 1024px) {
+      .container-mobile {
+        max-width: 1024px;
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
+      }
+    }
+    
+    /* Mobile-specific typography */
+    .text-mobile-hero {
+      font-size: clamp(1.75rem, 4vw, 3.5rem);
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+    }
+    
+    .text-mobile-subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      line-height: 1.3;
+    }
+    
+    .text-mobile-body {
+      font-size: clamp(0.875rem, 2vw, 1.125rem);
+      line-height: 1.6;
+    }
+    
+    /* Mobile spacing utilities */
+    .space-mobile-section {
+      padding-top: clamp(2rem, 5vw, 4rem);
+      padding-bottom: clamp(2rem, 5vw, 4rem);
+    }
+    
+    .space-mobile-element {
+      margin-bottom: clamp(1rem, 3vw, 2rem);
+    }
+  }
+  
+  /* =================================
+     Mobile Performance Optimizations
+     ================================= */
+  @media (max-width: 768px) {
+    /* Reduce animations on mobile for better performance */
+    .animate-fade-in,
+    .animate-slide-up,
+    .magazine-card:hover,
+    .card-hover:hover {
+      animation-duration: 0.2s;
+      transition-duration: 0.2s;
+    }
+    
+    img {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+    
+    /* Better touch targets */
+    button, 
+    a, 
+    input, 
+    textarea {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* =================================
+   Smooth Theme Transitions
+   ================================= */
+
+/* Apply transition to all theme-sensitive elements */
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *:before,
+.theme-transitioning *:after {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
+  transition-duration: 0.3s !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Ensure all theme-sensitive elements have transitions */
+* {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Specific elements that need smooth transitions */
+body,
+header,
+nav,
+main,
+footer,
+article,
+section,
+div,
+span,
+h1, h2, h3, h4, h5, h6,
+p,
+a,
+button,
+input,
+textarea,
+select,
+.card,
+.magazine-card,
+.btn,
+.nav-link,
+.subscribe-button,
+.mobile-nav-link,
+.dropdown-menu,
+.content-sidebar-enhanced,
+.content-main-enhanced,
+.article-header,
+.tinkbyte-header {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Prevent transition on page load */
+.no-transition,
+.no-transition * {
+  transition: none !important;
+}
+
+/* In your global CSS or legal page styles */
+.legal-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.legal-content h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-top: 1rem; /* For anchor scroll offset */
+}
+
+.legal-content ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.legal-content li {
+  margin-bottom: 0.5rem;
+}
+
+/* Enhanced List Styling - Add this to your legal page styles */
+.prose-content :global(ul),
+.prose-content :global(ol) {
+  margin: 1.5rem 0;
+  padding-left: 0; /* Remove default padding */
+  list-style: none; /* Remove default bullets */
+}
+
+.prose-content :global(ul li) {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.prose-content :global(ul li::before) {
+  content: "•";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #243788;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.prose-content :global(ol) {
+  counter-reset: list-counter;
+}
+
+.prose-content :global(ol li) {
+  position: relative;
+  padding-left: 2.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+  counter-increment: list-counter;
+}
+
+.prose-content :global(ol li::before) {
+  content: counter(list-counter) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #243788;
+  font-weight: bold;
+  font-size: 1em;
+  min-width: 2rem;
+}
+
+/* Nested lists */
+.prose-content :global(ul ul),
+.prose-content :global(ol ol),
+.prose-content :global(ul ol),
+.prose-content :global(ol ul) {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.prose-content :global(ul ul li::before) {
+  content: "◦";
+  color: #6b7280;
+}
+
+.prose-content :global(ul ul ul li::before) {
+  content: "▪";
+  color: #9ca3af;
+}
+
+/* Alternative approach - if you want to keep default browser styling */
+.prose-content :global(ul.default-bullets),
+.prose-content :global(ol.default-bullets) {
+  list-style: revert;
+  padding-left: 2rem;
+}
+
+.prose-content :global(ul.default-bullets li),
+.prose-content :global(ol.default-bullets li) {
+  padding-left: 0;
+}
+
+.prose-content :global(ul.default-bullets li::before),
+.prose-content :global(ol.default-bullets li::before) {
+  display: none;
+}
+
+/* Enhanced list styling for better readability */
+.prose-content :global(li) {
+  transition: all 0.2s ease;
+}
+
+.prose-content :global(li:hover) {
+  background: rgba(36, 55, 136, 0.03);
+  transform: translateX(2px);
+}
+
+/* Strong text in lists */
+.prose-content :global(li strong) {
+  color: #243788;
+  font-weight: 700;
+}
+
+/* Links in lists */
+.prose-content :global(li a) {
+  color: #243788;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+}
+
+.prose-content :global(li a:hover) {
+  color: #1e40af;
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Offset for fixed headers */
+[id] {
+  scroll-margin-top: 80px; /* Adjust based on your header height */
+}
+
+/* Enhanced list styling for both markdown and HTML lists */
+.prose-content :global(ul),
+.prose-content :global(ol) {
+  margin: 1.5rem 0;
+  padding-left: 0;
+}
+
+/* Markdown-style lists */
+.prose-content :global(ul li) {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+  list-style: none;
+}
+
+.prose-content :global(ul li::before) {
+  content: "•";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #243788;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+/* Ordered lists */
+.prose-content :global(ol) {
+  counter-reset: list-counter;
+}
+
+.prose-content :global(ol li) {
+  position: relative;
+  padding-left: 2.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+  counter-increment: list-counter;
+  list-style: none;
+}
+
+.prose-content :global(ol li::before) {
+  content: counter(list-counter) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #243788;
+  font-weight: bold;
+  font-size: 1em;
+  min-width: 2rem;
+}
+
+/* HTML-style lists (fallback) */
+.prose-content :global(ul[style*="list-style"]),
+.prose-content :global(ol[style*="list-style"]) {
+  padding-left: 2rem;
+}
+
+.prose-content :global(ul[style*="list-style"] li),
+.prose-content :global(ol[style*="list-style"] li) {
+  padding-left: 0;
+  list-style: revert;
+}
+
+.prose-content :global(ul[style*="list-style"] li::before),
+.prose-content :global(ol[style*="list-style"] li::before) {
+  display: none;
+}
+
+/* Nested lists */
+.prose-content :global(ul ul),
+.prose-content :global(ol ol),
+.prose-content :global(ul ol),
+.prose-content :global(ol ul) {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.prose-content :global(ul ul li::before) {
+  content: "◦";
+  color: #6b7280;
+}
+
+.prose-content :global(ol ol) {
+  counter-reset: nested-counter;
+}
+
+.prose-content :global(ol ol li) {
+  counter-increment: nested-counter;
+}
+
+.prose-content :global(ol ol li::before) {
+  content: counter(list-counter) "." counter(nested-counter) ".";
+}
+
+/* Ensure proper spacing for list items with strong text */
+.prose-content :global(li strong) {
+  color: #243788;
+  font-weight: 700;
+}
+
+/* Debug: Temporarily add borders to see what's happening */
+.prose-content :global(ul) {
+  border-left: 2px solid #e5e7eb; /* Remove this after debugging */
+}
+
+.prose-content :global(ol) {
+  border-left: 2px solid #fbbf24; /* Remove this after debugging */
+}
+
+.username.loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  color: transparent;
+  border-radius: 4px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Add to your global CSS or ProfileLayout styles */
+.auth-toast {
+  font-family: 'Space Grotesk', sans-serif !important;
+  border-left: 4px solid rgba(255, 255, 255, 0.3);
+}
+
+.auth-toast.info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+}
+
+.auth-toast.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+.auth-toast.warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+
+.auth-toast.error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+/* Dark mode support */
+html.dark .confirm-content {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+html.dark .confirm-content h3 {
+  color: #f8fafc !important;
+}
+
+html.dark .confirm-content p {
+  color: #94a3b8 !important;
+}
+
+html.dark .cancel-btn {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #334155 !important;
+}
+
+html.dark .cancel-btn:hover {
+  background: #334155 !important;
+  border-color: #475569 !important;
+}

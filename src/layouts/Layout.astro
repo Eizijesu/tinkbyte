@@ -4,6 +4,7 @@ import { SITE } from "../config/site";
 import Header from "../components/ui/Header.astro";
 import Footer from "../components/ui/Footer.astro";
 import "../styles/global.css";
+import FeedbackWidget from "../components/ui/FeedbackWidget.astro";
 
 export interface Props {
   title?: string;
@@ -424,10 +425,10 @@ const structuredData = getStructuredData();
     <!-- Enhanced Theme Detection Script -->
     <script is:inline>
       (function () {
-        const getTheme = () => {
+        function getTheme() {
           if (typeof localStorage !== "undefined") {
             const stored = localStorage.getItem("theme");
-            if (stored && ["light", "dark"].includes(stored)) {
+            if (stored && (stored === "light" || stored === "dark")) {
               return stored;
             }
           }
@@ -440,9 +441,9 @@ const structuredData = getStructuredData();
           }
 
           return "light";
-        };
+        }
 
-        const applyTheme = (theme) => {
+        function applyTheme(theme) {
           if (theme === "dark") {
             document.documentElement.classList.add("dark");
           } else {
@@ -450,15 +451,15 @@ const structuredData = getStructuredData();
           }
 
           // Force update all theme-aware elements
-          setTimeout(() => {
+          setTimeout(function () {
             const themeAwareElements = document.querySelectorAll(
               '.featured-post, .theme-card, [data-theme-aware="true"]'
             );
-            themeAwareElements.forEach((el) => {
-              el.style.transition = "all 0.3s ease";
-            });
+            for (let i = 0; i < themeAwareElements.length; i++) {
+              themeAwareElements[i].style.transition = "all 0.3s ease";
+            }
           }, 0);
-        };
+        }
 
         const theme = getTheme();
         applyTheme(theme);
@@ -470,70 +471,77 @@ const structuredData = getStructuredData();
       })();
     </script>
 
-    <!-- Add this RIGHT AFTER the existing theme detection script (around line 289) -->
     <script is:inline>
-      // CRITICAL: Theme transition coordinator for synchronized transitions
-      function initializeThemeTransitions() {
-        const html = document.documentElement;
+      (function () {
+        // Theme transition coordinator for synchronized transitions
+        function initializeThemeTransitions() {
+          const html = document.documentElement;
 
-        // Create a centralized theme transition manager
-        window.themeTransitionManager = {
-          isTransitioning: false,
-          transitionDuration: 300,
+          // Create a centralized theme transition manager
+          if (!window.themeTransitionManager) {
+            window.themeTransitionManager = {
+              isTransitioning: false,
+              transitionDuration: 300,
 
-          startTransition() {
-            if (this.isTransitioning) return;
+              startTransition: function () {
+                if (this.isTransitioning) return;
 
-            this.isTransitioning = true;
-            html.classList.add("theme-transitioning");
+                this.isTransitioning = true;
+                html.classList.add("theme-transitioning");
 
-            // Force all elements to use synchronized transitions
-            const style = document.createElement("style");
-            style.id = "theme-transition-override";
-            style.textContent = `
-          *, *::before, *::after {
-            transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                       color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                       border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                       stroke 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                // Force all elements to use synchronized transitions
+                const style = document.createElement("style");
+                style.id = "theme-transition-override";
+                style.textContent =
+                  "*, *::before, *::after { " +
+                  "transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), " +
+                  "color 0.3s cubic-bezier(0.4, 0, 0.2, 1), " +
+                  "border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), " +
+                  "stroke 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; " +
+                  "}";
+                document.head.appendChild(style);
+
+                const self = this;
+                setTimeout(function () {
+                  self.endTransition();
+                }, this.transitionDuration);
+              },
+
+              endTransition: function () {
+                this.isTransitioning = false;
+                html.classList.remove("theme-transitioning");
+
+                const style = document.getElementById(
+                  "theme-transition-override"
+                );
+                if (style) style.remove();
+              },
+            };
           }
-        `;
-            document.head.appendChild(style);
 
-            setTimeout(() => {
-              this.endTransition();
-            }, this.transitionDuration);
-          },
+          // Override existing theme toggle to use transition manager
+          const originalToggle = window.toggleTheme;
+          window.toggleTheme = function () {
+            if (window.themeTransitionManager) {
+              window.themeTransitionManager.startTransition();
+            }
 
-          endTransition() {
-            this.isTransitioning = false;
-            html.classList.remove("theme-transitioning");
+            setTimeout(function () {
+              if (originalToggle) originalToggle();
+            }, 10);
+          };
+        }
 
-            const style = document.getElementById("theme-transition-override");
-            if (style) style.remove();
-          },
-        };
-
-        // Override existing theme toggle to use transition manager
-        const originalToggle = window.toggleTheme;
-        window.toggleTheme = function () {
-          window.themeTransitionManager.startTransition();
-
-          setTimeout(() => {
-            if (originalToggle) originalToggle();
-          }, 10);
-        };
-      }
-
-      // Initialize when DOM is ready
-      if (document.readyState === "loading") {
-        document.addEventListener(
-          "DOMContentLoaded",
-          initializeThemeTransitions
-        );
-      } else {
-        initializeThemeTransitions();
-      }
+        // Initialize when DOM is ready
+        if (document.readyState === "loading") {
+          document.addEventListener(
+            "DOMContentLoaded",
+            initializeThemeTransitions
+          );
+        } else {
+          initializeThemeTransitions();
+        }
+      })();
     </script>
   </head>
 
@@ -558,6 +566,12 @@ const structuredData = getStructuredData();
 
       <Footer />
     </div>
+
+    <FeedbackWidget
+      position="bottom-right"
+      theme="auto"
+      hideOnPages={["/admin"]}
+    />
 
     <!-- Enhanced Theme and Functionality Script -->
     <script is:inline>

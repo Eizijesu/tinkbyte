@@ -1,9 +1,40 @@
 ---
-// src/pages/auth/admin-signout.astro - Simple signout
+// src/pages/auth/admin-signout.astro - UPDATED SINGLETON VERSION
 ---
 
 <script>
-  // Clear localStorage and redirect
-  localStorage.removeItem("tinkbyte-admin-session");
-  window.location.href = "/auth/admin-signin?message=signed_out";
+  import { adminAuthManager } from "../../lib/admin/auth.js";
+
+  // Enhanced admin sign out with singleton
+  async function performAdminSignOut() {
+    try {
+      console.log("🔄 Admin Sign Out: Starting sign out process...");
+
+      // Initialize auth manager if needed
+      await adminAuthManager.initialize();
+
+      // Perform sign out using singleton
+      await adminAuthManager.signOut();
+
+      console.log("✅ Admin Sign Out: Sign out completed");
+
+      // Redirect to sign in page with success message
+      window.location.href = "/auth/admin-signin?message=signed_out";
+    } catch (error) {
+      console.error("❌ Admin Sign Out: Error during sign out:", error);
+
+      // Still clear localStorage as fallback
+      localStorage.removeItem("tinkbyte-admin-session");
+
+      // Redirect anyway
+      window.location.href = "/auth/admin-signin?message=signed_out";
+    }
+  }
+
+  // Execute sign out immediately
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", performAdminSignOut);
+  } else {
+    performAdminSignOut();
+  }
 </script>

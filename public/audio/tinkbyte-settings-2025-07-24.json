@@ -1,0 +1,58 @@
+{
+  "general": {
+    "site_name": "TinkByte",
+    "site_tagline": "Build products that matter",
+    "site_description": "Real stories, practical insights, no fluff.",
+    "admin_email": "tinkbytehq@gmail.com",
+    "support_email": "support@tinkbyte.com",
+    "enable_comments": true,
+    "enable_profiles": true,
+    "enable_newsletters": true,
+    "enable_user_content": false,
+    "enable_social_login": true,
+    "enable_analytics": true
+  },
+  "moderation": {
+    "auto_moderate_new_users": true,
+    "auto_approve_trusted": true,
+    "auto_flag_profanity": false,
+    "enable_spam_detection": true,
+    "trusted_user_threshold": 100,
+    "comment_length_limit": 1000,
+    "blocked_keywords": ""
+  },
+  "users": {
+    "allow_registration": true,
+    "require_email_verification": false,
+    "invite_only": false,
+    "default_user_role": "member",
+    "allow_avatar_upload": true,
+    "show_reputation": true,
+    "allow_private_profiles": false,
+    "enable_user_following": true,
+    "show_online_status": false,
+    "session_timeout": 24
+  },
+  "content": {
+    "rich_text_editor": true,
+    "allow_image_uploads": true,
+    "syntax_highlighting": true,
+    "auto_link_urls": true,
+    "max_image_size": 5,
+    "allowed_file_types": "jpg, jpeg, png, gif, webp",
+    "auto_meta_descriptions": true,
+    "social_previews": true,
+    "index_user_content": false,
+    "enable_content_versioning": false
+  },
+  "email": {
+    "smtp_host": "",
+    "smtp_port": 587,
+    "from_email": "noreply@tinkbyte.com",
+    "from_name": "TinkByte Team",
+    "enable_welcome_emails": true,
+    "enable_comment_notifications": true,
+    "enable_newsletter_notifications": true,
+    "enable_admin_notifications": true
+  }
+}

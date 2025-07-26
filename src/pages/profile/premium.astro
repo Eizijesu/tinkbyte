@@ -1,5 +1,5 @@
 ---
-// src/pages/profile/premium.astro - CLEAN VERSION
+// src/pages/profile/premium.astro - MOBILE-FIRST RESPONSIVE
 import ProfileLayout from "../../layouts/ProfileLayout.astro";
 ---
 
@@ -140,23 +140,25 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   </div>
 </ProfileLayout>
 
-<style>
+<style is:global>
+  /* Mobile-First Premium Page Styles */
   .premium-page {
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    padding: 2rem;
+    gap: 1rem;
+    padding: 1rem;
   }
 
   .section {
     background: white;
     border: 2px solid #e2e8f0;
-    padding: 1.5rem;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
+    border-radius: 0;
   }
 
   html.dark .section {
@@ -165,29 +167,32 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   }
 
   .section-title {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #1e293b;
     margin: 0;
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
   html.dark .section-title {
     color: #f1f5f9;
   }
 
-  /* Status Section */
+  /* Status Section - Mobile First */
   .status-section {
     background: white;
     border: 2px solid #e2e8f0;
-    padding: 2rem;
+    padding: 1.5rem;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
+    border-radius: 0;
   }
 
   html.dark .status-section {
@@ -208,14 +213,15 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   }
 
   .status-icon {
-    width: 60px;
-    height: 60px;
+    width: 48px;
+    height: 48px;
     background: #64748b;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+    border-radius: 0;
   }
 
   .status-premium .status-icon {
@@ -229,9 +235,11 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   }
 
   .status-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 700;
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
   .status-description {
@@ -239,6 +247,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     opacity: 0.9;
     font-size: 0.875rem;
     max-width: 400px;
+    line-height: 1.4;
   }
 
   .loading-state {
@@ -246,7 +255,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    padding: 2rem;
+    padding: 1.5rem;
     color: #64748b;
     font-size: 0.875rem;
   }
@@ -255,11 +264,13 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     color: #94a3b8;
   }
 
+  /* SQUARE SPINNER - Mobile First */
   .loading-spinner {
     width: 24px;
     height: 24px;
     border: 2px solid #e2e8f0;
     border-top: 2px solid #243788;
+    border-radius: 0; /* SQUARE */
     animation: spin 1s linear infinite;
   }
 
@@ -277,21 +288,24 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     }
   }
 
-  /* Features Grid */
+  /* Features Grid - Mobile First */
   .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   .feature-item {
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
     gap: 1rem;
     padding: 1.5rem;
     background: #f8fafc;
     border: 2px solid transparent;
     transition: all 0.3s ease;
+    text-align: center;
+    border-radius: 0;
   }
 
   .feature-item:hover {
@@ -318,6 +332,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     justify-content: center;
     font-size: 1.125rem;
     flex-shrink: 0;
+    border-radius: 0;
   }
 
   html.dark .feature-icon {
@@ -334,6 +349,8 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     font-weight: 600;
     color: #1e293b;
     margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
   html.dark .feature-name {
@@ -341,35 +358,34 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   }
 
   .feature-description {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     color: #64748b;
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.4;
   }
 
   html.dark .feature-description {
     color: #94a3b8;
   }
 
-  /* Pricing Container */
+  /* Pricing Container - Mobile First */
   .pricing-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    max-width: 800px;
-    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 
   .pricing-card {
     background: #f8fafc;
     border: 2px solid #e2e8f0;
-    padding: 2rem;
+    padding: 1.5rem;
     text-align: center;
     position: relative;
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    border-radius: 0;
   }
 
   html.dark .pricing-card {
@@ -378,7 +394,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   }
 
   .pricing-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     border-color: #243788;
   }
 
@@ -389,7 +405,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   .pricing-card.popular {
     border-color: #243788;
     background: rgba(36, 55, 136, 0.05);
-    transform: scale(1.05);
+    transform: none; /* No scale on mobile */
   }
 
   html.dark .pricing-card.popular {
@@ -399,7 +415,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
   .popular-badge {
     position: absolute;
-    top: -1rem;
+    top: -0.75rem;
     left: 50%;
     transform: translateX(-50%);
     background: #243788;
@@ -410,6 +426,9 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border-radius: 0;
   }
 
   html.dark .popular-badge {
@@ -420,14 +439,16 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   .plan-header {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
 
   .plan-name {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #1e293b;
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
   html.dark .plan-name {
@@ -442,7 +463,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   }
 
   .currency {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #243788;
   }
@@ -452,7 +473,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   }
 
   .amount {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 800;
     color: #1e293b;
     line-height: 1;
@@ -477,23 +498,30 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     color: #10b981;
     font-weight: 600;
     background: rgba(16, 185, 129, 0.1);
-    padding: 0.25rem 0.5rem;
+    padding: 0.375rem 0.75rem;
     display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border-radius: 0;
   }
 
   .plan-features {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
     flex: 1;
   }
 
   .feature-check {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.75rem;
     font-size: 0.875rem;
     color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-weight: 600;
   }
 
   html.dark .feature-check {
@@ -513,7 +541,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    padding: 1rem;
     background: transparent;
     color: #243788;
     border: 2px solid #243788;
@@ -522,6 +550,10 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     cursor: pointer;
     transition: all 0.3s ease;
     font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border-radius: 0;
+    min-height: 48px; /* Touch-friendly */
   }
 
   .plan-button:hover {
@@ -565,211 +597,343 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     background: #94a3b8;
   }
 
-  /* Responsive */
-  @media (max-width: 768px) {
+  /* Tablet Styles (768px and up) */
+  @media (min-width: 768px) {
     .premium-page {
-      padding: 1rem;
+      padding: 1.5rem;
+      gap: 1.5rem;
     }
 
-    .pricing-container {
-      grid-template-columns: 1fr;
+    .section {
+      padding: 1.5rem;
+      gap: 1.5rem;
     }
 
+    .section-title {
+      font-size: 1.125rem;
+    }
+
+    .status-section {
+      padding: 2rem;
+    }
+
+    .status-icon {
+      width: 60px;
+      height: 60px;
+      font-size: 1.5rem;
+    }
+
+    .status-title {
+      font-size: 1.5rem;
+    }
+
+    /* Features Grid - 2 columns on tablet */
     .features-grid {
-      grid-template-columns: 1fr;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
     }
 
     .feature-item {
-      flex-direction: column;
-      text-align: center;
-      gap: 1rem;
+      flex-direction: row;
+      text-align: left;
+      align-items: flex-start;
+    }
+
+    /* Pricing - Side by side on tablet */
+    .pricing-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
     }
 
     .pricing-card.popular {
-      transform: none;
+      transform: scale(1.02);
     }
 
     .plan-price {
-      flex-direction: column;
-      gap: 0;
+      gap: 0.5rem;
     }
 
     .amount {
-      font-size: 2.5rem;
+      font-size: 3rem;
+    }
+
+    .currency {
+      font-size: 1.25rem;
+    }
+
+    .feature-check {
+      justify-content: flex-start;
+    }
+  }
+
+  /* Desktop Styles (1024px and up) */
+  @media (min-width: 1024px) {
+    .premium-page {
+      padding: 2rem;
+      gap: 2rem;
+    }
+
+    .section {
+      padding: 2rem;
+      gap: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+    }
+
+    /* Features Grid - 4 columns on desktop */
+    .features-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .pricing-card.popular {
+      transform: scale(1.05);
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .pricing-card.popular:hover {
+      transform: scale(1.05) translateY(-4px);
+    }
+  }
+
+  /* Large Desktop (1200px and up) */
+  @media (min-width: 1200px) {
+    .features-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .feature-item {
+      padding: 2rem;
     }
   }
 </style>
 
 <script>
-  import { supabase } from "../../lib/supabase.js";
-  import { authStore } from "../../lib/auth-store.js";
+  import { authManager } from "../../lib/auth.js";
 
-  let currentUser: any = null;
-  let subscription: any = null;
+  class PremiumPageManager {
+    private currentUser: any = null;
+    private subscription: any = null;
+    private initialized = false;
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    await loadPremiumStatus();
-    setupEventListeners();
-  });
+    constructor() {
+      this.init();
+    }
 
-  async function loadPremiumStatus() {
-    try {
-      // Get instant data from cache
-      if (authStore.hasInstantData()) {
-        console.log("⚡ Premium: Using instant cached data");
+    async init() {
+      if (this.initialized) return;
 
-        currentUser = authStore.getUser();
+      try {
+        console.log("🚀 Premium: Starting initialization...");
+        await this.loadPremiumStatus();
+        this.setupEventListeners();
+        this.initialized = true;
+        console.log("✅ Premium: Initialization complete");
+      } catch (error) {
+        console.error("❌ Premium: Initialization failed:", error);
+        this.updateStatusSection();
+      }
+    }
 
-        if (!currentUser) {
+    async loadPremiumStatus() {
+      try {
+        // Initialize auth manager
+        await authManager.initialize();
+
+        // Check authentication
+        this.currentUser = authManager.getUser();
+
+        if (!this.currentUser) {
+          console.log("❌ Premium: Not authenticated, redirecting...");
           window.location.href = "/auth/signin";
           return;
         }
 
-        // Show initial state
-        subscription = null;
-        updateStatusSection();
+        console.log("✅ Premium: User authenticated:", this.currentUser.email);
 
-        // Load subscription data in background
-        loadBackgroundData();
+        // Load subscription status (placeholder for now)
+        this.subscription = null; // TODO: Load actual subscription from database
+        this.updateStatusSection();
+
+        // Load any additional background data
+        await this.loadBackgroundData();
+      } catch (error) {
+        console.error("❌ Premium: Error loading status:", error);
+        this.updateStatusSection();
+      }
+    }
+
+    async loadBackgroundData() {
+      try {
+        // TODO: Load actual subscription data from your database
+        // For now, we'll simulate it
+        console.log("📊 Premium: Loading background data...");
+
+        // Example: Check if user has premium subscription
+        // const { data: subscription } = await supabase
+        //   .from('subscriptions')
+        //   .select('*')
+        //   .eq('user_id', this.currentUser.id)
+        //   .eq('status', 'active')
+        //   .single();
+
+        this.subscription = null; // No premium subscription found
+        this.updateStatusSection();
+      } catch (error) {
+        console.error("❌ Premium: Error loading background data:", error);
+      }
+    }
+
+    updateStatusSection() {
+      const statusSection = document.getElementById(
+        "premium-status"
+      ) as HTMLElement;
+      if (!statusSection) return;
+
+      if (this.subscription) {
+        // User has premium subscription
+        statusSection.className = "status-section status-premium";
+        statusSection.innerHTML = `
+          <div class="status-icon">
+            <i class="fas fa-crown"></i>
+          </div>
+          <h2 class="status-title">Premium Active</h2>
+          <p class="status-description">
+            Your premium membership is active
+          </p>
+        `;
+
+        // Hide pricing section since user already has premium
+        const pricingSection = document.getElementById("pricing-section");
+        if (pricingSection) {
+          pricingSection.style.display = "none";
+        }
+      } else {
+        // User is on free plan
+        statusSection.className = "status-section";
+        statusSection.innerHTML = `
+          <div class="status-icon">
+            <i class="fas fa-user"></i>
+          </div>
+          <h2 class="status-title">Free Member</h2>
+          <p class="status-description">
+            Upgrade to Premium for exclusive content and features
+          </p>
+        `;
+
+        // Show pricing section
+        const pricingSection = document.getElementById("pricing-section");
+        if (pricingSection) {
+          pricingSection.style.display = "block";
+        }
+      }
+    }
+
+    setupEventListeners() {
+      const planButtons = document.querySelectorAll(
+        ".plan-button[data-plan]"
+      ) as NodeListOf<HTMLButtonElement>;
+      planButtons.forEach((button) => {
+        button.addEventListener("click", (event) =>
+          this.handlePlanSelection(event)
+        );
+      });
+    }
+
+    async handlePlanSelection(event: Event) {
+      const button = event.currentTarget as HTMLButtonElement;
+      const plan = button.getAttribute("data-plan");
+
+      if (!this.currentUser) {
+        this.showToast("Please sign in to subscribe", "error");
         return;
       }
 
-      // No instant data, need to initialize
-      console.log("🔄 Premium: Initializing auth...");
-      await authStore.initialize();
+      console.log("💳 Premium: Plan selection:", plan);
 
-      currentUser = authStore.getUser();
+      const originalContent = button.innerHTML;
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-      if (!currentUser) {
-        window.location.href = "/auth/signin";
-        return;
+      try {
+        // TODO: Integrate with your payment processor (Stripe, etc.)
+        // For now, we'll simulate the process
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Simulate successful payment
+        this.showToast("Payment integration coming soon!", "success");
+
+        // TODO: After successful payment, update subscription status
+        // this.subscription = { plan, status: 'active' };
+        // this.updateStatusSection();
+      } catch (error) {
+        console.error("❌ Premium: Subscription error:", error);
+        this.showToast("Failed to process subscription", "error");
+      } finally {
+        button.disabled = false;
+        button.innerHTML = originalContent;
       }
-
-      subscription = null;
-      updateStatusSection();
-      loadBackgroundData();
-    } catch (error) {
-      console.error("Error loading premium status:", error);
-      updateStatusSection();
     }
-  }
 
-  async function loadBackgroundData() {
-    try {
-      // Here you would load actual subscription data
-      // For now, assume free user
-      subscription = null;
-      updateStatusSection();
-    } catch (error) {
-      console.error("Error loading background data:", error);
-    }
-  }
-
-  function updateStatusSection() {
-    const statusSection = document.getElementById(
-      "premium-status"
-    ) as HTMLElement;
-    if (!statusSection) return;
-
-    if (subscription) {
-      statusSection.className = "status-section status-premium";
-      statusSection.innerHTML = `
-        <div class="status-icon">
-          <i class="fas fa-crown"></i>
-        </div>
-        <h2 class="status-title">Premium Active</h2>
-        <p class="status-description">
-          Your premium membership is active
-        </p>
+    showToast(message: string, type: "success" | "error" = "success") {
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${type === "success" ? "#10b981" : "#ef4444"};
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        z-index: 10000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 0;
       `;
 
-      const pricingSection = document.getElementById("pricing-section");
-      if (pricingSection) {
-        pricingSection.style.display = "none";
-      }
-    } else {
-      statusSection.className = "status-section";
-      statusSection.innerHTML = `
-        <div class="status-icon">
-          <i class="fas fa-user"></i>
-        </div>
-        <h2 class="status-title">Free Member</h2>
-        <p class="status-description">
-          Upgrade to Premium for exclusive content and features
-        </p>
+      toast.innerHTML = `
+        <i class="fas fa-${type === "success" ? "check-circle" : "exclamation-triangle"}"></i>
+        ${message}
       `;
+
+      document.body.appendChild(toast);
+
+      // Show toast
+      setTimeout(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "translateX(0)";
+      }, 100);
+
+      // Hide toast after delay
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(100%)";
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Public method to refresh status
+    async refreshStatus() {
+      await this.loadPremiumStatus();
     }
   }
 
-  function setupEventListeners() {
-    const planButtons = document.querySelectorAll(".plan-button[data-plan]");
-    planButtons.forEach((button) => {
-      button.addEventListener("click", handlePlanSelection);
-    });
-  }
-
-  async function handlePlanSelection(event: Event) {
-    const button = event.currentTarget as HTMLButtonElement;
-    const plan = button.getAttribute("data-plan");
-
-    if (!currentUser) {
-      showToast("Please sign in to subscribe", "error");
-      return;
-    }
-
-    const originalContent = button.innerHTML;
-    button.disabled = true;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      showToast("Payment integration coming soon!", "success");
-    } catch (error) {
-      console.error("Subscription error:", error);
-      showToast("Failed to process subscription", "error");
-    } finally {
-      button.disabled = false;
-      button.innerHTML = originalContent;
-    }
-  }
-
-  function showToast(message: string, type: "success" | "error" = "success") {
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 1rem 1.5rem;
-      background: ${type === "success" ? "#10b981" : "#ef4444"};
-      color: white;
-      font-weight: 600;
-      font-size: 0.875rem;
-      z-index: 10000;
-      opacity: 0;
-      transform: translateX(100%);
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    `;
-
-    toast.innerHTML = `
-      <i class="fas fa-${type === "success" ? "check-circle" : "exclamation-triangle"}"></i>
-      ${message}
-    `;
-
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = "1";
-      toast.style.transform = "translateX(0)";
-    }, 100);
-
-    setTimeout(() => {
-      toast.style.opacity = "0";
-      toast.style.transform = "translateX(100%)";
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }
+  // Initialize when DOM is ready
+  document.addEventListener("DOMContentLoaded", () => {
+    new PremiumPageManager();
+  });
 </script>

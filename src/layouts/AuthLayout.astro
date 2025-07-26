@@ -7,6 +7,12 @@ export interface Props {
   description: string;
 }
 
+declare global {
+  interface WindowEventMap {
+    adminMetricsUpdate: CustomEvent;
+  }
+}
+
 const { title, description } = Astro.props;
 ---
 

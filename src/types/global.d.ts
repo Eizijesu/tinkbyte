@@ -7,4 +7,25 @@ declare global {
   }
 }
 
+declare global {
+  interface Window {
+    tinkbyteInitialized?: boolean;
+  }
+}
+
+export {};
+
+declare global {
+  interface Window {
+    themeTransitionManager?: {
+      startTransition: () => void;
+      endTransition: () => void;
+      isTransitioning: boolean;
+    };
+    toggleTheme?: () => void;
+  }
+}
+
+export {};
+
 export {};

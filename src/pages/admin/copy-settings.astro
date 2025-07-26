@@ -1,0 +1,1168 @@
+---
+// src/pages/admin/settings.astro (continued)
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Admin Settings - TinkByte Admin">
+  <div class="settings-container">
+    <!-- Settings Header -->
+    <div class="settings-header">
+      <h1>Admin Settings</h1>
+      <p>Configure your TinkByte community settings</p>
+    </div>
+
+    <!-- Settings Navigation -->
+    <div class="settings-nav">
+      <button class="settings-tab active" data-tab="general">
+        <i class="fas fa-cog"></i>
+        General
+      </button>
+      <button class="settings-tab" data-tab="moderation">
+        <i class="fas fa-shield-alt"></i>
+        Moderation
+      </button>
+      <button class="settings-tab" data-tab="users">
+        <i class="fas fa-users"></i>
+        User Management
+      </button>
+      <button class="settings-tab" data-tab="content">
+        <i class="fas fa-edit"></i>
+        Content
+      </button>
+      <button class="settings-tab" data-tab="cms">
+        <i class="fas fa-file-alt"></i>
+        CMS Access
+      </button>
+    </div>
+
+    <!-- General Settings -->
+    <div id="general-tab" class="settings-content active">
+      <div class="settings-section">
+        <h2>General Settings</h2>
+        <form class="settings-form" id="general-form">
+          <div class="form-group">
+            <label for="site-name">Site Name</label>
+            <input type="text" id="site-name" value="TinkByte" />
+            <span class="form-help">The name of your community</span>
+          </div>
+          <div class="form-group">
+            <label for="site-description">Site Description</label>
+            <textarea id="site-description" rows="3"
+              >Build products that matter. Real stories, practical insights, no
+              fluff.</textarea
+            >
+            <span class="form-help">Brief description of your community</span>
+          </div>
+          <div class="form-group">
+            <label for="admin-email">Admin Email</label>
+            <input type="email" id="admin-email" value="tinkbytehq@gmail.com" />
+            <span class="form-help">Primary admin contact email</span>
+          </div>
+          <div class="form-group">
+            <label>Community Features</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Enable user comments</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Enable user profiles</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Enable newsletter subscriptions</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" />
+                <span>Enable user-generated content</span>
+              </label>
+            </div>
+          </div>
+          <button type="submit" class="save-btn">
+            <i class="fas fa-save"></i>
+            Save General Settings
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Moderation Settings -->
+    <div id="moderation-tab" class="settings-content">
+      <div class="settings-section">
+        <h2>Moderation Settings</h2>
+        <form class="settings-form" id="moderation-form">
+          <div class="form-group">
+            <label>Auto-Moderation</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Enable auto-moderation for new users</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Auto-approve comments from trusted users</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" />
+                <span>Auto-flag comments with profanity</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="trusted-user-threshold"
+              >Trusted User Reputation Threshold</label
+            >
+            <input
+              type="number"
+              id="trusted-user-threshold"
+              value="100"
+              min="0"
+            />
+            <span class="form-help"
+              >Users above this reputation score get auto-approved comments</span
+            >
+          </div>
+          <div class="form-group">
+            <label for="moderation-keywords">Blocked Keywords</label>
+            <textarea
+              id="moderation-keywords"
+              rows="4"
+              placeholder="Enter keywords separated by commas"></textarea>
+            <span class="form-help"
+              >Comments containing these keywords will be auto-flagged</span
+            >
+          </div>
+          <div class="form-group">
+            <label for="comment-length-limit">Comment Length Limit</label>
+            <input
+              type="number"
+              id="comment-length-limit"
+              value="1000"
+              min="100"
+            />
+            <span class="form-help">Maximum characters allowed in comments</span
+            >
+          </div>
+          <button type="submit" class="save-btn">
+            <i class="fas fa-save"></i>
+            Save Moderation Settings
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- User Management Settings -->
+    <div id="users-tab" class="settings-content">
+      <div class="settings-section">
+        <h2>User Management Settings</h2>
+        <form class="settings-form" id="users-form">
+          <div class="form-group">
+            <label>Registration Settings</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Allow user registration</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" />
+                <span>Require email verification</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" />
+                <span>Enable invite-only registration</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="default-user-role">Default User Role</label>
+            <select id="default-user-role">
+              <option value="member" selected>Member</option>
+              <option value="contributor">Contributor</option>
+              <option value="moderator">Moderator</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Profile Settings</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Allow users to upload avatars</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Show user reputation scores</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" />
+                <span>Allow users to hide their profiles</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="session-timeout">Session Timeout (hours)</label>
+            <input
+              type="number"
+              id="session-timeout"
+              value="24"
+              min="1"
+              max="168"
+            />
+            <span class="form-help">How long users stay logged in</span>
+          </div>
+          <button type="submit" class="save-btn">
+            <i class="fas fa-save"></i>
+            Save User Settings
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Content Settings -->
+    <div id="content-tab" class="settings-content">
+      <div class="settings-section">
+        <h2>Content Settings</h2>
+        <form class="settings-form" id="content-form">
+          <div class="form-group">
+            <label>Content Features</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Enable rich text editor</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Allow image uploads in comments</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" />
+                <span>Enable code syntax highlighting</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Auto-link URLs in comments</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="max-image-size">Maximum Image Size (MB)</label>
+            <input
+              type="number"
+              id="max-image-size"
+              value="5"
+              min="1"
+              max="50"
+            />
+          </div>
+          <div class="form-group">
+            <label for="allowed-file-types">Allowed File Types</label>
+            <input
+              type="text"
+              id="allowed-file-types"
+              value="jpg, jpeg, png, gif, webp"
+            />
+            <span class="form-help"
+              >Comma-separated list of allowed file extensions</span
+            >
+          </div>
+          <div class="form-group">
+            <label>SEO Settings</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Generate automatic meta descriptions</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" checked />
+                <span>Enable social media previews</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" />
+                <span>Index user-generated content</span>
+              </label>
+            </div>
+          </div>
+          <button type="submit" class="save-btn">
+            <i class="fas fa-save"></i>
+            Save Content Settings
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- CMS Access -->
+    <div id="cms-tab" class="settings-content">
+      <div class="settings-section">
+        <h2>Content Management System</h2>
+        <div class="cms-access-section">
+          <div class="cms-info">
+            <div class="cms-icon">
+              <i class="fas fa-edit"></i>
+            </div>
+            <div class="cms-details">
+              <h3>TinaCMS Admin</h3>
+              <p>
+                Access the TinaCMS interface to manage your blog posts, pages,
+                and content. This is where you can create, edit, and publish
+                articles.
+              </p>
+              <div class="cms-features">
+                <span class="feature-tag">
+                  <i class="fas fa-file-alt"></i>
+                  Blog Posts
+                </span>
+                <span class="feature-tag">
+                  <i class="fas fa-images"></i>
+                  Media Library
+                </span>
+                <span class="feature-tag">
+                  <i class="fas fa-tags"></i>
+                  Categories
+                </span>
+                <span class="feature-tag">
+                  <i class="fas fa-cog"></i>
+                  Site Config
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cms-actions">
+            <a href="/admin/index.html" class="cms-btn primary" target="_blank">
+              <i class="fas fa-external-link-alt"></i>
+              Open TinaCMS
+            </a>
+            <button class="cms-btn secondary" id="refresh-cms">
+              <i class="fas fa-sync-alt"></i>
+              Refresh CMS
+            </button>
+          </div>
+        </div>
+
+        <div class="cms-stats">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-number">24</span>
+              <span class="stat-label">Published Posts</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-edit"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-number">3</span>
+              <span class="stat-label">Draft Posts</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-images"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-number">156</span>
+              <span class="stat-label">Media Files</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="recent-activity">
+          <h3>Recent CMS Activity</h3>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon">
+                <i class="fas fa-plus"></i>
+              </div>
+              <div class="activity-content">
+                <span class="activity-action">New post created</span>
+                <span class="activity-title"
+                  >"Building Better Products with AI"</span
+                >
+                <span class="activity-time">2 hours ago</span>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">
+                <i class="fas fa-edit"></i>
+              </div>
+              <div class="activity-content">
+                <span class="activity-action">Post updated</span>
+                <span class="activity-title"
+                  >"Product Strategy Fundamentals"</span
+                >
+                <span class="activity-time">1 day ago</span>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">
+                <i class="fas fa-image"></i>
+              </div>
+              <div class="activity-content">
+                <span class="activity-action">Media uploaded</span>
+                <span class="activity-title">5 new images added</span>
+                <span class="activity-time">2 days ago</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .settings-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .settings-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .settings-header h1 {
+    color: #f0f6fc;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .settings-header p {
+    color: #8b949e;
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .settings-nav {
+    display: flex;
+    gap: 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #21262d;
+    background: #161b22;
+  }
+
+  .settings-tab {
+    padding: 1rem 1.5rem;
+    border: none;
+    background: transparent;
+    color: #8b949e;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .settings-tab.active {
+    color: #4285f4;
+    border-bottom-color: #4285f4;
+    background: #0d1117;
+  }
+
+  .settings-tab:hover:not(.active) {
+    color: #f0f6fc;
+    background: #21262d;
+  }
+
+  .settings-content {
+    display: none;
+  }
+
+  .settings-content.active {
+    display: block;
+  }
+
+  .settings-section {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 2rem;
+  }
+
+  .settings-section h2 {
+    color: #f0f6fc;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 2rem 0;
+  }
+
+  .settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-group label {
+    color: #f0f6fc;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 0.75rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    font-size: 0.875rem;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: #4285f4;
+  }
+
+  .form-group input::placeholder,
+  .form-group textarea::placeholder {
+    color: #8b949e;
+  }
+
+  .form-help {
+    color: #8b949e;
+    font-size: 0.75rem;
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #f0f6fc;
+    font-weight: 400;
+    cursor: pointer;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #4285f4;
+  }
+
+  .save-btn {
+    align-self: flex-start;
+    padding: 0.75rem 1.5rem;
+    background: #4285f4;
+    border: 1px solid #4285f4;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .save-btn:hover {
+    background: #3367d6;
+    border-color: #3367d6;
+  }
+
+  /* CMS Access Styles */
+  .cms-access-section {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+  }
+
+  .cms-info {
+    flex: 1;
+    display: flex;
+    gap: 1rem;
+  }
+
+  .cms-icon {
+    width: 60px;
+    height: 60px;
+    background: #4285f4;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .cms-details h3 {
+    color: #f0f6fc;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .cms-details p {
+    color: #8b949e;
+    line-height: 1.5;
+    margin: 0 0 1rem 0;
+  }
+
+  .cms-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .feature-tag {
+    padding: 0.25rem 0.75rem;
+    background: rgba(66, 133, 244, 0.1);
+    color: #4285f4;
+    border: 1px solid #4285f4;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .cms-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-end;
+  }
+
+  .cms-btn {
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    font-size: 0.875rem;
+  }
+
+  .cms-btn.primary {
+    background: #4285f4;
+    color: white;
+    border: 1px solid #4285f4;
+  }
+
+  .cms-btn.primary:hover {
+    background: #3367d6;
+    border-color: #3367d6;
+  }
+
+  .cms-btn.secondary {
+    background: transparent;
+    color: #4285f4;
+    border: 1px solid #4285f4;
+  }
+
+  .cms-btn.secondary:hover {
+    background: #4285f4;
+    color: white;
+  }
+
+  .cms-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: #21262d;
+    border: 1px solid #30363d;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .stat-card .stat-icon {
+    width: 50px;
+    height: 50px;
+    background: #4285f4;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .stat-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #f0f6fc;
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: #8b949e;
+  }
+
+  .recent-activity {
+    background: #21262d;
+    border: 1px solid #30363d;
+    padding: 1.5rem;
+  }
+
+  .recent-activity h3 {
+    color: #f0f6fc;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+  }
+
+  .activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #161b22;
+    border: 1px solid #21262d;
+  }
+
+  .activity-item .activity-icon {
+    width: 40px;
+    height: 40px;
+    background: #30363d;
+    color: #f0f6fc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .activity-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .activity-action {
+    color: #f0f6fc;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .activity-title {
+    color: #8b949e;
+    font-size: 0.875rem;
+  }
+
+  .activity-time {
+    color: #8b949e;
+    font-size: 0.75rem;
+  }
+
+  /* Light mode styles */
+  :global(.light) .settings-header {
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .settings-header h1 {
+    color: #1f2937;
+  }
+
+  :global(.light) .settings-header p {
+    color: #6b7280;
+  }
+
+  :global(.light) .settings-nav {
+    background: #f8fafc;
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .settings-tab {
+    color: #6b7280;
+  }
+
+  :global(.light) .settings-tab.active {
+    color: #243788;
+    border-bottom-color: #243788;
+    background: white;
+  }
+
+  :global(.light) .settings-tab:hover:not(.active) {
+    color: #1f2937;
+    background: #e2e8f0;
+  }
+
+  :global(.light) .settings-section {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .settings-section h2 {
+    color: #1f2937;
+  }
+
+  :global(.light) .form-group label {
+    color: #1f2937;
+  }
+
+  :global(.light) .form-group input,
+  :global(.light) .form-group textarea,
+  :global(.light) .form-group select {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .form-group input:focus,
+  :global(.light) .form-group textarea:focus,
+  :global(.light) .form-group select:focus {
+    border-color: #243788;
+  }
+
+  :global(.light) .form-help {
+    color: #6b7280;
+  }
+
+  :global(.light) .checkbox-label {
+    color: #1f2937;
+  }
+
+  :global(.light) .save-btn {
+    background: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .save-btn:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+  }
+
+  :global(.light) .cms-access-section {
+    background: #f9fafb;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .cms-icon {
+    background: #243788;
+  }
+
+  :global(.light) .cms-details h3 {
+    color: #1f2937;
+  }
+
+  :global(.light) .cms-details p {
+    color: #6b7280;
+  }
+
+  :global(.light) .feature-tag {
+    background: rgba(36, 55, 136, 0.1);
+    color: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .cms-btn.primary {
+    background: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .cms-btn.primary:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+  }
+
+  :global(.light) .cms-btn.secondary {
+    color: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .cms-btn.secondary:hover {
+    background: #243788;
+  }
+
+  :global(.light) .stat-card {
+    background: #f9fafb;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .stat-card .stat-icon {
+    background: #243788;
+  }
+
+  :global(.light) .stat-number {
+    color: #1f2937;
+  }
+
+  :global(.light) .stat-label {
+    color: #6b7280;
+  }
+
+  :global(.light) .recent-activity {
+    background: #f9fafb;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .recent-activity h3 {
+    color: #1f2937;
+  }
+
+  :global(.light) .activity-item {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .activity-item .activity-icon {
+    background: #e2e8f0;
+    color: #1f2937;
+  }
+
+  :global(.light) .activity-action {
+    color: #1f2937;
+  }
+
+  :global(.light) .activity-title {
+    color: #6b7280;
+  }
+
+  :global(.light) .activity-time {
+    color: #6b7280;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .settings-nav {
+      flex-wrap: wrap;
+    }
+
+    .settings-tab {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+    }
+
+    .settings-section {
+      padding: 1.5rem;
+    }
+
+    .cms-access-section {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .cms-actions {
+      align-items: stretch;
+    }
+
+    .cms-btn {
+      justify-content: center;
+    }
+
+    .cms-stats {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  // Fixed TypeScript interfaces
+  interface SettingsTabElement extends HTMLButtonElement {
+    dataset: DOMStringMap;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    setupSettingsNavigation();
+    setupFormHandlers();
+    setupCMSActions();
+  });
+
+  function setupSettingsNavigation() {
+    const tabButtons = document.querySelectorAll(
+      ".settings-tab"
+    ) as NodeListOf<SettingsTabElement>;
+    const tabContents = document.querySelectorAll(".settings-content");
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const targetTab = button.dataset.tab;
+        if (!targetTab) return;
+
+        // Update active tab button
+        tabButtons.forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
+
+        // Show corresponding tab content
+        tabContents.forEach((content) => {
+          content.classList.remove("active");
+          if (content.id === `${targetTab}-tab`) {
+            content.classList.add("active");
+          }
+        });
+      });
+    });
+  }
+
+  function setupFormHandlers() {
+    // General form
+    const generalForm = document.getElementById("general-form");
+    generalForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await saveSettings(
+        "general",
+        getFormData(generalForm as HTMLFormElement)
+      );
+    });
+
+    // Moderation form
+    const moderationForm = document.getElementById("moderation-form");
+    moderationForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await saveSettings(
+        "moderation",
+        getFormData(moderationForm as HTMLFormElement)
+      );
+    });
+
+    // Users form
+    const usersForm = document.getElementById("users-form");
+    usersForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await saveSettings("users", getFormData(usersForm as HTMLFormElement));
+    });
+
+    // Content form
+    const contentForm = document.getElementById("content-form");
+    contentForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await saveSettings(
+        "content",
+        getFormData(contentForm as HTMLFormElement)
+      );
+    });
+  }
+
+  function setupCMSActions() {
+    const refreshCMSBtn = document.getElementById("refresh-cms");
+    refreshCMSBtn?.addEventListener("click", () => {
+      showNotification("CMS cache refreshed successfully", "success");
+    });
+  }
+
+  function getFormData(form: HTMLFormElement): Record<string, any> {
+    const formData = new FormData(form);
+    const data: Record<string, any> = {};
+
+    // Get regular inputs
+    const inputs = form.querySelectorAll("input, textarea, select");
+    inputs.forEach((input) => {
+      const element = input as
+        | HTMLInputElement
+        | HTMLTextAreaElement
+        | HTMLSelectElement;
+      if (element.type === "checkbox") {
+        data[element.id || element.name] = (
+          element as HTMLInputElement
+        ).checked;
+      } else {
+        data[element.id || element.name] = element.value;
+      }
+    });
+
+    return data;
+  }
+
+  async function saveSettings(section: string, data: Record<string, any>) {
+    try {
+      const response = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          section,
+          settings: data,
+        }),
+      });
+
+      if (response.ok) {
+        showNotification(
+          `${section.charAt(0).toUpperCase() + section.slice(1)} settings saved successfully`,
+          "success"
+        );
+      } else {
+        const result = await response.json();
+        showNotification(result.error || "Failed to save settings", "error");
+      }
+    } catch (error) {
+      console.error("Settings save error:", error);
+      showNotification("An error occurred while saving settings", "error");
+    }
+  }
+
+  function showNotification(
+    message: string,
+    type: "success" | "error" = "success"
+  ) {
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      color: white;
+      font-weight: 500;
+      z-index: 10000;
+      background: ${type === "success" ? "#238636" : "#da3633"};
+      animation: slideIn 0.3s ease;
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+
+  // Add animation styles
+  if (!document.getElementById("settings-animations")) {
+    const style = document.createElement("style");
+    style.id = "settings-animations";
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+</script>

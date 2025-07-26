@@ -1,0 +1,667 @@
+---
+// src/components/admin/ArticleEngagementModal.astro
+---
+
+<div
+  id="engagement-modal"
+  class="modal engagement-modal"
+  style="display: none;"
+>
+  <div class="modal-content large">
+    <div class="modal-header">
+      <h3 id="engagement-modal-title">Article Engagement Details</h3>
+      <button class="modal-close" id="engagement-modal-close">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="engagement-loading" class="loading-state">
+        <div class="spinner-square"></div>
+        <span>Loading engagement data...</span>
+      </div>
+
+      <div id="engagement-content" style="display: none;">
+        <!-- Engagement Summary -->
+        <div class="engagement-summary">
+          <div class="summary-cards">
+            <div class="summary-card">
+              <div class="card-icon">
+                <i class="fas fa-eye"></i>
+              </div>
+              <div class="card-content">
+                <div class="card-number" id="total-reads">-</div>
+                <div class="card-label">Total Reads</div>
+                <div class="card-detail">
+                  <span id="unique-readers">-</span> unique readers
+                </div>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="card-icon">
+                <i class="fas fa-heart"></i>
+              </div>
+              <div class="card-content">
+                <div class="card-number" id="total-likes">-</div>
+                <div class="card-label">Likes</div>
+                <div class="card-detail">
+                  <span id="engagement-rate">-</span>% engagement
+                </div>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="card-icon">
+                <i class="fas fa-bookmark"></i>
+              </div>
+              <div class="card-content">
+                <div class="card-number" id="total-saves">-</div>
+                <div class="card-label">Saves</div>
+                <div class="card-detail">High intent readers</div>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="card-icon">
+                <i class="fas fa-comment"></i>
+              </div>
+              <div class="card-content">
+                <div class="card-number" id="total-comments">-</div>
+                <div class="card-label">Comments</div>
+                <div class="card-detail">Community discussions</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="reading-metrics">
+            <div class="metric-item">
+              <span class="metric-label">Average Read Time:</span>
+              <span class="metric-value" id="avg-read-time">-</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Average Read Completion:</span>
+              <span class="metric-value" id="avg-read-percentage">-</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Anonymous Readers:</span>
+              <span class="metric-value" id="anonymous-readers">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="engagement-tabs">
+          <button class="tab-button active" data-tab="recent-activity"
+            >Recent Activity</button
+          >
+          <button class="tab-button" data-tab="top-users"
+            >Top Engaged Users</button
+          >
+          <button class="tab-button" data-tab="comments">Comments</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+          <!-- Recent Activity Tab -->
+          <div id="recent-activity" class="tab-panel active">
+            <div class="activity-sections">
+              <div class="activity-section">
+                <h4><i class="fas fa-eye"></i> Recent Reads</h4>
+                <div id="recent-reads" class="activity-list">
+                  <!-- Will be populated dynamically -->
+                </div>
+              </div>
+
+              <div class="activity-section">
+                <h4><i class="fas fa-heart"></i> Recent Likes</h4>
+                <div id="recent-likes" class="activity-list">
+                  <!-- Will be populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top Users Tab -->
+          <div id="top-users" class="tab-panel">
+            <div id="top-engaged-users" class="users-list">
+              <!-- Will be populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Comments Tab -->
+          <div id="comments" class="tab-panel">
+            <div id="article-comments" class="comments-list">
+              <!-- Will be populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .engagement-modal .modal-content {
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .engagement-summary {
+    margin-bottom: 2rem;
+  }
+
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .summary-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  }
+
+  .card-content {
+    flex: 1;
+  }
+
+  .card-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1;
+  }
+
+  .card-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-top: 0.25rem;
+  }
+
+  .card-detail {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.25rem;
+  }
+
+  .reading-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background: #f1f5f9;
+    border-radius: 8px;
+  }
+
+  .metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .metric-label {
+    font-weight: 500;
+    color: #475569;
+  }
+
+  .metric-value {
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .engagement-tabs {
+    display: flex;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+  }
+
+  .tab-button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: #64748b;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .tab-button.active {
+    color: #4f46e5;
+    border-bottom-color: #4f46e5;
+  }
+
+  .tab-button:hover {
+    color: #4f46e5;
+  }
+
+  .tab-panel {
+    display: none;
+  }
+
+  .tab-panel.active {
+    display: block;
+  }
+
+  .activity-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  .activity-section h4 {
+    margin: 0 0 1rem 0;
+    color: #1e293b;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .activity-list {
+    space-y: 0.75rem;
+  }
+
+  .activity-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .activity-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .activity-user {
+    font-weight: 500;
+    color: #1e293b;
+    font-size: 0.875rem;
+  }
+
+  .activity-time {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  .users-list {
+    space-y: 1rem;
+  }
+
+  .user-engagement-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .user-engagement-stats {
+    display: flex;
+    gap: 1rem;
+    margin-left: auto;
+  }
+
+  .engagement-stat {
+    text-align: center;
+  }
+
+  .engagement-stat-number {
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .engagement-stat-label {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  .comments-list {
+    space-y: 1rem;
+  }
+
+  .comment-item {
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .comment-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .comment-content {
+    color: #374151;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+  }
+
+  .comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  @media (max-width: 768px) {
+    .summary-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .activity-sections {
+      grid-template-columns: 1fr;
+    }
+
+    .reading-metrics {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  // Declare types to fix TypeScript errors
+  declare global {
+    interface Window {
+      showEngagementModal: (articleSlug: string) => void;
+      AdminAPI: any;
+      showNotification: (message: string, type: "success" | "error") => void;
+    }
+  }
+
+  // Add this to your articles page script - this should be included in the parent page
+  function showEngagementModal(articleSlug: string) {
+    const modal = document.getElementById("engagement-modal");
+    const title = document.getElementById("engagement-modal-title");
+    const loading = document.getElementById("engagement-loading");
+    const content = document.getElementById("engagement-content");
+
+    if (!modal || !title || !loading || !content) return;
+
+    title.textContent = `Engagement: ${articleSlug}`;
+    modal.style.display = "flex";
+    loading.style.display = "block";
+    content.style.display = "none";
+
+    loadArticleEngagement(articleSlug);
+  }
+
+  async function loadArticleEngagement(articleSlug: string) {
+    try {
+      // Import AdminAPI dynamically to avoid module resolution issues
+      const { AdminAPI } = await import("../../lib/admin-api.js");
+      const result = await AdminAPI.getArticleEngagementDetails(articleSlug);
+
+      if (result.success && result.data) {
+        populateEngagementData(result.data);
+      } else {
+        throw new Error(result.error || "Failed to load engagement data");
+      }
+    } catch (error: any) {
+      console.error("Engagement loading error:", error);
+      // Use a simple notification instead of the global function
+      showSimpleNotification("Failed to load engagement data", "error");
+    }
+  }
+
+  function populateEngagementData(data: any) {
+    const loading = document.getElementById("engagement-loading");
+    const content = document.getElementById("engagement-content");
+
+    if (!loading || !content) return;
+
+    // Update summary cards
+    const elements = {
+      "total-reads": data.summary.totalReads,
+      "unique-readers": data.summary.uniqueReaders,
+      "total-likes": data.summary.totalLikes,
+      "total-saves": data.summary.totalSaves,
+      "total-comments": data.summary.totalComments,
+      "engagement-rate": Math.round(data.summary.engagementRate),
+      "avg-read-time": `${Math.floor(data.summary.averageReadTime / 60)}m ${data.summary.averageReadTime % 60}s`,
+      "avg-read-percentage": `${data.summary.averageReadPercentage}%`,
+      "anonymous-readers": data.summary.anonymousReaders,
+    };
+
+    Object.entries(elements).forEach(([id, value]) => {
+      const element = document.getElementById(id);
+      if (element) element.textContent = value.toString();
+    });
+
+    // Populate recent activity
+    populateRecentActivity(data.recentActivity);
+    populateTopUsers(data.topEngagedUsers);
+    populateComments(data.recentActivity.comments);
+
+    // Show content
+    loading.style.display = "none";
+    content.style.display = "block";
+  }
+
+  function populateRecentActivity(activity: any) {
+    const readsContainer = document.getElementById("recent-reads");
+    const likesContainer = document.getElementById("recent-likes");
+
+    if (readsContainer) {
+      readsContainer.innerHTML = activity.reads
+        .slice(0, 10)
+        .map(
+          (read: any) => `
+      <div class="activity-item">
+        <div class="user-avatar">
+          ${read.profiles?.display_name?.charAt(0)?.toUpperCase() || "?"}
+        </div>
+        <div class="activity-details">
+          <div class="activity-user">
+            ${read.profiles?.display_name || "Anonymous Reader"}
+          </div>
+          <div class="activity-time">
+            ${new Date(read.created_at).toLocaleDateString()} • 
+            ${read.read_percentage || 0}% read • 
+            ${Math.floor((read.time_spent_seconds || 0) / 60)}m ${(read.time_spent_seconds || 0) % 60}s
+          </div>
+        </div>
+      </div>
+    `
+        )
+        .join("");
+    }
+
+    if (likesContainer) {
+      likesContainer.innerHTML = activity.likes
+        .slice(0, 10)
+        .map(
+          (like: any) => `
+      <div class="activity-item">
+        <div class="user-avatar">
+          ${like.profiles?.display_name?.charAt(0)?.toUpperCase() || "?"}
+        </div>
+        <div class="activity-details">
+          <div class="activity-user">
+            ${like.profiles?.display_name || "Anonymous User"}
+          </div>
+          <div class="activity-time">
+            ${new Date(like.created_at).toLocaleDateString()}
+          </div>
+        </div>
+      </div>
+    `
+        )
+        .join("");
+    }
+  }
+
+  function populateTopUsers(users: any[]) {
+    const container = document.getElementById("top-engaged-users");
+    if (!container) return;
+
+    container.innerHTML = users
+      .map(
+        (userStats: any) => `
+    <div class="user-engagement-item">
+      <div class="user-avatar">
+        ${userStats.user?.display_name?.charAt(0)?.toUpperCase() || "?"}
+      </div>
+      <div class="activity-details">
+        <div class="activity-user">
+          ${userStats.user?.display_name || "Anonymous User"}
+        </div>
+        <div class="activity-time">
+          Total engagement score: ${userStats.totalEngagement}
+        </div>
+      </div>
+      <div class="user-engagement-stats">
+        <div class="engagement-stat">
+          <div class="engagement-stat-number">${userStats.reads}</div>
+          <div class="engagement-stat-label">Reads</div>
+        </div>
+        <div class="engagement-stat">
+          <div class="engagement-stat-number">${userStats.likes}</div>
+          <div class="engagement-stat-label">Likes</div>
+        </div>
+        <div class="engagement-stat">
+          <div class="engagement-stat-number">${userStats.saves}</div>
+          <div class="engagement-stat-label">Saves</div>
+        </div>
+        <div class="engagement-stat">
+          <div class="engagement-stat-number">${userStats.comments}</div>
+          <div class="engagement-stat-label">Comments</div>
+        </div>
+      </div>
+    </div>
+  `
+      )
+      .join("");
+  }
+
+  function populateComments(comments: any[]) {
+    const container = document.getElementById("article-comments");
+    if (!container) return;
+
+    container.innerHTML = comments
+      .map(
+        (comment: any) => `
+    <div class="comment-item">
+      <div class="comment-header">
+        <div class="user-avatar">
+          ${comment.profiles?.display_name?.charAt(0)?.toUpperCase() || comment.guest_name?.charAt(0)?.toUpperCase() || "?"}
+        </div>
+        <div class="activity-details">
+          <div class="activity-user">
+            ${comment.profiles?.display_name || comment.guest_name || "Anonymous"}
+          </div>
+          <div class="activity-time">
+            ${new Date(comment.created_at).toLocaleDateString()}
+          </div>
+        </div>
+      </div>
+      <div class="comment-content">
+        ${comment.content}
+      </div>
+      <div class="comment-meta">
+        <span><i class="fas fa-heart"></i> ${comment.like_count || 0} likes</span>
+        <span class="status-badge ${comment.moderation_status}">
+          ${comment.moderation_status}
+        </span>
+      </div>
+    </div>
+  `
+      )
+      .join("");
+  }
+
+  // Simple notification function
+  function showSimpleNotification(
+    message: string,
+    type: "success" | "error" = "success"
+  ) {
+    const notification = document.createElement("div");
+    notification.textContent = message;
+    notification.style.cssText = `
+    position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem;
+    color: white; font-weight: 500; z-index: 10000; border-radius: 8px;
+    background: ${type === "success" ? "#238636" : "#da3633"};
+    animation: slideIn 0.3s ease;
+  `;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  }
+
+  // Tab switching
+  document.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    if (target.classList.contains("tab-button")) {
+      const tabId = target.dataset.tab;
+      if (!tabId) return;
+
+      // Update active tab button
+      document
+        .querySelectorAll(".tab-button")
+        .forEach((btn) => btn.classList.remove("active"));
+      target.classList.add("active");
+
+      // Update active tab panel
+      document
+        .querySelectorAll(".tab-panel")
+        .forEach((panel) => panel.classList.remove("active"));
+      const panel = document.getElementById(tabId);
+      if (panel) panel.classList.add("active");
+    }
+  });
+
+  // Modal close handlers
+  document
+    .getElementById("engagement-modal-close")
+    ?.addEventListener("click", () => {
+      const modal = document.getElementById("engagement-modal");
+      if (modal) modal.style.display = "none";
+    });
+
+  // Make function globally available
+  if (typeof window !== "undefined") {
+    window.showEngagementModal = showEngagementModal;
+  }
+</script>

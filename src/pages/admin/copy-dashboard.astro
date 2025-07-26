@@ -1,0 +1,799 @@
+---
+// src/pages/admin/dashboard.astro
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { supabase } from "../../lib/supabase";
+
+// Get dashboard statistics
+const { data: pendingComments } = await supabase
+  .from("comments")
+  .select("id")
+  .eq("moderation_status", "pending");
+
+const { data: flaggedComments } = await supabase
+  .from("comments")
+  .select("id")
+  .eq("moderation_status", "flagged");
+
+const { data: totalUsers } = await supabase.from("profiles").select("id");
+
+const { data: recentComments } = await supabase
+  .from("comments")
+  .select("*")
+  .order("created_at", { ascending: false })
+  .limit(5);
+
+const stats = {
+  pendingComments: pendingComments?.length || 0,
+  flaggedComments: flaggedComments?.length || 0,
+  totalUsers: totalUsers?.length || 0,
+  totalComments:
+    (pendingComments?.length || 0) + (flaggedComments?.length || 0),
+};
+---
+
+<AdminLayout title="Admin Dashboard - TinkByte">
+  <div class="dashboard-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+      <div class="header-content">
+        <h1>Admin Dashboard</h1>
+        <p>Welcome back! Here's what's happening with your community.</p>
+      </div>
+      <div class="header-actions">
+        <button class="refresh-btn" id="refresh-btn">
+          <i class="fas fa-sync-alt"></i>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+      <div class="stat-card urgent">
+        <div class="stat-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{stats.pendingComments}</div>
+          <div class="stat-label">Pending Comments</div>
+          <div class="stat-action">
+            <a href="/admin/moderation">Review Now</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon">
+          <i class="fas fa-flag"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{stats.flaggedComments}</div>
+          <div class="stat-label">Flagged Content</div>
+          <div class="stat-action">
+            <a href="/admin/moderation?tab=flagged">View Flagged</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card info">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{stats.totalUsers}</div>
+          <div class="stat-label">Total Users</div>
+          <div class="stat-action">
+            <a href="/admin/users">Manage Users</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{stats.totalComments}</div>
+          <div class="stat-label">Total Comments</div>
+          <div class="stat-action">
+            <a href="/admin/analytics">View Analytics</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-section">
+      <h2>Quick Actions</h2>
+      <div class="actions-grid">
+        <div class="action-card">
+          <div class="action-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <div class="action-content">
+            <h3>Comment Moderation</h3>
+            <p>Review and moderate user comments</p>
+            <a href="/admin/moderation" class="action-btn primary">
+              <i class="fas fa-arrow-right"></i>
+              Go to Moderation
+            </a>
+          </div>
+        </div>
+
+        <div class="action-card">
+          <div class="action-icon">
+            <i class="fas fa-chart-bar"></i>
+          </div>
+          <div class="action-content">
+            <h3>Analytics Dashboard</h3>
+            <p>View community engagement metrics</p>
+            <a href="/admin/analytics" class="action-btn secondary">
+              <i class="fas fa-arrow-right"></i>
+              View Analytics
+            </a>
+          </div>
+        </div>
+
+        <div class="action-card">
+          <div class="action-icon">
+            <i class="fas fa-users-cog"></i>
+          </div>
+          <div class="action-content">
+            <h3>User Management</h3>
+            <p>Manage user accounts and permissions</p>
+            <a href="/admin/users" class="action-btn secondary">
+              <i class="fas fa-arrow-right"></i>
+              Manage Users
+            </a>
+          </div>
+        </div>
+
+        <div class="action-card">
+          <div class="action-icon">
+            <i class="fas fa-edit"></i>
+          </div>
+          <div class="action-content">
+            <h3>Content Management</h3>
+            <p>Edit and manage site content</p>
+            <a href="/admin/index.html" class="action-btn secondary">
+              <i class="fas fa-arrow-right"></i>
+              Open TinaCMS
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="activity-section">
+      <h2>Recent Activity</h2>
+      <div class="activity-list">
+        {
+          recentComments?.map((comment) => (
+            <div class="activity-item">
+              <div class="activity-icon">
+                <i class="fas fa-comment" />
+              </div>
+              <div class="activity-content">
+                <div class="activity-title">New comment posted</div>
+                <div class="activity-description">
+                  {comment.content.substring(0, 100)}...
+                </div>
+                <div class="activity-time">
+                  {new Date(comment.created_at).toLocaleString()}
+                </div>
+              </div>
+              <div class="activity-actions">
+                <a
+                  href={`/admin/moderation?comment=${comment.id}`}
+                  class="activity-btn"
+                >
+                  Review
+                </a>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="status-section">
+      <h2>System Status</h2>
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="status-indicator online"></div>
+          <div class="status-content">
+            <div class="status-title">Database</div>
+            <div class="status-description">All systems operational</div>
+          </div>
+        </div>
+        <div class="status-item">
+          <div class="status-indicator online"></div>
+          <div class="status-content">
+            <div class="status-title">Authentication</div>
+            <div class="status-description">Working normally</div>
+          </div>
+        </div>
+        <div class="status-item">
+          <div class="status-indicator online"></div>
+          <div class="status-content">
+            <div class="status-title">Comment System</div>
+            <div class="status-description">Fully operational</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #21262d;
+  }
+
+  .header-content h1 {
+    color: #f0f6fc;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .header-content p {
+    color: #8b949e;
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .refresh-btn:hover {
+    background: #30363d;
+    border-color: #4285f4;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .stat-card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .stat-card:hover {
+    border-color: #4285f4;
+    transform: translateY(-2px);
+  }
+
+  .stat-card.urgent {
+    border-left: 4px solid #da3633;
+  }
+
+  .stat-card.warning {
+    border-left: 4px solid #fb8500;
+  }
+
+  .stat-card.info {
+    border-left: 4px solid #4285f4;
+  }
+
+  .stat-card.success {
+    border-left: 4px solid #238636;
+  }
+
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #21262d;
+    color: #f0f6fc;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .stat-card.urgent .stat-icon {
+    background: rgba(218, 54, 51, 0.1);
+    color: #da3633;
+  }
+
+  .stat-card.warning .stat-icon {
+    background: rgba(251, 133, 0, 0.1);
+    color: #fb8500;
+  }
+
+  .stat-card.info .stat-icon {
+    background: rgba(66, 133, 244, 0.1);
+    color: #4285f4;
+  }
+
+  .stat-card.success .stat-icon {
+    background: rgba(35, 134, 54, 0.1);
+    color: #238636;
+  }
+
+  .stat-content {
+    flex: 1;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-label {
+    color: #8b949e;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-action a {
+    color: #4285f4;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  .stat-action a:hover {
+    color: #64b5f6;
+  }
+
+  .actions-section,
+  .activity-section,
+  .status-section {
+    margin-bottom: 3rem;
+  }
+
+  .actions-section h2,
+  .activity-section h2,
+  .status-section h2 {
+    color: #f0f6fc;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+  }
+
+  .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .action-card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  .action-card:hover {
+    border-color: #4285f4;
+    transform: translateY(-2px);
+  }
+
+  .action-icon {
+    width: 80px;
+    height: 80px;
+    background: #4285f4;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .action-content h3 {
+    color: #f0f6fc;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .action-content p {
+    color: #8b949e;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .action-btn.primary {
+    background: #4285f4;
+    color: white;
+    border: 1px solid #4285f4;
+  }
+
+  .action-btn.primary:hover {
+    background: #3367d6;
+    border-color: #3367d6;
+  }
+
+  .action-btn.secondary {
+    background: transparent;
+    color: #4285f4;
+    border: 1px solid #4285f4;
+  }
+
+  .action-btn.secondary:hover {
+    background: #4285f4;
+    color: white;
+  }
+
+  .activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .activity-item {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .activity-item .activity-icon {
+    width: 50px;
+    height: 50px;
+    background: #21262d;
+    color: #4285f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .activity-content {
+    flex: 1;
+  }
+
+  .activity-title {
+    color: #f0f6fc;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .activity-description {
+    color: #8b949e;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .activity-time {
+    color: #8b949e;
+    font-size: 0.75rem;
+  }
+
+  .activity-actions {
+    flex-shrink: 0;
+  }
+
+  .activity-btn {
+    padding: 0.5rem 1rem;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #f0f6fc;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .activity-btn:hover {
+    background: #30363d;
+    border-color: #4285f4;
+  }
+
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .status-item {
+    background: #161b22;
+    border: 1px solid #21262d;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-indicator.online {
+    background: #238636;
+    box-shadow: 0 0 0 2px rgba(35, 134, 54, 0.2);
+  }
+
+  .status-indicator.offline {
+    background: #da3633;
+    box-shadow: 0 0 0 2px rgba(218, 54, 51, 0.2);
+  }
+
+  .status-title {
+    color: #f0f6fc;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .status-description {
+    color: #8b949e;
+    font-size: 0.75rem;
+  }
+
+  /* Light mode styles */
+  :global(.light) .dashboard-header {
+    border-bottom-color: #e2e8f0;
+  }
+
+  :global(.light) .header-content h1 {
+    color: #1f2937;
+  }
+
+  :global(.light) .header-content p {
+    color: #6b7280;
+  }
+
+  :global(.light) .refresh-btn {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .refresh-btn:hover {
+    background: #f9fafb;
+    border-color: #243788;
+  }
+
+  :global(.light) .stat-card {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .stat-card:hover {
+    border-color: #243788;
+  }
+
+  :global(.light) .stat-icon {
+    background: #f9fafb;
+    color: #1f2937;
+  }
+
+  :global(.light) .stat-card.urgent .stat-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+  }
+
+  :global(.light) .stat-card.warning .stat-icon {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+  }
+
+  :global(.light) .stat-card.info .stat-icon {
+    background: rgba(36, 55, 136, 0.1);
+    color: #243788;
+  }
+
+  :global(.light) .stat-card.success .stat-icon {
+    background: rgba(34, 197, 94, 0.1);
+    color: #059669;
+  }
+
+  :global(.light) .stat-number {
+    color: #1f2937;
+  }
+
+  :global(.light) .stat-label {
+    color: #6b7280;
+  }
+
+  :global(.light) .stat-action a {
+    color: #243788;
+  }
+
+  :global(.light) .stat-action a:hover {
+    color: #1e293b;
+  }
+
+  :global(.light) .actions-section h2,
+  :global(.light) .activity-section h2,
+  :global(.light) .status-section h2 {
+    color: #1f2937;
+  }
+
+  :global(.light) .action-card {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .action-card:hover {
+    border-color: #243788;
+  }
+
+  :global(.light) .action-icon {
+    background: #243788;
+  }
+
+  :global(.light) .action-content h3 {
+    color: #1f2937;
+  }
+
+  :global(.light) .action-content p {
+    color: #6b7280;
+  }
+
+  :global(.light) .action-btn.primary {
+    background: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .action-btn.primary:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+  }
+
+  :global(.light) .action-btn.secondary {
+    color: #243788;
+    border-color: #243788;
+  }
+
+  :global(.light) .action-btn.secondary:hover {
+    background: #243788;
+  }
+
+  :global(.light) .activity-item {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .activity-item .activity-icon {
+    background: #f9fafb;
+    color: #243788;
+  }
+
+  :global(.light) .activity-title {
+    color: #1f2937;
+  }
+
+  :global(.light) .activity-description {
+    color: #6b7280;
+  }
+
+  :global(.light) .activity-time {
+    color: #6b7280;
+  }
+
+  :global(.light) .activity-btn {
+    background: white;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  :global(.light) .activity-btn:hover {
+    background: #f9fafb;
+    border-color: #243788;
+  }
+
+  :global(.light) .status-item {
+    background: white;
+    border-color: #e2e8f0;
+  }
+
+  :global(.light) .status-title {
+    color: #1f2937;
+  }
+
+  :global(.light) .status-description {
+    color: #6b7280;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .dashboard-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .header-actions {
+      width: 100%;
+    }
+
+    .refresh-btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .actions-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .action-card {
+      padding: 1.5rem;
+    }
+
+    .status-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Refresh button functionality
+    const refreshBtn = document.getElementById("refresh-btn");
+    refreshBtn?.addEventListener("click", () => {
+      window.location.reload();
+    });
+
+    // Auto-refresh every 5 minutes
+    setInterval(
+      () => {
+        window.location.reload();
+      },
+      5 * 60 * 1000
+    );
+  });
+</script>

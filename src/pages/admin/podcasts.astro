@@ -1,0 +1,935 @@
+---
+// src/pages/admin/podcasts.astro - CLEANED VERSION
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Podcast Management - TinkByte Admin">
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="spinner-square"></div>
+      <span>Loading podcast data...</span>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  <div id="error-banner" class="error-banner" style="display: none;">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span id="error-message">An error occurred</span>
+    <button class="retry-btn" id="retry-btn">
+      <i class="fas fa-redo"></i>
+      Retry
+    </button>
+  </div>
+
+  <div class="podcasts-container">
+    <!-- Podcast Header -->
+    <div class="podcasts-header">
+      <div class="header-content">
+        <h1>Podcast Management</h1>
+        <p>Manage your podcast episodes and audio content</p>
+      </div>
+      <div class="header-actions">
+        <button class="create-podcast-btn" id="create-podcast-btn">
+          <span class="btn-spinner" id="create-spinner" style="display: none;">
+            <div class="spinner-square small"></div>
+          </span>
+          <i class="fas fa-plus"></i>
+          Create Episode
+        </button>
+        <button class="upload-audio-btn" id="upload-audio-btn">
+          <span class="btn-spinner" id="upload-spinner" style="display: none;">
+            <div class="spinner-square small"></div>
+          </span>
+          <i class="fas fa-upload"></i>
+          Upload Audio
+        </button>
+      </div>
+    </div>
+
+    <!-- Podcast Stats -->
+    <div class="podcast-stats" id="podcast-stats">
+      <div class="stat-card primary">
+        <div class="stat-icon">
+          <i class="fas fa-podcast"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number" id="total-episodes">-</span>
+          <span class="stat-label">Total Episodes</span>
+          <span class="stat-change positive" id="new-this-month"
+            >Loading...</span
+          >
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-play"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number" id="published-episodes">-</span>
+          <span class="stat-label">Published Episodes</span>
+          <span class="stat-change neutral" id="published-rate">Loading...</span
+          >
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number" id="featured-episodes">-</span>
+          <span class="stat-label">Featured Episodes</span>
+          <span class="stat-change neutral">Highlighted</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-number" id="total-duration">-</span>
+          <span class="stat-label">Total Duration</span>
+          <span class="stat-change neutral">Hours</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Podcast Tabs -->
+    <div class="podcast-tabs">
+      <button class="tab-btn active" data-tab="episodes">
+        <i class="fas fa-list"></i>
+        All Episodes (<span id="episodes-count">0</span>)
+      </button>
+      <button class="tab-btn" data-tab="published">
+        <i class="fas fa-play"></i>
+        Published (<span id="published-count">0</span>)
+      </button>
+      <button class="tab-btn" data-tab="drafts">
+        <i class="fas fa-edit"></i>
+        Drafts (<span id="drafts-count">0</span>)
+      </button>
+      <button class="tab-btn" data-tab="analytics">
+        <i class="fas fa-chart-line"></i>
+        Analytics
+      </button>
+    </div>
+
+    <!-- Episodes Tab -->
+    <div id="episodes-tab" class="tab-content active">
+      <div class="episodes-section">
+        <div class="section-header">
+          <h2>Podcast Episodes</h2>
+          <div class="section-actions">
+            <div class="search-container">
+              <i class="fas fa-search"></i>
+              <input
+                type="text"
+                placeholder="Search episodes..."
+                id="episode-search"
+              />
+            </div>
+            <select class="filter-select" id="episode-filter">
+              <option value="">All Episodes</option>
+              <option value="published">Published</option>
+              <option value="draft">Drafts</option>
+              <option value="featured">Featured</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="episodes-grid" id="episodes-grid">
+          <!-- Content will be loaded dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Published Tab -->
+    <div id="published-tab" class="tab-content">
+      <div class="published-episodes-grid" id="published-episodes-grid">
+        <!-- Published episodes will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Drafts Tab -->
+    <div id="drafts-tab" class="tab-content">
+      <div class="draft-episodes-grid" id="draft-episodes-grid">
+        <!-- Draft episodes will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div id="analytics-tab" class="tab-content">
+      <div class="analytics-section">
+        <h2>Podcast Analytics</h2>
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <h3>Episode Performance</h3>
+            <div class="chart-placeholder">
+              <div class="performance-chart">
+                <div class="chart-bar" style="height: 85%"></div>
+                <div class="chart-bar" style="height: 92%"></div>
+                <div class="chart-bar" style="height: 78%"></div>
+                <div class="chart-bar" style="height: 95%"></div>
+                <div class="chart-bar" style="height: 88%"></div>
+              </div>
+              <div class="chart-labels">
+                <span>Ep 1</span>
+                <span>Ep 2</span>
+                <span>Ep 3</span>
+                <span>Ep 4</span>
+                <span>Ep 5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create/Edit Episode Modal -->
+    <div id="episode-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="episode-modal-title">Create Episode</h3>
+          <button class="modal-close" id="episode-modal-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="episode-form" class="episode-form">
+            <div class="form-group">
+              <label for="episode-title">Episode Title *</label>
+              <input
+                type="text"
+                id="episode-title"
+                name="title"
+                required
+                placeholder="e.g., Building Better Products with AI"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="episode-slug">URL Slug *</label>
+              <input
+                type="text"
+                id="episode-slug"
+                name="slug"
+                required
+                placeholder="e.g., building-better-products-ai"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="episode-description">Description</label>
+              <textarea
+                id="episode-description"
+                name="description"
+                rows="4"
+                placeholder="Brief description of this episode..."></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="episode-number">Episode Number</label>
+                <input
+                  type="number"
+                  id="episode-number"
+                  name="episode_number"
+                  min="1"
+                />
+              </div>
+              <div class="form-group">
+                <label for="season-number">Season Number</label>
+                <input
+                  type="number"
+                  id="season-number"
+                  name="season_number"
+                  min="1"
+                  value="1"
+                />
+              </div>
+              <div class="form-group">
+                <label for="episode-duration">Duration</label>
+                <input
+                  type="text"
+                  id="episode-duration"
+                  name="duration"
+                  placeholder="e.g., 45:30"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="audio-url">Audio URL</label>
+              <input
+                type="url"
+                id="audio-url"
+                name="audio_url"
+                placeholder="https://example.com/audio.mp3"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="episode-image">Episode Image URL</label>
+              <input
+                type="url"
+                id="episode-image"
+                name="image_url"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            <div class="form-group">
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="episode-published"
+                    name="is_published"
+                  />
+                  <span>Publish Episode</span>
+                </label>
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    id="episode-featured"
+                    name="featured"
+                  />
+                  <span>Feature Episode</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="cancel-btn" id="episode-cancel"
+                >Cancel</button
+              >
+              <button type="submit" class="save-btn" id="episode-save">
+                <span
+                  class="btn-spinner"
+                  id="save-spinner"
+                  style="display: none;"
+                >
+                  <div class="spinner-square small"></div>
+                </span>
+                <i class="fas fa-save"></i>
+                Save Episode
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script>
+  import { adminAPIManager } from "../../lib/admin-api.js";
+  import { AuthState } from "../../lib/supabase.js";
+
+  interface Podcast {
+    id: string;
+    slug: string;
+    title: string;
+    description?: string;
+    duration?: string;
+    audio_url?: string;
+    image_url?: string;
+    episode_number?: number;
+    season_number?: number;
+    published_at?: string;
+    is_published: boolean;
+    featured: boolean;
+    created_at: string;
+    updated_at: string;
+  }
+
+  interface PodcastStats {
+    totalEpisodes: number;
+    publishedEpisodes: number;
+    draftEpisodes: number;
+    featuredEpisodes: number;
+    totalDuration: string;
+    newThisMonth: number;
+  }
+
+  let podcasts: Podcast[] = [];
+  let currentEditingPodcastId: string | null = null;
+  let isLoading = false;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      // Wait for auth to be ready
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await initializePodcastManagement();
+    } catch (error) {
+      console.error("Podcast management initialization error:", error);
+      showError(
+        "Failed to initialize podcast management. Please refresh and try again."
+      );
+    }
+  });
+
+  async function initializePodcastManagement() {
+    showLoading(true);
+
+    try {
+      console.log("🚀 Initializing podcast management...");
+
+      // Initialize admin API manager
+      await adminAPIManager.initialize();
+      console.log("✅ Admin API Manager initialized");
+
+      // Test connection
+      const connectionTest = await adminAPIManager.testConnection();
+      if (!connectionTest.success) {
+        throw new Error(connectionTest.error || "Connection test failed");
+      }
+
+      // Load data
+      await Promise.all([loadPodcasts(), loadPodcastStats()]);
+
+      setupEventListeners();
+      showLoading(false);
+      console.log("✅ Podcast management initialized successfully");
+    } catch (error) {
+      console.error("❌ Initialization error:", error);
+      showError(error.message || "Failed to load podcast data");
+      showLoading(false);
+    }
+  }
+
+  async function loadPodcasts() {
+    try {
+      console.log("🔄 Loading podcasts...");
+      const response = await adminAPIManager.getPodcasts();
+
+      if (response.success && response.data) {
+        podcasts = response.data;
+        renderPodcasts();
+        updatePodcastCounts();
+        console.log(`✅ Loaded ${podcasts.length} podcasts`);
+      } else {
+        throw new Error(response.error || "Failed to load podcasts");
+      }
+    } catch (error) {
+      console.error("❌ Load podcasts error:", error);
+      throw error;
+    }
+  }
+
+  async function loadPodcastStats() {
+    try {
+      console.log("📊 Loading podcast stats...");
+      const response = await adminAPIManager.getPodcasts();
+
+      if (response.success && response.data) {
+        const allPodcasts = response.data;
+
+        const stats: PodcastStats = {
+          totalEpisodes: allPodcasts.length,
+          publishedEpisodes: allPodcasts.filter((p) => p.is_published).length,
+          draftEpisodes: allPodcasts.filter((p) => !p.is_published).length,
+          featuredEpisodes: allPodcasts.filter((p) => p.featured).length,
+          totalDuration: calculateTotalDuration(allPodcasts),
+          newThisMonth: allPodcasts.filter((p) => {
+            const episodeDate = new Date(p.created_at);
+            const monthAgo = new Date();
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            return episodeDate > monthAgo;
+          }).length,
+        };
+
+        updatePodcastStats(stats);
+        console.log("✅ Podcast stats updated:", stats);
+      }
+    } catch (error) {
+      console.error("❌ Load podcast stats error:", error);
+    }
+  }
+
+  function calculateTotalDuration(podcasts: Podcast[]): string {
+    let totalMinutes = 0;
+
+    podcasts.forEach((podcast) => {
+      if (podcast.duration) {
+        const parts = podcast.duration.split(":");
+        if (parts.length === 2) {
+          totalMinutes += parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+      }
+    });
+
+    const hours = Math.floor(totalMinutes / 60);
+    return `${hours}h`;
+  }
+
+  function renderPodcasts() {
+    const episodesGrid = document.getElementById("episodes-grid");
+    if (!episodesGrid) return;
+
+    if (podcasts.length === 0) {
+      episodesGrid.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-podcast"></i>
+          <h3>No podcast episodes found</h3>
+          <p>Create your first podcast episode to get started</p>
+          <button class="create-first-episode-btn" onclick="openEpisodeModal()">
+            <i class="fas fa-plus"></i>
+            Create First Episode
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    episodesGrid.innerHTML = podcasts
+      .map(
+        (podcast) => `
+      <div class="episode-card" data-episode-id="${podcast.id}">
+        <div class="episode-header">
+          <div class="episode-info">
+            <h3 class="episode-title">${podcast.title}</h3>
+            <div class="episode-meta">
+              ${podcast.episode_number ? `<span>Episode ${podcast.episode_number}</span>` : ""}
+              ${podcast.season_number ? `<span>Season ${podcast.season_number}</span>` : ""}
+              ${podcast.duration ? `<span>${podcast.duration}</span>` : ""}
+            </div>
+            ${podcast.description ? `<p class="episode-description">${podcast.description}</p>` : ""}
+          </div>
+          <div class="episode-status">
+            <span class="status-badge ${podcast.is_published ? "published" : "draft"}">
+              ${podcast.is_published ? "Published" : "Draft"}
+            </span>
+            ${podcast.featured ? '<span class="status-badge featured">Featured</span>' : ""}
+          </div>
+        </div>
+
+        <div class="episode-stats">
+          <div class="episode-stat">
+            <span class="stat-value">${new Date(podcast.created_at).toLocaleDateString()}</span>
+            <span class="stat-label-small">Created</span>
+          </div>
+          <div class="episode-stat">
+            <span class="stat-value">${podcast.duration || "N/A"}</span>
+            <span class="stat-label-small">Duration</span>
+          </div>
+          <div class="episode-stat">
+            <span class="stat-value">${podcast.episode_number || "-"}</span>
+            <span class="stat-label-small">Episode #</span>
+          </div>
+        </div>
+
+        <div class="episode-actions">
+          <button class="action-btn edit" onclick="editEpisode('${podcast.id}')">
+            <i class="fas fa-edit"></i>
+            Edit
+          </button>
+          ${
+            podcast.is_published
+              ? `
+            <button class="action-btn unpublish" onclick="toggleEpisodeStatus('${podcast.id}', false)">
+              <i class="fas fa-eye-slash"></i>
+              Unpublish
+            </button>
+          `
+              : `
+            <button class="action-btn publish" onclick="toggleEpisodeStatus('${podcast.id}', true)">
+              <i class="fas fa-play"></i>
+              Publish
+            </button>
+          `
+          }
+          <button class="action-btn delete" onclick="deleteEpisode('${podcast.id}')">
+            <i class="fas fa-trash"></i>
+            Delete
+          </button>
+        </div>
+      </div>
+    `
+      )
+      .join("");
+
+    console.log(`✅ Rendered ${podcasts.length} podcast episodes`);
+  }
+
+  function updatePodcastStats(stats: PodcastStats) {
+    const elements = {
+      totalEpisodes: document.getElementById("total-episodes"),
+      publishedEpisodes: document.getElementById("published-episodes"),
+      featuredEpisodes: document.getElementById("featured-episodes"),
+      totalDuration: document.getElementById("total-duration"),
+      newThisMonth: document.getElementById("new-this-month"),
+      publishedRate: document.getElementById("published-rate"),
+    };
+
+    if (elements.totalEpisodes)
+      elements.totalEpisodes.textContent = stats.totalEpisodes.toString();
+    if (elements.publishedEpisodes)
+      elements.publishedEpisodes.textContent =
+        stats.publishedEpisodes.toString();
+    if (elements.featuredEpisodes)
+      elements.featuredEpisodes.textContent = stats.featuredEpisodes.toString();
+    if (elements.totalDuration)
+      elements.totalDuration.textContent = stats.totalDuration;
+    if (elements.newThisMonth)
+      elements.newThisMonth.textContent = `+${stats.newThisMonth} this month`;
+
+    if (elements.publishedRate && stats.totalEpisodes > 0) {
+      const publishedRate = Math.round(
+        (stats.publishedEpisodes / stats.totalEpisodes) * 100
+      );
+      elements.publishedRate.textContent = `${publishedRate}% published`;
+    }
+  }
+
+  function updatePodcastCounts() {
+    const elements = {
+      episodesCount: document.getElementById("episodes-count"),
+      publishedCount: document.getElementById("published-count"),
+      draftsCount: document.getElementById("drafts-count"),
+    };
+
+    if (elements.episodesCount)
+      elements.episodesCount.textContent = podcasts.length.toString();
+    if (elements.publishedCount)
+      elements.publishedCount.textContent = podcasts
+        .filter((p) => p.is_published)
+        .length.toString();
+    if (elements.draftsCount)
+      elements.draftsCount.textContent = podcasts
+        .filter((p) => !p.is_published)
+        .length.toString();
+  }
+
+  function setupEventListeners() {
+    console.log("🎯 Setting up event listeners...");
+
+    // Tab switching
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const tabContents = document.querySelectorAll(".tab-content");
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const targetTab = (button as HTMLElement).dataset.tab;
+        if (!targetTab) return;
+
+        tabButtons.forEach((btn) => btn.classList.remove("active"));
+        tabContents.forEach((content) => content.classList.remove("active"));
+
+        button.classList.add("active");
+        const targetContent = document.getElementById(`${targetTab}-tab`);
+        if (targetContent) {
+          targetContent.classList.add("active");
+        }
+      });
+    });
+
+    // Create episode button
+    const createEpisodeBtn = document.getElementById("create-podcast-btn");
+    createEpisodeBtn?.addEventListener("click", () => openEpisodeModal());
+
+    // Modal close buttons
+    const modalClose = document.getElementById("episode-modal-close");
+    const cancelBtn = document.getElementById("episode-cancel");
+    modalClose?.addEventListener("click", closeEpisodeModal);
+    cancelBtn?.addEventListener("click", closeEpisodeModal);
+
+    // Modal background click
+    const modal = document.getElementById("episode-modal");
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) closeEpisodeModal();
+    });
+
+    // Form submission
+    const form = document.getElementById("episode-form") as HTMLFormElement;
+    form?.addEventListener("submit", handleEpisodeFormSubmit);
+
+    // Auto-generate slug from title
+    const titleInput = document.getElementById(
+      "episode-title"
+    ) as HTMLInputElement;
+    const slugInput = document.getElementById(
+      "episode-slug"
+    ) as HTMLInputElement;
+    titleInput?.addEventListener("input", (e) => {
+      const title = (e.target as HTMLInputElement).value;
+      const slug = generateSlug(title);
+      if (slugInput) {
+        slugInput.value = slug;
+      }
+    });
+
+    // Retry button
+    const retryBtn = document.getElementById("retry-btn");
+    retryBtn?.addEventListener("click", () => {
+      hideError();
+      initializePodcastManagement();
+    });
+
+    console.log("✅ Event listeners setup complete");
+  }
+
+  function openEpisodeModal(podcast?: Podcast) {
+    const modal = document.getElementById("episode-modal");
+    const modalTitle = document.getElementById("episode-modal-title");
+    const form = document.getElementById("episode-form") as HTMLFormElement;
+
+    if (!modal || !modalTitle || !form) return;
+
+    if (podcast) {
+      currentEditingPodcastId = podcast.id;
+      modalTitle.textContent = "Edit Episode";
+      populateEpisodeForm(podcast);
+    } else {
+      currentEditingPodcastId = null;
+      modalTitle.textContent = "Create Episode";
+      form.reset();
+    }
+
+    modal.style.display = "flex";
+  }
+
+  function closeEpisodeModal() {
+    const modal = document.getElementById("episode-modal");
+    if (modal) {
+      modal.style.display = "none";
+    }
+    currentEditingPodcastId = null;
+  }
+
+  function populateEpisodeForm(podcast: Podcast) {
+    (document.getElementById("episode-title") as HTMLInputElement).value =
+      podcast.title || "";
+    (document.getElementById("episode-slug") as HTMLInputElement).value =
+      podcast.slug || "";
+    (
+      document.getElementById("episode-description") as HTMLTextAreaElement
+    ).value = podcast.description || "";
+    (document.getElementById("episode-number") as HTMLInputElement).value =
+      podcast.episode_number?.toString() || "";
+    (document.getElementById("season-number") as HTMLInputElement).value =
+      podcast.season_number?.toString() || "";
+    (document.getElementById("episode-duration") as HTMLInputElement).value =
+      podcast.duration || "";
+    (document.getElementById("audio-url") as HTMLInputElement).value =
+      podcast.audio_url || "";
+    (document.getElementById("episode-image") as HTMLInputElement).value =
+      podcast.image_url || "";
+    (document.getElementById("episode-published") as HTMLInputElement).checked =
+      podcast.is_published;
+    (document.getElementById("episode-featured") as HTMLInputElement).checked =
+      podcast.featured;
+  }
+
+  function generateSlug(title: string): string {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  }
+
+  async function handleEpisodeFormSubmit(e: Event) {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const saveBtn = document.getElementById(
+      "episode-save"
+    ) as HTMLButtonElement;
+    const saveSpinner = document.getElementById("save-spinner");
+
+    if (saveBtn && saveSpinner) {
+      saveBtn.disabled = true;
+      saveSpinner.style.display = "flex";
+    }
+
+    const episodeData = {
+      title: formData.get("title") as string,
+      slug: formData.get("slug") as string,
+      description: (formData.get("description") as string) || undefined,
+      episode_number:
+        parseInt(formData.get("episode_number") as string) || undefined,
+      season_number: parseInt(formData.get("season_number") as string) || 1,
+      duration: (formData.get("duration") as string) || undefined,
+      audio_url: (formData.get("audio_url") as string) || undefined,
+      image_url: (formData.get("image_url") as string) || undefined,
+      is_published: formData.has("is_published"),
+      featured: formData.has("featured"),
+    };
+
+    try {
+      let result;
+      if (currentEditingPodcastId) {
+        console.log(`🔄 Updating episode ${currentEditingPodcastId}...`);
+        result = await adminAPIManager.updatePodcast(
+          currentEditingPodcastId,
+          episodeData
+        );
+      } else {
+        console.log("🔄 Creating new episode...");
+        result = await adminAPIManager.createPodcast(episodeData);
+      }
+
+      if (result.success) {
+        showNotification(
+          currentEditingPodcastId
+            ? "Episode updated successfully"
+            : "Episode created successfully",
+          "success"
+        );
+        closeEpisodeModal();
+        await loadPodcasts();
+        await loadPodcastStats();
+        console.log("✅ Episode operation completed successfully");
+      } else {
+        throw new Error(result.error || "Failed to save episode");
+      }
+    } catch (error) {
+      console.error("❌ Episode form submission error:", error);
+      showNotification("An error occurred while saving the episode", "error");
+    } finally {
+      if (saveBtn && saveSpinner) {
+        saveBtn.disabled = false;
+        saveSpinner.style.display = "none";
+      }
+    }
+  }
+
+  // Global functions for onclick handlers - Updated to use singleton
+  (window as any).editEpisode = async function (episodeId: string) {
+    console.log(`✏️ Editing episode ${episodeId}...`);
+    const episode = podcasts.find((p) => p.id === episodeId);
+    if (episode) {
+      openEpisodeModal(episode);
+    }
+  };
+
+  (window as any).toggleEpisodeStatus = async function (
+    episodeId: string,
+    isPublished: boolean
+  ) {
+    try {
+      console.log(
+        `🔄 Toggling episode ${episodeId} status to ${isPublished ? "published" : "unpublished"}...`
+      );
+      const result = await adminAPIManager.updatePodcast(episodeId, {
+        is_published: isPublished,
+      });
+
+      if (result.success) {
+        showNotification(
+          `Episode ${isPublished ? "published" : "unpublished"} successfully`,
+          "success"
+        );
+        await loadPodcasts();
+        await loadPodcastStats();
+        console.log("✅ Episode status updated successfully");
+      } else {
+        throw new Error(result.error || "Failed to update episode status");
+      }
+    } catch (error) {
+      console.error("❌ Toggle episode status error:", error);
+      showNotification("Failed to update episode status", "error");
+    }
+  };
+
+  (window as any).deleteEpisode = async function (episodeId: string) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this episode? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      console.log(`🗑️ Deleting episode ${episodeId}...`);
+      const result = await adminAPIManager.deletePodcast(episodeId);
+
+      if (result.success) {
+        showNotification("Episode deleted successfully", "success");
+        await loadPodcasts();
+        await loadPodcastStats();
+        console.log("✅ Episode deleted successfully");
+      } else {
+        throw new Error(result.error || "Failed to delete episode");
+      }
+    } catch (error) {
+      console.error("❌ Delete episode error:", error);
+      showNotification("Failed to delete episode", "error");
+    }
+  };
+
+  (window as any).openEpisodeModal = function () {
+    openEpisodeModal();
+  };
+
+  function showLoading(show: boolean) {
+    const loadingOverlay = document.getElementById("loading-overlay");
+    if (loadingOverlay) {
+      loadingOverlay.style.display = show ? "flex" : "none";
+    }
+  }
+
+  function showError(message: string) {
+    const errorBanner = document.getElementById("error-banner");
+    const errorMessage = document.getElementById("error-message");
+
+    if (errorBanner && errorMessage) {
+      errorMessage.textContent = message;
+      errorBanner.style.display = "flex";
+    }
+  }
+
+  function hideError() {
+    const errorBanner = document.getElementById("error-banner");
+    if (errorBanner) {
+      errorBanner.style.display = "none";
+    }
+  }
+
+  function showNotification(
+    message: string,
+    type: "success" | "error" = "success"
+  ) {
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      color: white;
+      font-weight: 500;
+      z-index: 10000;
+      border-radius: 4px;
+      background: ${type === "success" ? "#238636" : "#da3633"};
+      animation: slideIn 0.3s ease;
+    `;
+
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 4000);
+  }
+
+  // Add slideIn animation
+  if (!document.getElementById("podcast-animations")) {
+    const style = document.createElement("style");
+    style.id = "podcast-animations";
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+</script>

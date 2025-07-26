@@ -1,5 +1,11 @@
 ---
-// src/layouts/AdminLayout.astro - Updated with square spinner
+// src/layouts/AdminLayout.astro -
+import "../styles/admin-global.css";
+declare global {
+  interface WindowEventMap {
+    adminMetricsUpdate: CustomEvent;
+  }
+}
 export interface Props {
   title: string;
   description?: string;
@@ -18,21 +24,12 @@ const { title, description, preloadData = true } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
 
-    <!-- Preload critical resources -->
-    <link
-      rel="preload"
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
-      as="style"
-    />
-    <link
-      rel="preload"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-      as="style"
-    />
-
-    <!-- Fonts -->
+    <!-- Performance optimizations -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+
+    <!-- Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
@@ -44,506 +41,184 @@ const { title, description, preloadData = true } = Astro.props;
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
 
-    <!-- Preload admin auth script -->
-    {preloadData && <link rel="modulepreload" href="/src/lib/admin/auth.js" />}
+    <!-- Preload admin modules -->
+    {
+      preloadData && (
+        <>
+          <link rel="modulepreload" href="/src/lib/admin-api.js" />
+          <link rel="modulepreload" href="/src/lib/supabase.js" />
+        </>
+      )
+    }
   </head>
 
-  <body>
-    <div id="admin-app">
-      <div id="admin-loading" class="admin-loading">
-        <div class="loading-spinner">
-          <svg
-            class="animate-spin"
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-          >
-            <line x1="12" y1="2" x2="12" y2="6"></line>
-            <line x1="12" y1="18" x2="12" y2="22"></line>
-            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-            <line x1="2" y1="12" x2="6" y2="12"></line>
-            <line x1="18" y1="12" x2="22" y2="12"></line>
-            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-          </svg>
-        </div>
-        <p>Loading admin panel...</p>
-      </div>
+  <script>
+  import { adminAPIManager } from "../lib/admin-api.js";
+  import { adminAuthManager } from "../lib/admin/auth.js";
 
-      <div id="admin-content" class="admin-content" style="display: none;">
-        <!-- Admin Navigation -->
-        <nav class="admin-nav">
-          <div class="nav-brand">
-            <a href="/admin/dashboard" class="brand-link">
-              <i class="fas fa-cog"></i>
-              <span>TinkByte Admin</span>
-            </a>
-          </div>
+    // Global admin layout management
+    class AdminLayout {
+      private isAuthenticated: boolean = false;
+      private currentUser: any = null;
+      private pendingCommentsCount: number = 0;
+      private loadingProgress: number = 0;
+      private notificationQueue: any[] = [];
 
-          <div class="nav-menu">
-            <a href="/admin/dashboard" class="nav-link" data-page="dashboard">
-              <i class="fas fa-tachometer-alt"></i>
-              <span>Dashboard</span>
-            </a>
-            <a href="/admin/moderation" class="nav-link" data-page="moderation">
-              <i class="fas fa-shield-alt"></i>
-              <span>Moderation</span>
-            </a>
-            <a href="/admin/categories" class="nav-link" data-page="categories">
-              <i class="fas fa-tags"></i>
-              <span>Categories</span>
-            </a>
-            <a href="/admin/users" class="nav-link" data-page="users">
-              <i class="fas fa-users"></i>
-              <span>Users</span>
-            </a>
-            <a
-              href="/admin/newsletters"
-              class="nav-link"
-              data-page="newsletters"
-            >
-              <i class="fas fa-envelope"></i>
-              <span>Newsletters</span>
-            </a>
-            <a href="/admin/analytics" class="nav-link" data-page="analytics">
-              <i class="fas fa-chart-line"></i>
-              <span>Analytics</span>
-            </a>
-            <a href="/admin/settings" class="nav-link" data-page="settings">
-              <i class="fas fa-cog"></i>
-              <span>Settings</span>
-            </a>
-
-            <!-- CMS Access Section -->
-            <div class="nav-divider"></div>
-            <div class="nav-section-title">Content Management</div>
-            <a
-              href="/admin/index.html"
-              class="nav-link cms-link"
-              target="_blank"
-            >
-              <i class="fas fa-edit"></i>
-              <span>TinaCMS</span>
-              <i class="fas fa-external-link-alt nav-external"></i>
-            </a>
-
-            <!-- Quick Links -->
-            <div class="nav-divider"></div>
-            <div class="nav-section-title">Quick Links</div>
-            <a href="/" class="nav-link" target="_blank">
-              <i class="fas fa-home"></i>
-              <span>View Site</span>
-              <i class="fas fa-external-link-alt nav-external"></i>
-            </a>
-          </div>
-
-          <div class="nav-user">
-            <div class="user-info">
-              <span class="user-name" id="admin-user-name">Admin</span>
-              <span class="user-role">Administrator</span>
-            </div>
-            <button class="signout-btn" id="admin-signout" title="Sign Out">
-              <i class="fas fa-sign-out-alt"></i>
-            </button>
-          </div>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="admin-main">
-          <slot />
-        </main>
-      </div>
-    </div>
-
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+      constructor() {
+        this.init();
       }
 
-      body {
-        font-family: "Space Grotesk", sans-serif;
-        background: #0d1117;
-        color: #f0f6fc;
-        line-height: 1.6;
-      }
-
-      .admin-loading {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #0d1117;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-      }
-
-      .loading-spinner {
-        margin-bottom: 1rem;
-        color: #4285f4;
-      }
-
-      .animate-spin {
-        animation: spin 1s linear infinite;
-      }
-
-      @keyframes spin {
-        from {
-          transform: rotate(0deg);
-        }
-        to {
-          transform: rotate(360deg);
+      async init(): Promise<void> {
+        try {
+          console.log("🚀 Admin layout initializing...");
+          await this.initializeAuth();
+          await this.setupEventListeners();
+          await this.loadInitialData();
+          this.hideLoading();
+          console.log("✅ Admin layout initialized successfully");
+        } catch (error) {
+          console.error("❌ Admin layout initialization error:", error);
+          this.handleInitError(error);
         }
       }
 
-      .admin-loading p {
-        color: #8b949e;
-        font-size: 0.875rem;
-      }
-
-      #admin-app {
-        min-height: 100vh;
-        display: flex;
-      }
-
-      .admin-content {
-        width: 100%;
-        display: flex;
-      }
-
-      .admin-nav {
-        width: 280px;
-        background: #161b22;
-        border-right: 1px solid #21262d;
-        display: flex;
-        flex-direction: column;
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        z-index: 1000;
-      }
-
-      .nav-brand {
-        padding: 1.5rem;
-        border-bottom: 1px solid #21262d;
-      }
-
-      .brand-link {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        color: #f0f6fc;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 1.125rem;
-        transition: color 0.2s ease;
-      }
-
-      .brand-link:hover {
-        color: #4285f4;
-      }
-
-      .brand-link i {
-        font-size: 1.25rem;
-        color: #4285f4;
-      }
-
-      .nav-menu {
-        flex: 1;
-        padding: 1rem 0;
-      }
-
-      .nav-link {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1rem 1.5rem;
-        color: #8b949e;
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        border-left: 3px solid transparent;
-      }
-
-      .nav-link:hover {
-        color: #f0f6fc;
-        background: #21262d;
-        border-left-color: #4285f4;
-      }
-
-      .nav-link.active {
-        color: #4285f4;
-        background: #21262d;
-        border-left-color: #4285f4;
-      }
-
-      .nav-link i {
-        width: 20px;
-        text-align: center;
-      }
-
-      .nav-user {
-        padding: 1.5rem;
-        border-top: 1px solid #21262d;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      .user-info {
-        flex: 1;
-      }
-
-      .user-name {
-        display: block;
-        color: #f0f6fc;
-        font-weight: 600;
-        font-size: 0.875rem;
-      }
-
-      .user-role {
-        display: block;
-        color: #8b949e;
-        font-size: 0.75rem;
-      }
-
-      .signout-btn {
-        background: #da3633;
-        border: none;
-        color: white;
-        padding: 0.5rem;
-        cursor: pointer;
-        transition: background 0.2s ease;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .signout-btn:hover {
-        background: #b91c1c;
-      }
-
-      .admin-main {
-        flex: 1;
-        margin-left: 280px;
-        padding: 2rem;
-        min-height: 100vh;
-      }
-
-      .nav-divider {
-        height: 1px;
-        background: #21262d;
-        margin: 1rem 0;
-      }
-
-      .nav-section-title {
-        padding: 0.5rem 1.5rem;
-        color: #8b949e;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .cms-link {
-        background: rgba(66, 133, 244, 0.1);
-        border-left-color: #4285f4 !important;
-      }
-
-      .nav-external {
-        margin-left: auto;
-        font-size: 0.75rem;
-        opacity: 0.6;
-      }
-
-      .nav-link:hover .nav-external {
-        opacity: 1;
-      }
-
-      /* Light mode styles */
-      :global(.light) body {
-        background: #ffffff;
-        color: #1f2937;
-      }
-
-      :global(.light) .admin-loading {
-        background: #ffffff;
-      }
-
-      :global(.light) .loading-spinner {
-        color: #243788;
-      }
-
-      :global(.light) .admin-loading p {
-        color: #6b7280;
-      }
-
-      :global(.light) .admin-nav {
-        background: #f8fafc;
-        border-right-color: #e2e8f0;
-      }
-
-      :global(.light) .nav-brand {
-        border-bottom-color: #e2e8f0;
-      }
-
-      :global(.light) .brand-link {
-        color: #1f2937;
-      }
-
-      :global(.light) .brand-link:hover {
-        color: #243788;
-      }
-
-      :global(.light) .brand-link i {
-        color: #243788;
-      }
-
-      :global(.light) .nav-link {
-        color: #6b7280;
-      }
-
-      :global(.light) .nav-link:hover {
-        color: #1f2937;
-        background: #e2e8f0;
-        border-left-color: #243788;
-      }
-
-      :global(.light) .nav-link.active {
-        color: #243788;
-        background: #e2e8f0;
-        border-left-color: #243788;
-      }
-
-      :global(.light) .nav-user {
-        border-top-color: #e2e8f0;
-      }
-
-      :global(.light) .user-name {
-        color: #1f2937;
-      }
-
-      :global(.light) .user-role {
-        color: #6b7280;
-      }
-
-      :global(.light) .nav-divider {
-        background: #e2e8f0;
-      }
-
-      :global(.light) .nav-section-title {
-        color: #6b7280;
-      }
-
-      :global(.light) .cms-link {
-        background: rgba(36, 55, 136, 0.1);
-        border-left-color: #243788 !important;
-      }
-
-      /* Mobile responsive */
-      @media (max-width: 768px) {
-        .admin-nav {
-          width: 100%;
-          height: auto;
-          position: relative;
-          transform: translateX(-100%);
-          transition: transform 0.3s ease;
-        }
-
-        .admin-nav.mobile-open {
-          transform: translateX(0);
-        }
-
-        .admin-main {
-          margin-left: 0;
-          padding: 1rem;
-        }
-
-        .nav-menu {
-          padding: 0.5rem 0;
-        }
-
-        .nav-link {
-          padding: 0.75rem 1rem;
-        }
-
-        .nav-user {
-          padding: 1rem;
-        }
-      }
-    </style>
-
-    <script>
-      document.addEventListener("DOMContentLoaded", async () => {
-        const loadingEl = document.getElementById("admin-loading");
-        const contentEl = document.getElementById("admin-content");
-        const userNameEl = document.getElementById("admin-user-name");
-        const signoutBtn = document.getElementById("admin-signout");
-
-        console.log("🔄 Admin layout initializing...");
+      private async initializeAuth(): Promise<void> {
+        this.updateLoadingStatus("Verifying authentication...", 20);
 
         try {
-          // Simple session check
-          const adminSession = localStorage.getItem("tinkbyte-admin-session");
+          // Use singleton auth manager
+          await adminAuthManager.initialize();
+          const user = await adminAuthManager.getCurrentUser();
 
-          if (!adminSession) {
-            console.log("❌ No admin session found");
-            window.location.href = "/auth/admin-signin";
-            return;
+          if (!user) {
+            throw new Error("No admin session found");
           }
 
-          const session = JSON.parse(adminSession);
+          this.isAuthenticated = true;
+          this.currentUser = user;
 
-          // Check if session is expired
-          if (Date.now() > session.expiresAt * 1000) {
-            console.log("❌ Session expired");
-            localStorage.removeItem("tinkbyte-admin-session");
-            window.location.href = "/auth/admin-signin?error=session_expired";
-            return;
-          }
-
-          // Session is valid
-          console.log("✅ Valid admin session found");
-
-          // Update user info
-          if (userNameEl && session.user?.email) {
-            userNameEl.textContent = session.user.email.split("@")[0];
-          }
-
-          // Show content and hide loading
-          if (loadingEl) loadingEl.style.display = "none";
-          if (contentEl) contentEl.style.display = "flex";
-
-          // Set active navigation
-          setActiveNavigation();
-
-          // Setup signout
-          signoutBtn?.addEventListener("click", () => {
-            localStorage.removeItem("tinkbyte-admin-session");
-            window.location.href = "/auth/admin-signin?message=signed_out";
-          });
+          this.updateLoadingStatus("Authentication verified", 40);
+          console.log("✅ Admin authentication verified");
         } catch (error) {
-          console.error("❌ Admin initialization error:", error);
-
-          // Hide loading and redirect
-          if (loadingEl) loadingEl.style.display = "none";
-          window.location.href =
-            "/auth/admin-signin?error=initialization_failed";
+          console.error("❌ Authentication failed:", error);
+          this.redirectToSignIn(error.message);
+          throw error;
         }
-      });
+      }
 
-      function setActiveNavigation() {
+      private async setupEventListeners(): Promise<void> {
+        this.updateLoadingStatus("Setting up interface...", 60);
+
+        // Mobile menu toggle
+        const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
+        const adminNav = document.getElementById("admin-nav");
+
+        mobileMenuToggle?.addEventListener("click", () => {
+          adminNav?.classList.toggle("mobile-open");
+        });
+
+        // User menu toggle
+        const userMenuToggle = document.getElementById("user-menu-toggle");
+        const userDropdown = document.getElementById("user-dropdown");
+
+        userMenuToggle?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (userDropdown) {
+            userDropdown.style.display =
+              userDropdown.style.display === "none" ? "block" : "none";
+          }
+        });
+
+        // Close user dropdown when clicking outside
+        document.addEventListener("click", (e) => {
+          if (userDropdown && !userDropdown.contains(e.target as Node)) {
+            userDropdown.style.display = "none";
+          }
+        });
+
+        // Sign out functionality
+        const signoutBtn = document.getElementById("admin-signout");
+        signoutBtn?.addEventListener("click", () => {
+          this.handleSignOut();
+        });
+
+        // Set active navigation
+        this.setActiveNavigation();
+
+        // Setup global keyboard shortcuts
+        this.setupKeyboardShortcuts();
+
+        console.log("✅ Event listeners setup complete");
+      }
+
+      private async loadInitialData(): Promise<void> {
+        this.updateLoadingStatus("Loading dashboard data...", 80);
+
+        try {
+          // Update user info
+          this.updateUserInfo();
+
+          // Load pending comments count for badge
+          await this.updatePendingCommentsCount();
+
+          // Setup periodic data refresh
+          this.setupPeriodicRefresh();
+
+          this.updateLoadingStatus("Ready!", 100);
+          console.log("✅ Initial data loaded");
+        } catch (error) {
+          console.warn("⚠️ Some data failed to load:", error);
+          // Continue anyway, don't block the UI
+        }
+      }
+
+      private updateUserInfo(): void {
+        const userNameElement = document.getElementById("admin-user-name");
+        const userAvatar = document.getElementById("user-avatar");
+
+        if (this.currentUser?.email && userNameElement) {
+          const displayName = this.currentUser.email.split("@")[0];
+          userNameElement.textContent = displayName;
+
+          // Update avatar with first letter
+          if (userAvatar) {
+            userAvatar.innerHTML = `<span>${displayName.charAt(0).toUpperCase()}</span>`;
+          }
+        }
+      }
+
+      private async updatePendingCommentsCount(): Promise<void> {
+        try {
+          // Use singleton API manager
+          const result = await adminAPIManager.getComments({
+            status: "pending",
+            limit: 1,
+          });
+
+          if (result.success && result.pagination) {
+            this.pendingCommentsCount = result.pagination.total;
+            this.updatePendingBadge();
+          }
+        } catch (error) {
+          console.warn("Failed to load pending comments count:", error);
+        }
+      }
+
+      private updatePendingBadge(): void {
+        const badge = document.getElementById("pending-comments-badge");
+        const countElement = document.getElementById("pending-count");
+
+        if (badge && countElement) {
+          if (this.pendingCommentsCount > 0) {
+            countElement.textContent = this.pendingCommentsCount.toString();
+            badge.style.display = "block";
+          } else {
+            badge.style.display = "none";
+          }
+        }
+      }
+
+      private setActiveNavigation(): void {
         try {
           const currentPath = window.location.pathname;
           const navLinks = document.querySelectorAll(
@@ -562,5 +237,540 @@ const { title, description, preloadData = true } = Astro.props;
           console.error("Navigation setup error:", error);
         }
       }
-    </script></body>
+
+      private setupKeyboardShortcuts(): void {
+        document.addEventListener("keydown", (e) => {
+          // Alt + D for Dashboard
+          if (e.altKey && e.key === "d") {
+            e.preventDefault();
+            window.location.href = "/admin/dashboard";
+          }
+
+          // Alt + M for Moderation
+          if (e.altKey && e.key === "m") {
+            e.preventDefault();
+            window.location.href = "/admin/moderation";
+          }
+
+          // Alt + U for Users
+          if (e.altKey && e.key === "u") {
+            e.preventDefault();
+            window.location.href = "/admin/users";
+          }
+
+          // Alt + A for Analytics
+          if (e.altKey && e.key === "a") {
+            e.preventDefault();
+            window.location.href = "/admin/analytics";
+          }
+
+          // Escape to close dropdowns
+          if (e.key === "Escape") {
+            const userDropdown = document.getElementById("user-dropdown");
+            if (userDropdown) {
+              userDropdown.style.display = "none";
+            }
+          }
+        });
+      }
+
+      private setupPeriodicRefresh(): void {
+        // Refresh pending comments count every 2 minutes
+        setInterval(
+          () => {
+            this.updatePendingCommentsCount();
+          },
+          2 * 60 * 1000
+        );
+
+        // Update user status every 5 minutes
+        setInterval(
+          () => {
+            this.updateUserStatus();
+          },
+          5 * 60 * 1000
+        );
+      }
+
+      private updateUserStatus(): void {
+        const statusElement = document.getElementById("user-status");
+        if (statusElement) {
+          // Update online status
+          const statusText = statusElement.querySelector(".status-text");
+          if (statusText) {
+            statusText.textContent = "Online";
+          }
+        }
+      }
+
+      private updateLoadingStatus(status: string, progress: number): void {
+        const statusElement = document.getElementById("loading-status");
+        const progressBar = document.getElementById("progress-bar");
+
+        if (statusElement) {
+          statusElement.textContent = status;
+        }
+
+        if (progressBar) {
+          progressBar.style.width = `${progress}%`;
+        }
+
+        this.loadingProgress = progress;
+      }
+
+      private hideLoading(): void {
+        const loadingElement = document.getElementById("admin-loading");
+        const contentElement = document.getElementById("admin-content");
+
+        setTimeout(() => {
+          if (loadingElement) loadingElement.style.display = "none";
+          if (contentElement) contentElement.style.display = "flex";
+        }, 500); // Small delay for smooth transition
+      }
+
+      private handleInitError(error: any): void {
+        const loadingElement = document.getElementById("admin-loading");
+
+        if (loadingElement) {
+          loadingElement.innerHTML = `
+              <div class="loading-content">
+                <div style="color: #da3633; font-size: 3rem; margin-bottom: 1rem;">
+                  <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="loading-text">
+                  <h3>Initialization Failed</h3>
+                  <p>${error.message || "An unexpected error occurred"}</p>
+                </div>
+                <button 
+                  onclick="window.location.reload()" 
+                  style="
+                    padding: 0.75rem 1.5rem; 
+                    background: #4285f4; 
+                    color: white; 
+                    border: none; 
+                    cursor: pointer; 
+                    font-weight: 500;
+                    margin-top: 1rem;
+                  "
+                >
+                  <i class="fas fa-refresh"></i> Retry
+                </button>
+              </div>
+            `;
+        }
+      }
+
+      private redirectToSignIn(reason?: string): void {
+        const params = new URLSearchParams();
+        if (reason) params.set("error", reason);
+        params.set("redirect", window.location.pathname);
+
+        window.location.href = `/auth/admin-signin?${params.toString()}`;
+      }
+
+      private async handleSignOut(): Promise<void> {
+        try {
+          this.showGlobalLoading("Signing out...");
+
+          // Clear session
+          localStorage.removeItem("tinkbyte-admin-session");
+
+          // Small delay for UX
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Redirect to sign in
+          window.location.href = "/auth/admin-signin?message=signed_out";
+        } catch (error) {
+          console.error("Sign out error:", error);
+          this.hideGlobalLoading();
+          this.showNotification("Failed to sign out properly", "error");
+        }
+      }
+
+      // Public methods for other scripts to use
+      public showGlobalLoading(message: string = "Loading..."): void {
+        const loadingElement = document.getElementById("global-loading");
+        const loadingText = document.getElementById("global-loading-text");
+
+        if (loadingElement) {
+          loadingElement.style.display = "flex";
+        }
+
+        if (loadingText) {
+          loadingText.textContent = message;
+        }
+      }
+
+      public hideGlobalLoading(): void {
+        const loadingElement = document.getElementById("global-loading");
+        if (loadingElement) {
+          loadingElement.style.display = "none";
+        }
+      }
+
+      public showNotification(
+        message: string,
+        type: "success" | "error" | "warning" | "info" = "info",
+        duration: number = 5000
+      ): void {
+        const container = document.getElementById("notifications-container");
+        if (!container) return;
+
+        const notification = document.createElement("div");
+        notification.className = `notification ${type}`;
+
+        const icon = this.getNotificationIcon(type);
+        notification.innerHTML = `
+            <i class="${icon}"></i>
+            <span>${message}</span>
+          `;
+
+        container.appendChild(notification);
+
+        // Auto remove after duration
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.style.animation = "slideOutRight 0.3s ease";
+            setTimeout(() => {
+              notification.remove();
+            }, 300);
+          }
+        }, duration);
+
+        // Allow manual dismiss by clicking
+        notification.addEventListener("click", () => {
+          notification.remove();
+        });
+      }
+
+      private getNotificationIcon(type: string): string {
+        switch (type) {
+          case "success":
+            return "fas fa-check-circle";
+          case "error":
+            return "fas fa-exclamation-circle";
+          case "warning":
+            return "fas fa-exclamation-triangle";
+          case "info":
+            return "fas fa-info-circle";
+          default:
+            return "fas fa-info-circle";
+        }
+      }
+
+      public updatePendingCount(count: number): void {
+        this.pendingCommentsCount = count;
+        this.updatePendingBadge();
+      }
+
+      public getCurrentUser(): any {
+        return this.currentUser;
+      }
+
+      public isUserAuthenticated(): boolean {
+        return this.isAuthenticated;
+      }
+    }
+
+    // Global admin layout instance
+    let adminLayoutInstance: AdminLayout;
+
+    // Initialize when DOM is loaded
+    document.addEventListener("DOMContentLoaded", () => {
+      adminLayoutInstance = new AdminLayout();
+
+      // Make it globally available
+      (window as any).adminLayout = adminLayoutInstance;
+    });
+
+    // Add slide out animation
+    if (!document.getElementById("admin-layout-animations")) {
+      const style = document.createElement("style");
+      style.id = "admin-layout-animations";
+      style.textContent = `
+          @keyframes slideOutRight {
+            from {
+              transform: translateX(0);
+              opacity: 1;
+            }
+            to {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+          }
+        `;
+      document.head.appendChild(style);
+    }
+  </script>
 </html>
+
+<body>
+  <div id="admin-app">
+    <!-- Enhanced Loading State -->
+    <div id="admin-loading" class="admin-loading">
+      <div class="loading-content">
+        <div class="loading-spinner">
+          <svg
+            class="animate-spin"
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="10" y="10" width="4" height="4"></rect>
+            <rect x="6" y="6" width="4" height="4"></rect>
+            <rect x="14" y="6" width="4" height="4"></rect>
+            <rect x="6" y="14" width="4" height="4"></rect>
+            <rect x="14" y="14" width="4" height="4"></rect>
+          </svg>
+        </div>
+        <div class="loading-text">
+          <h3>Loading Admin Panel...</h3>
+          <p id="loading-status">Verifying authentication...</p>
+        </div>
+        <div class="loading-progress">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Admin Content -->
+    <div id="admin-content" class="admin-content" style="display: none;">
+      <!-- Enhanced Admin Navigation -->
+      <nav class="admin-nav" id="admin-nav">
+        <!-- Mobile Menu Toggle -->
+        <div class="mobile-menu-toggle" id="mobile-menu-toggle">
+          <i class="fas fa-bars"></i>
+        </div>
+
+        <!-- Brand Section -->
+        <div class="nav-brand">
+          <a href="/admin/dashboard" class="brand-link">
+            <div class="brand-logo">
+              <!-- TinkByte Logo SVG -->
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 200 200"
+                class="logo-svg"
+                aria-label="TinkByte Logo"
+              >
+                <defs>
+                  <style>
+                    .logo-accent {
+                      fill: #4285f4;
+                    }
+                    .logo-primary {
+                      fill: #f0f6fc;
+                    }
+                    .logo-bg {
+                      fill: none;
+                    }
+                  </style>
+                </defs>
+                <rect class="logo-bg" width="200" height="200"></rect>
+                <g>
+                  <g>
+                    <rect
+                      class="logo-primary"
+                      x="63.34"
+                      y="118.44"
+                      width="10.6"
+                      height="40.2"></rect>
+                    <polygon
+                      class="logo-primary"
+                      points="115.73 73.67 115.73 63.07 21.54 63.07 21.54 73.67 63.4 73.67 63.4 115.75 74 115.75 74 73.67 115.73 73.67"
+                    ></polygon>
+                  </g>
+                  <path
+                    class="logo-accent"
+                    d="M177.02,91.46c-.96-2.09-2.4-4.58-4.32-7.46.52-1.05.94-2.16,1.24-3.34.3-1.18.46-2.38.46-3.6v-20.02c0-2.88-.7-5.52-2.09-7.92-1.4-2.4-3.29-4.29-5.69-5.69-2.4-1.39-5.04-2.09-7.92-2.09h-74.44v10.6h74.44c1.39,0,2.57.5,3.53,1.5.96,1,1.44,2.2,1.44,3.6v20.02c0,1.4-.48,2.6-1.44,3.6-.96,1-2.14,1.5-3.53,1.5h-74.44v53.38h78.5c2.88,0,5.52-.7,7.92-2.09,2.4-1.39,4.29-3.29,5.69-5.69,1.39-2.4,2.09-5.04,2.09-7.92v-21.98c0-2.18-.48-4.32-1.44-6.41ZM167.86,119.85c0,1.4-.5,2.6-1.5,3.6-1,1-2.2,1.5-3.6,1.5h-62.8c-1.4,0-2.6-.5-3.6-1.5-1-1-1.5-2.2-1.5-3.6v-21.98c0-1.39.5-2.59,1.5-3.6,1-1,2.2-1.5,3.6-1.5h62.8c1.39,0,2.59.5,3.6,1.5,1,1,1.5,2.2,1.5,3.6v21.98Z"
+                  ></path>
+                </g>
+              </svg>
+            </div>
+            <div class="brand-info">
+              <span class="brand-name">TinkByte Admin</span>
+              <span class="brand-version">v1.0</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="nav-menu" id="nav-menu">
+          <div class="nav-section">
+            <div class="nav-section-title">Overview</div>
+            <a href="/admin/dashboard" class="nav-link" data-page="dashboard">
+              <i class="fas fa-tachometer-alt"></i>
+              <span>Dashboard</span>
+              <div class="nav-indicator"></div>
+            </a>
+            <a href="/admin/analytics" class="nav-link" data-page="analytics">
+              <i class="fas fa-chart-line"></i>
+              <span>Analytics</span>
+              <div class="nav-indicator"></div>
+            </a>
+          </div>
+
+          <div class="nav-section">
+            <div class="nav-section-title">Content Management</div>
+            <a href="/admin/moderation" class="nav-link" data-page="moderation">
+              <i class="fas fa-shield-alt"></i>
+              <span>Moderation</span>
+              <div
+                class="pending-badge"
+                id="pending-comments-badge"
+                style="display: none;"
+              >
+                <span id="pending-count">0</span>
+              </div>
+              <div class="nav-indicator"></div>
+            </a>
+            <a href="/admin/articles" class="nav-link" data-page="articles">
+              <i class="fas fa-file-alt"></i>
+              <span>Articles</span>
+              <div class="nav-indicator"></div>
+            </a>
+            <a href="/admin/categories" class="nav-link" data-page="categories">
+              <i class="fas fa-tags"></i>
+              <span>Categories</span>
+              <div class="nav-indicator"></div>
+            </a>
+            <a href="/admin/authors" class="nav-link" data-page="authors">
+              <i class="fas fa-user-edit"></i>
+              <span>Authors</span>
+              <div class="nav-indicator"></div>
+            </a>
+            <a href="/admin/podcasts" class="nav-link" data-page="podcasts">
+              <i class="fas fa-podcast"></i>
+              <span>Podcasts</span>
+              <div class="nav-indicator"></div>
+            </a>
+            <a href="/admin/users" class="nav-link" data-page="users">
+              <i class="fas fa-users"></i>
+              <span>Users</span>
+              <div class="nav-indicator"></div>
+            </a>
+            <a href="/admin/feedback" class="nav-link" data-page="feedback">
+              <i class="fas fa-feedback"></i>
+              <span>Feedback</span>
+              <div class="nav-indicator"></div>
+            </a>
+            <a
+              href="/admin/newsletters"
+              class="nav-link"
+              data-page="newsletters"
+            >
+              <i class="fas fa-envelope"></i>
+              <span>Newsletters</span>
+              <div class="nav-indicator"></div>
+            </a>
+          </div>
+
+          <!-- CMS Access Section -->
+          <div class="nav-section">
+            <div class="nav-section-title">Content Creation</div>
+            <a
+              href="/admin/index.html"
+              class="nav-link cms-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i class="fas fa-edit"></i>
+              <span>TinaCMS</span>
+              <i class="fas fa-external-link-alt nav-external"></i>
+              <div class="nav-indicator"></div>
+            </a>
+          </div>
+
+          <!-- Quick Links -->
+          <div class="nav-section">
+            <div class="nav-section-title">Quick Access</div>
+            <a
+              href="/"
+              class="nav-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i class="fas fa-home"></i>
+              <span>View Site</span>
+              <i class="fas fa-external-link-alt nav-external"></i>
+              <div class="nav-indicator"></div>
+            </a>
+            <a href="/admin/settings" class="nav-link" data-page="settings">
+              <i class="fas fa-cog"></i>
+              <span>Settings</span>
+              <div class="nav-indicator"></div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Fixed User Section -->
+        <div class="nav-user" id="nav-user">
+          <div class="user-profile">
+            <div class="user-avatar" id="user-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div class="user-details">
+              <span class="user-name" id="admin-user-name">Loading...</span>
+              <span class="user-role">Administrator</span>
+              <div class="user-status online" id="user-status">
+                <span class="status-dot"></span>
+                <span class="status-text">Online</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="user-actions">
+            <button
+              class="user-action-btn"
+              id="user-menu-toggle"
+              title="User Menu"
+            >
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+
+          <!-- User Dropdown Menu -->
+          <div class="user-dropdown" id="user-dropdown" style="display: none;">
+            <a href="/admin/profile" class="dropdown-item">
+              <i class="fas fa-user-edit"></i>
+              <span>Edit Profile</span>
+            </a>
+            <a href="/admin/reset-password" class="dropdown-item">
+              <i class="fas fa-key"></i>
+              <span>Change Password</span>
+            </a>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item signout-btn" id="admin-signout">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content Area -->
+      <main class="admin-main" id="admin-main">
+        <!-- Page Content -->
+        <div class="page-content">
+          <slot />
+        </div>
+
+        <!-- Global Notifications Container -->
+        <div id="notifications-container" class="notifications-container"></div>
+
+        <!-- Global Loading Overlay -->
+        <div id="global-loading" class="global-loading" style="display: none;">
+          <div class="loading-overlay">
+            <div class="loading-spinner">
+              <div class="spinner-square"></div>
+            </div>
+            <p id="global-loading-text">Loading...</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>

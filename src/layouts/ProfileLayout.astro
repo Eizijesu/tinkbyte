@@ -1,7 +1,9 @@
 ---
-// src/layouts/ProfileLayout.astro - FIXED FRONTMATTER
+// src/layouts/ProfileLayout.astro - SINGLETON VERSION
 import "../styles/global.css";
 import Logo from "../components/ui/Logo.astro";
+import NotificationBell from "../components/ui/NotificationBell.astro";
+import FeedbackWidget from "../components/ui/FeedbackWidget.astro";
 
 export interface Props {
   title: string;
@@ -66,9 +68,15 @@ const { title, description } = Astro.props;
 
           <div class="nav-secondary">
             <div class="user-menu">
-              <button class="user-display" id="user-menu" type="button">
-                <span class="username" id="nav-username">Loading...</span>
-                <i class="fas fa-chevron-down dropdown-arrow"></i>
+              <!-- Profile Avatar as Clickable Element -->
+              <button class="user-avatar-btn" id="user-menu" type="button">
+                <img
+                  id="nav-avatar"
+                  src="/images/avatars/preset-1.svg"
+                  alt="User Avatar"
+                  class="nav-avatar"
+                />
+                <i class="fas fa-chevron-down avatar-dropdown-arrow"></i>
               </button>
 
               <div class="user-dropdown" id="user-dropdown">
@@ -102,14 +110,22 @@ const { title, description } = Astro.props;
                 </button>
               </div>
             </div>
+            <NotificationBell />
           </div>
         </div>
       </nav>
 
-      <!-- Profile Navigation -->
+      <!-- Mobile Profile Navigation -->
       <div class="profile-nav-container">
         <div class="profile-nav">
-          <div class="nav-items">
+          <!-- Mobile Menu Toggle -->
+          <button class="mobile-nav-toggle" id="mobile-nav-toggle">
+            <i class="fas fa-bars"></i>
+            <span>Menu</span>
+          </button>
+
+          <!-- Navigation Items -->
+          <div class="nav-items" id="nav-items">
             <a href="/profile" class="profile-nav-item">My Profile</a>
             <a href="/profile/following" class="profile-nav-item">Following</a>
             <a href="/profile/account" class="profile-nav-item">Account</a>
@@ -118,11 +134,11 @@ const { title, description } = Astro.props;
             >
           </div>
 
-          <!-- Premium Button (Far Right) -->
+          <!-- Premium Button -->
           <div class="nav-premium">
             <a href="/profile/premium" class="premium-btn">
               <i class="fas fa-star"></i>
-              Premium
+              <span class="premium-text">Premium</span>
             </a>
           </div>
         </div>
@@ -221,11 +237,16 @@ const { title, description } = Astro.props;
         </div>
       </footer>
     </div>
+    <FeedbackWidget
+      position="bottom-right"
+      theme="auto"
+      hideOnPages={["/admin"]}
+    />
   </body>
 </html>
 
 <style is:global>
-  /* Base styles */
+  /* Mobile-First Base Styles */
   * {
     box-sizing: border-box;
   }
@@ -255,7 +276,29 @@ const { title, description } = Astro.props;
     background: #0f172a;
     color: #f8fafc;
   }
+  /* Auth Loading Overlay - SQUARE SPINNER */
+  .loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e2e8f0;
+    border-top: 3px solid #243788;
+    border-radius: 0; /* SQUARE - not round */
+    animation: spin 1s linear infinite;
+  }
 
+  html.dark .loading-spinner {
+    border-color: #334155;
+    border-top-color: #b4bce1;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
   /* Auth Loading Overlay */
   .auth-loading {
     position: fixed;
@@ -322,7 +365,7 @@ const { title, description } = Astro.props;
     flex-direction: column;
   }
 
-  /* Navigation */
+  /* Top Navigation - Mobile First */
   .top-nav {
     position: sticky;
     top: 0;
@@ -344,76 +387,110 @@ const { title, description } = Astro.props;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 4.5rem;
+    height: 4rem;
   }
 
   .nav-secondary {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
-  /* User Menu */
+  /* User Menu - Mobile Optimized */ /* User Menu - Avatar-Based */
   .user-menu {
     position: relative;
   }
 
-  .user-display {
+  .user-avatar-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
-    padding: 0.5rem 0.75rem;
+    padding: 0.25rem;
     border: 2px solid transparent;
     background: transparent;
     font-family: inherit;
     color: inherit;
     transition: all 0.3s ease;
     border-radius: 0;
+    position: relative;
   }
 
-  .user-display:hover {
-    background: #f8fafc;
+  .user-avatar-btn:hover {
     border-color: #243788;
-    color: #243788;
+    background: rgba(36, 55, 136, 0.05);
   }
 
-  html.dark .user-display:hover {
-    background: #334155;
+  html.dark .user-avatar-btn:hover {
     border-color: #b4bce1;
-    color: #b4bce1;
+    background: rgba(180, 188, 225, 0.05);
   }
 
-  .username {
-    font-weight: 600;
-    font-size: 0.875rem;
-    color: #1e293b;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
+  /* Square Navigation Avatar */
+  .nav-avatar {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #e2e8f0;
+    object-fit: cover;
+    display: block;
+    border-radius: 0; /* Square avatar */
+    transition: all 0.3s ease;
   }
 
-  html.dark .username {
-    color: #f8fafc;
+  html.dark .nav-avatar {
+    border-color: #334155;
   }
 
-  .dropdown-arrow {
-    font-size: 0.75rem;
+  .user-avatar-btn:hover .nav-avatar {
+    border-color: #243788;
+    transform: translateY(-1px);
+  }
+
+  html.dark .user-avatar-btn:hover .nav-avatar {
+    border-color: #b4bce1;
+  }
+
+  /* Small Dropdown Arrow on Avatar */
+  .avatar-dropdown-arrow {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    font-size: 0.625rem;
     color: #64748b;
-    transition: transform 0.2s ease;
+    background: white;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    border-radius: 0;
   }
 
-  .user-display:hover .dropdown-arrow {
-    transform: rotate(180deg);
-  }
-
-  html.dark .dropdown-arrow {
+  html.dark .avatar-dropdown-arrow {
+    background: #1e293b;
     color: #94a3b8;
+    border-color: #334155;
   }
 
-  /* Dropdown */
+  .user-avatar-btn:hover .avatar-dropdown-arrow {
+    transform: rotate(180deg);
+    background: #243788;
+    color: white;
+    border-color: #243788;
+  }
+
+  html.dark .user-avatar-btn:hover .avatar-dropdown-arrow {
+    background: #b4bce1;
+    color: #0f172a;
+    border-color: #b4bce1;
+  }
+
+  /* Dropdown - Improved for Avatar Menu */
   .user-dropdown {
     position: absolute;
-    top: calc(100% + 0.5rem);
+    top: calc(100% + 0.75rem);
     right: 0;
     background: white;
     border: 2px solid #243788;
@@ -423,6 +500,7 @@ const { title, description } = Astro.props;
     transform: translateY(-10px);
     transition: all 0.2s ease;
     z-index: 1001;
+    border-radius: 0;
   }
 
   html.dark .user-dropdown {
@@ -439,8 +517,8 @@ const { title, description } = Astro.props;
   .dropdown-header {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
+    gap: 1rem;
+    padding: 1.25rem;
     border-bottom: 2px solid #e2e8f0;
   }
 
@@ -448,17 +526,24 @@ const { title, description } = Astro.props;
     border-bottom-color: #334155;
   }
 
+  /* Square Dropdown Avatar */
   .dropdown-header img {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
+    border-radius: 0; /* Square avatar */
     object-fit: cover;
+    border: 2px solid #e2e8f0;
+  }
+
+  html.dark .dropdown-header img {
+    border-color: #334155;
   }
 
   .user-info {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    flex: 1;
   }
 
   .user-name {
@@ -476,6 +561,7 @@ const { title, description } = Astro.props;
   .user-email {
     font-size: 0.75rem;
     color: #64748b;
+    word-break: break-all;
   }
 
   html.dark .user-email {
@@ -496,7 +582,7 @@ const { title, description } = Astro.props;
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 1rem;
+    padding: 0.875rem 1.25rem;
     color: #1e293b;
     text-decoration: none;
     transition: all 0.3s ease;
@@ -536,10 +622,69 @@ const { title, description } = Astro.props;
     color: #ef4444;
   }
 
-  /* Profile Navigation - FIXED */
+  /* Mobile Responsive for Avatar Menu */
+  @media (max-width: 768px) {
+    .nav-avatar {
+      width: 36px;
+      height: 36px;
+    }
+
+    .avatar-dropdown-arrow {
+      width: 14px;
+      height: 14px;
+      font-size: 0.5rem;
+    }
+
+    .user-dropdown {
+      min-width: 260px;
+      right: -1rem;
+    }
+
+    .dropdown-header {
+      padding: 1rem;
+    }
+
+    .dropdown-header img {
+      width: 40px;
+      height: 40px;
+    }
+
+    .dropdown-item {
+      padding: 0.75rem 1rem;
+      font-size: 0.8125rem;
+    }
+  }
+
+  .dropdown-item:hover {
+    background: #f8fafc;
+    border-left-color: #243788;
+    color: #243788;
+    transform: translateX(4px);
+  }
+
+  html.dark .dropdown-item {
+    color: #e2e8f0;
+  }
+
+  html.dark .dropdown-item:hover {
+    background: #334155;
+    border-left-color: #b4bce1;
+    color: #b4bce1;
+  }
+
+  .logout-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-left-color: #ef4444;
+    color: #ef4444;
+  }
+
+  /* Profile Navigation - Mobile First */
   .profile-nav-container {
     background: white;
     border-bottom: 2px solid #e2e8f0;
+    position: sticky;
+    top: 4rem;
+    z-index: 999;
   }
 
   html.dark .profile-nav-container {
@@ -552,20 +697,67 @@ const { title, description } = Astro.props;
     margin: 0 auto;
     padding: 0 1rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    overflow-x: auto;
+    justify-content: space-between;
+    min-height: 3.5rem;
   }
 
-  .nav-items {
+  /* Mobile Navigation Toggle */
+  .mobile-nav-toggle {
     display: flex;
-    gap: 0;
-    flex: 1;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: transparent;
+    border: 2px solid transparent;
+    color: #64748b;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 0;
   }
 
-  .nav-premium {
-    margin-left: auto;
-    padding-left: 2rem;
+  .mobile-nav-toggle:hover {
+    background: #f8fafc;
+    border-color: #243788;
+    color: #243788;
+  }
+
+  html.dark .mobile-nav-toggle {
+    color: #94a3b8;
+  }
+
+  html.dark .mobile-nav-toggle:hover {
+    background: rgba(180, 188, 225, 0.05);
+    border-color: #b4bce1;
+    color: #b4bce1;
+  }
+
+  /* Navigation Items - Mobile First */
+  .nav-items {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 2px solid #e2e8f0;
+    border-bottom: 2px solid #e2e8f0;
+    z-index: 998;
+  }
+
+  html.dark .nav-items {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .nav-items.show {
+    display: flex;
+    flex-direction: column;
   }
 
   .profile-nav-item {
@@ -578,47 +770,56 @@ const { title, description } = Astro.props;
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
-    border-bottom: 3px solid transparent;
+    border-bottom: 1px solid #e2e8f0;
+    border-left: 3px solid transparent;
     transition: all 0.3s ease;
     white-space: nowrap;
+  }
+
+  .profile-nav-item:last-child {
+    border-bottom: none;
   }
 
   .profile-nav-item:hover {
     color: #243788;
     background: rgba(36, 55, 136, 0.05);
+    border-left-color: #243788;
+    transform: translateX(4px);
   }
 
   .profile-nav-item.active {
     color: #243788;
-    border-bottom-color: #243788;
     background: rgba(36, 55, 136, 0.05);
+    border-left-color: #243788;
   }
 
   html.dark .profile-nav-item {
     color: #94a3b8;
+    border-bottom-color: #334155;
   }
 
   html.dark .profile-nav-item:hover,
   html.dark .profile-nav-item.active {
     color: #b4bce1;
     background: rgba(180, 188, 225, 0.05);
+    border-left-color: #b4bce1;
   }
 
-  html.dark .profile-nav-item.active {
-    border-bottom-color: #b4bce1;
+  /* Premium Button - Mobile First */
+  .nav-premium {
+    flex-shrink: 0;
   }
 
-  /* Premium Button */
   .premium-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1rem;
     background: linear-gradient(135deg, #243788 0%, #1e2f6b 100%);
     color: white;
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
     transition: all 0.3s ease;
@@ -634,13 +835,18 @@ const { title, description } = Astro.props;
 
   .premium-btn i {
     color: #fbbf24;
+    font-size: 0.875rem;
   }
 
-  /* Main Content */
+  .premium-text {
+    display: none;
+  }
+
+  /* Main Content - Mobile First */
   .main-content {
     flex: 1;
-    padding: 2rem 0;
-    min-height: calc(100vh - 300px);
+    padding: 1rem 0;
+    min-height: calc(100vh - 200px);
     background: white;
   }
 
@@ -654,12 +860,12 @@ const { title, description } = Astro.props;
     padding: 0 1rem;
   }
 
-  /* Footer - SIMPLIFIED */
+  /* Footer - Mobile First */
   .profile-footer {
     background: #0f172a;
     border-top: 2px solid #1e293b;
-    margin-top: 4rem;
-    padding: 3rem 0 2rem 0;
+    margin-top: 2rem;
+    padding: 2rem 0 1rem 0;
   }
 
   .footer-container {
@@ -669,9 +875,9 @@ const { title, description } = Astro.props;
   }
 
   .footer-content {
-    display: grid;
-    grid-template-columns: 2fr 1fr auto;
-    gap: 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
     align-items: start;
   }
 
@@ -679,6 +885,7 @@ const { title, description } = Astro.props;
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    width: 100%;
   }
 
   .footer-brand p {
@@ -689,7 +896,9 @@ const { title, description } = Astro.props;
 
   .footer-links {
     display: flex;
-    gap: 3rem;
+    flex-direction: column;
+    gap: 2rem;
+    width: 100%;
   }
 
   .footer-section {
@@ -721,11 +930,12 @@ const { title, description } = Astro.props;
     color: #b4bce1;
   }
 
-  /* Social Links */
+  /* Social Links - Mobile First */
   .social-links {
     display: flex;
     gap: 0.75rem;
     margin-top: 0.5rem;
+    flex-wrap: wrap;
   }
 
   .social-link {
@@ -750,10 +960,10 @@ const { title, description } = Astro.props;
   }
 
   .social-link i {
-    font-size: 1.125rem;
+    font-size: 1rem;
   }
 
-  /* Theme Dropdown */
+  /* Theme Dropdown - Mobile First */
   .footer-theme h4 {
     color: #f8fafc;
     font-size: 0.875rem;
@@ -765,6 +975,7 @@ const { title, description } = Astro.props;
 
   .theme-dropdown {
     position: relative;
+    width: 100%;
   }
 
   .theme-toggle {
@@ -782,7 +993,7 @@ const { title, description } = Astro.props;
     text-transform: uppercase;
     letter-spacing: 0.025em;
     font-family: inherit;
-    min-width: 140px;
+    width: 100%;
   }
 
   .theme-toggle:hover {
@@ -855,150 +1066,296 @@ const { title, description } = Astro.props;
     border-left-color: #b4bce1;
   }
 
-  /* Responsive */
-  @media (max-width: 768px) {
+  /* Tablet Styles (768px and up) */
+  @media (min-width: 768px) {
     .nav-container {
-      padding: 0 0.5rem;
+      height: 4.5rem;
+      padding: 0 1.5rem;
     }
 
-    .profile-nav {
-      padding: 0 0.5rem;
-      flex-direction: column;
-      gap: 1rem;
+    .nav-secondary {
+      gap: 1.5rem;
+    }
+
+    .username {
+      display: block;
+      font-size: 0.875rem;
+    }
+
+    .user-display {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    .dropdown-header img {
+      width: 48px;
+      height: 48px;
+    }
+
+    .mobile-nav-toggle {
+      display: none;
     }
 
     .nav-items {
-      order: 1;
-      justify-content: center;
+      display: flex;
+      position: static;
+      background: transparent;
+      border: none;
+      flex-direction: row;
+      gap: 0;
+      flex: 1;
+    }
+
+    .profile-nav-item {
+      border-bottom: 3px solid transparent;
+      border-left: none;
+      padding: 1rem 1.5rem;
+      transform: none;
+    }
+
+    .profile-nav-item:hover {
+      transform: none;
+      border-left: none;
+      border-bottom-color: #243788;
+    }
+
+    .profile-nav-item.active {
+      border-left: none;
+      border-bottom-color: #243788;
+    }
+
+    html.dark .profile-nav-item:hover,
+    html.dark .profile-nav-item.active {
+      border-left: none;
+      border-bottom-color: #b4bce1;
     }
 
     .nav-premium {
-      order: 2;
-      margin-left: 0;
-      padding-left: 0;
+      margin-left: auto;
+      padding-left: 2rem;
+    }
+
+    .premium-btn {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.875rem;
+    }
+
+    .premium-text {
+      display: inline;
+    }
+
+    .main-content {
+      padding: 2rem 0;
     }
 
     .content-wrapper {
-      padding: 0 0.5rem;
+      padding: 0 1.5rem;
+    }
+
+    .profile-footer {
+      margin-top: 3rem;
+      padding: 3rem 0 2rem 0;
     }
 
     .footer-content {
-      grid-template-columns: 1fr;
-      gap: 2rem;
+      display: grid;
+      grid-template-columns: 2fr 1fr auto;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    .footer-brand {
+      width: auto;
     }
 
     .footer-links {
-      flex-direction: column;
-      gap: 2rem;
+      display: flex;
+      flex-direction: row;
+      gap: 3rem;
+      width: auto;
     }
 
-    .social-links {
-      justify-content: center;
+    .theme-dropdown {
+      width: 140px;
+    }
+
+    .theme-toggle {
+      width: 100%;
+    }
+
+    .social-link i {
+      font-size: 1.125rem;
+    }
+  }
+
+  /* Desktop Styles (1024px and up) */
+  @media (min-width: 1024px) {
+    .nav-container {
+      padding: 0 2rem;
+    }
+
+    .content-wrapper {
+      padding: 0 2rem;
+    }
+
+    .footer-container {
+      padding: 0 2rem;
+    }
+
+    .profile-footer {
+      margin-top: 4rem;
     }
   }
 </style>
 
 <script>
-  import { authStore } from "../lib/auth-store.js";
+  import { authManager } from "../lib/auth.js";
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    console.log("🚀 ProfileLayout: Starting...");
+  class ProfileLayoutManager {
+    private initialized = false;
+    private authManager = authManager;
+    private unsubscribeAuth: (() => void) | null = null;
 
-    const authLoading = document.getElementById("auth-loading");
-    const mainApp = document.getElementById("main-app");
-
-    // Check if we're on signin page
-    if (window.location.pathname === "/auth/signin") {
-      showMainApp();
-      return;
+    constructor() {
+      this.init();
     }
 
-    try {
-      // Check if we have instant data from cache
-      if (authStore.hasInstantData()) {
-        console.log("⚡ ProfileLayout: Using instant cached data");
+    async init() {
+      if (this.initialized) return;
 
-        const user = authStore.getUser();
-        const profile = authStore.getProfile();
+      try {
+        console.log("🚀 ProfileLayout: Starting initialization...");
 
-        showMainApp();
-        updateUI(user, profile);
-        setupLogout();
-        setupOtherElements();
+        // Skip auth check for signin page
+        if (window.location.pathname === "/auth/signin") {
+          this.showMainApp();
+          this.setupOtherElements();
+          return;
+        }
 
-        // Initialize in background for verification
-        authStore.initialize();
+        // Initialize auth manager
+        await this.authManager.initialize();
 
-        return;
+        // Check authentication
+        if (!(await this.authManager.isAuthenticated())) {
+          console.log("❌ Not authenticated, redirecting to signin");
+          window.location.href = "/auth/signin";
+          return;
+        }
+
+        // Get user data
+        const user = this.authManager.getUser();
+        const profile = this.authManager.getProfile();
+
+        console.log("✅ User authenticated:", user?.email);
+
+        // Show app and update UI
+        this.showMainApp();
+        this.updateUI(user, profile);
+        this.setupEventListeners();
+        this.setupOtherElements();
+
+        // Listen for auth changes
+        this.unsubscribeAuth = this.authManager.onAuthChange(
+          (user, profile) => {
+            if (!user) {
+              console.log("🔄 User signed out, redirecting...");
+              window.location.href = "/auth/signin";
+            } else {
+              this.updateUI(user, profile);
+            }
+          }
+        );
+
+        this.initialized = true;
+        console.log("✅ ProfileLayout: Initialization complete");
+      } catch (error) {
+        console.error("❌ ProfileLayout: Initialization failed:", error);
+        this.showMainApp(); // Show app anyway to prevent blank screen
+        this.setupOtherElements();
       }
-
-      // No instant data, need to initialize
-      console.log("🔄 ProfileLayout: Initializing auth...");
-      await authStore.initialize();
-
-      if (!authStore.isAuthenticated()) {
-        console.log("❌ Not authenticated, redirecting to signin");
-        window.location.href = "/auth/signin";
-        return;
-      }
-
-      const user = authStore.getUser();
-      const profile = authStore.getProfile();
-
-      console.log("✅ User authenticated:", user?.email);
-
-      showMainApp();
-      updateUI(user, profile);
-      setupLogout();
-      setupOtherElements();
-    } catch (error) {
-      console.error("❌ Auth check failed:", error);
-      showMainApp();
     }
 
-    function showMainApp() {
+    private showMainApp() {
+      const authLoading = document.getElementById("auth-loading");
+      const mainApp = document.getElementById("main-app");
+
       if (authLoading) authLoading.style.display = "none";
       if (mainApp) mainApp.style.display = "flex";
     }
 
-    function updateUI(user: any, profile: any) {
-      const displayName = authStore.getDisplayName();
+    private updateUI(user: any, profile: any) {
+      try {
+        const displayName = this.authManager.getDisplayName();
+        const avatarUrl = this.authManager.getAvatarUrl();
 
-      const navUsername = document.getElementById("nav-username");
-      const dropdownName = document.getElementById("dropdown-name");
-      const dropdownEmail = document.getElementById("dropdown-email");
-      const dropdownAvatar = document.getElementById(
-        "dropdown-avatar"
-      ) as HTMLImageElement;
+        // Update navigation elements
+        const navAvatar = document.getElementById(
+          "nav-avatar"
+        ) as HTMLImageElement;
+        const dropdownName = document.getElementById("dropdown-name");
+        const dropdownEmail = document.getElementById("dropdown-email");
+        const dropdownAvatar = document.getElementById(
+          "dropdown-avatar"
+        ) as HTMLImageElement;
 
-      if (navUsername) navUsername.textContent = displayName;
-      if (dropdownName) dropdownName.textContent = displayName;
-      if (dropdownEmail) dropdownEmail.textContent = user?.email || "";
+        if (navAvatar) navAvatar.src = avatarUrl;
+        if (dropdownName) dropdownName.textContent = displayName;
+        if (dropdownEmail) dropdownEmail.textContent = user?.email || "";
+        if (dropdownAvatar) dropdownAvatar.src = avatarUrl;
 
-      if (dropdownAvatar) {
-        dropdownAvatar.src = authStore.getAvatarUrl();
+        console.log("✅ ProfileLayout: UI updated for", displayName);
+      } catch (error) {
+        console.error("❌ ProfileLayout: UI update failed:", error);
       }
     }
 
-    async function setupLogout() {
+    private setupEventListeners() {
+      this.setupLogout();
+      this.setupUserMenu();
+      this.setupMobileNav();
+      this.setupThemeDropdown();
+      this.setActiveNavItem();
+      this.setupProfileUpdateListener();
+    }
+
+    private async setupLogout() {
       const logoutBtn = document.getElementById(
         "logout-btn"
       ) as HTMLButtonElement;
+
       if (logoutBtn) {
         logoutBtn.addEventListener("click", async (e) => {
           e.preventDefault();
 
           if (confirm("Are you sure you want to sign out?")) {
             try {
+              // Store original content BEFORE modifying
               const originalContent = logoutBtn.innerHTML;
+
               logoutBtn.innerHTML =
                 '<i class="fas fa-spinner fa-spin"></i> Signing out...';
               logoutBtn.disabled = true;
 
-              await authStore.signOut();
+              // Use singleton auth manager
+              await this.authManager.signOut();
+
+              // Redirect will happen automatically via auth change listener
               window.location.href = "/";
             } catch (error) {
               console.error("❌ ProfileLayout: Signout error:", error);
+
+              // Restore button state using the stored original content
+              const originalContent = logoutBtn.innerHTML.includes(
+                "Signing out"
+              )
+                ? '<i class="fas fa-sign-out-alt"></i> Sign out'
+                : logoutBtn.innerHTML;
+
+              logoutBtn.innerHTML = originalContent;
+              logoutBtn.disabled = false;
+
+              // Force redirect anyway
               window.location.href = "/";
             }
           }
@@ -1006,14 +1363,7 @@ const { title, description } = Astro.props;
       }
     }
 
-    function setupOtherElements() {
-      setupUserMenu();
-      setupThemeDropdown();
-      setActiveNavItem();
-      setupProfileUpdateListener();
-    }
-
-    function setupUserMenu() {
+    private setupUserMenu() {
       const userMenu = document.getElementById(
         "user-menu"
       ) as HTMLButtonElement;
@@ -1027,13 +1377,59 @@ const { title, description } = Astro.props;
           userDropdown.classList.toggle("show");
         });
 
-        document.addEventListener("click", () => {
-          userDropdown.classList.remove("show");
+        // Close dropdown when clicking outside
+        document.addEventListener("click", (event) => {
+          if (
+            !userMenu.contains(event.target as Node) &&
+            !userDropdown.contains(event.target as Node)
+          ) {
+            userDropdown.classList.remove("show");
+          }
+        });
+
+        // Prevent dropdown from closing when clicking inside it
+        userDropdown.addEventListener("click", (e) => {
+          e.stopPropagation();
         });
       }
     }
 
-    function setupThemeDropdown() {
+    private setupMobileNav() {
+      const mobileNavToggle = document.getElementById(
+        "mobile-nav-toggle"
+      ) as HTMLButtonElement;
+      const navItems = document.getElementById("nav-items") as HTMLElement;
+
+      if (mobileNavToggle && navItems) {
+        mobileNavToggle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          navItems.classList.toggle("show");
+
+          const icon = mobileNavToggle.querySelector("i");
+          if (icon) {
+            if (navItems.classList.contains("show")) {
+              icon.className = "fas fa-times";
+            } else {
+              icon.className = "fas fa-bars";
+            }
+          }
+        });
+
+        document.addEventListener("click", () => {
+          navItems.classList.remove("show");
+          const icon = mobileNavToggle.querySelector("i");
+          if (icon) {
+            icon.className = "fas fa-bars";
+          }
+        });
+
+        navItems.addEventListener("click", (e) => {
+          e.stopPropagation();
+        });
+      }
+    }
+
+    private setupThemeDropdown() {
       const themeToggle = document.getElementById(
         "theme-toggle"
       ) as HTMLButtonElement;
@@ -1048,7 +1444,7 @@ const { title, description } = Astro.props;
       const themeText = document.querySelector(".theme-text") as HTMLElement;
 
       const currentTheme = localStorage.getItem("theme") || "system";
-      updateThemeDisplay(currentTheme);
+      this.updateThemeDisplay(currentTheme, themeIcon, themeText);
 
       if (themeToggle && themeOptions && themeDropdown) {
         themeToggle.addEventListener("click", (e) => {
@@ -1090,33 +1486,37 @@ const { title, description } = Astro.props;
               localStorage.setItem("theme", "system");
             }
 
-            updateThemeDisplay(theme || "system");
+            this.updateThemeDisplay(theme || "system", themeIcon, themeText);
             themeDropdown.classList.remove("open");
             themeOptions.classList.remove("show");
           });
         });
       }
+    }
 
-      function updateThemeDisplay(theme: string) {
-        if (!themeIcon || !themeText) return;
+    private updateThemeDisplay(
+      theme: string,
+      themeIcon: HTMLElement,
+      themeText: HTMLElement
+    ) {
+      if (!themeIcon || !themeText) return;
 
-        switch (theme) {
-          case "light":
-            themeIcon.className = "fas fa-sun theme-icon";
-            themeText.textContent = "Light";
-            break;
-          case "dark":
-            themeIcon.className = "fas fa-moon theme-icon";
-            themeText.textContent = "Dark";
-            break;
-          default:
-            themeIcon.className = "fas fa-desktop theme-icon";
-            themeText.textContent = "System";
-        }
+      switch (theme) {
+        case "light":
+          themeIcon.className = "fas fa-sun theme-icon";
+          themeText.textContent = "Light";
+          break;
+        case "dark":
+          themeIcon.className = "fas fa-moon theme-icon";
+          themeText.textContent = "Dark";
+          break;
+        default:
+          themeIcon.className = "fas fa-desktop theme-icon";
+          themeText.textContent = "System";
       }
     }
 
-    function setActiveNavItem() {
+    private setActiveNavItem() {
       const currentPath = window.location.pathname;
       const navItems = document.querySelectorAll(
         ".profile-nav-item"
@@ -1137,14 +1537,38 @@ const { title, description } = Astro.props;
       });
     }
 
-    function setupProfileUpdateListener() {
+    private setupProfileUpdateListener() {
       window.addEventListener("profile-updated", (event: any) => {
         console.log("🔄 ProfileLayout: Profile updated, refreshing UI");
-        const { user, profile } = event.detail;
-        updateUI(user, profile);
+        const user = this.authManager.getUser();
+        const profile = this.authManager.getProfile();
+        this.updateUI(user, profile);
       });
     }
 
-    console.log("✅ ProfileLayout: Setup complete");
+    private setupOtherElements() {
+      // Setup any other elements that don't require authentication
+      this.setupThemeDropdown();
+      this.setActiveNavItem();
+    }
+
+    // Cleanup method
+    destroy() {
+      if (this.unsubscribeAuth) {
+        this.unsubscribeAuth();
+        this.unsubscribeAuth = null;
+      }
+      this.initialized = false;
+    }
+  }
+
+  // Initialize when DOM is ready
+  document.addEventListener("DOMContentLoaded", () => {
+    new ProfileLayoutManager();
+  });
+
+  // Cleanup on page unload
+  window.addEventListener("beforeunload", () => {
+    // Any cleanup if needed
   });
 </script>

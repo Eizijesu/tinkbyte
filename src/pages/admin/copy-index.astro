@@ -1,0 +1,24 @@
+---
+// src/pages/admin/index.astro
+// Simple redirect page that checks admin status before redirecting to TinaCMS and other admin pages
+
+// Type assertion to ensure TypeScript recognizes the properties
+const user = (Astro.locals as any).user;
+const isAdmin = (Astro.locals as any).isAdmin;
+
+console.log("Admin redirect check:", {
+  hasUser: !!user,
+  isAdmin,
+  userEmail: user?.email,
+});
+
+if (!user || !isAdmin) {
+  console.log("Redirecting to admin signin");
+  return Astro.redirect(
+    "/auth/admin-signin?redirect=" + encodeURIComponent("/admin/index.html")
+  );
+}
+
+console.log("Admin verified, redirecting to TinaCMS");
+return Astro.redirect("/admin/index.html");
+---

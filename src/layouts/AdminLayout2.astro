@@ -1,0 +1,567 @@
+---
+// src/layouts/AdminLayout.astro - Updated with square spinner
+export interface Props {
+  title: string;
+  description?: string;
+  preloadData?: boolean;
+}
+
+const { title, description, preloadData = true } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description || "TinkByte Admin Panel"} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+
+    <!-- Preload critical resources -->
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+      as="style"
+    />
+    <link
+      rel="preload"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      as="style"
+    />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+
+    <!-- Preload admin auth script -->
+    {preloadData && <link rel="modulepreload" href="/src/lib/admin/auth.js" />}
+  </head>
+
+  <body>
+    <div id="admin-app">
+      <div id="admin-loading" class="admin-loading">
+        <div class="loading-spinner">
+          <svg
+            class="animate-spin"
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+          >
+            <line x1="12" y1="2" x2="12" y2="6"></line>
+            <line x1="12" y1="18" x2="12" y2="22"></line>
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+            <line x1="2" y1="12" x2="6" y2="12"></line>
+            <line x1="18" y1="12" x2="22" y2="12"></line>
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+          </svg>
+        </div>
+        <p>Loading admin panel...</p>
+      </div>
+
+      <div id="admin-content" class="admin-content" style="display: none;">
+        <!-- Admin Navigation -->
+        <nav class="admin-nav">
+          <div class="nav-brand">
+            <a href="/admin/dashboard" class="brand-link">
+              <i class="fas fa-cog"></i>
+              <span>TinkByte Admin</span>
+            </a>
+          </div>
+
+          <div class="nav-menu">
+            <a href="/admin/dashboard" class="nav-link" data-page="dashboard">
+              <i class="fas fa-tachometer-alt"></i>
+              <span>Dashboard</span>
+            </a>
+            <a href="/admin/moderation" class="nav-link" data-page="moderation">
+              <i class="fas fa-shield-alt"></i>
+              <span>Moderation</span>
+            </a>
+            <a href="/admin/categories" class="nav-link" data-page="categories">
+              <i class="fas fa-tags"></i>
+              <span>Categories</span>
+            </a>
+            <a href="/admin/users" class="nav-link" data-page="users">
+              <i class="fas fa-users"></i>
+              <span>Users</span>
+            </a>
+            <a
+              href="/admin/newsletters"
+              class="nav-link"
+              data-page="newsletters"
+            >
+              <i class="fas fa-envelope"></i>
+              <span>Newsletters</span>
+            </a>
+            <a href="/admin/analytics" class="nav-link" data-page="analytics">
+              <i class="fas fa-chart-line"></i>
+              <span>Analytics</span>
+            </a>
+            <a href="/admin/settings" class="nav-link" data-page="settings">
+              <i class="fas fa-cog"></i>
+              <span>Settings</span>
+            </a>
+
+            <!-- CMS Access Section -->
+            <div class="nav-divider"></div>
+            <div class="nav-section-title">Content Management</div>
+            <a
+              href="/admin/index.html"
+              class="nav-link cms-link"
+              target="_blank"
+            >
+              <i class="fas fa-edit"></i>
+              <span>TinaCMS</span>
+              <i class="fas fa-external-link-alt nav-external"></i>
+            </a>
+
+            <!-- Quick Links -->
+            <div class="nav-divider"></div>
+            <div class="nav-section-title">Quick Links</div>
+            <a href="/" class="nav-link" target="_blank">
+              <i class="fas fa-home"></i>
+              <span>View Site</span>
+              <i class="fas fa-external-link-alt nav-external"></i>
+            </a>
+          </div>
+
+          <div class="nav-user">
+            <div class="user-info">
+              <span class="user-name" id="admin-user-name">Admin</span>
+              <span class="user-role">Administrator</span>
+            </div>
+            <button class="signout-btn" id="admin-signout" title="Sign Out">
+              <i class="fas fa-sign-out-alt"></i>
+            </button>
+          </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        background: #0d1117;
+        color: #f0f6fc;
+        line-height: 1.6;
+      }
+
+      .admin-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #0d1117;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+
+      .loading-spinner {
+        margin-bottom: 1rem;
+        color: #4285f4;
+      }
+
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .admin-loading p {
+        color: #8b949e;
+        font-size: 0.875rem;
+      }
+
+      #admin-app {
+        min-height: 100vh;
+        display: flex;
+      }
+
+      .admin-content {
+        width: 100%;
+        display: flex;
+      }
+
+      .admin-nav {
+        width: 280px;
+        background: #161b22;
+        border-right: 1px solid #21262d;
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1000;
+      }
+
+      .nav-brand {
+        padding: 1.5rem;
+        border-bottom: 1px solid #21262d;
+      }
+
+      .brand-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #f0f6fc;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.125rem;
+        transition: color 0.2s ease;
+      }
+
+      .brand-link:hover {
+        color: #4285f4;
+      }
+
+      .brand-link i {
+        font-size: 1.25rem;
+        color: #4285f4;
+      }
+
+      .nav-menu {
+        flex: 1;
+        padding: 1rem 0;
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        color: #8b949e;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border-left: 3px solid transparent;
+      }
+
+      .nav-link:hover {
+        color: #f0f6fc;
+        background: #21262d;
+        border-left-color: #4285f4;
+      }
+
+      .nav-link.active {
+        color: #4285f4;
+        background: #21262d;
+        border-left-color: #4285f4;
+      }
+
+      .nav-link i {
+        width: 20px;
+        text-align: center;
+      }
+
+      .nav-user {
+        padding: 1.5rem;
+        border-top: 1px solid #21262d;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .user-info {
+        flex: 1;
+      }
+
+      .user-name {
+        display: block;
+        color: #f0f6fc;
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+
+      .user-role {
+        display: block;
+        color: #8b949e;
+        font-size: 0.75rem;
+      }
+
+      .signout-btn {
+        background: #da3633;
+        border: none;
+        color: white;
+        padding: 0.5rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .signout-btn:hover {
+        background: #b91c1c;
+      }
+
+      .admin-main {
+        flex: 1;
+        margin-left: 280px;
+        padding: 2rem;
+        min-height: 100vh;
+      }
+
+      .nav-divider {
+        height: 1px;
+        background: #21262d;
+        margin: 1rem 0;
+      }
+
+      .nav-section-title {
+        padding: 0.5rem 1.5rem;
+        color: #8b949e;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .cms-link {
+        background: rgba(66, 133, 244, 0.1);
+        border-left-color: #4285f4 !important;
+      }
+
+      .nav-external {
+        margin-left: auto;
+        font-size: 0.75rem;
+        opacity: 0.6;
+      }
+
+      .nav-link:hover .nav-external {
+        opacity: 1;
+      }
+
+      /* Light mode styles */
+      :global(.light) body {
+        background: #ffffff;
+        color: #1f2937;
+      }
+
+      :global(.light) .admin-loading {
+        background: #ffffff;
+      }
+
+      :global(.light) .loading-spinner {
+        color: #243788;
+      }
+
+      :global(.light) .admin-loading p {
+        color: #6b7280;
+      }
+
+      :global(.light) .admin-nav {
+        background: #f8fafc;
+        border-right-color: #e2e8f0;
+      }
+
+      :global(.light) .nav-brand {
+        border-bottom-color: #e2e8f0;
+      }
+
+      :global(.light) .brand-link {
+        color: #1f2937;
+      }
+
+      :global(.light) .brand-link:hover {
+        color: #243788;
+      }
+
+      :global(.light) .brand-link i {
+        color: #243788;
+      }
+
+      :global(.light) .nav-link {
+        color: #6b7280;
+      }
+
+      :global(.light) .nav-link:hover {
+        color: #1f2937;
+        background: #e2e8f0;
+        border-left-color: #243788;
+      }
+
+      :global(.light) .nav-link.active {
+        color: #243788;
+        background: #e2e8f0;
+        border-left-color: #243788;
+      }
+
+      :global(.light) .nav-user {
+        border-top-color: #e2e8f0;
+      }
+
+      :global(.light) .user-name {
+        color: #1f2937;
+      }
+
+      :global(.light) .user-role {
+        color: #6b7280;
+      }
+
+      :global(.light) .nav-divider {
+        background: #e2e8f0;
+      }
+
+      :global(.light) .nav-section-title {
+        color: #6b7280;
+      }
+
+      :global(.light) .cms-link {
+        background: rgba(36, 55, 136, 0.1);
+        border-left-color: #243788 !important;
+      }
+
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        .admin-nav {
+          width: 100%;
+          height: auto;
+          position: relative;
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+        }
+
+        .admin-nav.mobile-open {
+          transform: translateX(0);
+        }
+
+        .admin-main {
+          margin-left: 0;
+          padding: 1rem;
+        }
+
+        .nav-menu {
+          padding: 0.5rem 0;
+        }
+
+        .nav-link {
+          padding: 0.75rem 1rem;
+        }
+
+        .nav-user {
+          padding: 1rem;
+        }
+      }
+    </style>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const loadingEl = document.getElementById("admin-loading");
+        const contentEl = document.getElementById("admin-content");
+        const userNameEl = document.getElementById("admin-user-name");
+        const signoutBtn = document.getElementById("admin-signout");
+
+        console.log("🔄 Admin layout initializing...");
+
+        try {
+          // Simple session check
+          const adminSession = localStorage.getItem("tinkbyte-admin-session");
+
+          if (!adminSession) {
+            console.log("❌ No admin session found");
+            window.location.href = "/auth/admin-signin";
+            return;
+          }
+
+          const session = JSON.parse(adminSession);
+
+          // Check if session is expired
+          if (Date.now() > session.expiresAt * 1000) {
+            console.log("❌ Session expired");
+            localStorage.removeItem("tinkbyte-admin-session");
+            window.location.href = "/auth/admin-signin?error=session_expired";
+            return;
+          }
+
+          // Session is valid
+          console.log("✅ Valid admin session found");
+
+          // Update user info
+          if (userNameEl && session.user?.email) {
+            userNameEl.textContent = session.user.email.split("@")[0];
+          }
+
+          // Show content and hide loading
+          if (loadingEl) loadingEl.style.display = "none";
+          if (contentEl) contentEl.style.display = "flex";
+
+          // Set active navigation
+          setActiveNavigation();
+
+          // Setup signout
+          signoutBtn?.addEventListener("click", () => {
+            localStorage.removeItem("tinkbyte-admin-session");
+            window.location.href = "/auth/admin-signin?message=signed_out";
+          });
+        } catch (error) {
+          console.error("❌ Admin initialization error:", error);
+
+          // Hide loading and redirect
+          if (loadingEl) loadingEl.style.display = "none";
+          window.location.href =
+            "/auth/admin-signin?error=initialization_failed";
+        }
+      });
+
+      function setActiveNavigation() {
+        try {
+          const currentPath = window.location.pathname;
+          const navLinks = document.querySelectorAll(
+            '.nav-link:not([target="_blank"])'
+          );
+
+          navLinks.forEach((link) => {
+            const href = link.getAttribute("href");
+            if (href && currentPath === href) {
+              link.classList.add("active");
+            } else {
+              link.classList.remove("active");
+            }
+          });
+        } catch (error) {
+          console.error("Navigation setup error:", error);
+        }
+      }
+    </script></body
+  >
+</html>

@@ -1,34 +1,47 @@
 // src/lib/supabase.ts
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'
+import { config } from './config';
 
-const environment = (import.meta as any).env.PUBLIC_ENVIRONMENT || 'development';
-const isProduction = environment === 'production';
-const supabaseUrl = (import.meta as any).env.PUBLIC_SUPABASE_URL as string;
-const supabaseAnonKey = (import.meta as any).env.PUBLIC_SUPABASE_ANON_KEY as string;
+let supabaseInstance: any = null;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+function getSupabaseClient() {
+  if (!supabaseInstance) {
+    const supabaseUrl = config.supabase.url;
+    const supabaseAnonKey = config.supabase.anonKey;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing Supabase environment variables');
+    }
+
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        storageKey: `tinkbyte-auth-token-${config.environment}`,
+        debug: false
+      },
+      global: {
+        headers: {
+          'X-Environment': config.environment,
+          'X-Client-Info': `tinkbyte-web-${config.environment}`
+        }
+      }
+    });
+
+    console.log('✅ Supabase singleton created');
+  }
+  return supabaseInstance;
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    storageKey: `tinkbyte-auth-token-${environment}`,
-    debug: !isProduction
-  },
-  global: {
-    headers: {
-      'X-Environment': environment,
-      'X-Client-Info': `tinkbyte-web-${environment}`
-    }
-  }
-});
+export const supabase = getSupabaseClient();
 
-// db helper with environment filtering
+// ✅ Keep all your existing code exactly as it is below:
+export const getEnvironment = () => config.environment;
+export const isProductionEnvironment = () => config.environment === 'production';
+
 export const db = {
   profiles: () => supabase.from('profiles'),
   comments: () => supabase.from('comments'),
@@ -57,64 +70,64 @@ export const db = {
 // Environment-aware query helpers
 export const envDb = {
   profiles: {
-    select: (columns = '*') => db.profiles().select(columns).eq('environment', environment),
-    insert: (data: any) => db.profiles().insert({ ...data, environment }),
-    update: (data: any) => db.profiles().update({ ...data, environment }),
-    delete: () => db.profiles().delete().eq('environment', environment),
+    select: (columns: string = '*') => db.profiles().select(columns).eq('environment', config.environment),
+    insert: (data: Partial<Profile>) => db.profiles().insert({ ...data, environment: config.environment } as any),
+    update: (data: Partial<Profile>) => db.profiles().update({ ...data, environment: config.environment } as any),
+    delete: () => db.profiles().delete().eq('environment', config.environment),
   },
   comments: {
-    select: (columns = '*') => db.comments().select(columns).eq('environment', environment),
-    insert: (data: any) => db.comments().insert({ ...data, environment }),
-    update: (data: any) => db.comments().update({ ...data, environment }),
-    delete: () => db.comments().delete().eq('environment', environment),
+    select: (columns: string = '*') => db.comments().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.comments().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.comments().update({ ...data, environment: config.environment }),
+    delete: () => db.comments().delete().eq('environment', config.environment),
   },
   commentLikes: {
-    select: (columns = '*') => db.commentLikes().select(columns).eq('environment', environment),
-    insert: (data: any) => db.commentLikes().insert({ ...data, environment }),
-    update: (data: any) => db.commentLikes().update({ ...data, environment }),
-    delete: () => db.commentLikes().delete().eq('environment', environment),
+    select: (columns: string = '*') => db.commentLikes().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentLikes().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentLikes().update({ ...data, environment: config.environment }),
+    delete: () => db.commentLikes().delete().eq('environment', config.environment),
   },
   commentModeration: {
-    select: (columns = '*') => db.commentModeration().select(columns).eq('environment', environment),
-    insert: (data: any) => db.commentModeration().insert({ ...data, environment }),
-    update: (data: any) => db.commentModeration().update({ ...data, environment }),
-    delete: () => db.commentModeration().delete().eq('environment', environment),
+    select: (columns: string = '*') => db.commentModeration().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentModeration().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentModeration().update({ ...data, environment: config.environment }),
+    delete: () => db.commentModeration().delete().eq('environment', config.environment),
   },
   commentReactions: {
-    select: (columns = '*') => db.commentReactions().select(columns).eq('environment', environment),
-    insert: (data: any) => db.commentReactions().insert({ ...data, environment }),
-    update: (data: any) => db.commentReactions().update({ ...data, environment }),
-    delete: () => db.commentReactions().delete().eq('environment', environment),
+    select: (columns: string = '*') => db.commentReactions().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentReactions().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentReactions().update({ ...data, environment: config.environment }),
+    delete: () => db.commentReactions().delete().eq('environment', config.environment),
   },
   commentBookmarks: {
-    select: (columns = '*') => db.commentBookmarks().select(columns).eq('environment', environment),
-    insert: (data: any) => db.commentBookmarks().insert({ ...data, environment }),
-    update: (data: any) => db.commentBookmarks().update({ ...data, environment }),
-    delete: () => db.commentBookmarks().delete().eq('environment', environment),
+    select: (columns: string = '*') => db.commentBookmarks().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentBookmarks().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentBookmarks().update({ ...data, environment: config.environment }),
+    delete: () => db.commentBookmarks().delete().eq('environment', config.environment),
   },
   commentDrafts: {
-    select: (columns = '*') => db.commentDrafts().select(columns).eq('environment', environment),
-    insert: (data: any) => db.commentDrafts().insert({ ...data, environment }),
-    update: (data: any) => db.commentDrafts().update({ ...data, environment }),
-    delete: () => db.commentDrafts().delete().eq('environment', environment),
+    select: (columns: string = '*') => db.commentDrafts().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentDrafts().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentDrafts().update({ ...data, environment: config.environment }),
+    delete: () => db.commentDrafts().delete().eq('environment', config.environment),
   },
   commentNotifications: {
-    select: (columns = '*') => db.commentNotifications().select(columns).eq('environment', environment),
-    insert: (data: any) => db.commentNotifications().insert({ ...data, environment }),
-    update: (data: any) => db.commentNotifications().update({ ...data, environment }),
-    delete: () => db.commentNotifications().delete().eq('environment', environment),
+    select: (columns: string = '*') => db.commentNotifications().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentNotifications().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentNotifications().update({ ...data, environment: config.environment }),
+    delete: () => db.commentNotifications().delete().eq('environment', config.environment),
   },
   userRateLimits: {
-    select: (columns = '*') => db.userRateLimits().select(columns).eq('environment', environment),
-    insert: (data: any) => db.userRateLimits().insert({ ...data, environment }),
-    update: (data: any) => db.userRateLimits().update({ ...data, environment }),
-    delete: () => db.userRateLimits().delete().eq('environment', environment),
+    select: (columns: string = '*') => db.userRateLimits().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.userRateLimits().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.userRateLimits().update({ ...data, environment: config.environment }),
+    delete: () => db.userRateLimits().delete().eq('environment', config.environment),
   },
   newsletterSubscriptions: {
-    select: (columns = '*') => db.newsletterSubscriptions().select(columns).eq('environment', environment),
-    insert: (data: any) => db.newsletterSubscriptions().insert({ ...data, environment }),
-    update: (data: any) => db.newsletterSubscriptions().update({ ...data, environment }),
-    delete: () => db.newsletterSubscriptions().delete().eq('environment', environment),
+    select: (columns: string = '*') => db.newsletterSubscriptions().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.newsletterSubscriptions().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.newsletterSubscriptions().update({ ...data, environment: config.environment }),
+    delete: () => db.newsletterSubscriptions().delete().eq('environment', config.environment),
   },
 };
 
@@ -146,10 +159,38 @@ export interface User {
   };
 }
 
+export interface AdminUser extends User {
+  is_admin?: boolean;
+  admin_level?: 'super' | 'moderator' | 'editor';
+}
+
+export interface AdminProfile extends Profile {
+  admin_permissions?: string[];
+  last_admin_activity?: string;
+}
+
+export interface AdminSession {
+  user: AdminUser;
+  profile: AdminProfile;
+  permissions: string[];
+  expires_at: string;
+}
+export interface CommentNotification {
+  id: string;
+  user_id: string;
+  comment_id: string;
+  notification_type: 'mention' | 'reply' | 'reaction';
+  message?: string;
+  is_read: boolean;
+  environment: string;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   display_name: string | null;
   first_name: string | null;
+  full_name?: string; 
   last_name: string | null;
   bio: string | null;
   avatar_type: 'preset' | 'uploaded' | 'google'; 
@@ -358,7 +399,7 @@ export class AuthState {
         .from('profiles')
         .select('*')
         .eq('id', this.user.id)
-        .eq('environment', environment)
+        .eq('environment', config.environment)
         .single();
 
       if (error && error.code === 'PGRST116') {
@@ -404,7 +445,7 @@ export class AuthState {
         googleAvatar,
         isGoogleProvider,
         isGoogleAvatar,
-        environment,
+        environment: config.environment,
         userMetadata: this.user.user_metadata,
         appMetadata: this.user.app_metadata
       });
@@ -437,7 +478,7 @@ export class AuthState {
         membership_type: 'free',
         is_admin: this.user.email === 'tinkbytehq@gmail.com',
         email: this.user.email,
-        environment: environment, // Add environment context
+        environment: config.environment, // Add environment context
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -528,7 +569,7 @@ export class AuthState {
           membership_type: 'free',
           is_admin: false,
           email: this.user.email,
-          environment: environment, // Add environment to minimal profile too
+          environment: config.environment, // Add environment to minimal profile too
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -611,7 +652,7 @@ export class AuthState {
           updated_at: new Date().toISOString()
         })
         .eq('id', this.user.id)
-        .eq('environment', environment)
+        .eq('environment', config.environment)
         .select()
         .single();
 
@@ -651,7 +692,7 @@ export const dbWithRetry = {
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .eq("environment", environment)
+        .eq("environment", config.environment)
         .single();
       
       if (error) throw error;
@@ -659,13 +700,15 @@ export const dbWithRetry = {
     });
   },
 
+  
+
   async updateProfile(userId: string, updates: Partial<Profile>) {
     return withRetry(async () => {
       const { data, error } = await supabase
         .from("profiles")
         .update(updates)
         .eq("id", userId)
-        .eq("environment", environment)
+        .eq('environment', config.environment)
         .select()
         .single();
       
@@ -765,104 +808,513 @@ export class TinkByteAPI {
   }
 
   // Get comments for an article with environment filtering
-  static async getComments(articleId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('comments')
-        .select(`
-          *,
-          author:profiles!comments_user_id_fkey(*)
-        `)
-        .eq('article_id', articleId)
-        .eq('environment', environment)
-        .in('moderation_status', ['approved', 'auto_approved'])
-        .order('created_at', { ascending: false });
+static async getComments(articleId) {
+  try {
+    console.log('🔍 Fetching comments for article:', articleId);
+    
+    const { data, error } = await supabase
+      .from('comments')
+      .select(`
+        *,
+        profiles!inner(
+          id,
+          display_name,
+          avatar_type,
+          avatar_preset_id,
+          avatar_url,
+          reputation_score,
+          is_admin,
+          membership_type
+        ),
+        comment_reactions(
+          reaction_type,
+          user_id
+        ),
+        comment_likes(
+          user_id
+        ),
+        comment_bookmarks(
+          user_id
+        )
+      `)
+      .eq('article_id', articleId)
+      .eq('environment', config.environment)
+      .eq('is_deleted', false)
+      .in('moderation_status', ['approved', 'auto_approved'])
+      .order('created_at', { ascending: false });
 
-      if (error) throw error;
-
-      return { success: true, data: data as Comment[] };
-    } catch (error: any) {
-      console.error('Error fetching comments:', error);
-      return { success: false, error: error.message };
+    if (error) {
+      console.error('❌ Error fetching comments:', error);
+      throw error;
     }
+
+    console.log(`✅ Fetched ${data?.length || 0} comments`);
+    return { success: true, data: data || [] };
+  } catch (error) {
+    console.error('❌ Error fetching comments:', error);
+    return { success: false, error: error.message };
   }
+}
+  // Fixed addComment method with single foreign key relationship
+static async addComment(articleSlug, content, parentId = null) {
+  try {
+    const authState = AuthState.getInstance();
+    const user = authState.getUser();
+    const profile = authState.getProfile();
 
-  // Updated comment operations with environment context
-  static async addComment(articleId: string, content: string, parentId?: string) {
-    try {
-      const authState = AuthState.getInstance();
-      const user = authState.getUser();
+    if (!user) {
+      throw new Error('Must be logged in to comment');
+    }
 
-      if (!user) {
-        throw new Error('Must be logged in to comment');
-      }
+    console.log('=== ADDING COMMENT ===');
+    console.log('User ID:', user.id);
+    console.log('Article Slug:', articleSlug);
+    console.log('Environment:', config.environment);
 
-      const { data, error } = await supabase
+    // Verify the article exists
+    const { data: article, error: articleError } = await supabase
+      .from('articles')
+      .select('slug, title')
+      .eq('slug', articleSlug)
+      .single();
+
+    if (articleError || !article) {
+      console.error('Article not found:', articleSlug, articleError);
+      throw new Error(`Article with slug "${articleSlug}" not found`);
+    }
+
+    // Calculate thread level for replies
+    let threadLevel = 0;
+    if (parentId) {
+      const { data: parentComment } = await supabase
         .from('comments')
-        .insert({
-          content,
-          raw_content: content,
-          user_id: user.id,
-          article_id: articleId,
-          parent_id: parentId || null,
-          moderation_status: 'pending',
-          like_count: 0,
-          environment: environment, // Add environment context
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select(`
-          *,
-          author:profiles!comments_user_id_fkey(*)
-        `)
+        .select('thread_level')
+        .eq('id', parentId)
         .single();
-
-      if (error) throw error;
-
-      return { success: true, data: data as Comment };
-    } catch (error: any) {
-      console.error('Error adding comment:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Update comment with environment awareness
-    static async updateComment(commentId: string, content: string, editReason?: string) {
-      try {
-        const authState = AuthState.getInstance();
-        const user = authState.getUser();
-
-        if (!user) {
-          throw new Error('Must be logged in to update comment');
-        }
-
-        const { data, error } = await supabase
-          .from('comments')
-          .update({
-            content,
-            raw_content: content,
-            edit_reason: editReason || null,
-            is_edited: true,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', commentId)
-          .eq('user_id', user.id)
-          .eq('environment', environment)
-          .select(`
-            *,
-            author:profiles!comments_user_id_fkey(*)
-          `)
-          .single();
-
-        if (error) throw error;
-
-        return { success: true, data: data as Comment };
-      } catch (error: any) {
-        console.error('Error updating comment:', error);
-        return { success: false, error: error.message };
+      
+      if (parentComment) {
+        threadLevel = Math.min((parentComment.thread_level || 0) + 1, 4);
       }
     }
 
+    const commentData = {
+      content: content,
+      raw_content: content,
+      user_id: user.id,
+      article_id: articleSlug,
+      parent_id: parentId || null,
+      thread_level: threadLevel,
+      environment: config.environment,
+      moderation_status: 'auto_approved',
+      auto_approved_reason: 'Auto-approved by content filter',
+      quality_score: 50,
+      like_count: 0,
+      reply_count: 0
+    };
+
+    console.log('Inserting comment:', commentData);
+
+    // Insert comment
+    const { data: insertedComment, error: insertError } = await supabase
+      .from('comments')
+      .insert(commentData)
+      .select('*')
+      .single();
+
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      throw insertError;
+    }
+
+    console.log('Comment inserted:', insertedComment);
+
+    // *** PROCESS MENTIONS ***
+    await this.processMentions(content, insertedComment.id, profile?.display_name || 'Someone');
+
+    // Fetch profile separately
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select(`
+        id,
+        display_name,
+        avatar_type,
+        avatar_preset_id,
+        avatar_url,
+        reputation_score,
+        is_admin,
+        membership_type
+      `)
+      .eq('id', user.id)
+      .eq('environment', config.environment)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Profile fetch error:', profileError);
+      const fallbackProfile = {
+        id: user.id,
+        display_name: user.email?.split('@')[0] || 'User',
+        avatar_type: 'preset',
+        avatar_preset_id: 1,
+        avatar_url: null,
+        reputation_score: 0,
+        is_admin: false,
+        membership_type: 'free'
+      };
+      
+      const finalData = {
+        ...insertedComment,
+        profiles: fallbackProfile
+      };
+      
+      console.log('Comment added with fallback profile');
+      return { success: true, data: finalData };
+    }
+
+    if (!profileData) {
+      console.error('No profile found for user');
+      throw new Error('User profile not found');
+    }
+
+    // Combine the data
+    const finalData = {
+      ...insertedComment,
+      profiles: profileData
+    };
+
+    console.log('Comment added successfully:', finalData);
+    return { success: true, data: finalData };
+
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Add this helper method to process mentions
+static async processMentions(content: string, commentId: string, mentionerName: string) {
+  try {
+    // Extract mentions from content using regex with proper typing
+    const mentionRegex = /@(\w+)/g;
+    const mentions: string[] = []; // Explicitly type the array
+    let match: RegExpExecArray | null;
+
+    // Reset regex lastIndex to ensure it works correctly
+    mentionRegex.lastIndex = 0;
+    
+    while ((match = mentionRegex.exec(content)) !== null) {
+      if (match[1]) { // Check if capture group exists
+        mentions.push(match[1].toLowerCase());
+      }
+    }
+
+    if (mentions.length === 0) return;
+
+    console.log('🔍 Processing mentions:', mentions);
+
+    // Get users by display names (case insensitive) with proper typing
+    const { data: users, error } = await supabase
+      .from('profiles')
+      .select('id, display_name')
+      .eq('environment', config.environment);
+
+    if (error) {
+      console.error('Error fetching users for mentions:', error);
+      return;
+    }
+
+    // Ensure users is an array and properly typed
+    const userProfiles = users || [];
+
+    // Match mentioned usernames to actual users with explicit typing
+    const mentionedUsers = userProfiles.filter((user: any) => {
+      if (!user.display_name) return false;
+      
+      const username = user.display_name.toLowerCase().replace(/\s+/g, '');
+      return mentions.includes(username);
+    });
+
+    console.log('👥 Found mentioned users:', mentionedUsers);
+
+    // Create notifications for mentioned users
+    for (const mentionedUser of mentionedUsers) {
+      try {
+        await this.createMentionNotification(commentId, mentionedUser.id, mentionerName);
+        console.log(`✅ Notification created for ${mentionedUser.display_name}`);
+      } catch (error) {
+        console.error(`❌ Failed to create notification for ${mentionedUser.display_name}:`, error);
+      }
+    }
+
+    // Update the comment with mention_users array - Fix the type error
+    if (mentionedUsers.length > 0) {
+      const mentionedUserIds: string[] = mentionedUsers.map((user: any) => user.id);
+      
+      // Use a more specific type assertion
+      const { error: updateError } = await supabase
+        .from('comments')
+        .update({ 
+          mention_users: mentionedUserIds 
+        } as { mention_users: string[] })
+        .eq('id', commentId)
+        .eq('environment', config.environment);
+
+      if (updateError) {
+        console.error('Error updating comment with mentions:', updateError);
+      } else {
+        console.log('📝 Updated comment with mentioned user IDs');
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ Error processing mentions:', error);
+  }
+}
+
+// Get mentionable users with your database structure
+static async getMentionableUsers(query: string = '') {
+  try {
+    const authState = AuthState.getInstance();
+    const user = authState.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Must be logged in to get mentionable users' };
+    }
+
+    // Get users from profiles with environment filtering
+    let queryBuilder = supabase
+      .from('profiles')
+      .select('id, display_name, avatar_type, avatar_preset_id, avatar_url, is_admin, membership_type')
+      .eq('environment', config.environment)
+      .eq('is_public', true)
+      .neq('id', user.id) // Don't include current user
+      .limit(8);
+
+    if (query && query.length > 0) {
+      queryBuilder = queryBuilder.ilike('display_name', `%${query}%`);
+    }
+
+    const { data, error } = await queryBuilder;
+
+    if (error) throw error;
+
+    // Format for mention dropdown
+    const formattedUsers = (data || []).map(profile => ({
+      id: profile.id,
+      username: profile.display_name?.toLowerCase().replace(/\s+/g, '') || 'user',
+      display_name: profile.display_name || 'User',
+      avatar_type: profile.avatar_type,
+      avatar_preset_id: profile.avatar_preset_id,
+      avatar_url: profile.avatar_url,
+      is_admin: profile.is_admin,
+      membership_type: profile.membership_type
+    }));
+
+    return { success: true, data: formattedUsers };
+  } catch (error: any) {
+    console.error('Error fetching mentionable users:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+
+static async createMentionNotification(commentId: string, mentionedUserId: string, mentionerName: string) {
+  try {
+    const authState = AuthState.getInstance();
+    const user = authState.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Must be logged in to create notifications' };
+    }
+
+    // Check if user has notification preferences
+    const { data: prefs } = await supabase
+      .from('comment_notification_preferences')
+      .select('mention_notifications')
+      .eq('user_id', mentionedUserId)
+      .single();
+
+    // If user has disabled mention notifications, don't create notification
+    if (prefs && prefs.mention_notifications === false) {
+      return { success: true, message: 'User has disabled mention notifications' };
+    }
+
+    // Insert notification into comment_notifications table
+    const { data, error } = await supabase
+      .from('comment_notifications')
+      .insert({
+        user_id: mentionedUserId,
+        comment_id: commentId,
+        notification_type: 'mention',
+        is_read: false,
+        environment: config.environment,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error creating mention notification:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+static async getUserNotifications(limit = 20) {
+  try {
+    const authState = AuthState.getInstance();
+    const user = authState.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Must be logged in to get notifications' };
+    }
+
+    const { data, error } = await supabase
+      .from('comment_notifications')
+      .select(`
+        *,
+        comments!inner(
+          id,
+          content,
+          article_id,
+          user_id,
+          profiles!inner(
+            display_name,
+            avatar_type,
+            avatar_preset_id,
+            avatar_url
+          )
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('environment', config.environment)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return { success: true, data: data || [] };
+  } catch (error: any) {
+    console.error('Error fetching notifications:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+
+// Mark notification as read
+static async markNotificationAsRead(notificationId: string) {
+  try {
+    const authState = AuthState.getInstance();
+    const user = authState.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Must be logged in to mark notifications as read' };
+    }
+
+    const { error } = await supabase
+      .from('comment_notifications')
+      .update({ is_read: true })
+      .eq('id', notificationId)
+      .eq('user_id', user.id)
+      .eq('environment', config.environment);
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error marking notification as read:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Get unread notification count
+static async getUnreadNotificationCount() {
+  try {
+    const authState = AuthState.getInstance();
+    const user = authState.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Must be logged in to get notification count' };
+    }
+
+    const { count, error } = await supabase
+      .from('comment_notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('environment', config.environment)
+      .eq('is_read', false);
+
+    if (error) throw error;
+
+    return { success: true, count: count || 0 };
+  } catch (error: any) {
+    console.error('Error getting notification count:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+
+
+      // Update comment with environment awareness
+static async updateComment(commentId, content, editReason = null) {
+  try {
+    const authState = AuthState.getInstance();
+    const user = authState.getUser();
+
+    if (!user) {
+      throw new Error('Must be logged in to update comment');
+    }
+
+    // First, get the comment to check ownership and time
+    const { data: existingComment, error: fetchError } = await supabase
+      .from('comments')
+      .select('user_id, created_at, editable_until')
+      .eq('id', commentId)
+      .eq('environment', config.environment)
+      .single();
+
+    if (fetchError || !existingComment) {
+      throw new Error('Comment not found');
+    }
+
+    // Check ownership
+    if (existingComment.user_id !== user.id) {
+      throw new Error('You can only edit your own comments');
+    }
+
+    // Check time limit (15 minutes)
+    const createdAt = new Date(existingComment.created_at);
+    const now = new Date();
+    const diffInMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+
+    if (diffInMinutes > 15) {
+      throw new Error('Comments can only be edited within 15 minutes of posting');
+    }
+
+    // Update the comment
+    const { data, error } = await supabase
+      .from('comments')
+      .update({
+        content,
+        raw_content: content,
+        edit_reason: editReason || null,
+        is_edited: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', commentId)
+      .eq('user_id', user.id)
+      .eq('environment', config.environment)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
 
   // Delete comment with environment awareness
   static async deleteComment(commentId: string) {
@@ -883,7 +1335,7 @@ export class TinkByteAPI {
         })
         .eq('id', commentId)
         .eq('user_id', user.id)
-        .eq('environment', environment);
+        .eq('environment', config.environment);
 
       if (error) throw error;
 
@@ -895,97 +1347,254 @@ export class TinkByteAPI {
   }
 
   // Toggle comment like with environment awareness
-    static async toggleCommentLike(commentId: string) {
-      try {
-        const authState = AuthState.getInstance();
-        const user = authState.getUser();
+  static async toggleCommentLike(commentId: string) {
+    try {
+      const authState = AuthState.getInstance();
+      const user = authState.getUser();
 
-        if (!user) {
-          throw new Error('Must be logged in to like comments');
-        }
+      if (!user) {
+        throw new Error('Must be logged in to like comments');
+      }
 
-        // Check if already liked
-        const { data: existingLike } = await supabase
+      // Check if already liked
+      const { data: existingLike } = await supabase
+        .from('comment_likes')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('comment_id', commentId)
+        .eq('environment', config.environment)
+        .single();
+
+      if (existingLike) {
+        // Remove like
+        await supabase
           .from('comment_likes')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('comment_id', commentId)
-          .eq('environment', environment)
+          .delete()
+          .eq('id', existingLike.id)
+          .eq('environment', config.environment);
+
+        // Get current like count and decrement
+        const { data: comment } = await supabase
+          .from('comments')
+          .select('like_count')
+          .eq('id', commentId)
+          .eq('environment', config.environment)
           .single();
 
-        if (existingLike) {
-          // Remove like
-          await supabase
-            .from('comment_likes')
-            .delete()
-            .eq('id', existingLike.id)
-            .eq('environment', environment);
+        const newCount = Math.max((comment?.like_count || 1) - 1, 0);
+        
+        await supabase
+          .from('comments')
+          .update({ like_count: newCount })
+          .eq('id', commentId)
+          .eq('environment', config.environment);
 
-          // Decrement like count using RPC
-          await supabase.rpc('decrement_comment_likes', {
-            comment_id_param: commentId,
-            env: environment
+        return { success: true, liked: false };
+      } else {
+        // Add like
+        await supabase
+          .from('comment_likes')
+          .insert({
+            user_id: user.id,
+            comment_id: commentId,
+            environment: config.environment,
+            created_at: new Date().toISOString()
           });
 
-          return { success: true, liked: false };
-        } else {
-          // Add like
-          await supabase
-            .from('comment_likes')
-            .insert({
-              user_id: user.id,
-              comment_id: commentId,
-              environment: environment,
-              created_at: new Date().toISOString()
-            });
+        // Get current like count and increment
+        const { data: comment } = await supabase
+          .from('comments')
+          .select('like_count')
+          .eq('id', commentId)
+          .eq('environment', config.environment)
+          .single();
 
-          // Increment like count using RPC
-          await supabase.rpc('increment_comment_likes', {
-            comment_id_param: commentId,
-            env: environment
-          });
+        const newCount = (comment?.like_count || 0) + 1;
+        
+        await supabase
+          .from('comments')
+          .update({ like_count: newCount })
+          .eq('id', commentId)
+          .eq('environment', config.environment);
 
-          return { success: true, liked: true };
-        }
-      } catch (error: any) {
-        console.error('Error toggling comment like:', error);
-        return { success: false, error: error.message };
+        return { success: true, liked: true };
       }
+    } catch (error: any) {
+      console.error('Error toggling comment like:', error);
+      return { success: false, error: error.message };
     }
+  }
 
     
   // Save comment draft with environment awareness
-    static async saveCommentDraft(articleId: string, content: string, draftKey?: string) {
-      try {
-        const authState = AuthState.getInstance();
-        const user = authState.getUser();
+static async saveCommentDraft(articleId: string, content: string, draftKey?: string) {
+  try {
+    const authState = AuthState.getInstance();
+    const user = authState.getUser();
 
-        if (!user) {
-          throw new Error('Must be logged in to save draft');
-        }
-
-        const { data, error } = await supabase
-          .from('comment_drafts')
-          .upsert({
-            user_id: user.id,
-            article_id: articleId,
-            content,
-            draft_key: draftKey || `${user.id}-${articleId}`,
-            environment: environment,
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        return { success: true, data };
-      } catch (error: any) {
-        console.error('Error saving comment draft:', error);
-        return { success: false, error: error.message };
-      }
+    if (!user) {
+      throw new Error('Must be logged in to save draft');
     }
 
+    const key = draftKey || `${user.id}-${articleId}`;
+
+    // First try to update existing draft
+    const { data: existingDraft } = await supabase
+      .from('comment_drafts')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('article_id', articleId)
+      .eq('draft_key', key)
+      .eq('environment', config.environment)
+      .single();
+
+    if (existingDraft) {
+      // Update existing draft
+      const { data, error } = await supabase
+        .from('comment_drafts')
+        .update({
+          content,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingDraft.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } else {
+      // Insert new draft
+      const { data, error } = await supabase
+        .from('comment_drafts')
+        .insert({
+          user_id: user.id,
+          article_id: articleId,
+          content,
+          draft_key: key,
+          environment: config.environment,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    }
+  } catch (error: any) {
+    console.error('Error saving comment draft:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Add bookmark functionality
+static async toggleCommentBookmark(commentId: string) {
+  try {
+    const authState = AuthState.getInstance();
+    const user = authState.getUser();
+
+    if (!user) {
+      throw new Error('Must be logged in to bookmark comments');
+    }
+
+    // Check if already bookmarked
+    const { data: existingBookmark } = await supabase
+      .from('comment_bookmarks')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('comment_id', commentId)
+      .eq('environment', config.environment)
+      .single();
+
+    if (existingBookmark) {
+      // Remove bookmark
+      await supabase
+        .from('comment_bookmarks')
+        .delete()
+        .eq('id', existingBookmark.id);
+
+      return { success: true, bookmarked: false };
+    } else {
+      // Add bookmark
+      await supabase
+        .from('comment_bookmarks')
+        .insert({
+          user_id: user.id,
+          comment_id: commentId,
+          environment: config.environment,
+          created_at: new Date().toISOString()
+        });
+
+      return { success: true, bookmarked: true };
+    }
+  } catch (error: any) {
+    console.error('Error toggling bookmark:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Add reaction functionality
+static async toggleCommentReaction(commentId: string, reactionType: string) {
+  try {
+    const authState = AuthState.getInstance();
+    const user = authState.getUser();
+
+    if (!user) {
+      throw new Error('Must be logged in to react to comments');
+    }
+
+    // Check if already reacted
+    const { data: existingReaction } = await supabase
+      .from('comment_reactions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('comment_id', commentId)
+      .eq('reaction_type', reactionType)
+      .eq('environment', config.environment)
+      .single();
+
+    if (existingReaction) {
+      // Remove reaction
+      await supabase
+        .from('comment_reactions')
+        .delete()
+        .eq('id', existingReaction.id);
+
+      // Get updated count
+      const { count } = await supabase
+        .from('comment_reactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('comment_id', commentId)
+        .eq('reaction_type', reactionType)
+        .eq('environment', config.environment);
+
+      return { success: true, reacted: false, count: count || 0 };
+    } else {
+      // Add reaction
+      await supabase
+        .from('comment_reactions')
+        .insert({
+          user_id: user.id,
+          comment_id: commentId,
+          reaction_type: reactionType,
+          environment: config.environment,
+          created_at: new Date().toISOString()
+        });
+
+      // Get updated count
+      const { count } = await supabase
+        .from('comment_reactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('comment_id', commentId)
+        .eq('reaction_type', reactionType)
+        .eq('environment', config.environment);
+
+      return { success: true, reacted: true, count: count || 0 };
+    }
+  } catch (error: any) {
+    console.error('Error toggling reaction:', error);
+    return { success: false, error: error.message };
+  }
+}
 
     // Get comment draft with environment awareness
     static async getCommentDraft(articleId: string, draftKey?: string) {
@@ -1002,7 +1611,7 @@ export class TinkByteAPI {
           .select('*')
           .eq('user_id', user.id)
           .eq('article_id', articleId)
-          .eq('environment', environment)
+          .eq('environment', config.environment)
           .eq('draft_key', draftKey || `${user.id}-${articleId}`)
           .single();
 
@@ -1145,7 +1754,7 @@ export class TinkByteAPI {
           user_id: user?.id || null,
           newsletter_type: 'weekly',
           is_active: true,
-          environment: environment, // Add environment context
+          environment: config.environment, // Add environment context
           subscribed_at: new Date().toISOString()
         })
         .select()
@@ -1174,7 +1783,7 @@ export class TinkByteAPI {
         .from('newsletter_subscriptions')
         .select('*')
         .eq('user_id', user.id)
-        .eq('environment', environment)
+        .eq('environment', config.environment)
         .eq('is_active', true);
 
       if (error) throw error;
@@ -1212,7 +1821,7 @@ export class TinkByteAPI {
           .select('*')
           .or(`display_name.ilike.%${query}%,bio.ilike.%${query}%`)
           .eq('is_public', true)
-          .eq('environment', environment)
+          .eq('environment', config.environment)
           .limit(10);
 
         results.users = users || [];
@@ -1266,7 +1875,7 @@ export class TinkByteAPI {
           updated_at: new Date().toISOString()
         })
         .eq('id', commentId)
-        .eq('environment', environment);
+        .eq('environment', config.environment);
 
       if (commentError) throw commentError;
 
@@ -1278,7 +1887,7 @@ export class TinkByteAPI {
           moderator_id: user.id,
           action,
           reason: reason || null,
-          environment: environment,
+          environment: config.environment,
           created_at: new Date().toISOString()
         });
 
@@ -1292,8 +1901,5 @@ export class TinkByteAPI {
   }
 }
 
-// Environment helper functions
-export const getEnvironment = () => environment;
-export const isProductionEnvironment = () => isProduction;
 
 export default supabase;

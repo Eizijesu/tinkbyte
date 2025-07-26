@@ -1,0 +1,1643 @@
+---
+// src/pages/admin/articles.astro - ARTICLES MANAGEMENT
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import ArticleEngagementModal from "../../components/admin/ArticleEngagementModal.astro";
+---
+
+<AdminLayout title="Articles Management - TinkByte Admin">
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner">
+      <div class="spinner-square"></div>
+      <span>Loading articles data...</span>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  <div id="error-banner" class="error-banner" style="display: none;">
+    <i class="fas fa-exclamation-triangle"></i>
+    <span id="error-message">An error occurred</span>
+    <button class="retry-btn" id="retry-btn">
+      <i class="fas fa-redo"></i>
+      Retry
+    </button>
+  </div>
+
+  <div class="articles-container">
+    <!-- Articles Header -->
+    <div class="articles-header">
+      <div class="header-content">
+        <h1>Articles Management</h1>
+        <p>
+          Manage your content library, publications, and article performance
+        </p>
+      </div>
+      <div class="header-actions">
+        <button class="create-article-btn" id="create-article-btn">
+          <span class="btn-spinner" id="create-spinner" style="display: none;">
+            <div class="spinner-square small"></div>
+          </span>
+          <i class="fas fa-plus"></i>
+          Create Article
+        </button>
+        <a
+          href="/admin/index.html"
+          class="cms-link-btn"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <i class="fas fa-edit"></i>
+          Open TinaCMS
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Articles Stats - Horizontal Layout -->
+    <div class="articles-stats-grid">
+      <div class="stat-card primary">
+        <div class="stat-icon">
+          <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="total-articles">-</div>
+          <div class="stat-label">Total Articles</div>
+          <div class="stat-action">
+            <span class="stat-change neutral" id="articles-change"
+              >All content</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">
+          <i class="fas fa-eye"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="published-articles">-</div>
+          <div class="stat-label">Published</div>
+          <div class="stat-action">
+            <span class="stat-change positive" id="published-change"
+              >Live content</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon">
+          <i class="fas fa-edit"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="draft-articles">-</div>
+          <div class="stat-label">Drafts</div>
+          <div class="stat-action">
+            <span class="stat-change neutral" id="draft-change"
+              >In progress</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card info">
+        <div class="stat-icon">
+          <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="featured-articles">-</div>
+          <div class="stat-label">Featured</div>
+          <div class="stat-action">
+            <span class="stat-change positive" id="featured-change"
+              >Highlighted</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Articles Controls -->
+    <div class="articles-controls">
+      <div class="search-section">
+        <div class="search-container">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            placeholder="Search articles by title, content, or author..."
+            id="article-search"
+          />
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <select class="filter-select" id="status-filter">
+          <option value="">All Status</option>
+          <option value="published">Published</option>
+          <option value="draft">Drafts</option>
+          <option value="featured">Featured</option>
+        </select>
+
+        <select class="filter-select" id="category-filter">
+          <option value="">All Categories</option>
+          <!-- Categories will be loaded dynamically -->
+        </select>
+
+        <select class="filter-select" id="author-filter">
+          <option value="">All Authors</option>
+          <!-- Authors will be loaded dynamically -->
+        </select>
+
+        <select class="filter-select" id="sort-filter">
+          <option value="created_at-desc">Newest First</option>
+          <option value="created_at-asc">Oldest First</option>
+          <option value="title-asc">Title A-Z</option>
+          <option value="title-desc">Title Z-A</option>
+          <option value="view_count-desc">Most Views</option>
+          <option value="published_at-desc">Recently Published</option>
+        </select>
+
+        <button class="filter-btn" id="apply-filters">
+          <i class="fas fa-filter"></i>
+          Apply Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Articles Grid -->
+    <div class="articles-grid" id="articles-grid">
+      <!-- Content will be loaded dynamically -->
+      <div class="loading-state">
+        <div class="loading-spinner">
+          <div class="spinner-square"></div>
+        </div>
+        <h3>Loading articles...</h3>
+        <p>Please wait while we load your content library</p>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div
+      class="pagination-container"
+      id="pagination-container"
+      style="display: none;"
+    >
+      <div class="pagination-info">
+        <span id="pagination-info">Showing articles</span>
+      </div>
+      <div class="pagination-buttons" id="pagination-buttons">
+        <!-- Pagination buttons will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions-bar" id="bulk-actions-bar" style="display: none;">
+      <div class="bulk-info">
+        <span id="selected-articles-count">0</span> articles selected
+      </div>
+      <div class="bulk-buttons">
+        <button class="bulk-btn publish-selected">
+          <i class="fas fa-eye"></i>
+          Publish Selected
+        </button>
+        <button class="bulk-btn unpublish-selected">
+          <i class="fas fa-eye-slash"></i>
+          Unpublish Selected
+        </button>
+        <button class="bulk-btn feature-selected">
+          <i class="fas fa-star"></i>
+          Feature Selected
+        </button>
+        <button class="bulk-btn delete-selected">
+          <i class="fas fa-trash"></i>
+          Delete Selected
+        </button>
+      </div>
+    </div>
+
+    <!-- Create/Edit Article Modal -->
+    <div id="article-modal" class="modal" style="display: none;">
+      <div class="modal-content large">
+        <div class="modal-header">
+          <h3 id="article-modal-title">Create Article</h3>
+          <button class="modal-close" id="article-modal-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="article-form" class="article-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="article-title">Article Title *</label>
+                <input
+                  type="text"
+                  id="article-title"
+                  name="title"
+                  required
+                  placeholder="Enter article title"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="article-slug">URL Slug *</label>
+                <input
+                  type="text"
+                  id="article-slug"
+                  name="slug"
+                  required
+                  placeholder="article-url-slug"
+                />
+                <small class="form-help">Used in the article URL</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="article-subtitle">Subtitle</label>
+              <input
+                type="text"
+                id="article-subtitle"
+                name="subtitle"
+                placeholder="Optional article subtitle"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="article-excerpt">Excerpt</label>
+              <textarea
+                id="article-excerpt"
+                name="excerpt"
+                rows="3"
+                placeholder="Brief description of the article..."></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="article-category">Category</label>
+                <select id="article-category" name="category_slug">
+                  <option value="">Select Category</option>
+                  <!-- Categories will be loaded dynamically -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="article-author">Author</label>
+                <select id="article-author" name="author_id">
+                  <option value="">Select Author</option>
+                  <!-- Authors will be loaded dynamically -->
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="article-read-time">Read Time (minutes)</label>
+                <input
+                  type="number"
+                  id="article-read-time"
+                  name="read_time_minutes"
+                  min="1"
+                  placeholder="5"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="article-image">Featured Image URL</label>
+              <input
+                type="url"
+                id="article-image"
+                name="featured_image_url"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="article-content">Content *</label>
+              <textarea
+                id="article-content"
+                name="content"
+                rows="15"
+                required
+                placeholder="Write your article content here..."></textarea>
+              <small class="form-help">You can use Markdown formatting</small>
+            </div>
+
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  id="article-published"
+                  name="is_published"
+                />
+                <span>Published</span>
+                <small>Make this article visible to readers</small>
+              </label>
+
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  id="article-featured"
+                  name="is_featured"
+                />
+                <span>Featured Article</span>
+                <small>Highlight this article on the homepage</small>
+              </label>
+
+              <label class="checkbox-label">
+                <input type="checkbox" id="article-premium" name="is_premium" />
+                <span>Premium Content</span>
+                <small>Require subscription to read</small>
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="cancel-btn" id="article-cancel">
+                Cancel
+              </button>
+              <button type="submit" class="save-btn" id="article-save">
+                <span
+                  class="btn-spinner"
+                  id="save-spinner"
+                  style="display: none;"
+                >
+                  <div class="spinner-square small"></div>
+                </span>
+                <i class="fas fa-save"></i>
+                Save Article
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Article Preview Modal -->
+    <div id="preview-modal" class="modal" style="display: none;">
+      <div class="modal-content large">
+        <div class="modal-header">
+          <h3>Article Preview</h3>
+          <button class="modal-close" id="preview-modal-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div id="preview-content">
+            <!-- Preview content will be loaded here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ArticleEngagementModal />
+</AdminLayout>
+
+<script>
+  import { adminAPIManager } from "../../lib/admin-api.js";
+  import { adminAuthManager } from "../../lib/admin/auth.js";
+
+  // TypeScript interfaces remain the same...
+  interface Article {
+    id: string;
+    slug: string;
+    title: string;
+    subtitle?: string;
+    excerpt?: string;
+    content: string;
+    author_id?: string;
+    featured_image_url?: string;
+    is_published: boolean;
+    is_premium: boolean;
+    is_featured: boolean;
+    read_time_minutes?: number;
+    view_count: number;
+    like_count: number;
+    comment_count: number;
+    published_at?: string;
+    created_at: string;
+    updated_at: string;
+    category_slug?: string;
+    authors?: {
+      name: string;
+      slug: string;
+    };
+    categories?: {
+      name: string;
+      slug: string;
+      color: string;
+    };
+  }
+
+  interface Category {
+    id: string;
+    name: string;
+    slug: string;
+    color: string;
+  }
+
+  interface Author {
+    id: string;
+    name: string;
+    slug: string;
+  }
+
+  // Global state
+  let articles: Article[] = [];
+  let categories: Category[] = [];
+  let authors: Author[] = [];
+  let currentEditingArticleId: string | null = null;
+  let currentPage = 1;
+  let totalPages = 1;
+  let isLoading = false;
+
+  // Current filters
+  let currentFilters = {
+    search: "",
+    status: "",
+    category: "",
+    author: "",
+    sortBy: "created_at",
+    sortOrder: "desc",
+  };
+
+  // Initialize articles management
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      console.log("🚀 Articles management initializing...");
+
+      // Verify authentication first
+      await adminAuthManager.initialize();
+      const user = await adminAuthManager.getCurrentUser();
+
+      if (!user) {
+        throw new Error("Authentication required");
+      }
+
+      console.log(
+        "✅ Admin authenticated, initializing articles management..."
+      );
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await initializeArticlesManagement();
+    } catch (error: any) {
+      console.error("Articles management initialization error:", error);
+      showError(
+        "Failed to initialize articles management. Please refresh and try again."
+      );
+
+      // Redirect to sign in if authentication failed
+      if (error.message.includes("Authentication")) {
+        setTimeout(() => {
+          window.location.href = `/auth/admin-signin?error=${encodeURIComponent(error.message)}`;
+        }, 3000);
+      }
+    }
+  });
+
+  async function initializeArticlesManagement() {
+    showLoading(true);
+
+    try {
+      console.log("🔌 Initializing admin API manager...");
+      await adminAPIManager.initialize();
+
+      console.log("🔌 Testing connection...");
+      const connectionTest = await adminAPIManager.testConnection();
+      if (!connectionTest.success) {
+        throw new Error(connectionTest.error || "Connection test failed");
+      }
+
+      console.log("📊 Loading data...");
+      await Promise.all([
+        loadArticles(),
+        loadCategories(),
+        loadAuthors(),
+        updateStats(),
+      ]);
+
+      setupEventListeners();
+      showLoading(false);
+      console.log("✅ Articles management initialized successfully");
+    } catch (error: any) {
+      console.error("Initialization error:", error);
+      showError(error.message || "Failed to load articles data");
+      showLoading(false);
+    }
+  }
+
+  async function loadArticles(page = 1) {
+    try {
+      if (isLoading) return;
+      isLoading = true;
+
+      console.log("📰 Loading articles...", { page, filters: currentFilters });
+
+      const [sortBy, sortOrder] = currentFilters.sortBy.includes("-")
+        ? currentFilters.sortBy.split("-")
+        : [currentFilters.sortBy, currentFilters.sortOrder];
+
+      const options = {
+        page,
+        limit: 20,
+        search: currentFilters.search,
+        status: currentFilters.status,
+        category: currentFilters.category,
+        author: currentFilters.author,
+        sortBy,
+        sortOrder,
+      };
+
+      // Use singleton manager
+      const result = await adminAPIManager.getArticles(options);
+
+      if (result.success) {
+        articles = result.data || [];
+        currentPage = page;
+        totalPages = result.pagination?.totalPages || 1;
+
+        renderArticles();
+        renderPagination(result.pagination);
+        console.log(`✅ Loaded ${articles.length} articles`);
+      } else {
+        throw new Error(result.error || "Failed to load articles");
+      }
+    } catch (error: any) {
+      console.error("Load articles error:", error);
+      showError("Failed to load articles");
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  async function loadCategories() {
+    try {
+      console.log("🏷️ Loading categories...");
+      const result = await adminAPIManager.getCategories();
+
+      if (result.success) {
+        categories = result.data || [];
+        populateFilterOptions();
+        console.log(`✅ Loaded ${categories.length} categories`);
+      }
+    } catch (error: any) {
+      console.error("Load categories error:", error);
+    }
+  }
+
+  async function loadAuthors() {
+    try {
+      console.log("👥 Loading authors...");
+      const result = await adminAPIManager.getAuthors({ limit: 100 });
+
+      if (result.success) {
+        authors = result.data || [];
+        populateFilterOptions();
+        console.log(`✅ Loaded ${authors.length} authors`);
+      }
+    } catch (error: any) {
+      console.error("Load authors error:", error);
+    }
+  }
+
+  async function updateStats() {
+    try {
+      console.log("📈 Updating stats...");
+
+      // Get counts for different article types using singleton manager
+      const [totalResult, publishedResult, draftResult, featuredResult] =
+        await Promise.all([
+          adminAPIManager.getArticles({ limit: 1 }),
+          adminAPIManager.getArticles({ limit: 1, status: "published" }),
+          adminAPIManager.getArticles({ limit: 1, status: "draft" }),
+          adminAPIManager.getArticles({ limit: 1, status: "featured" }),
+        ]);
+
+      const totalCount = totalResult.pagination?.total || 0;
+      const publishedCount = publishedResult.pagination?.total || 0;
+      const draftCount = draftResult.pagination?.total || 0;
+      const featuredCount = featuredResult.pagination?.total || 0;
+
+      // Update stat elements
+      const elements = {
+        totalArticles: document.getElementById("total-articles"),
+        publishedArticles: document.getElementById("published-articles"),
+        draftArticles: document.getElementById("draft-articles"),
+        featuredArticles: document.getElementById("featured-articles"),
+      };
+
+      if (elements.totalArticles)
+        elements.totalArticles.textContent = totalCount.toString();
+      if (elements.publishedArticles)
+        elements.publishedArticles.textContent = publishedCount.toString();
+      if (elements.draftArticles)
+        elements.draftArticles.textContent = draftCount.toString();
+      if (elements.featuredArticles)
+        elements.featuredArticles.textContent = featuredCount.toString();
+
+      console.log("✅ Stats updated", {
+        totalCount,
+        publishedCount,
+        draftCount,
+        featuredCount,
+      });
+    } catch (error: any) {
+      console.error("Update stats error:", error);
+    }
+  }
+
+  async function editArticle(articleId: string) {
+    try {
+      const result = await adminAPIManager.getArticle(articleId);
+      if (result.success && result.data) {
+        openArticleModal(result.data);
+      } else {
+        throw new Error(result.error || "Article not found");
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async function updateArticleStatus(articleId: string, action: string) {
+    try {
+      const result = await adminAPIManager.updateArticleStatus(
+        articleId,
+        action as any
+      );
+      if (result.success) {
+        showNotification(
+          result.message || `Article ${action}ed successfully`,
+          "success"
+        );
+        await loadArticles(currentPage);
+        await updateStats();
+      } else {
+        throw new Error(result.error || `Failed to ${action} article`);
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async function deleteArticle(articleId: string) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this article? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const result = await adminAPIManager.deleteArticle(articleId);
+      if (result.success) {
+        showNotification(
+          result.message || "Article deleted successfully",
+          "success"
+        );
+        await loadArticles(currentPage);
+        await updateStats();
+      } else {
+        throw new Error(result.error || "Failed to delete article");
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  function populateFilterOptions() {
+    // Populate category filter
+    const categoryFilter = document.getElementById(
+      "category-filter"
+    ) as HTMLSelectElement;
+    const articleCategory = document.getElementById(
+      "article-category"
+    ) as HTMLSelectElement;
+
+    if (categoryFilter && articleCategory) {
+      const categoryOptions = categories
+        .map((cat) => `<option value="${cat.slug}">${cat.name}</option>`)
+        .join("");
+
+      categoryFilter.innerHTML =
+        '<option value="">All Categories</option>' + categoryOptions;
+      articleCategory.innerHTML =
+        '<option value="">Select Category</option>' + categoryOptions;
+    }
+
+    // Populate author filter
+    const authorFilter = document.getElementById(
+      "author-filter"
+    ) as HTMLSelectElement;
+    const articleAuthor = document.getElementById(
+      "article-author"
+    ) as HTMLSelectElement;
+
+    if (authorFilter && articleAuthor) {
+      const authorOptions = authors
+        .map(
+          (author) => `<option value="${author.slug}">${author.name}</option>`
+        )
+        .join("");
+
+      authorFilter.innerHTML =
+        '<option value="">All Authors</option>' + authorOptions;
+      articleAuthor.innerHTML =
+        '<option value="">Select Author</option>' + authorOptions;
+    }
+  }
+
+  function renderArticles() {
+    const articlesGrid = document.getElementById("articles-grid");
+    if (!articlesGrid) return;
+
+    if (articles.length === 0) {
+      articlesGrid.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-file-alt"></i>
+        <h3>No articles found</h3>
+        <p>Start creating content for your community</p>
+        <button class="create-first-article-btn" id="create-first-article">
+          <i class="fas fa-plus"></i>
+          Create First Article
+        </button>
+      </div>
+    `;
+
+      const createFirstBtn = document.getElementById(
+        "create-first-article"
+      ) as HTMLButtonElement;
+      createFirstBtn?.addEventListener("click", () => openArticleModal());
+      return;
+    }
+
+    articlesGrid.innerHTML = articles
+      .map(
+        (article) => `
+    <div class="article-card enhanced" data-article-id="${article.id}">
+      <div class="article-select">
+        <input type="checkbox" class="article-checkbox" value="${article.id}" />
+      </div>
+      
+      ${
+        article.featured_image_url
+          ? `
+        <div class="article-image">
+          <img src="${article.featured_image_url}" alt="${article.title}" loading="lazy" />
+          ${article.is_featured ? '<div class="featured-badge"><i class="fas fa-star"></i></div>' : ""}
+          ${article.is_premium ? '<div class="premium-badge"><i class="fas fa-crown"></i></div>' : ""}
+        </div>
+      `
+          : `
+        <div class="article-image-placeholder">
+          <i class="fas fa-file-alt"></i>
+          ${article.is_featured ? '<div class="featured-badge"><i class="fas fa-star"></i></div>' : ""}
+          ${article.is_premium ? '<div class="premium-badge"><i class="fas fa-crown"></i></div>' : ""}
+        </div>
+      `
+      }
+
+      <div class="article-content">
+        <div class="article-meta">
+          ${
+            article.categories
+              ? `
+            <span class="category-badge" style="background: ${article.categories.color || "#4285f4"}20; color: ${article.categories.color || "#4285f4"};">
+              ${article.categories.name}
+            </span>
+          `
+              : ""
+          }
+          
+          <span class="status-badge ${article.is_published ? "published" : "draft"}">
+            ${article.is_published ? "Published" : "Draft"}
+          </span>
+        </div>
+
+        <h3 class="article-title">${article.title}</h3>
+        
+        ${article.subtitle ? `<p class="article-subtitle">${article.subtitle}</p>` : ""}
+        
+        ${article.excerpt ? `<p class="article-excerpt">${article.excerpt}</p>` : ""}
+
+        <div class="article-details">
+          ${
+            article.authors
+              ? `
+            <span class="author-info">
+              <i class="fas fa-user"></i>
+              ${article.authors.name}
+            </span>
+          `
+              : ""
+          }
+          
+          ${
+            article.read_time_minutes
+              ? `
+            <span class="read-time">
+              <i class="fas fa-clock"></i>
+              ${article.read_time_minutes} min read
+            </span>
+          `
+              : ""
+          }
+          
+          <span class="publish-date">
+            <i class="fas fa-calendar"></i>
+            ${article.published_at ? new Date(article.published_at).toLocaleDateString() : new Date(article.created_at).toLocaleDateString()}
+          </span>
+        </div>
+
+        <!-- Enhanced Stats Section -->
+        <div class="article-stats-enhanced">
+          <div class="stats-row primary">
+            <div class="stat-item views">
+              <i class="fas fa-eye"></i>
+              <span class="stat-number">${article.view_count || 0}</span>
+              <span class="stat-label">views</span>
+            </div>
+            <div class="stat-item likes">
+              <i class="fas fa-heart"></i>
+              <span class="stat-number">${article.like_count || 0}</span>
+              <span class="stat-label">likes</span>
+            </div>
+            <div class="stat-item comments">
+              <i class="fas fa-comment"></i>
+              <span class="stat-number">${article.comment_count || 0}</span>
+              <span class="stat-label">comments</span>
+            </div>
+          </div>
+          
+          <!-- Engagement Details (Initially Hidden) -->
+          <div class="engagement-details" id="engagement-${article.slug}" style="display: none;">
+            <div class="loading-engagement">
+              <div class="spinner-small"></div>
+              <span>Loading engagement data...</span>
+            </div>
+          </div>
+          
+          <!-- Toggle Button -->
+          <button class="engagement-toggle" onclick="toggleEngagement('${article.slug}')" data-article-slug="${article.slug}">
+            <i class="fas fa-chart-line"></i>
+            <span>View Detailed Engagement</span>
+            <i class="fas fa-chevron-down toggle-icon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="article-actions">
+        <button class="action-btn edit" data-action="edit" data-article-id="${article.id}" title="Edit Article">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="action-btn preview" data-action="preview" data-article-slug="${article.slug}" title="Preview Article">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button class="action-btn refresh-stats" onclick="refreshArticleStats('${article.id}')" title="Refresh Stats">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+        ${
+          article.is_published
+            ? `
+          <button class="action-btn unpublish" data-action="unpublish" data-article-id="${article.id}" title="Unpublish">
+            <i class="fas fa-eye-slash"></i>
+          </button>
+        `
+            : `
+          <button class="action-btn publish" data-action="publish" data-article-id="${article.id}" title="Publish">
+            <i class="fas fa-globe"></i>
+          </button>
+        `
+        }
+        ${
+          article.is_featured
+            ? `
+          <button class="action-btn unfeature" data-action="unfeature" data-article-id="${article.id}" title="Remove from Featured">
+            <i class="fas fa-star-half-alt"></i>
+          </button>
+        `
+            : `
+          <button class="action-btn feature" data-action="feature" data-article-id="${article.id}" title="Feature Article">
+            <i class="fas fa-star"></i>
+          </button>
+        `
+        }
+        <button class="action-btn delete" data-action="delete" data-article-id="${article.id}" title="Delete Article">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+  `
+      )
+      .join("");
+
+    // Attach event listeners
+    attachActionListeners();
+  }
+
+  function renderPagination(pagination: any) {
+    const container = document.getElementById("pagination-container");
+    const buttonsContainer = document.getElementById("pagination-buttons");
+    const infoElement = document.getElementById("pagination-info");
+
+    if (!container || !buttonsContainer || !infoElement || !pagination) return;
+
+    if (pagination.totalPages <= 1) {
+      container.style.display = "none";
+      return;
+    }
+
+    container.style.display = "flex";
+
+    // Update info
+    const start = (pagination.page - 1) * pagination.limit + 1;
+    const end = Math.min(pagination.page * pagination.limit, pagination.total);
+    infoElement.textContent = `Showing ${start}-${end} of ${pagination.total} articles`;
+
+    // Generate pagination buttons
+    let buttonsHtml = "";
+
+    if (pagination.hasPrev) {
+      buttonsHtml += `<button class="pagination-btn" onclick="goToPage(${pagination.page - 1})">Previous</button>`;
+    }
+
+    const startPage = Math.max(1, pagination.page - 2);
+    const endPage = Math.min(pagination.totalPages, pagination.page + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      const isActive = i === pagination.page;
+      buttonsHtml += `<button class="pagination-btn ${isActive ? "active" : ""}" onclick="goToPage(${i})">${i}</button>`;
+    }
+
+    if (pagination.hasNext) {
+      buttonsHtml += `<button class="pagination-btn" onclick="goToPage(${pagination.page + 1})">Next</button>`;
+    }
+
+    buttonsContainer.innerHTML = buttonsHtml;
+  }
+
+  function attachActionListeners() {
+    const actionButtons = document.querySelectorAll(
+      ".action-btn"
+    ) as NodeListOf<HTMLButtonElement>;
+    actionButtons.forEach((button) => {
+      button.addEventListener("click", handleArticleAction);
+    });
+
+    const checkboxes = document.querySelectorAll(
+      ".article-checkbox"
+    ) as NodeListOf<HTMLInputElement>;
+    checkboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", updateBulkActionsBar);
+    });
+  }
+
+  async function handleArticleAction(event: Event) {
+    const button = event.currentTarget as HTMLButtonElement;
+    const action = button.dataset.action;
+    const articleId = button.dataset.articleId;
+    const articleSlug = button.dataset.articleSlug;
+
+    if (!action) return;
+
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<div class="spinner-square small"></div>';
+    button.disabled = true;
+
+    try {
+      switch (action) {
+        case "edit":
+          if (articleId) await editArticle(articleId);
+          break;
+        case "preview":
+          if (articleSlug) previewArticle(articleSlug);
+          break;
+        case "publish":
+        case "unpublish":
+          if (articleId) await updateArticleStatus(articleId, action);
+          break;
+        case "feature":
+        case "unfeature":
+          if (articleId) await updateArticleStatus(articleId, action);
+          break;
+        case "delete":
+          if (articleId) await deleteArticle(articleId);
+          break;
+      }
+    } catch (error) {
+      console.error(`Article ${action} error:`, error);
+      showNotification(
+        `Failed to ${action} article: ${error.message}`,
+        "error"
+      );
+    } finally {
+      button.innerHTML = originalContent;
+      button.disabled = false;
+    }
+  }
+
+  function previewArticle(slug: string) {
+    window.open(`/admin/preview?slug=${slug}&type=article`, "_blank");
+  }
+
+  // Global functions for inline engagement
+  declare global {
+    interface Window {
+      toggleEngagement: (articleSlug: string) => Promise<void>;
+      refreshArticleStats: (articleId: string) => Promise<void>;
+    }
+  }
+
+  async function toggleEngagement(articleSlug: string) {
+    const detailsElement = document.getElementById(`engagement-${articleSlug}`);
+    const toggleButton = document.querySelector(
+      `[data-article-slug="${articleSlug}"]`
+    ) as HTMLButtonElement;
+
+    if (!detailsElement || !toggleButton) return;
+
+    const isExpanded = detailsElement.style.display !== "none";
+
+    if (isExpanded) {
+      // Collapse
+      detailsElement.style.display = "none";
+      toggleButton.classList.remove("expanded");
+      toggleButton.querySelector("span")!.textContent =
+        "View Detailed Engagement";
+    } else {
+      // Expand and load data
+      detailsElement.style.display = "block";
+      toggleButton.classList.add("expanded");
+      toggleButton.querySelector("span")!.textContent =
+        "Hide Engagement Details";
+
+      // Load engagement data if not already loaded
+      if (!detailsElement.dataset.loaded) {
+        await loadInlineEngagement(articleSlug);
+        detailsElement.dataset.loaded = "true";
+      }
+    }
+  }
+
+  async function loadInlineEngagement(articleSlug: string) {
+    const detailsElement = document.getElementById(`engagement-${articleSlug}`);
+    if (!detailsElement) return;
+
+    try {
+      console.log(`📊 Loading engagement for article: ${articleSlug}`);
+
+      // Use singleton manager
+      const result = await adminAPIManager.getArticleEngagementStats();
+
+      if (result.success && result.data) {
+        // Find the specific article data
+        const articleData = result.data.find(
+          (article: any) => article.slug === articleSlug
+        );
+
+        if (articleData) {
+          renderInlineEngagement(detailsElement, articleData);
+          return;
+        }
+      }
+
+      // Fallback to basic stats
+      console.log("📊 Falling back to basic engagement stats...");
+      await loadBasicEngagementStats(detailsElement, articleSlug);
+    } catch (error: any) {
+      console.error("Engagement loading error:", error);
+
+      // Try basic stats as final fallback
+      try {
+        await loadBasicEngagementStats(detailsElement, articleSlug);
+      } catch (fallbackError) {
+        console.error("Fallback engagement loading failed:", fallbackError);
+        detailsElement.innerHTML = `
+        <div class="engagement-error">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>Failed to load engagement data</span>
+          <button onclick="loadInlineEngagement('${articleSlug}')" class="retry-btn-small">
+            <i class="fas fa-redo"></i> Retry
+          </button>
+        </div>
+      `;
+      }
+    }
+  }
+
+  async function loadBasicEngagementStats(
+    detailsElement: HTMLElement,
+    articleSlug: string
+  ) {
+    try {
+      console.log(`📊 Loading basic engagement stats for: ${articleSlug}`);
+
+      // Import supabase and config directly
+      const { supabase } = await import("../../lib/supabase.js");
+      const { config } = await import("../../lib/config.js");
+
+      // Get basic counts directly using supabase
+      const queries = await Promise.allSettled([
+        // Article reads
+        supabase
+          .from("article_reads")
+          .select("*", { count: "exact", head: true })
+          .eq("article_id", articleSlug),
+
+        // Article likes
+        supabase
+          .from("article_likes")
+          .select("*", { count: "exact", head: true })
+          .eq("article_id", articleSlug),
+
+        // Article saves
+        supabase
+          .from("article_saves")
+          .select("*", { count: "exact", head: true })
+          .eq("article_id", articleSlug),
+
+        // Article comments
+        supabase
+          .from("comments")
+          .select("*", { count: "exact", head: true })
+          .eq("article_id", articleSlug)
+          .eq("environment", config.environment)
+          .eq("is_deleted", false),
+      ]);
+
+      const [readsResult, likesResult, savesResult, commentsResult] = queries;
+
+      const stats = {
+        reads:
+          readsResult.status === "fulfilled" ? readsResult.value.count || 0 : 0,
+        likes:
+          likesResult.status === "fulfilled" ? likesResult.value.count || 0 : 0,
+        saves:
+          savesResult.status === "fulfilled" ? savesResult.value.count || 0 : 0,
+        comments:
+          commentsResult.status === "fulfilled"
+            ? commentsResult.value.count || 0
+            : 0,
+      };
+
+      console.log(`✅ Loaded engagement stats:`, stats);
+      renderBasicEngagement(detailsElement, stats);
+    } catch (error) {
+      console.error("Basic engagement loading error:", error);
+      detailsElement.innerHTML = `
+      <div class="engagement-error">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Unable to load engagement data</span>
+        <button onclick="loadInlineEngagement('${articleSlug}')" class="retry-btn-small">
+          <i class="fas fa-redo"></i> Retry
+        </button>
+      </div>
+    `;
+    }
+  }
+
+  function renderInlineEngagement(container: HTMLElement, articleData: any) {
+    container.innerHTML = `
+    <div class="engagement-grid">
+      <div class="engagement-metric">
+        <div class="engagement-metric-number">${articleData.actual_views || 0}</div>
+        <div class="engagement-metric-label">Total Reads</div>
+      </div>
+      <div class="engagement-metric">
+        <div class="engagement-metric-number">${articleData.actual_likes || 0}</div>
+        <div class="engagement-metric-label">Likes</div>
+      </div>
+      <div class="engagement-metric">
+        <div class="engagement-metric-number">${articleData.actual_comments || 0}</div>
+        <div class="engagement-metric-label">Comments</div>
+      </div>
+      <div class="engagement-metric">
+        <div class="engagement-metric-number">${articleData.engagement_score || 0}</div>
+        <div class="engagement-metric-label">Engagement Score</div>
+      </div>
+    </div>
+    
+    <div class="recent-activity">
+      <h5><i class="fas fa-clock"></i> Recent Activity</h5>
+      <div class="activity-list">
+        <div class="activity-item">
+          <div class="activity-avatar">📊</div>
+          <div class="activity-text">Last updated: ${new Date().toLocaleDateString()}</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-avatar">👁️</div>
+          <div class="activity-text">${articleData.actual_views || 0} total views</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-avatar">❤️</div>
+          <div class="activity-text">${articleData.actual_likes || 0} likes received</div>
+        </div>
+      </div>
+    </div>
+  `;
+  }
+
+  function renderBasicEngagement(container: HTMLElement, stats: any) {
+    container.innerHTML = `
+    <div class="engagement-grid">
+      <div class="engagement-metric">
+        <div class="engagement-metric-number">${stats.reads}</div>
+        <div class="engagement-metric-label">Reads</div>
+      </div>
+      <div class="engagement-metric">
+        <div class="engagement-metric-number">${stats.likes}</div>
+        <div class="engagement-metric-label">Likes</div>
+      </div>
+      <div class="engagement-metric">
+        <div class="engagement-metric-number">${stats.saves}</div>
+        <div class="engagement-metric-label">Saves</div>
+      </div>
+      <div class="engagement-metric">
+        <div class="engagement-metric-number">${stats.comments}</div>
+        <div class="engagement-metric-label">Comments</div>
+      </div>
+    </div>
+    
+    <div class="recent-activity">
+      <h5><i class="fas fa-chart-bar"></i> Quick Stats</h5>
+      <div class="activity-list">
+        <div class="activity-item">
+          <div class="activity-avatar">📈</div>
+          <div class="activity-text">Total engagement: ${stats.reads + stats.likes + stats.saves + stats.comments}</div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-avatar">🎯</div>
+          <div class="activity-text">Engagement rate: ${stats.reads > 0 ? Math.round(((stats.likes + stats.saves + stats.comments) / stats.reads) * 100) : 0}%</div>
+        </div>
+      </div>
+    </div>
+  `;
+  }
+
+  async function refreshArticleStats(articleId: string) {
+    const button = document.querySelector(
+      `[onclick="refreshArticleStats('${articleId}')"]`
+    ) as HTMLButtonElement;
+    if (!button) return;
+
+    const originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
+    button.classList.add("loading");
+
+    try {
+      // Find the article to get its slug
+      const article = articles.find((a) => a.id === articleId);
+      if (!article) throw new Error("Article not found");
+
+      console.log(`🔄 Refreshing stats for article: ${article.slug}`);
+
+      const result = await adminAPIManager.updateArticleStats(article.slug);
+      if (result.success) {
+        console.log(`✅ Updated stats for ${article.slug}`);
+        showNotification("Article stats refreshed successfully", "success");
+
+        // Reload the articles list to show updated stats
+        await loadArticles(currentPage);
+
+        // If engagement details are expanded, reload them too
+        const detailsElement = document.getElementById(
+          `engagement-${article.slug}`
+        );
+        if (detailsElement && detailsElement.style.display !== "none") {
+          detailsElement.dataset.loaded = "false";
+          await loadInlineEngagement(article.slug);
+        }
+      } else {
+        throw new Error(result.error || "Failed to refresh stats");
+      }
+    } catch (error: any) {
+      console.error("Refresh stats error:", error);
+      showNotification(
+        `Failed to refresh article stats: ${error.message}`,
+        "error"
+      );
+    } finally {
+      button.innerHTML = originalContent;
+      button.classList.remove("loading");
+    }
+  }
+
+  // Make functions globally available
+  window.toggleEngagement = toggleEngagement;
+  window.refreshArticleStats = refreshArticleStats;
+  window.goToPage = async (page: number) => {
+    await loadArticles(page);
+  };
+
+  function openArticleModal(article?: Article) {
+    const modal = document.getElementById("article-modal");
+    const modalTitle = document.getElementById("article-modal-title");
+    const form = document.getElementById("article-form") as HTMLFormElement;
+
+    if (!modal || !modalTitle || !form) return;
+
+    if (article) {
+      currentEditingArticleId = article.id;
+      modalTitle.textContent = "Edit Article";
+
+      // Populate form with article data
+      (document.getElementById("article-title") as HTMLInputElement).value =
+        article.title;
+      (document.getElementById("article-slug") as HTMLInputElement).value =
+        article.slug;
+      (document.getElementById("article-subtitle") as HTMLInputElement).value =
+        article.subtitle || "";
+      (
+        document.getElementById("article-excerpt") as HTMLTextAreaElement
+      ).value = article.excerpt || "";
+      (document.getElementById("article-category") as HTMLSelectElement).value =
+        article.category_slug || "";
+      (document.getElementById("article-author") as HTMLSelectElement).value =
+        article.author_id || "";
+      (document.getElementById("article-read-time") as HTMLInputElement).value =
+        article.read_time_minutes?.toString() || "";
+      (document.getElementById("article-image") as HTMLInputElement).value =
+        article.featured_image_url || "";
+      (
+        document.getElementById("article-content") as HTMLTextAreaElement
+      ).value = article.content;
+      (
+        document.getElementById("article-published") as HTMLInputElement
+      ).checked = article.is_published;
+      (
+        document.getElementById("article-featured") as HTMLInputElement
+      ).checked = article.is_featured;
+      (document.getElementById("article-premium") as HTMLInputElement).checked =
+        article.is_premium;
+    } else {
+      currentEditingArticleId = null;
+      modalTitle.textContent = "Create Article";
+      form.reset();
+    }
+
+    modal.style.display = "flex";
+  }
+
+  function closeArticleModal() {
+    const modal = document.getElementById("article-modal");
+    if (modal) {
+      modal.style.display = "none";
+    }
+    currentEditingArticleId = null;
+  }
+
+  function updateBulkActionsBar() {
+    const selectedCheckboxes = document.querySelectorAll(
+      ".article-checkbox:checked"
+    );
+    const bulkActionsBar = document.getElementById("bulk-actions-bar");
+    const selectedCount = document.getElementById("selected-articles-count");
+
+    if (selectedCheckboxes.length > 0) {
+      if (bulkActionsBar) bulkActionsBar.style.display = "flex";
+      if (selectedCount)
+        selectedCount.textContent = selectedCheckboxes.length.toString();
+    } else {
+      if (bulkActionsBar) bulkActionsBar.style.display = "none";
+    }
+  }
+
+  function setupEventListeners() {
+    console.log("🔧 Setting up event listeners...");
+
+    // Create article button
+    const createArticleBtn = document.getElementById(
+      "create-article-btn"
+    ) as HTMLButtonElement;
+    createArticleBtn?.addEventListener("click", () => openArticleModal());
+
+    // Modal controls
+    const modalClose = document.getElementById(
+      "article-modal-close"
+    ) as HTMLButtonElement;
+    const cancelBtn = document.getElementById(
+      "article-cancel"
+    ) as HTMLButtonElement;
+    modalClose?.addEventListener("click", closeArticleModal);
+    cancelBtn?.addEventListener("click", closeArticleModal);
+
+    const modal = document.getElementById("article-modal");
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) closeArticleModal();
+    });
+
+    // Form submission
+    const articleForm = document.getElementById(
+      "article-form"
+    ) as HTMLFormElement;
+    articleForm?.addEventListener("submit", handleArticleFormSubmit);
+
+    // Auto-generate slug from title
+    const titleInput = document.getElementById(
+      "article-title"
+    ) as HTMLInputElement;
+    const slugInput = document.getElementById(
+      "article-slug"
+    ) as HTMLInputElement;
+
+    titleInput?.addEventListener("input", (e) => {
+      const title = (e.target as HTMLInputElement).value;
+      const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .trim();
+      if (slugInput && !currentEditingArticleId) {
+        slugInput.value = slug;
+      }
+    });
+
+    // Search and filters
+    const searchInput = document.getElementById(
+      "article-search"
+    ) as HTMLInputElement;
+    searchInput?.addEventListener("input", debounce(handleSearch, 300));
+
+    const applyFiltersBtn = document.getElementById(
+      "apply-filters"
+    ) as HTMLButtonElement;
+    applyFiltersBtn?.addEventListener("click", handleFilters);
+
+    // Retry button
+    const retryBtn = document.getElementById("retry-btn") as HTMLButtonElement;
+    retryBtn?.addEventListener("click", () => {
+      hideError();
+      initializeArticlesManagement();
+    });
+
+    console.log("✅ Event listeners setup complete");
+  }
+
+  async function handleArticleFormSubmit(e: Event) {
+    e.preventDefault();
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    const articleData = {
+      title: formData.get("title") as string,
+      slug: formData.get("slug") as string,
+      subtitle: (formData.get("subtitle") as string) || undefined,
+      excerpt: (formData.get("excerpt") as string) || undefined,
+      content: formData.get("content") as string,
+      category_slug: (formData.get("category_slug") as string) || undefined,
+      author_id: (formData.get("author_id") as string) || undefined,
+      read_time_minutes: formData.get("read_time_minutes")
+        ? parseInt(formData.get("read_time_minutes") as string)
+        : undefined,
+      featured_image_url:
+        (formData.get("featured_image_url") as string) || undefined,
+      is_published: formData.has("is_published"),
+      is_featured: formData.has("is_featured"),
+      is_premium: formData.has("is_premium"),
+    };
+
+    try {
+      let result;
+      if (currentEditingArticleId) {
+        result = await adminAPIManager.updateArticle(
+          currentEditingArticleId,
+          articleData
+        );
+      } else {
+        result = await adminAPIManager.createArticle(articleData);
+      }
+
+      if (result.success) {
+        showNotification(
+          result.message || "Article saved successfully",
+          "success"
+        );
+        closeArticleModal();
+        await loadArticles(currentPage);
+        await updateStats();
+      } else {
+        throw new Error(result.error || "Failed to save article");
+      }
+    } catch (error: any) {
+      console.error("Form submission error:", error);
+      showNotification("Failed to save article", "error");
+    }
+  }
+
+  async function handleSearch() {
+    const searchInput = document.getElementById(
+      "article-search"
+    ) as HTMLInputElement;
+    currentFilters.search = searchInput?.value || "";
+    currentPage = 1;
+    await loadArticles(currentPage);
+  }
+
+  async function handleFilters() {
+    const statusFilter = document.getElementById(
+      "status-filter"
+    ) as HTMLSelectElement;
+    const categoryFilter = document.getElementById(
+      "category-filter"
+    ) as HTMLSelectElement;
+    const authorFilter = document.getElementById(
+      "author-filter"
+    ) as HTMLSelectElement;
+    const sortFilter = document.getElementById(
+      "sort-filter"
+    ) as HTMLSelectElement;
+
+    currentFilters = {
+      ...currentFilters,
+      status: statusFilter?.value || "",
+      category: categoryFilter?.value || "",
+      author: authorFilter?.value || "",
+      sortBy: sortFilter?.value || "created_at-desc",
+    };
+
+    currentPage = 1;
+    await loadArticles(currentPage);
+  }
+
+  // Global function for pagination
+  declare global {
+    interface Window {
+      goToPage: (page: number) => Promise<void>;
+    }
+  }
+
+  function showLoading(show: boolean) {
+    const loadingOverlay = document.getElementById("loading-overlay");
+    if (loadingOverlay) {
+      loadingOverlay.style.display = show ? "flex" : "none";
+    }
+  }
+
+  function showError(message: string) {
+    const errorBanner = document.getElementById("error-banner");
+    const errorMessage = document.getElementById("error-message");
+
+    if (errorBanner && errorMessage) {
+      errorMessage.textContent = message;
+      errorBanner.style.display = "flex";
+    }
+  }
+
+  function hideError() {
+    const errorBanner = document.getElementById("error-banner");
+    if (errorBanner) {
+      errorBanner.style.display = "none";
+    }
+  }
+
+  function showNotification(
+    message: string,
+    type: "success" | "error" | "info" = "success"
+  ) {
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      color: white;
+      font-weight: 500;
+      z-index: 10000;
+      background: ${type === "success" ? "#238636" : type === "error" ? "#da3633" : "#4285f4"};
+      animation: slideIn 0.3s ease;
+    `;
+
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 4000);
+  }
+
+  function debounce(func: Function, wait: number) {
+    let timeout: NodeJS.Timeout;
+    return function executedFunction(...args: any[]) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Add animation styles
+  if (!document.getElementById("articles-animations")) {
+    const style = document.createElement("style");
+    style.id = "articles-animations";
+    style.textContent = `
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+</script>

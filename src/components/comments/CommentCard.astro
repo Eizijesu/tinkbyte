@@ -4,21 +4,30 @@ import {
   formatDate,
   formatContent,
   getUserAvatar,
-  getReactionIcon,
-  canUserEdit,
-  canUserDelete,
 } from "../../lib/helpers/commentHelpers";
+import { REACTION_TYPES } from "../../lib/config/comments";
 import type { CommentWithProfile } from "../../lib/types/comments";
+
+
+interface ReactionType {
+  name: string;
+  emoji: string;
+  label: string;
+}
 
 interface Props {
   comment: CommentWithProfile;
   currentUserId?: string;
   isReply?: boolean;
-  reactionTypes: string[];
-  onReply?: (commentId: string, authorName: string) => void;
+  reactionTypes?: ReactionType[];
 }
 
-const { comment, currentUserId, isReply = false, reactionTypes } = Astro.props;
+const {
+  comment,
+  currentUserId,
+  isReply = false,
+  reactionTypes = [],
+} = Astro.props;
 
 // Determine user profile data
 const userProfile = comment.profiles || comment.user_profile;
@@ -27,23 +36,36 @@ const displayName =
 const isAdmin = userProfile?.is_admin || false;
 const avatarUrl = getUserAvatar(userProfile);
 
-// User permissions
-const canEdit = canUserEdit(comment, currentUserId);
-const canDelete = canUserDelete(comment, currentUserId);
-const canReply = (comment.thread_level || 0) < 4;
-const isOwner = currentUserId && comment.user_id === currentUserId;
-
 // Thread level styling
 const threadLevel = Math.min(comment.thread_level || 0, 4);
+const canReply = (comment.thread_level || 0) < 4;
+
+// Use the passed reactionTypes or fall back to config with proper typing
+const reactions =
+  reactionTypes.length > 0
+    ? reactionTypes
+    : Object.entries(REACTION_TYPES).map(([key, value]: [string, any]) => ({
+        name: key,
+        emoji: value.emoji,
+        label: value.label,
+      }));
+
+// *** REMOVE SERVER-SIDE PERMISSION LOGIC - Let JavaScript handle everything ***
+console.log("CommentCard rendering:", {
+  commentId: comment.id,
+  userId: comment.user_id,
+  displayName,
+});
 ---
 
 <div
   class={`comment-card ${isReply ? "reply-card" : ""}`}
   data-comment-id={comment.id}
   data-user-id={comment.user_id || ""}
+  data-created-at={comment.created_at || ""}
   data-thread-level={threadLevel}
 >
-  {isReply && <div class="reply-indicator" />}
+  {isReply && <div class="reply-connector" />}
 
   <div class={isReply ? "reply-content" : "comment-content-wrapper"}>
     <!-- Comment Header -->
@@ -58,12 +80,25 @@ const threadLevel = Math.min(comment.thread_level || 0, 4);
             <span class={`username ${isAdmin ? "admin" : ""}`}>
               {displayName}
             </span>
-            <span
-              class="comment-time"
-              title={new Date(comment.created_at).toLocaleString()}
-            >
-              {formatDate(comment.created_at)}
-            </span>
+            <div class="comment-time-wrapper">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12,6 12,12 16,14"></polyline>
+              </svg>
+              <span
+                class="comment-time"
+                title={new Date(comment.created_at).toLocaleString()}
+              >
+                {formatDate(comment.created_at)}
+              </span>
+            </div>
             {
               comment.is_edited && (
                 <span
@@ -78,7 +113,7 @@ const threadLevel = Math.min(comment.thread_level || 0, 4);
         </div>
       </div>
 
-      <!-- Actions Menu -->
+      <!-- Actions Menu - ALWAYS RENDER ALL OPTIONS, LET JAVASCRIPT CONTROL VISIBILITY -->
       <div class="comment-actions-menu">
         <button
           class="menu-btn"
@@ -100,56 +135,60 @@ const threadLevel = Math.min(comment.thread_level || 0, 4);
           </svg>
         </button>
 
+        <!-- ALWAYS render all dropdown items, hidden by default for JavaScript control -->
         <div class="dropdown-menu" id={`dropdown-${comment.id}`}>
-          {
-            canEdit && (
-              <button
-                class="dropdown-item edit-comment-btn"
-                data-comment-id={comment.id}
-                aria-label="Edit comment"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                Edit
-              </button>
-            )
-          }
+          <!-- Edit Option - Always render, hidden by default for client-side control -->
+          <button
+            class="dropdown-item edit-comment-btn"
+            data-comment-id={comment.id}
+            style="display: none;"
+            aria-label="Edit comment"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+              ></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+              ></path>
+            </svg>
+            Edit
+          </button>
 
-          {
-            canDelete && (
-              <button
-                class="dropdown-item delete-comment-btn"
-                data-comment-id={comment.id}
-                aria-label="Delete comment"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <polyline points="3,6 5,6 21,6" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
-                Delete
-              </button>
-            )
-          }
+          <!-- Delete Option - Always render, hidden by default for client-side control -->
+          <button
+            class="dropdown-item delete-comment-btn"
+            data-comment-id={comment.id}
+            style="display: none;"
+            aria-label="Delete comment"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="3,6 5,6 21,6"></polyline>
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"
+              ></path>
+            </svg>
+            Delete
+          </button>
 
+          <!-- Report Option - Always show -->
           <button
             class="dropdown-item report-btn"
             data-comment-id={comment.id}
+            style="display: flex;"
             aria-label="Report comment"
           >
             <svg
@@ -178,11 +217,12 @@ const threadLevel = Math.min(comment.thread_level || 0, 4);
 
     <!-- Comment Footer -->
     <div class="comment-footer">
-      <!-- Voting -->
-      <div class="comment-voting">
+      <!-- Vote Section -->
+      <div class="vote-section">
         <button
           class="vote-btn upvote-btn"
           data-comment-id={comment.id}
+          data-action="upvote"
           title="Upvote"
           aria-label="Upvote comment"
         >
@@ -196,12 +236,14 @@ const threadLevel = Math.min(comment.thread_level || 0, 4);
           >
             <path d="M7 14l5-5 5 5"></path>
           </svg>
-          <span class="vote-count">{comment.like_count || 0}</span>
         </button>
-
+        <span class="vote-count" id={`vote-count-${comment.id}`}
+          >{comment.like_count || 0}</span
+        >
         <button
           class="vote-btn downvote-btn"
           data-comment-id={comment.id}
+          data-action="downvote"
           title="Downvote"
           aria-label="Downvote comment"
         >
@@ -221,17 +263,20 @@ const threadLevel = Math.min(comment.thread_level || 0, 4);
       <!-- Reactions -->
       <div class="comment-reactions">
         {
-          reactionTypes.map((reaction) => (
+          reactions.map((reaction) => (
             <button
               class="reaction-btn"
-              data-reaction={reaction}
+              data-reaction={reaction.name}
               data-comment-id={comment.id}
-              title={`React with ${reaction}`}
-              aria-label={`React with ${reaction}`}
+              title={`React with ${reaction.label}`}
+              aria-label={`React with ${reaction.label}`}
             >
-              <span class="reaction-emoji">{getReactionIcon(reaction)}</span>
-              <span class="reaction-count">
-                {comment.reaction_counts?.[reaction] || 0}
+              <span class="reaction-emoji">{reaction.emoji}</span>
+              <span
+                class="reaction-count"
+                id={`reaction-${reaction.name}-${comment.id}`}
+              >
+                {comment.reaction_counts?.[reaction.name] || 0}
               </span>
             </button>
           ))
@@ -257,7 +302,8 @@ const threadLevel = Math.min(comment.thread_level || 0, 4);
                 stroke="currentColor"
                 stroke-width="2"
               >
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                <polyline points="9,17 4,12 9,7" />
+                <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
               </svg>
               Reply
             </button>
@@ -280,6 +326,7 @@ const threadLevel = Math.min(comment.thread_level || 0, 4);
           >
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
           </svg>
+          Bookmark
         </button>
 
         <button
@@ -296,11 +343,10 @@ const threadLevel = Math.min(comment.thread_level || 0, 4);
             stroke="currentColor"
             stroke-width="2"
           >
-            <path
-              d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
-            ></path>
-            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
           </svg>
+          Copy
         </button>
       </div>
     </div>

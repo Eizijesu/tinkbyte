@@ -11,6 +11,20 @@ const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Collection mappings
+const COLLECTIONS = {
+  authors: 'src/content/authors',
+  blog: 'src/content/blog',
+  categories: 'src/content/categories',
+  allTopics: 'src/content/allTopics',
+  contact: 'src/content/contact',
+  legal: 'src/content/legal',
+  newsletter: 'src/content/newsletter',
+  pages: 'src/content/pages',
+  podcast: 'src/content/podcast',
+  settings: 'src/content/settings'
+};
+
 // Helper function to ensure author exists
 async function ensureAuthor(authorSlug, authorData = {}) {
   if (!authorSlug) {
@@ -19,7 +33,6 @@ async function ensureAuthor(authorSlug, authorData = {}) {
   }
 
   try {
-    // Check if author exists
     const { data: existingAuthor, error: findError } = await supabase
       .from('authors')
       .select('*')
@@ -35,7 +48,6 @@ async function ensureAuthor(authorSlug, authorData = {}) {
       return existingAuthor.slug;
     }
 
-    // Auto-create author if doesn't exist
     const authorDefaults = {
       slug: authorSlug,
       name: authorData.name || authorSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
@@ -74,10 +86,11 @@ async function ensureAuthor(authorSlug, authorData = {}) {
   }
 }
 
+// Sync Authors
 async function syncAuthors() {
   console.log('🔄 Syncing authors...');
   
-  const authorFiles = getMarkdownFiles('src/content/authors');
+  const authorFiles = getMarkdownFiles(COLLECTIONS.authors);
   
   for (const filePath of authorFiles) {
     try {
@@ -87,19 +100,19 @@ async function syncAuthors() {
       const authorData = {
         slug,
         name: data.name || slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        bio: data.bio || '',
+        bio: data.bio || content.substring(0, 200) + '...',
         avatar: data.avatar || '/images/default-avatar.png',
         role: data.role || 'Contributor',
         company: data.company || null,
         email: data.email || null,
         social: data.social || {},
         featured: data.featured || false,
-        follower_count: 0,
-        article_count: 0,
-        is_verified: false,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        follower_count: data.follower_count || 0,
+        article_count: 0, // Will be updated later
+        is_verified: data.verified || false,
+        is_active: data.active !== false,
+        created_at: data.createdAt ? new Date(data.createdAt).toISOString() : new Date().toISOString(),
+        updated_at: data.updatedAt ? new Date(data.updatedAt).toISOString() : new Date().toISOString()
       };
 
       const { error } = await supabase
@@ -117,29 +130,32 @@ async function syncAuthors() {
   }
 }
 
+// Sync Categories
 async function syncCategories() {
   console.log('🔄 Syncing categories...');
   
-  const categoryFiles = getMarkdownFiles('src/content/categories');
+  const categoryFiles = getMarkdownFiles(COLLECTIONS.categories);
   
   for (const filePath of categoryFiles) {
     try {
-      const { data } = readMarkdownFile(filePath);
+      const { data, content } = readMarkdownFile(filePath);
       const slug = path.basename(filePath, path.extname(filePath));
       
       const categoryData = {
         name: data.name,
         slug: slug,
-        description: data.description,
+        description: data.description || content.substring(0, 200) + '...',
+        target_audience: data.audience || data.targetAudience || null,
         color: data.color || 'blue',
         icon: data.icon || 'tag',
         is_premium: data.premium || false,
-        // Only include columns that exist
-        ...(data.featured !== undefined && { featured: data.featured }),
-        ...(data.sortOrder !== undefined && { sort_order: data.sortOrder }),
-        ...(data.tags && { tags: data.tags }),
-        ...(data.seo?.title && { seo_title: data.seo.title }),
-        ...(data.seo?.description && { seo_description: data.seo.description }),
+        sort_order: data.sortOrder || 0,
+        is_featured: data.featured || false,
+        tags: data.tags || [],
+        seo_title: data.seo?.title || null,
+        seo_description: data.seo?.description || null,
+        newsletter_enabled: data.newsletter?.enabled || false,
+        created_at: data.createdAt ? new Date(data.createdAt).toISOString() : new Date().toISOString()
       };
       
       const { error } = await supabase
@@ -149,7 +165,7 @@ async function syncCategories() {
       if (error) {
         console.error(`❌ Error with category ${data.name}:`, error.message);
       } else {
-        console.log(`✅ Synced: ${data.name}`);
+        console.log(`✅ Synced category: ${data.name}`);
       }
     } catch (error) {
       console.error(`❌ Error processing ${filePath}:`, error.message);
@@ -157,10 +173,57 @@ async function syncCategories() {
   }
 }
 
+// Sync All Topics (if different from categories)
+async function syncAllTopics() {
+  console.log('🔄 Syncing all topics...');
+  
+  const topicFiles = getMarkdownFiles(COLLECTIONS.allTopics);
+  
+  if (topicFiles.length === 0) {
+    console.log('ℹ️  No topic files found, skipping...');
+    return;
+  }
+  
+  for (const filePath of topicFiles) {
+    try {
+      const { data, content } = readMarkdownFile(filePath);
+      const slug = path.basename(filePath, path.extname(filePath));
+      
+      // You might want to create a separate topics table or merge with categories
+      // For now, I'll treat them as categories
+      const topicData = {
+        name: data.name || data.title,
+        slug: slug,
+        description: data.description || content.substring(0, 200) + '...',
+        color: data.color || 'gray',
+        icon: data.icon || 'hashtag',
+        is_premium: false,
+        sort_order: data.sortOrder || 999,
+        is_featured: false,
+        tags: data.tags || [],
+        created_at: new Date().toISOString()
+      };
+      
+      const { error } = await supabase
+        .from('categories')
+        .upsert(topicData, { onConflict: 'slug' });
+      
+      if (error) {
+        console.error(`❌ Error with topic ${data.name}:`, error.message);
+      } else {
+        console.log(`✅ Synced topic: ${topicData.name}`);
+      }
+    } catch (error) {
+      console.error(`❌ Error processing ${filePath}:`, error.message);
+    }
+  }
+}
+
+// Sync Blog Articles
 async function syncArticles() {
   console.log('🔄 Syncing articles...');
   
-  const blogFiles = getMarkdownFiles('src/content/blog');
+  const blogFiles = getMarkdownFiles(COLLECTIONS.blog);
   
   for (const filePath of blogFiles) {
     try {
@@ -177,17 +240,13 @@ async function syncArticles() {
       let authorData = {};
       
       if (data.authorInfo) {
-        // Extract author info from your TinaCMS structure
         const authorName = data.authorInfo.name;
-        
-        // Convert author name to slug
         if (authorName) {
           authorSlug = authorName
             .toLowerCase()
             .replace(/\s+/g, '-')
             .replace(/[^\w-]+/g, '');
           
-          // Store author data for auto-creation
           authorData = {
             name: authorName,
             bio: data.authorInfo.bio || '',
@@ -198,14 +257,8 @@ async function syncArticles() {
       }
       
       // Support legacy author formats
-      if (!authorSlug && data.author_slug) {
-        authorSlug = data.author_slug;
-      }
-      
-      if (!authorSlug && data.author_id) {
-        authorSlug = data.author_id;
-      }
-      
+      if (!authorSlug && data.author_slug) authorSlug = data.author_slug;
+      if (!authorSlug && data.author_id) authorSlug = data.author_id;
       if (!authorSlug && data.author) {
         if (typeof data.author === 'string') {
           authorSlug = data.author;
@@ -214,12 +267,8 @@ async function syncArticles() {
         }
       }
       
-      // Fallback to default if no author info
-      if (!authorSlug) {
-        authorSlug = 'tinkbyte-team';
-      }
+      if (!authorSlug) authorSlug = 'tinkbyte-team';
 
-      // Ensure author exists (auto-create if needed)
       const validAuthorSlug = await ensureAuthor(authorSlug, authorData);
 
       // Ensure category exists
@@ -241,7 +290,7 @@ async function syncArticles() {
             color: 'blue',
             icon: 'tag',
             is_premium: false,
-            featured: false,
+            is_featured: false,
             sort_order: 0,
             created_at: new Date().toISOString()
           });
@@ -261,9 +310,9 @@ async function syncArticles() {
         slug: slug,
         title: data.title,
         subtitle: data.subtitle || null,
-        excerpt: data.excerpt,
+        excerpt: data.excerpt || data.description || content.substring(0, 200) + '...',
         content: content,
-        author_id: validAuthorSlug, // Now references authors.slug
+        author_id: validAuthorSlug,
         category_slug: categorySlug,
         featured_image_url: imageUrl,
         is_published: !data.draft,
@@ -285,11 +334,103 @@ async function syncArticles() {
       
       if (error) {
         console.error(`❌ Error with article ${data.title}:`, error.message);
-        console.error('Data:', articleData);
       } else {
-        console.log(`✅ Synced: ${data.title}`);
+        console.log(`✅ Synced article: ${data.title}`);
       }
       
+    } catch (error) {
+      console.error(`❌ Error processing ${filePath}:`, error.message);
+    }
+  }
+}
+
+// Sync Podcasts
+async function syncPodcasts() {
+  console.log('🔄 Syncing podcasts...');
+  
+  const podcastFiles = getMarkdownFiles(COLLECTIONS.podcast);
+  
+  if (podcastFiles.length === 0) {
+    console.log('ℹ️  No podcast files found, skipping...');
+    return;
+  }
+  
+  for (const filePath of podcastFiles) {
+    try {
+      const { data, content } = readMarkdownFile(filePath);
+      const slug = path.basename(filePath, path.extname(filePath));
+      
+      const podcastData = {
+        slug: slug,
+        title: data.title,
+        description: data.description || content.substring(0, 300) + '...',
+        duration: data.duration || null,
+        audio_url: data.audioUrl || data.audio_url || null,
+        image_url: data.imageUrl || data.image_url || data.image || null,
+        episode_number: data.episodeNumber || data.episode_number || null,
+        season_number: data.seasonNumber || data.season_number || null,
+        published_at: data.pubDate ? new Date(data.pubDate).toISOString() : new Date().toISOString(),
+        is_published: !data.draft,
+        featured: data.featured || false,
+        created_at: data.createdAt ? new Date(data.createdAt).toISOString() : new Date().toISOString(),
+        updated_at: data.updatedAt ? new Date(data.updatedAt).toISOString() : new Date().toISOString()
+      };
+      
+      const { error } = await supabase
+        .from('podcasts')
+        .upsert(podcastData, { onConflict: 'slug' });
+      
+      if (error) {
+        console.error(`❌ Error with podcast ${data.title}:`, error.message);
+      } else {
+        console.log(`✅ Synced podcast: ${data.title}`);
+      }
+    } catch (error) {
+      console.error(`❌ Error processing ${filePath}:`, error.message);
+    }
+  }
+}
+
+// Sync Newsletter Subscriptions (if you have newsletter content)
+async function syncNewsletters() {
+  console.log('🔄 Syncing newsletters...');
+  
+  const newsletterFiles = getMarkdownFiles(COLLECTIONS.newsletter);
+  
+  if (newsletterFiles.length === 0) {
+    console.log('ℹ️  No newsletter files found, skipping...');
+    return;
+  }
+  
+  for (const filePath of newsletterFiles) {
+    try {
+      const { data, content } = readMarkdownFile(filePath);
+      const slug = path.basename(filePath, path.extname(filePath));
+      
+      const newsletterData = {
+        slug: slug,
+        name: data.name || data.title,
+        description: data.description || content.substring(0, 200) + '...',
+        frequency: data.frequency || 'weekly',
+        day_of_week: data.dayOfWeek || null,
+        image_url: data.imageUrl || data.image || null,
+        code: data.code || null,
+        type: data.type || 'general',
+        is_active: data.active !== false,
+        sort_order: data.sortOrder || 0,
+        subscriber_count: 0,
+        created_at: new Date().toISOString()
+      };
+      
+      const { error } = await supabase
+        .from('newsletters')
+        .upsert(newsletterData, { onConflict: 'slug' });
+      
+      if (error) {
+        console.error(`❌ Error with newsletter ${data.name}:`, error.message);
+      } else {
+        console.log(`✅ Synced newsletter: ${data.name}`);
+      }
     } catch (error) {
       console.error(`❌ Error processing ${filePath}:`, error.message);
     }
@@ -339,6 +480,7 @@ async function updateAuthorStats() {
   }
 }
 
+// Helper functions
 function readMarkdownFile(filePath) {
   const fileContent = fs.readFileSync(filePath, 'utf8');
   return matter(fileContent);
@@ -346,6 +488,9 @@ function readMarkdownFile(filePath) {
 
 function getMarkdownFiles(dirPath) {
   try {
+    if (!fs.existsSync(dirPath)) {
+      return [];
+    }
     return fs.readdirSync(dirPath)
       .filter(file => file.endsWith('.md') || file.endsWith('.mdx'))
       .map(file => path.join(dirPath, file));
@@ -365,22 +510,34 @@ function calculateReadTime(readTimeString, content) {
   return Math.ceil(wordCount / wordsPerMinute);
 }
 
+// Main function
 async function main() {
-  console.log('🚀 Starting sync...\n');
+  console.log('🚀 Starting comprehensive sync...\n');
 
   try {
+    // Sync in order of dependencies
     await syncAuthors();
     console.log('');
     
     await syncCategories();
     console.log('');
     
+    await syncAllTopics();
+    console.log('');
+    
     await syncArticles();
+    console.log('');
+    
+    await syncPodcasts();
+    console.log('');
+    
+    await syncNewsletters();
     console.log('');
     
     await updateAuthorStats();
     console.log('');
     
+    // Get final counts
     const { count: authorsCount } = await supabase
       .from('authors')
       .select('*', { count: 'exact', head: true });
@@ -393,14 +550,25 @@ async function main() {
       .from('articles')
       .select('*', { count: 'exact', head: true });
     
-    console.log('✅ Sync completed!');
-    console.log(`📊 Results:`);
+    const { count: podcastsCount } = await supabase
+      .from('podcasts')
+      .select('*', { count: 'exact', head: true });
+    
+    const { count: newslettersCount } = await supabase
+      .from('newsletters')
+      .select('*', { count: 'exact', head: true });
+    
+    console.log('✅ Comprehensive sync completed!');
+    console.log(`📊 Final Results:`);
     console.log(`   • ${authorsCount} authors`);
-    console.log(`   • ${categoriesCount} categories`);
+    console.log(`   • ${categoriesCount} categories/topics`);
     console.log(`   • ${articlesCount} articles`);
+    console.log(`   • ${podcastsCount} podcasts`);
+    console.log(`   • ${newslettersCount} newsletters`);
     
   } catch (error) {
     console.error('❌ Sync failed:', error);
+    process.exit(1);
   }
 }
 

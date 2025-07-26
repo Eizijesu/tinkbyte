@@ -7,42 +7,50 @@ import { checkRateLimit } from '../utils/rateLimiter';
 export function buildCommentTree(comments: CommentWithProfile[]): CommentWithProfile[] {
   const commentMap = new Map<string, CommentWithProfile>();
   const rootComments: CommentWithProfile[] = [];
-  
-  // Get current max depth based on device
-  const maxDepth = 4; // You can make this dynamic later
-  
-  // First pass: create map
+
+  // First pass: create a map of all comments and initialize replies array
   comments.forEach(comment => {
-    const processedComment: CommentWithProfile = {
-      ...comment,
-      replies: [],
-      thread_level: comment.thread_level || 0,
-      is_collapsed: shouldAutoCollapse(comment),
-      profiles: normalizeProfile(comment),
-      reaction_counts: processReactionCounts(comment.comment_reactions || [])
-    };
-    commentMap.set(comment.id, processedComment);
+    comment.replies = [];
+    comment.thread_level = 0; // Initialize thread level
+    commentMap.set(comment.id, comment);
   });
 
-  // Second pass: build tree respecting max depth
+  // Second pass: build the tree structure
   comments.forEach(comment => {
-    const processedComment = commentMap.get(comment.id);
-    if (!processedComment) return;
-
-    if (comment.parent_id && (comment.thread_level || 0) < maxDepth) {
+    if (comment.parent_id) {
       const parent = commentMap.get(comment.parent_id);
       if (parent) {
+        // Set thread level based on parent
+        comment.thread_level = Math.min((parent.thread_level || 0) + 1, 4);
         parent.replies = parent.replies || [];
-        parent.replies.push(processedComment);
+        parent.replies.push(comment);
       } else {
-        rootComments.push(processedComment);
+        // Parent not found, treat as root comment
+        comment.thread_level = 0;
+        rootComments.push(comment);
       }
     } else {
-      rootComments.push(processedComment);
+      // Root comment
+      comment.thread_level = 0;
+      rootComments.push(comment);
     }
   });
 
-  return sortComments(rootComments);
+  // Sort root comments by creation date (newest first)
+  rootComments.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  // Sort replies within each thread (oldest first for better conversation flow)
+  function sortReplies(comments: CommentWithProfile[]) {
+    comments.forEach(comment => {
+      if (comment.replies && comment.replies.length > 0) {
+        comment.replies.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        sortReplies(comment.replies);
+      }
+    });
+  }
+
+  sortReplies(rootComments);
+  return rootComments;
 }
 
 // Helper function to normalize profile data - FIXED: Single function with correct type

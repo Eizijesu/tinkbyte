@@ -1,0 +1,137 @@
+/* Admin Override Styles - High Specificity */
+.admin-layout * {
+  border-radius: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Force container styles */
+.admin-layout .newsletters-container,
+.admin-layout .settings-container,
+.admin-layout .comments-container,
+.admin-layout .users-container,
+.admin-layout .authors-container {
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 1rem !important;
+  background: transparent !important;
+}
+
+/* Force grid layouts */
+.admin-layout .newsletters-grid,
+.admin-layout .authors-grid,
+.admin-layout .users-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
+  gap: 1.5rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Force table styles */
+.admin-layout .subscribers-table-container,
+.admin-layout .users-table-container,
+.admin-layout .comments-table-container {
+  background: #161b22 !important;
+  border: 1px solid #21262d !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  margin-bottom: 2rem !important;
+}
+
+.admin-layout table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+.admin-layout table th {
+  background: #21262d !important;
+  color: #f0f6fc !important;
+  padding: 1rem !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+  border-bottom: 1px solid #30363d !important;
+  border-right: 1px solid #30363d !important;
+  border-radius: 0 !important;
+}
+
+.admin-layout table td {
+  padding: 1rem !important;
+  border-bottom: 1px solid #21262d !important;
+  border-right: 1px solid #21262d !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+/* Force card styles */
+.admin-layout .newsletter-card,
+.admin-layout .user-card,
+.admin-layout .author-card,
+.admin-layout .comment-card,
+.admin-layout .stat-card {
+  background: #161b22 !important;
+  border: 1px solid #21262d !important;
+  border-radius: 0 !important;
+  padding: 1.5rem !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Force button styles */
+.admin-layout button,
+.admin-layout .btn,
+.admin-layout .action-btn {
+  border-radius: 0 !important;
+  border: 1px solid #30363d !important;
+  background: #21262d !important;
+  color: #f0f6fc !important;
+  padding: 0.5rem 1rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Force form styles */
+.admin-layout input,
+.admin-layout textarea,
+.admin-layout select {
+  border-radius: 0 !important;
+  background: #21262d !important;
+  border: 1px solid #30363d !important;
+  color: #f0f6fc !important;
+  padding: 0.75rem !important;
+}
+
+/* Light mode overrides */
+.admin-layout.light .newsletters-container,
+.admin-layout.light .settings-container,
+.admin-layout.light .comments-container {
+  background: white !important;
+}
+
+.admin-layout.light .newsletter-card,
+.admin-layout.light .user-card,
+.admin-layout.light .author-card,
+.admin-layout.light .stat-card {
+  background: white !important;
+  border-color: #e2e8f0 !important;
+}
+
+.admin-layout.light table th {
+  background: #f8fafc !important;
+  color: #1f2937 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.admin-layout.light table td {
+  border-color: #e2e8f0 !important;
+}
+
+.admin-layout.light input,
+.admin-layout.light textarea,
+.admin-layout.light select {
+  background: white !important;
+  border-color: #d1d5db !important;
+  color: #1f2937 !important;
+}

@@ -3,14 +3,21 @@
 import CommentCard from './CommentCard.astro';
 import type { CommentWithProfile } from '../../lib/types/comments';
 
+// Define the reaction type structure
+interface ReactionType {
+  name: string;
+  emoji: string;
+  label: string;
+}
+
 interface Props {
   replies: CommentWithProfile[];
   currentUserId?: string;
-  reactionTypes: string[];
+  reactionTypes?: ReactionType[]; // Changed from string[] to ReactionType[]
   maxDepth?: number;
 }
 
-const { replies, currentUserId, reactionTypes, maxDepth = 4 } = Astro.props;
+const { replies, currentUserId, reactionTypes = [], maxDepth = 4 } = Astro.props;
 
 // Filter replies that are within max depth
 const visibleReplies = replies.filter(reply => (reply.thread_level || 0) <= maxDepth);

@@ -624,475 +624,501 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 </style>
 
 <script>
-  import { authStore } from "../../lib/auth-store.js";
-  import {
-    getCachedTopics,
-    getCachedNewsletters,
-    dataCache,
-  } from "../../lib/data-cache.js";
+  import { authManager } from "../../lib/auth.js";
   import { supabase } from "../../lib/supabase.js";
 
-  let currentUser: any = null;
-  let followedTopics: Set<string> = new Set();
-  let subscribedNewsletters: Set<string> = new Set();
-  let allTopics: any[] = [];
-  let allNewsletters: any[] = [];
+  class FollowingPageManager {
+    private currentUser: any = null;
+    private followedTopics: Set<string> = new Set();
+    private subscribedNewsletters: Set<string> = new Set();
+    private allTopics: any[] = [];
+    private allNewsletters: any[] = [];
+    private initialized = false;
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    await loadFollowingData();
-    setupEventListeners();
-  });
+    constructor() {
+      this.init();
+    }
 
-  async function loadFollowingData() {
-    try {
-      // Get instant data from cache
-      if (authStore.hasInstantData()) {
-        console.log("⚡ Following: Using instant cached data");
+    async init() {
+      if (this.initialized) return;
 
-        currentUser = authStore.getUser();
+      try {
+        console.log("🚀 Following: Starting initialization...");
 
-        if (!currentUser) {
+        // Initialize auth manager
+        await authManager.initialize();
+
+        // Check authentication
+        this.currentUser = authManager.getUser();
+        if (!this.currentUser) {
+          console.log("❌ Not authenticated, redirecting to signin");
           window.location.href = "/auth/signin";
           return;
         }
 
+        console.log("✅ User authenticated:", this.currentUser.email);
+
+        // Load data and setup UI
+        await this.loadFollowingData();
+        this.setupEventListeners();
+
+        this.initialized = true;
+        console.log("✅ Following: Initialization complete");
+      } catch (error) {
+        console.error("❌ Following: Initialization failed:", error);
+        this.showError("Failed to load following data");
+      }
+    }
+
+    async loadFollowingData() {
+      try {
+        console.log("📊 Loading following data...");
+
         // Show loading state initially
-        updateCounts();
-        updateSummaries();
+        this.updateCounts();
+        this.updateSummaries();
 
-        // Load data in background
-        loadBackgroundData();
-        return;
+        // Load topics and newsletters data
+        await this.loadBackgroundData();
+      } catch (error) {
+        console.error("❌ Error loading following data:", error);
+        this.showError("Failed to load following data");
       }
-
-      // No instant data, need to initialize
-      console.log("🔄 Following: Initializing auth...");
-      await authStore.initialize();
-
-      currentUser = authStore.getUser();
-      if (!currentUser) {
-        window.location.href = "/auth/signin";
-        return;
-      }
-
-      loadBackgroundData();
-    } catch (error) {
-      console.error("Error loading following data:", error);
-      showError("Failed to load following data");
     }
-  }
 
-  async function loadBackgroundData() {
-    try {
-      // Load topics and newsletters from cache
-      const [topics, newsletters] = await Promise.all([
-        getCachedTopics(),
-        getCachedNewsletters(),
-      ]);
+    async loadBackgroundData() {
+      try {
+        // Load topics and newsletters from database
+        const [topicsResult, newslettersResult] = await Promise.all([
+          supabase.from("categories").select("*").order("sort_order"),
+          supabase
+            .from("newsletters")
+            .select("*")
+            .eq("is_active", true)
+            .order("name"),
+        ]);
 
-      allTopics = topics;
-      allNewsletters = newsletters;
+        this.allTopics = topicsResult.data || [];
+        this.allNewsletters = newslettersResult.data || [];
 
-      // Load user's followed topics
-      const { data: userTopics } = await supabase
+        // Load user's followed topics
+        const { data: userTopics } = await supabase
+          .from("user_category_follows")
+          .select("category_slug")
+          .eq("user_id", this.currentUser.id);
+
+        this.followedTopics = new Set(
+          (userTopics || []).map((t) => t.category_slug)
+        );
+
+        // Load user's newsletter preferences
+        const { data: userPrefs } = await supabase
+          .from("user_preferences")
+          .select("newsletter_subscriptions, newsletter_frequency")
+          .eq("id", this.currentUser.id)
+          .single();
+
+        if (userPrefs?.newsletter_subscriptions) {
+          this.subscribedNewsletters = new Set(
+            userPrefs.newsletter_subscriptions
+          );
+        } else if (
+          userPrefs?.newsletter_frequency &&
+          userPrefs.newsletter_frequency !== "never"
+        ) {
+          this.subscribedNewsletters.add("tinkbyte-weekly");
+        }
+
+        // Render UI
+        this.renderTopicsDropdown();
+        this.renderNewslettersDropdown();
+        this.updateCounts();
+        this.updateSummaries();
+
+        console.log("✅ Background data loaded successfully");
+      } catch (error) {
+        console.error("❌ Error loading background data:", error);
+        this.showError("Failed to load following data");
+      }
+    }
+
+    renderTopicsDropdown() {
+      const topicsList = document.getElementById("topics-list");
+      if (!topicsList) return;
+
+      if (this.allTopics.length === 0) {
+        topicsList.innerHTML =
+          '<div class="loading-state">Loading topics...</div>';
+        return;
+      }
+
+      topicsList.innerHTML = this.allTopics
+        .map((topic) => {
+          const isFollowing = this.followedTopics.has(topic.slug);
+          return `
+          <div class="dropdown-item ${isFollowing ? "selected" : ""}" data-topic-slug="${topic.slug}">
+            <div class="dropdown-checkbox ${isFollowing ? "checked" : ""}">
+              ${isFollowing ? '<i class="fas fa-check"></i>' : ""}
+            </div>
+            <div class="topic-color" style="background: ${this.getTopicColor(topic.color)}"></div>
+            <div class="dropdown-item-content">
+              <div class="dropdown-item-name">${topic.name}</div>
+              <div class="dropdown-item-description">${topic.description || ""}</div>
+            </div>
+          </div>
+        `;
+        })
+        .join("");
+
+      topicsList.querySelectorAll(".dropdown-item").forEach((item) => {
+        item.addEventListener("click", (e) => this.handleTopicToggle(e));
+      });
+    }
+
+    renderNewslettersDropdown() {
+      const newslettersList = document.getElementById("newsletters-list");
+      if (!newslettersList) return;
+
+      if (this.allNewsletters.length === 0) {
+        newslettersList.innerHTML =
+          '<div class="loading-state">Loading newsletters...</div>';
+        return;
+      }
+
+      newslettersList.innerHTML = this.allNewsletters
+        .map((newsletter) => {
+          const isSubscribed = this.subscribedNewsletters.has(newsletter.slug);
+          return `
+          <div class="dropdown-item ${isSubscribed ? "selected" : ""}" data-newsletter-slug="${newsletter.slug}">
+            <div class="dropdown-checkbox ${isSubscribed ? "checked" : ""}">
+              ${isSubscribed ? '<i class="fas fa-check"></i>' : ""}
+            </div>
+            <div class="dropdown-item-content">
+              <div class="dropdown-item-name">${newsletter.name}</div>
+              <div class="dropdown-item-description">${newsletter.description}</div>
+              <div class="newsletter-frequency">${newsletter.frequency || "Weekly"}</div>
+            </div>
+          </div>
+        `;
+        })
+        .join("");
+
+      newslettersList.querySelectorAll(".dropdown-item").forEach((item) => {
+        item.addEventListener("click", (e) => this.handleNewsletterToggle(e));
+      });
+    }
+
+    handleTopicToggle(event: Event) {
+      const item = event.currentTarget as HTMLElement;
+      const topicSlug = item.getAttribute("data-topic-slug");
+      if (!topicSlug) return;
+
+      const checkbox = item.querySelector(".dropdown-checkbox");
+
+      if (this.followedTopics.has(topicSlug)) {
+        this.followedTopics.delete(topicSlug);
+        item.classList.remove("selected");
+        checkbox?.classList.remove("checked");
+        if (checkbox) checkbox.innerHTML = "";
+      } else {
+        this.followedTopics.add(topicSlug);
+        item.classList.add("selected");
+        checkbox?.classList.add("checked");
+        if (checkbox) checkbox.innerHTML = '<i class="fas fa-check"></i>';
+      }
+
+      this.updateCounts();
+      this.updateSummaries();
+    }
+
+    handleNewsletterToggle(event: Event) {
+      const item = event.currentTarget as HTMLElement;
+      const newsletterSlug = item.getAttribute("data-newsletter-slug");
+      if (!newsletterSlug) return;
+
+      const checkbox = item.querySelector(".dropdown-checkbox");
+
+      if (this.subscribedNewsletters.has(newsletterSlug)) {
+        this.subscribedNewsletters.delete(newsletterSlug);
+        item.classList.remove("selected");
+        checkbox?.classList.remove("checked");
+        if (checkbox) checkbox.innerHTML = "";
+      } else {
+        this.subscribedNewsletters.add(newsletterSlug);
+        item.classList.add("selected");
+        checkbox?.classList.add("checked");
+        if (checkbox) checkbox.innerHTML = '<i class="fas fa-check"></i>';
+      }
+
+      this.updateCounts();
+      this.updateSummaries();
+    }
+
+    async saveChanges() {
+      if (!this.currentUser) return;
+
+      try {
+        const saveBtn = document.getElementById(
+          "save-changes-btn"
+        ) as HTMLButtonElement;
+        if (saveBtn) {
+          saveBtn.disabled = true;
+          saveBtn.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        }
+
+        await this.updateTopicFollows();
+        await this.updateNewsletterPreferences();
+
+        this.showSuccess("Changes saved successfully!");
+
+        console.log("✅ Changes saved successfully");
+      } catch (error) {
+        console.error("❌ Error saving changes:", error);
+        this.showError("Failed to save changes");
+      } finally {
+        const saveBtn = document.getElementById(
+          "save-changes-btn"
+        ) as HTMLButtonElement;
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        }
+      }
+    }
+
+    async updateTopicFollows() {
+      // Delete existing follows
+      await supabase
         .from("user_category_follows")
-        .select("category_slug")
-        .eq("user_id", currentUser.id);
+        .delete()
+        .eq("user_id", this.currentUser.id);
 
-      followedTopics = new Set((userTopics || []).map((t) => t.category_slug));
+      // Insert new follows
+      if (this.followedTopics.size > 0) {
+        const follows = Array.from(this.followedTopics).map((topicSlug) => ({
+          user_id: this.currentUser.id,
+          category_slug: topicSlug,
+        }));
 
-      // Load user's newsletter preferences
-      const { data: userPrefs } = await supabase
+        const { error } = await supabase
+          .from("user_category_follows")
+          .insert(follows);
+        if (error) throw error;
+      }
+    }
+
+    async updateNewsletterPreferences() {
+      const hasNewsletterSubscriptions = this.subscribedNewsletters.size > 0;
+      const subscriptionsArray = Array.from(this.subscribedNewsletters);
+
+      const updatedPrefs = {
+        id: this.currentUser.id,
+        newsletter_frequency: hasNewsletterSubscriptions ? "weekly" : "never",
+        newsletter_subscriptions: subscriptionsArray,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
         .from("user_preferences")
-        .select("newsletter_subscriptions, newsletter_frequency")
-        .eq("id", currentUser.id)
-        .single();
+        .upsert(updatedPrefs, { onConflict: "id" });
 
-      if (userPrefs?.newsletter_subscriptions) {
-        subscribedNewsletters = new Set(userPrefs.newsletter_subscriptions);
-      } else if (
-        userPrefs?.newsletter_frequency &&
-        userPrefs.newsletter_frequency !== "never"
-      ) {
-        subscribedNewsletters.add("tinkbyte-weekly");
+      if (error) throw error;
+    }
+
+    getTopicColor(color: string) {
+      const colorMap: Record<string, string> = {
+        blue: "#3b82f6",
+        purple: "#8b5cf6",
+        orange: "#f97316",
+        green: "#10b981",
+        red: "#ef4444",
+        indigo: "#6366f1",
+        violet: "#8b5cf6",
+        emerald: "#10b981",
+        pink: "#ec4899",
+        cyan: "#06b6d4",
+      };
+      return colorMap[color] || "#243788";
+    }
+
+    updateCounts() {
+      const topicsCount = document.getElementById("topics-count");
+      const newslettersCount = document.getElementById("newsletters-count");
+
+      if (topicsCount) {
+        topicsCount.textContent = `${this.followedTopics.size} following`;
       }
-
-      renderTopicsDropdown();
-      renderNewslettersDropdown();
-      updateCounts();
-      updateSummaries();
-    } catch (error) {
-      console.error("Error loading background data:", error);
-      showError("Failed to load following data");
-    }
-  }
-
-  function renderTopicsDropdown() {
-    const topicsList = document.getElementById("topics-list");
-    if (!topicsList) return;
-
-    if (allTopics.length === 0) {
-      topicsList.innerHTML =
-        '<div class="loading-state">Loading topics...</div>';
-      return;
-    }
-
-    topicsList.innerHTML = allTopics
-      .map((topic) => {
-        const isFollowing = followedTopics.has(topic.slug);
-        return `
-        <div class="dropdown-item ${isFollowing ? "selected" : ""}" data-topic-slug="${topic.slug}">
-          <div class="dropdown-checkbox ${isFollowing ? "checked" : ""}">
-            ${isFollowing ? '<i class="fas fa-check"></i>' : ""}
-          </div>
-          <div class="topic-color" style="background: ${getTopicColor(topic.color)}"></div>
-          <div class="dropdown-item-content">
-            <div class="dropdown-item-name">${topic.name}</div>
-            <div class="dropdown-item-description">${topic.description || ""}</div>
-          </div>
-        </div>
-      `;
-      })
-      .join("");
-
-    topicsList.querySelectorAll(".dropdown-item").forEach((item) => {
-      item.addEventListener("click", handleTopicToggle);
-    });
-  }
-
-  function renderNewslettersDropdown() {
-    const newslettersList = document.getElementById("newsletters-list");
-    if (!newslettersList) return;
-
-    if (allNewsletters.length === 0) {
-      newslettersList.innerHTML =
-        '<div class="loading-state">Loading newsletters...</div>';
-      return;
-    }
-
-    newslettersList.innerHTML = allNewsletters
-      .map((newsletter) => {
-        const isSubscribed = subscribedNewsletters.has(newsletter.slug);
-        return `
-        <div class="dropdown-item ${isSubscribed ? "selected" : ""}" data-newsletter-slug="${newsletter.slug}">
-          <div class="dropdown-checkbox ${isSubscribed ? "checked" : ""}">
-            ${isSubscribed ? '<i class="fas fa-check"></i>' : ""}
-          </div>
-          <div class="dropdown-item-content">
-            <div class="dropdown-item-name">${newsletter.name}</div>
-            <div class="dropdown-item-description">${newsletter.description}</div>
-            <div class="newsletter-frequency">${newsletter.frequency}</div>
-          </div>
-        </div>
-      `;
-      })
-      .join("");
-
-    newslettersList.querySelectorAll(".dropdown-item").forEach((item) => {
-      item.addEventListener("click", handleNewsletterToggle);
-    });
-  }
-
-  function handleTopicToggle(event: Event) {
-    const item = event.currentTarget as HTMLElement;
-    const topicSlug = item.getAttribute("data-topic-slug");
-    if (!topicSlug) return;
-
-    const checkbox = item.querySelector(".dropdown-checkbox");
-
-    if (followedTopics.has(topicSlug)) {
-      followedTopics.delete(topicSlug);
-      item.classList.remove("selected");
-      checkbox?.classList.remove("checked");
-      if (checkbox) checkbox.innerHTML = "";
-    } else {
-      followedTopics.add(topicSlug);
-      item.classList.add("selected");
-      checkbox?.classList.add("checked");
-      if (checkbox) checkbox.innerHTML = '<i class="fas fa-check"></i>';
-    }
-
-    updateCounts();
-    updateSummaries();
-  }
-
-  function handleNewsletterToggle(event: Event) {
-    const item = event.currentTarget as HTMLElement;
-    const newsletterSlug = item.getAttribute("data-newsletter-slug");
-    if (!newsletterSlug) return;
-
-    const checkbox = item.querySelector(".dropdown-checkbox");
-
-    if (subscribedNewsletters.has(newsletterSlug)) {
-      subscribedNewsletters.delete(newsletterSlug);
-      item.classList.remove("selected");
-      checkbox?.classList.remove("checked");
-      if (checkbox) checkbox.innerHTML = "";
-    } else {
-      subscribedNewsletters.add(newsletterSlug);
-      item.classList.add("selected");
-      checkbox?.classList.add("checked");
-      if (checkbox) checkbox.innerHTML = '<i class="fas fa-check"></i>';
-    }
-
-    updateCounts();
-    updateSummaries();
-  }
-
-  async function saveChanges() {
-    if (!currentUser) return;
-
-    try {
-      const saveBtn = document.getElementById(
-        "save-changes-btn"
-      ) as HTMLButtonElement;
-      if (saveBtn) {
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-      }
-
-      await updateTopicFollows();
-      await updateNewsletterPreferences();
-
-      dataCache.delete(`user-stats-${currentUser.id}`);
-
-      showSuccess("Changes saved successfully!");
-    } catch (error) {
-      console.error("Error saving changes:", error);
-      showError("Failed to save changes");
-    } finally {
-      const saveBtn = document.getElementById(
-        "save-changes-btn"
-      ) as HTMLButtonElement;
-      if (saveBtn) {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
-      }
-    }
-  }
-
-  async function updateTopicFollows() {
-    await supabase
-      .from("user_category_follows")
-      .delete()
-      .eq("user_id", currentUser.id);
-
-    if (followedTopics.size > 0) {
-      const follows = Array.from(followedTopics).map((topicSlug) => ({
-        user_id: currentUser.id,
-        category_slug: topicSlug,
-      }));
-
-      await supabase.from("user_category_follows").insert(follows);
-    }
-  }
-
-  async function updateNewsletterPreferences() {
-    const hasNewsletterSubscriptions = subscribedNewsletters.size > 0;
-    const subscriptionsArray = Array.from(subscribedNewsletters);
-
-    const updatedPrefs = {
-      id: currentUser.id,
-      newsletter_frequency: hasNewsletterSubscriptions ? "weekly" : "never",
-      newsletter_subscriptions: subscriptionsArray,
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error } = await supabase
-      .from("user_preferences")
-      .upsert(updatedPrefs, { onConflict: "id" });
-
-    if (error) throw error;
-  }
-
-  function getTopicColor(color: string) {
-    const colorMap: Record<string, string> = {
-      blue: "#3b82f6",
-      purple: "#8b5cf6",
-      orange: "#f97316",
-      green: "#10b981",
-      red: "#ef4444",
-      indigo: "#6366f1",
-      violet: "#8b5cf6",
-      emerald: "#10b981",
-      pink: "#ec4899",
-      cyan: "#06b6d4",
-    };
-    return colorMap[color] || "#243788";
-  }
-
-  function updateCounts() {
-    const topicsCount = document.getElementById("topics-count");
-    const newslettersCount = document.getElementById("newsletters-count");
-
-    if (topicsCount) {
-      topicsCount.textContent = `${followedTopics.size} following`;
-    }
-    if (newslettersCount) {
-      newslettersCount.textContent = `${subscribedNewsletters.size} subscribed`;
-    }
-  }
-
-  function updateSummaries() {
-    const topicsSummary = document.getElementById("topics-summary");
-    if (topicsSummary) {
-      const followedTopicNames = allTopics
-        .filter((t) => followedTopics.has(t.slug))
-        .map((t) => t.name)
-        .slice(0, 3);
-
-      if (followedTopicNames.length > 0) {
-        const remaining = followedTopics.size - followedTopicNames.length;
-        const summaryText = `Following: ${followedTopicNames.join(", ")}${
-          remaining > 0 ? ` and ${remaining} more` : ""
-        }`;
-        topicsSummary.innerHTML = `<p class="summary-text">${summaryText}</p>`;
-      } else {
-        topicsSummary.innerHTML =
-          '<p class="summary-text">Select topics you want to follow for personalized content recommendations.</p>';
+      if (newslettersCount) {
+        newslettersCount.textContent = `${this.subscribedNewsletters.size} subscribed`;
       }
     }
 
-    const newslettersSummary = document.getElementById("newsletters-summary");
-    if (newslettersSummary) {
-      const subscribedNewsletterNames = allNewsletters
-        .filter((n) => subscribedNewsletters.has(n.slug))
-        .map((n) => n.name)
-        .slice(0, 2);
+    updateSummaries() {
+      const topicsSummary = document.getElementById("topics-summary");
+      if (topicsSummary) {
+        const followedTopicNames = this.allTopics
+          .filter((t) => this.followedTopics.has(t.slug))
+          .map((t) => t.name)
+          .slice(0, 3);
 
-      if (subscribedNewsletterNames.length > 0) {
-        const remaining =
-          subscribedNewsletters.size - subscribedNewsletterNames.length;
-        const summaryText = `Subscribed to: ${subscribedNewsletterNames.join(", ")}${
-          remaining > 0 ? ` and ${remaining} more` : ""
-        }`;
-        newslettersSummary.innerHTML = `<p class="summary-text">${summaryText}</p>`;
-      } else {
-        newslettersSummary.innerHTML =
-          '<p class="summary-text">Choose which newsletters you\'d like to receive in your inbox.</p>';
+        if (followedTopicNames.length > 0) {
+          const remaining =
+            this.followedTopics.size - followedTopicNames.length;
+          const summaryText = `Following: ${followedTopicNames.join(", ")}${
+            remaining > 0 ? ` and ${remaining} more` : ""
+          }`;
+          topicsSummary.innerHTML = `<p class="summary-text">${summaryText}</p>`;
+        } else {
+          topicsSummary.innerHTML =
+            '<p class="summary-text">Select topics you want to follow for personalized content recommendations.</p>';
+        }
+      }
+
+      const newslettersSummary = document.getElementById("newsletters-summary");
+      if (newslettersSummary) {
+        const subscribedNewsletterNames = this.allNewsletters
+          .filter((n) => this.subscribedNewsletters.has(n.slug))
+          .map((n) => n.name)
+          .slice(0, 2);
+
+        if (subscribedNewsletterNames.length > 0) {
+          const remaining =
+            this.subscribedNewsletters.size - subscribedNewsletterNames.length;
+          const summaryText = `Subscribed to: ${subscribedNewsletterNames.join(", ")}${
+            remaining > 0 ? ` and ${remaining} more` : ""
+          }`;
+          newslettersSummary.innerHTML = `<p class="summary-text">${summaryText}</p>`;
+        } else {
+          newslettersSummary.innerHTML =
+            '<p class="summary-text">Choose which newsletters you\'d like to receive in your inbox.</p>';
+        }
       }
     }
-  }
 
-  function setupEventListeners() {
-    const topicsDropdownTrigger = document.getElementById(
-      "topics-dropdown-trigger"
-    );
-    const topicsDropdown = document.getElementById("topics-dropdown");
-    const newslettersDropdownTrigger = document.getElementById(
-      "newsletters-dropdown-trigger"
-    );
-    const newslettersDropdown = document.getElementById("newsletters-dropdown");
-
-    topicsDropdownTrigger?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleDropdown(topicsDropdownTrigger, topicsDropdown);
-      closeDropdown(newslettersDropdownTrigger, newslettersDropdown);
-    });
-
-    newslettersDropdownTrigger?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleDropdown(newslettersDropdownTrigger, newslettersDropdown);
-      closeDropdown(topicsDropdownTrigger, topicsDropdown);
-    });
-
-    document.addEventListener("click", () => {
-      closeDropdown(topicsDropdownTrigger, topicsDropdown);
-      closeDropdown(newslettersDropdownTrigger, newslettersDropdown);
-    });
-
-    topicsDropdown?.addEventListener("click", (e) => e.stopPropagation());
-    newslettersDropdown?.addEventListener("click", (e) => e.stopPropagation());
-
-    document
-      .getElementById("select-all-topics")
-      ?.addEventListener("click", () => selectAllItems("topics"));
-    document
-      .getElementById("clear-all-topics")
-      ?.addEventListener("click", () => clearAllItems("topics"));
-    document
-      .getElementById("select-all-newsletters")
-      ?.addEventListener("click", () => selectAllItems("newsletters"));
-    document
-      .getElementById("clear-all-newsletters")
-      ?.addEventListener("click", () => clearAllItems("newsletters"));
-    document
-      .getElementById("save-changes-btn")
-      ?.addEventListener("click", saveChanges);
-  }
-
-  function toggleDropdown(
-    trigger: HTMLElement | null,
-    dropdown: HTMLElement | null
-  ) {
-    if (!trigger || !dropdown) return;
-
-    const isOpen = dropdown.classList.contains("show");
-    if (isOpen) {
-      closeDropdown(trigger, dropdown);
-    } else {
-      openDropdown(trigger, dropdown);
-    }
-  }
-
-  function openDropdown(trigger: HTMLElement, dropdown: HTMLElement) {
-    trigger.classList.add("active");
-    dropdown.classList.add("show");
-  }
-
-  function closeDropdown(
-    trigger: HTMLElement | null,
-    dropdown: HTMLElement | null
-  ) {
-    if (!trigger || !dropdown) return;
-    trigger.classList.remove("active");
-    dropdown.classList.remove("show");
-  }
-
-  function selectAllItems(type: "topics" | "newsletters") {
-    if (type === "topics") {
-      allTopics.forEach((topic) => followedTopics.add(topic.slug));
-      renderTopicsDropdown();
-    } else {
-      allNewsletters.forEach((newsletter) =>
-        subscribedNewsletters.add(newsletter.slug)
+    setupEventListeners() {
+      const topicsDropdownTrigger = document.getElementById(
+        "topics-dropdown-trigger"
       );
-      renderNewslettersDropdown();
+      const topicsDropdown = document.getElementById("topics-dropdown");
+      const newslettersDropdownTrigger = document.getElementById(
+        "newsletters-dropdown-trigger"
+      );
+      const newslettersDropdown = document.getElementById(
+        "newsletters-dropdown"
+      );
+
+      topicsDropdownTrigger?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.toggleDropdown(topicsDropdownTrigger, topicsDropdown);
+        this.closeDropdown(newslettersDropdownTrigger, newslettersDropdown);
+      });
+
+      newslettersDropdownTrigger?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.toggleDropdown(newslettersDropdownTrigger, newslettersDropdown);
+        this.closeDropdown(topicsDropdownTrigger, topicsDropdown);
+      });
+
+      document.addEventListener("click", () => {
+        this.closeDropdown(topicsDropdownTrigger, topicsDropdown);
+        this.closeDropdown(newslettersDropdownTrigger, newslettersDropdown);
+      });
+
+      topicsDropdown?.addEventListener("click", (e) => e.stopPropagation());
+      newslettersDropdown?.addEventListener("click", (e) =>
+        e.stopPropagation()
+      );
+
+      document
+        .getElementById("select-all-topics")
+        ?.addEventListener("click", () => this.selectAllItems("topics"));
+      document
+        .getElementById("clear-all-topics")
+        ?.addEventListener("click", () => this.clearAllItems("topics"));
+      document
+        .getElementById("select-all-newsletters")
+        ?.addEventListener("click", () => this.selectAllItems("newsletters"));
+      document
+        .getElementById("clear-all-newsletters")
+        ?.addEventListener("click", () => this.clearAllItems("newsletters"));
+      document
+        .getElementById("save-changes-btn")
+        ?.addEventListener("click", () => this.saveChanges());
     }
-    updateCounts();
-    updateSummaries();
-  }
 
-  function clearAllItems(type: "topics" | "newsletters") {
-    if (type === "topics") {
-      followedTopics.clear();
-      renderTopicsDropdown();
-    } else {
-      subscribedNewsletters.clear();
-      renderNewslettersDropdown();
+    toggleDropdown(trigger: HTMLElement | null, dropdown: HTMLElement | null) {
+      if (!trigger || !dropdown) return;
+
+      const isOpen = dropdown.classList.contains("show");
+      if (isOpen) {
+        this.closeDropdown(trigger, dropdown);
+      } else {
+        this.openDropdown(trigger, dropdown);
+      }
     }
-    updateCounts();
-    updateSummaries();
+
+    openDropdown(trigger: HTMLElement, dropdown: HTMLElement) {
+      trigger.classList.add("active");
+      dropdown.classList.add("show");
+    }
+
+    closeDropdown(trigger: HTMLElement | null, dropdown: HTMLElement | null) {
+      if (!trigger || !dropdown) return;
+      trigger.classList.remove("active");
+      dropdown.classList.remove("show");
+    }
+
+    selectAllItems(type: "topics" | "newsletters") {
+      if (type === "topics") {
+        this.allTopics.forEach((topic) => this.followedTopics.add(topic.slug));
+        this.renderTopicsDropdown();
+      } else {
+        this.allNewsletters.forEach((newsletter) =>
+          this.subscribedNewsletters.add(newsletter.slug)
+        );
+        this.renderNewslettersDropdown();
+      }
+      this.updateCounts();
+      this.updateSummaries();
+    }
+
+    clearAllItems(type: "topics" | "newsletters") {
+      if (type === "topics") {
+        this.followedTopics.clear();
+        this.renderTopicsDropdown();
+      } else {
+        this.subscribedNewsletters.clear();
+        this.renderNewslettersDropdown();
+      }
+      this.updateCounts();
+      this.updateSummaries();
+    }
+
+    showSuccess(message: string) {
+      this.showToast(message, "success");
+    }
+
+    showError(message: string) {
+      this.showToast(message, "error");
+    }
+
+    showToast(message: string, type: "success" | "error") {
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<i class="fas fa-${type === "success" ? "check-circle" : "exclamation-triangle"}"></i> ${message}`;
+
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.add("show"), 100);
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
   }
 
-  function showSuccess(message: string) {
-    showToast(message, "success");
-  }
-
-  function showError(message: string) {
-    showToast(message, "error");
-  }
-
-  function showToast(message: string, type: "success" | "error") {
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="fas fa-${type === "success" ? "check-circle" : "exclamation-triangle"}"></i> ${message}`;
-
-    document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add("show"), 100);
-    setTimeout(() => {
-      toast.classList.remove("show");
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }
+  // Initialize when DOM is ready
+  document.addEventListener("DOMContentLoaded", () => {
+    new FollowingPageManager();
+  });
 </script>

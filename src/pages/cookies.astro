@@ -1,0 +1,599 @@
+---
+// src/pages/cookies.astro
+import Layout from "../layouts/Layout.astro";
+import { getEntry } from "astro:content";
+
+// Get cookie content from TinaCMS
+const cookiesPage = await getEntry("legal", "cookie-policy");
+const { Content } = cookiesPage ? await cookiesPage.render() : { Content: null };
+
+const lastUpdated = cookiesPage?.data.updatedDate 
+  ? new Date(cookiesPage.data.updatedDate).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long", 
+      day: "numeric",
+    })
+  : "January 15, 2024";
+
+const pageTitle = cookiesPage?.data.seo?.title || cookiesPage?.data.title || "Cookie Policy | TinkByte";
+const pageDescription = cookiesPage?.data.seo?.description || cookiesPage?.data.description || "TinkByte's cookie policy. Learn how we collect, use, and protect your personal information.";
+---
+
+<Layout title={pageTitle} description={pageDescription}>
+  <div class="legal-page-container">
+    <div class="max-w-4xl mx-auto py-12 lg:py-16 px-4 sm:px-6">
+      <!-- Enhanced Header -->
+      <header class="legal-page-header">
+        <div class="header-decoration">
+          <div class="decoration-circle cookie-circle">
+            <i class="fas fa-shield-alt text-white text-2xl"></i>
+          </div>
+          <div class="decoration-line"></div>
+        </div>
+        
+        <h1 class="legal-page-title">
+          <span class="title-icon">
+            <i class="fas fa-user-shield"></i>
+          </span>
+          {cookiesPage?.data.title || "Cookie Policy"}
+        </h1>
+        
+        <div class="last-updated-badge">
+          <i class="fas fa-calendar-alt mr-2"></i>
+          Last updated: {lastUpdated}
+        </div>
+        
+        <p class="legal-page-subtitle">
+          {cookiesPage?.data.description || "Your cookie matters. Here's how we protect and respect your data."}
+        </p>
+      </header>
+
+      <!-- Content -->
+      <div class="legal-content">
+        {Content ? (
+          <div class="prose-content">
+            <Content />
+          </div>
+        ) : (
+          <!-- Fallback content if no TinaCMS content -->
+          <div class="prose-content">
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">01</span>
+                Our Commitment to Cookie
+              </h2>
+              <p>
+                At TinkByte, we respect your cookie and are committed to protecting your personal data. This policy explains how we collect, use, and safeguard your information.
+              </p>
+            </section>
+
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">02</span>
+                Information We Collect
+              </h2>
+              
+              <div class="subsection">
+                <h3 class="subsection-title">Information You Provide</h3>
+                <ul class="enhanced-list">
+                  <li><strong>Email Address:</strong> When you subscribe to our newsletter</li>
+                  <li><strong>Name:</strong> If you choose to provide it during subscription</li>
+                  <li><strong>Contact Information:</strong> When you reach out to us directly</li>
+                </ul>
+              </div>
+
+              <div class="subsection">
+                <h3 class="subsection-title">Automatically Collected Information</h3>
+                <ul class="enhanced-list">
+                  <li><strong>Usage Data:</strong> Pages visited, time spent, interaction patterns</li>
+                  <li><strong>Device Information:</strong> Browser type, operating system, device identifiers</li>
+                  <li><strong>Analytics Data:</strong> Through Google Analytics and similar services</li>
+                </ul>
+              </div>
+            </section>
+
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">03</span>
+                How We Use Your Information
+              </h2>
+              <ul class="enhanced-list">
+                <li>Send you our weekly newsletter and tech insights</li>
+                <li>Respond to your inquiries and provide customer support</li>
+                <li>Improve our website and content based on usage patterns</li>
+                <li>Comply with legal obligations</li>
+              </ul>
+            </section>
+
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">04</span>
+                Information Sharing
+              </h2>
+              <p>
+                We do not sell, trade, or rent your personal information to third parties. We may share your information only in these circumstances:
+              </p>
+              <ul class="enhanced-list">
+                <li><strong>Service Providers:</strong> ConvertKit for email management, analytics providers</li>
+                <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
+                <li><strong>Business Transfers:</strong> In the event of a merger, acquisition, or asset sale</li>
+              </ul>
+            </section>
+
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">05</span>
+                Your Rights
+              </h2>
+              <p>You have the right to:</p>
+              <ul class="enhanced-list">
+                <li>Access the personal data we hold about you</li>
+                <li>Request correction of inaccurate data</li>
+                <li>Request deletion of your data</li>
+                <li>Unsubscribe from our newsletter at any time</li>
+                <li>Object to processing of your data</li>
+              </ul>
+            </section>
+
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">06</span>
+                Cookies & Tracking
+              </h2>
+              <p>
+                We use cookies and similar technologies to enhance your browsing experience, analyze website traffic, and understand user preferences. You can control cookie settings through your browser.
+              </p>
+            </section>
+
+            <section class="content-section">
+              <h2 class="section-title">
+                <span class="section-number">07</span>
+                Third-Party Services
+              </h2>
+              <p>Our website integrates with:</p>
+              <ul class="enhanced-list">
+                <li><strong>ConvertKit:</strong> Email newsletter management</li>
+                <li><strong>Google Analytics:</strong> Website analytics</li>
+                <li><strong>Cloudflare:</strong> Content delivery and security</li>
+              </ul>
+            </section>
+
+            <section class="content-section contact-section">
+              <h2 class="section-title">
+                <span class="section-number">08</span>
+                Contact Us
+              </h2>
+              <p>Questions about this cookie policy or our data practices? Contact us:</p>
+              <div class="contact-info">
+                <div class="contact-item">
+                  <i class="fas fa-envelope"></i>
+                  <span>{cookiesPage?.data.contact?.email || "cookie@tinkbyte.com"}</span>
+                </div>
+                {cookiesPage?.data.contact?.address && (
+                  <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>{cookiesPage.data.contact.address}</span>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+      </div>
+
+      <!-- Back to Top -->
+      <div class="back-to-top">
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="back-to-top-btn">
+          <i class="fas fa-arrow-up"></i>
+          Back to Top
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  /* Legal Page Styles - Fixed with squared design */
+  .legal-page-container {
+    font-family: "Space Grotesk", sans-serif;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+    transition: all 0.3s ease;
+  }
+
+  /* Enhanced Header */
+  .legal-page-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    position: relative;
+  }
+
+  .header-decoration {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+
+  .decoration-circle {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+  }
+
+  .cookie-circle {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+
+  .decoration-line {
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #243788, transparent);
+    margin: 1rem auto 0;
+  }
+
+  .legal-page-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .title-icon {
+    font-size: 0.8em;
+    color: #243788;
+  }
+
+  .last-updated-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  :global(.dark) .last-updated-badge {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .legal-page-subtitle {
+    font-size: 1.25rem;
+    color: var(--color-text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+    transition: color 0.3s ease;
+  }
+
+  /* Enhanced Content Styling */
+  .legal-content {
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    padding: 3rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .legal-content {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .prose-content {
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: var(--color-text-primary);
+    transition: color 0.3s ease;
+  }
+
+  /* TinaCMS Content Styling */
+  .prose-content :global(h1),
+  .prose-content :global(h2),
+  .prose-content :global(h3),
+  .prose-content :global(h4) {
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .prose-content :global(h1) {
+    font-size: 2.5rem;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 1rem;
+  }
+
+  .prose-content :global(h2) {
+    font-size: 1.75rem;
+    color: #243788;
+  }
+
+  .prose-content :global(h3) {
+    font-size: 1.25rem;
+  }
+
+  .prose-content :global(p) {
+    margin-bottom: 1.5rem;
+    line-height: 1.7;
+  }
+
+  .prose-content :global(ul),
+  .prose-content :global(ol) {
+    margin: 1.5rem 0;
+    padding-left: 2rem;
+  }
+
+  .prose-content :global(li) {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+  }
+
+  .prose-content :global(strong) {
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  .prose-content :global(a) {
+    color: #243788;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+  }
+
+  .prose-content :global(a:hover) {
+    color: #1e40af;
+  }
+
+  .prose-content :global(blockquote) {
+    border-left: 4px solid #243788;
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    font-style: italic;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-secondary);
+    padding: 1.5rem;
+  }
+
+  .prose-content :global(code) {
+    background: var(--color-bg-secondary);
+    padding: 0.25rem 0.5rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    border: 1px solid var(--color-border);
+  }
+
+  .prose-content :global(pre) {
+    background: var(--color-bg-secondary);
+    padding: 1.5rem;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    margin: 1.5rem 0;
+  }
+
+  .prose-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+  }
+
+  .prose-content :global(th),
+  .prose-content :global(td) {
+    border: 1px solid var(--color-border);
+    padding: 0.75rem;
+    text-align: left;
+  }
+
+  .prose-content :global(th) {
+    background: var(--color-bg-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Fallback Content Styling */
+  .content-section {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--color-border);
+    position: relative;
+  }
+
+  .content-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #243788;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: color 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .section-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #243788;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .subsection {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: var(--color-bg-secondary);
+    border-left: 4px solid #243788;
+    transition: all 0.3s ease;
+  }
+
+  .subsection-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 0.75rem;
+    transition: color 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .enhanced-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+  }
+
+  .enhanced-list li {
+    position: relative;
+    padding: 0.75rem 0 0.75rem 2rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .enhanced-list li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    top: 0.75rem;
+    color: #243788;
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+
+  .enhanced-list li:hover {
+    background: rgba(36, 55, 136, 0.05);
+    transform: translateX(4px);
+  }
+
+  .contact-section {
+    background: var(--color-bg-secondary);
+    padding: 2rem;
+    border: 2px solid #243788;
+    margin-top: 2rem;
+  }
+
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .contact-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .contact-item i {
+    color: #243788;
+    font-size: 1.2em;
+  }
+
+  /* Back to Top */
+  .back-to-top {
+    text-align: center;
+    margin-top: 3rem;
+  }
+
+  .back-to-top-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #243788;
+    color: white;
+    border: 2px solid #243788;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(36, 55, 136, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: inherit;
+  }
+
+  .back-to-top-btn:hover {
+    background: white;
+    color: #243788;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(36, 55, 136, 0.4);
+  }
+
+  /* Mobile Responsiveness */
+  @media (max-width: 768px) {
+    .legal-content {
+      padding: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      flex-direction: column;
+      text-align: center;
+      gap: 0.5rem;
+    }
+
+    .contact-info {
+      gap: 0.75rem;
+    }
+
+    .contact-item {
+      flex-direction: column;
+      text-align: center;
+      gap: 0.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .legal-content {
+      padding: 1.5rem;
+    }
+
+    .prose-content {
+      font-size: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+    }
+  }
+</style>

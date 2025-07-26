@@ -1,7 +1,6 @@
 ---
 // src/pages/auth/verify-email.astro
 export const prerender = false;
-
 import Layout from "../../layouts/Layout.astro";
 import AuthLayout from "../../components/auth/AuthLayout.astro";
 ---
@@ -145,87 +144,169 @@ import AuthLayout from "../../components/auth/AuthLayout.astro";
 </Layout>
 
 <script>
-  import { auth } from "../../lib/auth.js";
+  import { authManager } from "../../lib/auth.js";
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    console.log("🔄 VerifyEmail: Initializing...");
+  class VerifyEmailManager {
+    private initialized: boolean = false;
+    private emailDisplay: HTMLElement | null = null;
+    private passwordSetup: HTMLElement | null = null;
+    private passwordForm: HTMLFormElement | null = null;
+    private newPasswordInput: HTMLInputElement | null = null;
+    private confirmPasswordInput: HTMLInputElement | null = null;
+    private passwordToggle: HTMLButtonElement | null = null;
+    private confirmPasswordToggle: HTMLButtonElement | null = null;
+    private strengthFill: HTMLElement | null = null;
+    private strengthText: HTMLElement | null = null;
+    private setupBtn: HTMLButtonElement | null = null;
+    private resendBtn: HTMLButtonElement | null = null;
+    private statusMessage: HTMLElement | null = null;
+    private statusText: HTMLElement | null = null;
+    private email: string = "";
 
-    // Initialize auth
-    await auth.initialize();
-
-    // Parse URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const email = urlParams.get("email");
-    const type = urlParams.get("type") || "signup";
-
-    // DOM Elements
-    const emailDisplay = document.getElementById("email-display");
-    const passwordSetup = document.getElementById("password-setup");
-    const passwordForm = document.getElementById(
-      "password-setup-form"
-    ) as HTMLFormElement;
-    const newPasswordInput = document.getElementById(
-      "new-password"
-    ) as HTMLInputElement;
-    const confirmPasswordInput = document.getElementById(
-      "confirm-password"
-    ) as HTMLInputElement;
-    const passwordToggle = document.getElementById(
-      "password-toggle"
-    ) as HTMLButtonElement;
-    const confirmPasswordToggle = document.getElementById(
-      "confirm-password-toggle"
-    ) as HTMLButtonElement;
-    const strengthFill = document.getElementById(
-      "strength-fill"
-    ) as HTMLElement;
-    const strengthText = document.getElementById(
-      "strength-text"
-    ) as HTMLElement;
-    const setupBtn = document.getElementById(
-      "setup-password-btn"
-    ) as HTMLButtonElement;
-    const resendBtn = document.getElementById(
-      "resend-code"
-    ) as HTMLButtonElement;
-    const statusMessage = document.getElementById(
-      "status-message"
-    ) as HTMLElement;
-    const statusText = document.getElementById("status-text") as HTMLElement;
-
-    // Update email display
-    if (emailDisplay && email) {
-      emailDisplay.textContent = email;
+    constructor() {
+      this.init();
     }
 
-    // Check if email exists - if not, redirect
-    if (!email || email.trim() === "") {
-      setTimeout(() => {
-        window.location.href = "/auth/signup";
-      }, 2000);
-      return;
+    async init() {
+      if (this.initialized) return;
+
+      try {
+        console.log("🔄 VerifyEmail: Initializing...");
+
+        await authManager.initialize();
+
+        this.setupDOM();
+        this.parseURLParams();
+        this.checkEmailVerification();
+        this.setupEventListeners();
+
+        this.initialized = true;
+        console.log("✅ VerifyEmail: Initialized successfully");
+      } catch (error) {
+        console.error("❌ VerifyEmail: Initialization failed:", error);
+        this.showStatus("Failed to initialize email verification", "error");
+      }
     }
 
-    // Check for email verification in URL hash (from magic link)
-    const urlHash = window.location.hash;
-    if (urlHash.includes("access_token")) {
-      console.log("🔄 VerifyEmail: Email verification detected in URL");
+    private setupDOM() {
+      this.emailDisplay = document.getElementById("email-display");
+      this.passwordSetup = document.getElementById("password-setup");
+      this.passwordForm = document.getElementById(
+        "password-setup-form"
+      ) as HTMLFormElement;
+      this.newPasswordInput = document.getElementById(
+        "new-password"
+      ) as HTMLInputElement;
+      this.confirmPasswordInput = document.getElementById(
+        "confirm-password"
+      ) as HTMLInputElement;
+      this.passwordToggle = document.getElementById(
+        "password-toggle"
+      ) as HTMLButtonElement;
+      this.confirmPasswordToggle = document.getElementById(
+        "confirm-password-toggle"
+      ) as HTMLButtonElement;
+      this.strengthFill = document.getElementById(
+        "strength-fill"
+      ) as HTMLElement;
+      this.strengthText = document.getElementById(
+        "strength-text"
+      ) as HTMLElement;
+      this.setupBtn = document.getElementById(
+        "setup-password-btn"
+      ) as HTMLButtonElement;
+      this.resendBtn = document.getElementById(
+        "resend-code"
+      ) as HTMLButtonElement;
+      this.statusMessage = document.getElementById(
+        "status-message"
+      ) as HTMLElement;
+      this.statusText = document.getElementById("status-text") as HTMLElement;
+    }
 
-      // Show password setup form
-      if (passwordSetup) {
-        passwordSetup.style.display = "block";
+    private parseURLParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      this.email = urlParams.get("email") || "";
+      const type = urlParams.get("type") || "signup";
+
+      if (this.emailDisplay && this.email) {
+        this.emailDisplay.textContent = this.email;
       }
 
-      // Clear the hash for security
-      window.history.replaceState(
-        {},
-        document.title,
-        window.location.pathname + window.location.search
-      );
+      if (!this.email || this.email.trim() === "") {
+        setTimeout(() => {
+          window.location.href = "/auth/signup";
+        }, 2000);
+        return;
+      }
     }
 
-    // Password strength checker
-    function checkPasswordStrength(password: string): {
+    private checkEmailVerification() {
+      const urlHash = window.location.hash;
+      if (urlHash.includes("access_token")) {
+        console.log("🔄 VerifyEmail: Email verification detected in URL");
+
+        if (this.passwordSetup) {
+          this.passwordSetup.style.display = "block";
+        }
+
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname + window.location.search
+        );
+      }
+    }
+
+    private setupEventListeners() {
+      this.newPasswordInput?.addEventListener("input", () => {
+        if (!this.newPasswordInput) return;
+        const password = this.newPasswordInput.value;
+        const strength = this.checkPasswordStrength(password);
+
+        if (this.strengthFill) {
+          this.strengthFill.className = `strength-fill ${strength.class}`;
+        }
+
+        if (this.strengthText) {
+          this.strengthText.textContent = strength.text;
+        }
+      });
+
+      this.setupPasswordToggle(this.passwordToggle, this.newPasswordInput);
+      this.setupPasswordToggle(
+        this.confirmPasswordToggle,
+        this.confirmPasswordInput
+      );
+
+      this.passwordForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await this.handlePasswordSetup();
+      });
+
+      this.resendBtn?.addEventListener("click", async () => {
+        await this.resendVerificationEmail();
+      });
+    }
+
+    private setupPasswordToggle(
+      toggleBtn: HTMLButtonElement | null,
+      passwordInput: HTMLInputElement | null
+    ) {
+      if (!toggleBtn || !passwordInput) return;
+
+      toggleBtn.addEventListener("click", () => {
+        const type = passwordInput.type === "password" ? "text" : "password";
+        passwordInput.type = type;
+
+        toggleBtn.innerHTML =
+          type === "text"
+            ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+            : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+      });
+    }
+
+    private checkPasswordStrength(password: string): {
       score: number;
       text: string;
       class: string;
@@ -248,79 +329,44 @@ import AuthLayout from "../../components/auth/AuthLayout.astro";
       };
     }
 
-    // Password strength indicator
-    newPasswordInput?.addEventListener("input", () => {
-      const password = newPasswordInput.value;
-      const strength = checkPasswordStrength(password);
+    private async handlePasswordSetup() {
+      if (!this.newPasswordInput || !this.confirmPasswordInput) return;
 
-      if (strengthFill) {
-        strengthFill.className = `strength-fill ${strength.class}`;
-      }
-
-      if (strengthText) {
-        strengthText.textContent = strength.text;
-      }
-    });
-
-    // Password toggle functionality
-    function setupPasswordToggle(
-      toggleBtn: HTMLButtonElement,
-      passwordInput: HTMLInputElement
-    ) {
-      toggleBtn?.addEventListener("click", () => {
-        const type = passwordInput.type === "password" ? "text" : "password";
-        passwordInput.type = type;
-
-        toggleBtn.innerHTML =
-          type === "text"
-            ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
-            : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-      });
-    }
-
-    setupPasswordToggle(passwordToggle, newPasswordInput);
-    setupPasswordToggle(confirmPasswordToggle, confirmPasswordInput);
-
-    // Password setup form submission
-    passwordForm?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const password = newPasswordInput.value;
-      const confirmPassword = confirmPasswordInput.value;
+      const password = this.newPasswordInput.value;
+      const confirmPassword = this.confirmPasswordInput.value;
 
       if (password !== confirmPassword) {
-        showStatus("Passwords do not match", "error");
+        this.showStatus("Passwords do not match", "error");
         return;
       }
 
-      const strength = checkPasswordStrength(password);
+      const strength = this.checkPasswordStrength(password);
       if (strength.score < 3) {
-        showStatus("Please choose a stronger password", "error");
+        this.showStatus("Please choose a stronger password", "error");
         return;
       }
 
-      const btnText = setupBtn.querySelector(".btn-text") as HTMLElement;
-      const btnSpinner = setupBtn.querySelector(".btn-spinner") as HTMLElement;
+      const btnText = this.setupBtn?.querySelector(".btn-text") as HTMLElement;
+      const btnSpinner = this.setupBtn?.querySelector(
+        ".btn-spinner"
+      ) as HTMLElement;
 
-      setupBtn.disabled = true;
+      if (this.setupBtn) this.setupBtn.disabled = true;
       if (btnText) btnText.style.display = "none";
       if (btnSpinner) btnSpinner.style.display = "block";
 
       try {
         console.log("🔄 VerifyEmail: Setting up password");
 
-        // Update user password
-        const { error } = await auth.supabase.auth.updateUser({
-          password: password,
-        });
+        const result = await authManager.setPassword(password);
 
-        if (error) {
-          throw error;
+        if (!result.success) {
+          throw new Error(result.error);
         }
 
         console.log("✅ VerifyEmail: Password setup successful");
 
-        showStatus(
+        this.showStatus(
           "Account setup complete! Redirecting to your profile...",
           "success"
         );
@@ -330,57 +376,58 @@ import AuthLayout from "../../components/auth/AuthLayout.astro";
         }, 2000);
       } catch (error: any) {
         console.error("❌ VerifyEmail: Password setup error", error);
-        showStatus("Failed to set up password. Please try again.", "error");
+        this.showStatus(
+          "Failed to set up password. Please try again.",
+          "error"
+        );
       } finally {
-        setupBtn.disabled = false;
+        if (this.setupBtn) this.setupBtn.disabled = false;
         if (btnText) btnText.style.display = "block";
         if (btnSpinner) btnSpinner.style.display = "none";
       }
-    });
+    }
 
-    // Resend verification email
-    resendBtn?.addEventListener("click", async () => {
+    private async resendVerificationEmail() {
+      if (!this.email) return;
+
       try {
-        const { error } = await auth.supabase.auth.signInWithOtp({
-          email: email!,
-          options: {
-            shouldCreateUser: true,
-          },
-        });
+        const result = await authManager.signUpWithEmail(this.email, "");
 
-        if (error) throw error;
+        if (!result.success) {
+          throw new Error(result.error);
+        }
 
-        showStatus("New verification email sent!", "success");
-        startResendTimer();
+        this.showStatus("New verification email sent!", "success");
+        this.startResendTimer();
       } catch (error: any) {
-        showStatus(`Failed to resend: ${error.message}`, "error");
+        this.showStatus(`Failed to resend: ${error.message}`, "error");
       }
-    });
+    }
 
-    function showStatus(message: string, type: string) {
-      if (statusMessage && statusText) {
-        statusMessage.className = `status-message ${type}`;
-        statusText.textContent = message;
-        statusMessage.style.display = "block";
+    private showStatus(message: string, type: string) {
+      if (this.statusMessage && this.statusText) {
+        this.statusMessage.className = `status-message ${type}`;
+        this.statusText.textContent = message;
+        this.statusMessage.style.display = "block";
 
         if (type === "error") {
           setTimeout(() => {
-            statusMessage.style.display = "none";
+            if (this.statusMessage) this.statusMessage.style.display = "none";
           }, 5000);
         }
       }
     }
 
-    function startResendTimer() {
-      const resendText = resendBtn?.querySelector(
+    private startResendTimer() {
+      const resendText = this.resendBtn?.querySelector(
         ".resend-text"
       ) as HTMLElement;
-      const resendTimer = resendBtn?.querySelector(
+      const resendTimer = this.resendBtn?.querySelector(
         ".resend-timer"
       ) as HTMLElement;
       const timerSpan = document.getElementById("timer") as HTMLElement;
 
-      if (resendBtn) resendBtn.disabled = true;
+      if (this.resendBtn) this.resendBtn.disabled = true;
       if (resendText) resendText.style.display = "none";
       if (resendTimer) resendTimer.style.display = "block";
 
@@ -391,303 +438,15 @@ import AuthLayout from "../../components/auth/AuthLayout.astro";
 
         if (countdown < 0) {
           clearInterval(interval);
-          if (resendBtn) resendBtn.disabled = false;
+          if (this.resendBtn) this.resendBtn.disabled = false;
           if (resendText) resendText.style.display = "block";
           if (resendTimer) resendTimer.style.display = "none";
         }
       }, 1000);
     }
+  }
 
-    console.log("✅ VerifyEmail: Initialization complete");
+  document.addEventListener("DOMContentLoaded", () => {
+    new VerifyEmailManager();
   });
 </script>
-
-<style>
-  .verification-form {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  .email-info {
-    text-align: center;
-    margin-bottom: 1rem;
-  }
-
-  .email-message {
-    color: #64748b;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    margin: 0;
-  }
-
-  :global(.dark) .email-message {
-    color: rgb(148, 163, 184);
-  }
-
-  .setup-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #243788;
-    margin: 0 0 0.5rem 0;
-    text-align: center;
-  }
-
-  :global(.dark) .setup-title {
-    color: rgb(248, 250, 252);
-  }
-
-  .setup-description {
-    color: #64748b;
-    font-size: 0.875rem;
-    text-align: center;
-    margin: 0 0 1.5rem 0;
-  }
-
-  :global(.dark) .setup-description {
-    color: rgb(148, 163, 184);
-  }
-
-  .password-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .form-input {
-    width: 100%;
-    padding: 0.875rem;
-    border: 2px solid #e2e8f0;
-    background: white;
-    color: #374151;
-    font-size: 0.875rem;
-    transition: border-color 0.2s ease;
-    font-family: inherit;
-    box-sizing: border-box;
-  }
-
-  .form-input:focus {
-    outline: none;
-    border-color: #243788;
-  }
-
-  .password-input {
-    position: relative;
-  }
-
-  .password-toggle {
-    position: absolute;
-    right: 0.875rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: #9ca3af;
-    cursor: pointer;
-    padding: 0.25rem;
-  }
-
-  .password-toggle:hover {
-    color: #243788;
-  }
-
-  .password-strength {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-top: 0.5rem;
-  }
-
-  .strength-bar {
-    flex: 1;
-    height: 4px;
-    background: #e2e8f0;
-    overflow: hidden;
-  }
-
-  .strength-fill {
-    height: 100%;
-    width: 0%;
-    transition: all 0.3s ease;
-    background: #ef4444;
-  }
-
-  .strength-fill.weak {
-    width: 25%;
-    background: #ef4444;
-  }
-
-  .strength-fill.fair {
-    width: 50%;
-    background: #f59e0b;
-  }
-
-  .strength-fill.good {
-    width: 75%;
-    background: #3b82f6;
-  }
-
-  .strength-fill.strong {
-    width: 100%;
-    background: #10b981;
-  }
-
-  .strength-text {
-    font-size: 0.75rem;
-    color: #64748b;
-    min-width: 100px;
-  }
-
-  .auth-btn {
-    width: 100%;
-    padding: 1rem;
-    border: 2px solid #e2e8f0;
-    background: white;
-    color: #374151;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-family: inherit;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .auth-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .auth-btn.primary {
-    background: #243788;
-    color: white;
-    border-color: #243788;
-  }
-
-  .auth-btn.primary:hover:not(:disabled) {
-    background: #1e2d6b;
-    border-color: #1e2d6b;
-  }
-
-  .verification-options {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    font-size: 0.875rem;
-  }
-
-  .option-link {
-    background: none;
-    border: none;
-    color: #243788;
-    cursor: pointer;
-    text-decoration: underline;
-    font-family: inherit;
-    font-size: inherit;
-    font-weight: 600;
-  }
-
-  .option-link:hover {
-    opacity: 0.8;
-  }
-
-  .btn-spinner {
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .status-message {
-    padding: 1rem;
-    font-size: 0.875rem;
-    text-align: center;
-    margin-top: 1rem;
-  }
-
-  .status-message.error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 2px solid #ef4444;
-    color: #dc2626;
-  }
-
-  .status-message.success {
-    background: rgba(34, 197, 94, 0.1);
-    border: 2px solid #22c55e;
-    color: #16a34a;
-  }
-
-  /* Dark mode support */
-  :global(.dark) .form-input {
-    background: rgb(17, 24, 39);
-    border-color: rgb(51, 65, 85);
-    color: rgb(248, 250, 252);
-  }
-
-  :global(.dark) .form-input:focus {
-    border-color: #b4bce1;
-  }
-
-  :global(.dark) .password-toggle:hover {
-    color: #b4bce1;
-  }
-
-  :global(.dark) .strength-bar {
-    background: rgb(51, 65, 85);
-  }
-
-  :global(.dark) .strength-text {
-    color: rgb(148, 163, 184);
-  }
-
-  :global(.dark) .auth-btn.primary {
-    background: #b4bce1;
-    color: rgb(15, 23, 42);
-    border-color: #b4bce1;
-  }
-
-  :global(.dark) .auth-btn.primary:hover:not(:disabled) {
-    background: #9ca8d4;
-    border-color: #9ca8d4;
-  }
-
-  :global(.dark) .option-link {
-    color: #b4bce1;
-  }
-
-  :global(.dark) .status-message.error {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: #ef4444;
-    color: #fca5a5;
-  }
-
-  :global(.dark) .status-message.success {
-    background: rgba(34, 197, 94, 0.2);
-    border-color: #22c55e;
-    color: #86efac;
-  }
-
-  @media (max-width: 480px) {
-    .verification-options {
-      flex-direction: column;
-      gap: 0.75rem;
-      text-align: center;
-    }
-  }
-</style>

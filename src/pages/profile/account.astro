@@ -1340,674 +1340,729 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 </style>
 
 <script>
-  import { supabase, withRetry } from "../../lib/supabase.js";
-  import { authStore } from "../../lib/auth-store.js";
-  import { auth } from "../../lib/auth.js";
+  import { authManager } from "../../lib/auth.js";
+  import { supabase } from "../../lib/supabase.js";
 
-  let currentUser: any = null;
-  let currentProfile: any = null;
-  let selectedPreset: number = 1;
-  let isNewUser: boolean = false;
-  let hasPassword: boolean = false;
-  let isFirstTimeUser: boolean = false;
+  class AccountManager {
+    private authManager = authManager;
+    private currentUser: any = null;
+    private currentProfile: any = null;
+    private selectedPreset: number = 1;
+    private isNewUser: boolean = false;
+    private hasPassword: boolean = false;
+    private isFirstTimeUser: boolean = false;
+    private initialized = false;
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    await loadAccountData();
-    setupEventListeners();
-  });
+    constructor() {
+      this.init();
+    }
 
-  async function loadAccountData() {
-    try {
-      // Get instant data from cache
-      if (authStore.hasInstantData()) {
-        console.log("⚡ Account: Using instant cached data");
+    async init() {
+      if (this.initialized) return;
 
-        currentUser = authStore.getUser();
-        currentProfile = authStore.getProfile();
+      try {
+        console.log("🚀 Account: Starting initialization...");
+        await this.loadAccountData();
+        this.setupEventListeners();
+        this.initialized = true;
+        console.log("✅ Account: Initialization complete");
+      } catch (error) {
+        console.error("❌ Account: Initialization failed:", error);
+        this.showToast("Failed to load account data", "error");
+      }
+    }
 
-        if (!currentUser) {
+    async loadAccountData() {
+      try {
+        // Initialize auth manager
+        await this.authManager.initialize();
+
+        // Check authentication
+        if (!(await this.authManager.isAuthenticated())) {
+          console.log("❌ Not authenticated, redirecting...");
           window.location.href = "/auth/signin";
           return;
         }
 
-        // Update UI immediately with cached data
-        if (currentProfile) {
-          selectedPreset = currentProfile.avatar_preset_id || 1;
-          updateUI();
+        // Get user data from singleton
+        this.currentUser = this.authManager.getUser();
+        this.currentProfile = this.authManager.getProfile();
+
+        if (!this.currentUser) {
+          window.location.href = "/auth/signin";
+          return;
         }
 
-        // Load additional data in background
-        loadBackgroundData();
-        return;
+        console.log("✅ Account: User authenticated:", this.currentUser.email);
+
+        // Set initial values
+        if (this.currentProfile) {
+          this.selectedPreset = this.currentProfile.avatar_preset_id || 1;
+        }
+
+        // Analyze user status
+        await this.analyzeUserStatus();
+
+        // Update UI
+        this.updateUI();
+      } catch (error) {
+        console.error("❌ Account: Error loading data:", error);
+        throw error;
       }
-
-      // No instant data, need to initialize
-      console.log("🔄 Account: Initializing auth...");
-      await authStore.initialize();
-
-      currentUser = authStore.getUser();
-      currentProfile = authStore.getProfile();
-
-      if (!currentUser) {
-        window.location.href = "/auth/signin";
-        return;
-      }
-
-      if (currentProfile) {
-        selectedPreset = currentProfile.avatar_preset_id || 1;
-        updateUI();
-      }
-
-      loadBackgroundData();
-    } catch (error) {
-      console.error("Error loading account data:", error);
-      showToast("Failed to load account data", "error");
     }
-  }
 
-  async function loadBackgroundData() {
-    try {
-      // Verify and refresh profile in background
-      await auth.initialize();
-      const freshProfile = auth.getProfile();
-
-      if (freshProfile) {
-        currentProfile = freshProfile;
-        authStore.updateProfile(freshProfile);
-        selectedPreset = freshProfile.avatar_preset_id || 1;
-        updateUI();
-      }
-
-      // Check user status
-      const userCreatedAt = new Date(currentUser.created_at).getTime();
+    private async analyzeUserStatus() {
+      // Check if user is new (created within last 5 minutes)
+      const userCreatedAt = new Date(this.currentUser.created_at).getTime();
       const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-      isFirstTimeUser = userCreatedAt > fiveMinutesAgo;
+      this.isFirstTimeUser = userCreatedAt > fiveMinutesAgo;
 
+      // Check if profile is incomplete
       const hasIncompleteProfile =
-        !currentProfile?.display_name ||
-        currentProfile.display_name === currentUser.email?.split("@")[0] ||
-        currentProfile.display_name === "TBMember";
+        !this.currentProfile?.display_name ||
+        this.currentProfile.display_name ===
+          this.currentUser.email?.split("@")[0] ||
+        this.currentProfile.display_name === "TBMember";
 
-      hasPassword =
-        currentUser.user_metadata?.provider !== "google" && !isFirstTimeUser;
-      isNewUser = isFirstTimeUser && (hasIncompleteProfile || !hasPassword);
+      // Check if user has password (not OAuth-only)
+      this.hasPassword =
+        this.currentUser.user_metadata?.provider !== "google" &&
+        !this.isFirstTimeUser;
 
-      updateUI();
-    } catch (error) {
-      console.error("Error loading background data:", error);
-    }
-  }
+      // Determine if user needs setup
+      this.isNewUser =
+        this.isFirstTimeUser && (hasIncompleteProfile || !this.hasPassword);
 
-  function updateUI() {
-    // Update welcome banner - only show for truly new users
-    const welcomeBanner = document.getElementById("welcome-banner");
-    const passwordRequired = document.getElementById("password-required");
-    const passwordStatus = document.getElementById("password-status");
-    const passwordSetupForm = document.getElementById("password-setup-form");
-
-    if (isFirstTimeUser && !hasPassword) {
-      welcomeBanner?.style.setProperty("display", "block");
-      passwordRequired?.style.setProperty("display", "inline-block");
-      passwordSetupForm?.style.setProperty("display", "flex");
-      passwordStatus?.style.setProperty("display", "none");
-    } else if (!hasPassword) {
-      welcomeBanner?.style.setProperty("display", "none");
-      passwordRequired?.style.setProperty("display", "inline-block");
-      passwordSetupForm?.style.setProperty("display", "flex");
-      passwordStatus?.style.setProperty("display", "none");
-    } else {
-      welcomeBanner?.style.setProperty("display", "none");
-      passwordRequired?.style.setProperty("display", "none");
-      passwordSetupForm?.style.setProperty("display", "none");
-      passwordStatus?.style.setProperty("display", "flex");
+      console.log("👤 Account: User status analysis:", {
+        isFirstTimeUser: this.isFirstTimeUser,
+        hasIncompleteProfile,
+        hasPassword: this.hasPassword,
+        isNewUser: this.isNewUser,
+      });
     }
 
-    // Update display name
-    const displayNameValue = document.getElementById("display-name-value");
-    const displayNameInput = document.getElementById(
-      "display-name-input"
-    ) as HTMLInputElement;
-    const displayName = authStore.getDisplayName();
+    private updateUI() {
+      // Update welcome banner - only show for truly new users
+      const welcomeBanner = document.getElementById("welcome-banner");
+      const passwordRequired = document.getElementById("password-required");
+      const passwordStatus = document.getElementById("password-status");
+      const passwordSetupForm = document.getElementById("password-setup-form");
 
-    if (displayNameValue) displayNameValue.textContent = displayName;
-    if (displayNameInput) displayNameInput.value = displayName;
-
-    // Update email
-    const currentEmail = document.getElementById("current-email");
-    const emailBadge = document.getElementById("email-badge");
-
-    if (currentEmail) currentEmail.textContent = currentUser.email;
-    if (emailBadge && currentUser.email_confirmed_at) {
-      emailBadge.className = "email-badge verified";
-      emailBadge.innerHTML = '<i class="fas fa-check-circle"></i> Verified';
-    } else if (emailBadge) {
-      emailBadge.className = "email-badge unverified";
-      emailBadge.innerHTML =
-        '<i class="fas fa-exclamation-triangle"></i> Unverified';
-    }
-
-    // Update avatar selection
-    updateAvatarSelection();
-  }
-
-  function updateAvatarSelection() {
-    document.querySelectorAll(".avatar-option").forEach((option) => {
-      option.classList.remove("selected");
-    });
-
-    const selectedOption = document.querySelector(
-      `[data-preset="${selectedPreset}"]`
-    );
-    selectedOption?.classList.add("selected");
-  }
-
-  function setupEventListeners() {
-    setupDisplayNameEditing();
-    setupAvatarSelection();
-    setupPasswordFunctionality();
-    setupFileUpload();
-  }
-
-  function setupDisplayNameEditing() {
-    const editBtn = document.getElementById("edit-display-name");
-    const saveBtn = document.getElementById("save-display-name");
-    const cancelBtn = document.getElementById("cancel-display-name");
-    const displayDiv = document.getElementById("display-name-display");
-    const editDiv = document.getElementById("display-name-edit");
-    const input = document.getElementById(
-      "display-name-input"
-    ) as HTMLInputElement;
-
-    editBtn?.addEventListener("click", () => {
-      displayDiv?.style.setProperty("display", "none");
-      editDiv?.style.setProperty("display", "flex");
-      input?.focus();
-    });
-
-    cancelBtn?.addEventListener("click", () => {
-      displayDiv?.style.setProperty("display", "flex");
-      editDiv?.style.setProperty("display", "none");
-      if (input && currentProfile) {
-        input.value = currentProfile.display_name || "";
-      }
-    });
-
-    saveBtn?.addEventListener("click", async () => {
-      const newName = input?.value.trim();
-      if (!newName) {
-        showToast("Display name cannot be empty", "error");
-        return;
+      if (this.isFirstTimeUser && !this.hasPassword) {
+        welcomeBanner?.style.setProperty("display", "block");
+        passwordRequired?.style.setProperty("display", "inline-block");
+        passwordSetupForm?.style.setProperty("display", "flex");
+        passwordStatus?.style.setProperty("display", "none");
+      } else if (!this.hasPassword) {
+        welcomeBanner?.style.setProperty("display", "none");
+        passwordRequired?.style.setProperty("display", "inline-block");
+        passwordSetupForm?.style.setProperty("display", "flex");
+        passwordStatus?.style.setProperty("display", "none");
+      } else {
+        welcomeBanner?.style.setProperty("display", "none");
+        passwordRequired?.style.setProperty("display", "none");
+        passwordSetupForm?.style.setProperty("display", "none");
+        passwordStatus?.style.setProperty("display", "flex");
       }
 
-      try {
-        (saveBtn as HTMLButtonElement).disabled = true;
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      // Update display name using singleton
+      const displayNameValue = document.getElementById("display-name-value");
+      const displayNameInput = document.getElementById(
+        "display-name-input"
+      ) as HTMLInputElement;
+      const displayName = this.authManager.getDisplayName();
 
-        const { error } = await supabase
-          .from("profiles")
-          .update({
-            display_name: newName,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", currentUser.id);
+      if (displayNameValue) displayNameValue.textContent = displayName;
+      if (displayNameInput) displayNameInput.value = displayName;
 
-        if (error) {
-          console.error("Database error:", error);
-          throw error;
-        }
+      // Update email
+      const currentEmail = document.getElementById("current-email");
+      const emailBadge = document.getElementById("email-badge");
 
-        const displayNameValue = document.getElementById("display-name-value");
-        if (displayNameValue) displayNameValue.textContent = newName;
+      if (currentEmail) currentEmail.textContent = this.currentUser.email;
+      if (emailBadge && this.currentUser.email_confirmed_at) {
+        emailBadge.className = "email-badge verified";
+        emailBadge.innerHTML = '<i class="fas fa-check-circle"></i> Verified';
+      } else if (emailBadge) {
+        emailBadge.className = "email-badge unverified";
+        emailBadge.innerHTML =
+          '<i class="fas fa-exclamation-triangle"></i> Unverified';
+      }
 
+      // Update avatar selection
+      this.updateAvatarSelection();
+    }
+
+    private updateAvatarSelection() {
+      document.querySelectorAll(".avatar-option").forEach((option) => {
+        option.classList.remove("selected");
+      });
+
+      const selectedOption = document.querySelector(
+        `[data-preset="${this.selectedPreset}"]`
+      );
+      selectedOption?.classList.add("selected");
+    }
+
+    private setupEventListeners() {
+      this.setupDisplayNameEditing();
+      this.setupAvatarSelection();
+      this.setupPasswordFunctionality();
+      this.setupFileUpload();
+    }
+
+    private setupDisplayNameEditing() {
+      const editBtn = document.getElementById("edit-display-name");
+      const saveBtn = document.getElementById("save-display-name");
+      const cancelBtn = document.getElementById("cancel-display-name");
+      const displayDiv = document.getElementById("display-name-display");
+      const editDiv = document.getElementById("display-name-edit");
+      const input = document.getElementById(
+        "display-name-input"
+      ) as HTMLInputElement;
+
+      editBtn?.addEventListener("click", () => {
+        displayDiv?.style.setProperty("display", "none");
+        editDiv?.style.setProperty("display", "flex");
+        input?.focus();
+      });
+
+      cancelBtn?.addEventListener("click", () => {
         displayDiv?.style.setProperty("display", "flex");
         editDiv?.style.setProperty("display", "none");
+        if (input && this.currentProfile) {
+          input.value = this.currentProfile.display_name || "";
+        }
+      });
 
-        if (currentProfile) {
-          currentProfile.display_name = newName;
-          authStore.updateProfile(currentProfile);
+      saveBtn?.addEventListener("click", async () => {
+        const newName = input?.value.trim();
+        if (!newName) {
+          this.showToast("Display name cannot be empty", "error");
+          return;
         }
 
-        showToast("Display name updated successfully!");
-      } catch (error: any) {
-        console.error("Error updating display name:", error);
-        showToast(`Failed to update display name: ${error.message}`, "error");
-      } finally {
-        (saveBtn as HTMLButtonElement).disabled = false;
-        saveBtn.innerHTML = '<i class="fas fa-check"></i>';
-      }
-    });
-  }
-
-  function setupAvatarSelection() {
-    document.querySelectorAll(".avatar-option").forEach((option) => {
-      option.addEventListener("click", async (e) => {
-        const presetId = parseInt(
-          (e.currentTarget as HTMLElement).getAttribute("data-preset") || "1"
-        );
-        selectedPreset = presetId;
-        updateAvatarSelection();
-
         try {
-          const { error } = await supabase
-            .from("profiles")
-            .update({
+          (saveBtn as HTMLButtonElement).disabled = true;
+          saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+          // Update using singleton auth manager
+          const result = await this.authManager.updateProfile({
+            display_name: newName,
+            updated_at: new Date().toISOString(),
+          });
+
+          if (!result.success) {
+            throw new Error(result.error || "Failed to update profile");
+          }
+
+          // Update local data
+          if (this.currentProfile) {
+            this.currentProfile.display_name = newName;
+          }
+
+          // Update UI
+          const displayNameValue =
+            document.getElementById("display-name-value");
+          if (displayNameValue) displayNameValue.textContent = newName;
+
+          displayDiv?.style.setProperty("display", "flex");
+          editDiv?.style.setProperty("display", "none");
+
+          // Dispatch profile update event
+          window.dispatchEvent(
+            new CustomEvent("profile-updated", {
+              detail: { user: this.currentUser, profile: this.currentProfile },
+            })
+          );
+
+          this.showToast("Display name updated successfully!");
+        } catch (error: any) {
+          console.error("❌ Error updating display name:", error);
+          this.showToast(
+            `Failed to update display name: ${error.message}`,
+            "error"
+          );
+        } finally {
+          (saveBtn as HTMLButtonElement).disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-check"></i>';
+        }
+      });
+    }
+
+    private setupAvatarSelection() {
+      document.querySelectorAll(".avatar-option").forEach((option) => {
+        option.addEventListener("click", async (e) => {
+          const presetId = parseInt(
+            (e.currentTarget as HTMLElement).getAttribute("data-preset") || "1"
+          );
+          this.selectedPreset = presetId;
+          this.updateAvatarSelection();
+
+          try {
+            // Update using singleton auth manager
+            const result = await this.authManager.updateProfile({
               avatar_preset_id: presetId,
               avatar_type: "preset",
               updated_at: new Date().toISOString(),
-            })
-            .eq("id", currentUser.id);
+            });
 
-          if (error) throw error;
+            if (!result.success) {
+              throw new Error(result.error || "Failed to update avatar");
+            }
 
-          if (currentProfile) {
-            currentProfile.avatar_preset_id = presetId;
-            currentProfile.avatar_type = "preset";
-            authStore.updateProfile(currentProfile);
+            // Update local data
+            if (this.currentProfile) {
+              this.currentProfile.avatar_preset_id = presetId;
+              this.currentProfile.avatar_type = "preset";
+            }
+
+            // Dispatch profile update event
+            window.dispatchEvent(
+              new CustomEvent("profile-updated", {
+                detail: {
+                  user: this.currentUser,
+                  profile: this.currentProfile,
+                },
+              })
+            );
+
+            this.showToast("Avatar updated successfully!");
+          } catch (error: any) {
+            console.error("❌ Error updating avatar:", error);
+            this.showToast("Failed to update avatar", "error");
           }
-
-          showToast("Avatar updated successfully!");
-        } catch (error: any) {
-          console.error("Error updating avatar:", error);
-          showToast("Failed to update avatar", "error");
-        }
+        });
       });
-    });
-  }
+    }
 
-  function setupPasswordFunctionality() {
-    setupPasswordToggle("new-password", "new-password-toggle");
-    setupPasswordToggle("confirm-password", "confirm-password-toggle");
-    setupPasswordToggle("current-password", "current-password-toggle");
-    setupPasswordToggle("change-new-password", "change-new-password-toggle");
-    setupPasswordToggle(
-      "change-confirm-password",
-      "change-confirm-password-toggle"
-    );
-
-    const newPasswordInput = document.getElementById(
-      "new-password"
-    ) as HTMLInputElement;
-    newPasswordInput?.addEventListener("input", (e) => {
-      const password = (e.target as HTMLInputElement).value;
-      updatePasswordRequirements(password, "");
-    });
-
-    newPasswordInput?.addEventListener("focus", () => {
-      const requirementsContainer = document.getElementById(
-        "password-requirements"
+    private setupPasswordFunctionality() {
+      this.setupPasswordToggle("new-password", "new-password-toggle");
+      this.setupPasswordToggle("confirm-password", "confirm-password-toggle");
+      this.setupPasswordToggle("current-password", "current-password-toggle");
+      this.setupPasswordToggle(
+        "change-new-password",
+        "change-new-password-toggle"
       );
-      requirementsContainer?.style.setProperty("display", "block");
-    });
-
-    const changeNewPasswordInput = document.getElementById(
-      "change-new-password"
-    ) as HTMLInputElement;
-    changeNewPasswordInput?.addEventListener("input", (e) => {
-      const password = (e.target as HTMLInputElement).value;
-      updatePasswordRequirements(password, "change-");
-    });
-
-    changeNewPasswordInput?.addEventListener("focus", () => {
-      const requirementsContainer = document.getElementById(
-        "change-password-requirements"
+      this.setupPasswordToggle(
+        "change-confirm-password",
+        "change-confirm-password-toggle"
       );
-      requirementsContainer?.style.setProperty("display", "block");
-    });
 
-    const changePasswordBtn = document.getElementById("change-password-btn");
-    const changePasswordForm = document.getElementById("change-password-form");
-    const cancelPasswordChange = document.getElementById(
-      "cancel-password-change"
-    );
-
-    changePasswordBtn?.addEventListener("click", () => {
-      changePasswordForm?.style.setProperty("display", "flex");
-    });
-
-    cancelPasswordChange?.addEventListener("click", () => {
-      changePasswordForm?.style.setProperty("display", "none");
-      clearPasswordForm("change");
-    });
-
-    const setPasswordBtn = document.getElementById("set-password-btn");
-    const updatePasswordBtn = document.getElementById("update-password-btn");
-
-    setPasswordBtn?.addEventListener("click", handlePasswordSetup);
-    updatePasswordBtn?.addEventListener("click", handlePasswordUpdate);
-  }
-
-  function setupPasswordToggle(inputId: string, toggleId: string) {
-    const input = document.getElementById(inputId) as HTMLInputElement;
-    const toggle = document.getElementById(toggleId);
-
-    toggle?.addEventListener("click", () => {
-      if (input.type === "password") {
-        input.type = "text";
-        toggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
-      } else {
-        input.type = "password";
-        toggle.innerHTML = '<i class="fas fa-eye"></i>';
-      }
-    });
-  }
-
-  function updatePasswordRequirements(password: string, prefix: string) {
-    const requirementsContainer = document.getElementById(
-      `${prefix}password-requirements`
-    );
-
-    if (!password) {
-      requirementsContainer?.style.setProperty("display", "none");
-      return;
-    }
-
-    requirementsContainer?.style.setProperty("display", "block");
-
-    const checks = {
-      length: password.length >= 8,
-      lowercase: /[a-z]/.test(password),
-      uppercase: /[A-Z]/.test(password),
-      number: /[0-9]/.test(password),
-      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
-    };
-
-    Object.entries(checks).forEach(([key, isValid]) => {
-      const element = document.getElementById(`${prefix}req-${key}`);
-      if (element) {
-        element.className = isValid ? "valid" : "";
-      }
-    });
-  }
-
-  async function handlePasswordSetup() {
-    const newPassword = (
-      document.getElementById("new-password") as HTMLInputElement
-    )?.value;
-    const confirmPassword = (
-      document.getElementById("confirm-password") as HTMLInputElement
-    )?.value;
-
-    if (!newPassword || !confirmPassword) {
-      showToast("Please fill in all password fields", "error");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      showToast("Passwords do not match", "error");
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      showToast("Password must be at least 8 characters long", "error");
-      return;
-    }
-
-    try {
-      const setPasswordBtn = document.getElementById(
-        "set-password-btn"
-      ) as HTMLButtonElement;
-      setPasswordBtn.disabled = true;
-      setPasswordBtn.innerHTML =
-        '<i class="fas fa-spinner fa-spin"></i> Setting Password...';
-
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
+      const newPasswordInput = document.getElementById(
+        "new-password"
+      ) as HTMLInputElement;
+      newPasswordInput?.addEventListener("input", (e) => {
+        const password = (e.target as HTMLInputElement).value;
+        this.updatePasswordRequirements(password, "");
       });
-      if (error) throw error;
 
-      showToast("Password set successfully!");
-      clearPasswordForm("");
-
-      hasPassword = true;
-      isNewUser = false;
-      isFirstTimeUser = false;
-      updateUI();
-    } catch (error: any) {
-      showToast(error.message || "Failed to set password", "error");
-    } finally {
-      const setPasswordBtn = document.getElementById(
-        "set-password-btn"
-      ) as HTMLButtonElement;
-      setPasswordBtn.disabled = false;
-      setPasswordBtn.innerHTML = '<i class="fas fa-lock"></i> Set Password';
-    }
-  }
-
-  async function handlePasswordUpdate() {
-    const currentPassword = (
-      document.getElementById("current-password") as HTMLInputElement
-    )?.value;
-    const newPassword = (
-      document.getElementById("change-new-password") as HTMLInputElement
-    )?.value;
-    const confirmPassword = (
-      document.getElementById("change-confirm-password") as HTMLInputElement
-    )?.value;
-
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      showToast("Please fill in all password fields", "error");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      showToast("Passwords do not match", "error");
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      showToast("Password must be at least 8 characters long", "error");
-      return;
-    }
-
-    try {
-      const updatePasswordBtn = document.getElementById(
-        "update-password-btn"
-      ) as HTMLButtonElement;
-      updatePasswordBtn.disabled = true;
-      updatePasswordBtn.innerHTML =
-        '<i class="fas fa-spinner fa-spin"></i> Updating...';
-
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
+      newPasswordInput?.addEventListener("focus", () => {
+        const requirementsContainer = document.getElementById(
+          "password-requirements"
+        );
+        requirementsContainer?.style.setProperty("display", "block");
       });
-      if (error) throw error;
 
-      showToast("Password updated successfully!");
+      const changeNewPasswordInput = document.getElementById(
+        "change-new-password"
+      ) as HTMLInputElement;
+      changeNewPasswordInput?.addEventListener("input", (e) => {
+        const password = (e.target as HTMLInputElement).value;
+        this.updatePasswordRequirements(password, "change-");
+      });
 
+      changeNewPasswordInput?.addEventListener("focus", () => {
+        const requirementsContainer = document.getElementById(
+          "change-password-requirements"
+        );
+        requirementsContainer?.style.setProperty("display", "block");
+      });
+
+      const changePasswordBtn = document.getElementById("change-password-btn");
       const changePasswordForm = document.getElementById(
         "change-password-form"
       );
-      changePasswordForm?.style.setProperty("display", "none");
-      clearPasswordForm("change");
-    } catch (error: any) {
-      showToast(error.message || "Failed to update password", "error");
-    } finally {
-      const updatePasswordBtn = document.getElementById(
-        "update-password-btn"
-      ) as HTMLButtonElement;
-      updatePasswordBtn.disabled = false;
-      updatePasswordBtn.innerHTML =
-        '<i class="fas fa-key"></i> Update Password';
+      const cancelPasswordChange = document.getElementById(
+        "cancel-password-change"
+      );
+
+      changePasswordBtn?.addEventListener("click", () => {
+        changePasswordForm?.style.setProperty("display", "flex");
+      });
+
+      cancelPasswordChange?.addEventListener("click", () => {
+        changePasswordForm?.style.setProperty("display", "none");
+        this.clearPasswordForm("change");
+      });
+
+      const setPasswordBtn = document.getElementById("set-password-btn");
+      const updatePasswordBtn = document.getElementById("update-password-btn");
+
+      setPasswordBtn?.addEventListener("click", () =>
+        this.handlePasswordSetup()
+      );
+      updatePasswordBtn?.addEventListener("click", () =>
+        this.handlePasswordUpdate()
+      );
     }
-  }
 
-  function clearPasswordForm(prefix: string) {
-    const inputs = [
-      `${prefix}new-password`,
-      `${prefix}confirm-password`,
-      ...(prefix === "change"
-        ? ["current-password", "change-new-password", "change-confirm-password"]
-        : []),
-    ];
+    private setupPasswordToggle(inputId: string, toggleId: string) {
+      const input = document.getElementById(inputId) as HTMLInputElement;
+      const toggle = document.getElementById(toggleId);
 
-    inputs.forEach((id) => {
-      const input = document.getElementById(id) as HTMLInputElement;
-      if (input) input.value = "";
-    });
-
-    const requirementsContainer = document.getElementById(
-      `${prefix}password-requirements`
-    );
-    requirementsContainer?.style.setProperty("display", "none");
-  }
-
-  async function compressImage(file: File): Promise<File> {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
-
-      img.onload = () => {
-        const maxSize = 512;
-        let { width, height } = img;
-
-        if (width > height) {
-          if (width > maxSize) {
-            height = (height * maxSize) / width;
-            width = maxSize;
-          }
+      toggle?.addEventListener("click", () => {
+        if (input.type === "password") {
+          input.type = "text";
+          toggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
         } else {
-          if (height > maxSize) {
-            width = (width * maxSize) / height;
-            height = maxSize;
-          }
+          input.type = "password";
+          toggle.innerHTML = '<i class="fas fa-eye"></i>';
         }
+      });
+    }
 
-        canvas.width = width;
-        canvas.height = height;
+    private updatePasswordRequirements(password: string, prefix: string) {
+      const requirementsContainer = document.getElementById(
+        `${prefix}password-requirements`
+      );
 
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              const compressedFile = new File([blob], file.name, {
-                type: file.type,
-                lastModified: Date.now(),
-              });
-              resolve(compressedFile);
-            } else {
-              resolve(file);
-            }
-          },
-          file.type,
-          0.8
-        );
-      };
-
-      img.src = URL.createObjectURL(file);
-    });
-  }
-
-  function setupFileUpload() {
-    const uploadBtn = document.getElementById("upload-avatar-btn");
-    const fileInput = document.getElementById(
-      "avatar-file-input"
-    ) as HTMLInputElement;
-
-    uploadBtn?.addEventListener("click", () => {
-      fileInput.click();
-    });
-
-    fileInput?.addEventListener("change", async (event) => {
-      const file = (event.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/gif",
-      ];
-      if (!allowedTypes.includes(file.type)) {
-        showToast("Please select a JPEG, PNG, WebP, or GIF image", "error");
+      if (!password) {
+        requirementsContainer?.style.setProperty("display", "none");
         return;
       }
 
-      const maxSize = 2 * 1024 * 1024;
-      if (file.size > maxSize) {
-        showToast("Image must be smaller than 2MB", "error");
+      requirementsContainer?.style.setProperty("display", "block");
+
+      const checks = {
+        length: password.length >= 8,
+        lowercase: /[a-z]/.test(password),
+        uppercase: /[A-Z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+      };
+
+      Object.entries(checks).forEach(([key, isValid]) => {
+        const element = document.getElementById(`${prefix}req-${key}`);
+        if (element) {
+          element.className = isValid ? "valid" : "";
+        }
+      });
+    }
+
+    private async handlePasswordSetup() {
+      const newPassword = (
+        document.getElementById("new-password") as HTMLInputElement
+      )?.value;
+      const confirmPassword = (
+        document.getElementById("confirm-password") as HTMLInputElement
+      )?.value;
+
+      if (!newPassword || !confirmPassword) {
+        this.showToast("Please fill in all password fields", "error");
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        this.showToast("Passwords do not match", "error");
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        this.showToast("Password must be at least 8 characters long", "error");
         return;
       }
 
       try {
-        uploadBtn!.innerHTML =
-          '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        const setPasswordBtn = document.getElementById(
+          "set-password-btn"
+        ) as HTMLButtonElement;
+        setPasswordBtn.disabled = true;
+        setPasswordBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i> Setting Password...';
 
-        const compressedFile = await compressImage(file);
+        // Use singleton auth manager for password update
+        const result = await this.authManager.updatePassword(newPassword);
 
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${currentUser.id}/avatar-${Date.now()}.${fileExt}`;
+        if (!result.success) {
+          throw new Error(result.error || "Failed to set password");
+        }
 
-        const { data, error } = await supabase.storage
-          .from("avatars")
-          .upload(fileName, compressedFile, {
-            cacheControl: "3600",
-            upsert: true,
-          });
+        this.showToast("Password set successfully!");
+        this.clearPasswordForm("");
 
-        if (error) throw error;
+        this.hasPassword = true;
+        this.isNewUser = false;
+        this.isFirstTimeUser = false;
+        this.updateUI();
+      } catch (error: any) {
+        this.showToast(error.message || "Failed to set password", "error");
+      } finally {
+        const setPasswordBtn = document.getElementById(
+          "set-password-btn"
+        ) as HTMLButtonElement;
+        setPasswordBtn.disabled = false;
+        setPasswordBtn.innerHTML = '<i class="fas fa-lock"></i> Set Password';
+      }
+    }
 
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("avatars").getPublicUrl(fileName);
+    private async handlePasswordUpdate() {
+      const currentPassword = (
+        document.getElementById("current-password") as HTMLInputElement
+      )?.value;
+      const newPassword = (
+        document.getElementById("change-new-password") as HTMLInputElement
+      )?.value;
+      const confirmPassword = (
+        document.getElementById("change-confirm-password") as HTMLInputElement
+      )?.value;
 
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        this.showToast("Please fill in all password fields", "error");
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        this.showToast("Passwords do not match", "error");
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        this.showToast("Password must be at least 8 characters long", "error");
+        return;
+      }
+
+      try {
+        const updatePasswordBtn = document.getElementById(
+          "update-password-btn"
+        ) as HTMLButtonElement;
+        updatePasswordBtn.disabled = true;
+        updatePasswordBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+        // Use singleton auth manager for password update
+        const result = await this.authManager.updatePassword(newPassword);
+
+        if (!result.success) {
+          throw new Error(result.error || "Failed to update password");
+        }
+
+        this.showToast("Password updated successfully!");
+
+        const changePasswordForm = document.getElementById(
+          "change-password-form"
+        );
+        changePasswordForm?.style.setProperty("display", "none");
+        this.clearPasswordForm("change");
+      } catch (error: any) {
+        this.showToast(error.message || "Failed to update password", "error");
+      } finally {
+        const updatePasswordBtn = document.getElementById(
+          "update-password-btn"
+        ) as HTMLButtonElement;
+        updatePasswordBtn.disabled = false;
+        updatePasswordBtn.innerHTML =
+          '<i class="fas fa-key"></i> Update Password';
+      }
+    }
+
+    private clearPasswordForm(prefix: string) {
+      const inputs = [
+        `${prefix}new-password`,
+        `${prefix}confirm-password`,
+        ...(prefix === "change"
+          ? [
+              "current-password",
+              "change-new-password",
+              "change-confirm-password",
+            ]
+          : []),
+      ];
+
+      inputs.forEach((id) => {
+        const input = document.getElementById(id) as HTMLInputElement;
+        if (input) input.value = "";
+      });
+
+      const requirementsContainer = document.getElementById(
+        `${prefix}password-requirements`
+      );
+      requirementsContainer?.style.setProperty("display", "none");
+    }
+
+    private async compressImage(file: File): Promise<File> {
+      return new Promise((resolve) => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+
+        img.onload = () => {
+          const maxSize = 512;
+          let { width, height } = img;
+
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: file.type,
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                resolve(file);
+              }
+            },
+            file.type,
+            0.8
+          );
+        };
+
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    private setupFileUpload() {
+      const uploadBtn = document.getElementById("upload-avatar-btn");
+      const fileInput = document.getElementById(
+        "avatar-file-input"
+      ) as HTMLInputElement;
+
+      uploadBtn?.addEventListener("click", () => {
+        fileInput.click();
+      });
+
+      fileInput?.addEventListener("change", async (event) => {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+
+        const allowedTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/gif",
+        ];
+        if (!allowedTypes.includes(file.type)) {
+          this.showToast(
+            "Please select a JPEG, PNG, WebP, or GIF image",
+            "error"
+          );
+          return;
+        }
+
+        const maxSize = 2 * 1024 * 1024;
+        if (file.size > maxSize) {
+          this.showToast("Image must be smaller than 2MB", "error");
+          return;
+        }
+
+        try {
+          uploadBtn!.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+          const compressedFile = await this.compressImage(file);
+
+          const fileExt = file.name.split(".").pop();
+          const fileName = `${this.currentUser.id}/avatar-${Date.now()}.${fileExt}`;
+
+          const { data, error } = await supabase.storage
+            .from("avatars")
+            .upload(fileName, compressedFile, {
+              cacheControl: "3600",
+              upsert: true,
+            });
+
+          if (error) throw error;
+
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from("avatars").getPublicUrl(fileName);
+
+          // Update using singleton auth manager
+          const result = await this.authManager.updateProfile({
             avatar_type: "uploaded",
             avatar_url: publicUrl,
             updated_at: new Date().toISOString(),
-          })
-          .eq("id", currentUser.id);
+          });
 
-        if (updateError) throw updateError;
+          if (!result.success) {
+            throw new Error(result.error || "Failed to update profile");
+          }
 
-        showToast("Avatar uploaded successfully!");
+          this.showToast("Avatar uploaded successfully!");
 
-        document.querySelectorAll(".avatar-option").forEach((option) => {
-          option.classList.remove("selected");
-        });
+          document.querySelectorAll(".avatar-option").forEach((option) => {
+            option.classList.remove("selected");
+          });
 
-        if (currentProfile) {
-          currentProfile.avatar_type = "uploaded";
-          currentProfile.avatar_url = publicUrl;
-          authStore.updateProfile(currentProfile);
+          // Update local data
+          if (this.currentProfile) {
+            this.currentProfile.avatar_type = "uploaded";
+            this.currentProfile.avatar_url = publicUrl;
+          }
+
+          // Dispatch profile update event
+          window.dispatchEvent(
+            new CustomEvent("profile-updated", {
+              detail: { user: this.currentUser, profile: this.currentProfile },
+            })
+          );
+        } catch (error: any) {
+          console.error("❌ Avatar upload error:", error);
+          this.showToast(error.message || "Failed to upload avatar", "error");
+        } finally {
+          uploadBtn!.innerHTML =
+            '<i class="fas fa-upload"></i> Upload Custom Avatar';
         }
-      } catch (error: any) {
-        console.error("Avatar upload error:", error);
-        showToast(error.message || "Failed to upload avatar", "error");
-      } finally {
-        uploadBtn!.innerHTML =
-          '<i class="fas fa-upload"></i> Upload Custom Avatar';
-      }
-    });
+      });
+    }
+
+    private showToast(
+      message: string,
+      type: "success" | "error" | "warning" = "success"
+    ) {
+      const container = document.getElementById("toast-container");
+      if (!container) return;
+
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+
+      const icon =
+        type === "success"
+          ? "check-circle"
+          : type === "error"
+            ? "exclamation-triangle"
+            : "info-circle";
+
+      toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+      container.appendChild(toast);
+
+      setTimeout(() => toast.classList.add("show"), 100);
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
   }
 
-  function showToast(
-    message: string,
-    type: "success" | "error" | "warning" = "success"
-  ) {
-    const container = document.getElementById("toast-container");
-    if (!container) return;
-
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-
-    const icon =
-      type === "success"
-        ? "check-circle"
-        : type === "error"
-          ? "exclamation-triangle"
-          : "info-circle";
-
-    toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
-    container.appendChild(toast);
-
-    setTimeout(() => toast.classList.add("show"), 100);
-    setTimeout(() => {
-      toast.classList.remove("show");
-      setTimeout(() => toast.remove(), 300);
-    }, 3000);
-  }
+  // Initialize when DOM is ready
+  document.addEventListener("DOMContentLoaded", () => {
+    new AccountManager();
+  });
 </script>

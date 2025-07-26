@@ -1,5 +1,5 @@
 ---
-// src/components/ui/ThemeToggle.astro - Smooth Transitions Fixed
+// src/components/ui/ThemeToggle.astro - Fixed Global Declaration
 ---
 
 <button
@@ -116,8 +116,8 @@
       
       if (withTransition) {
         // Use the global transition manager if available
-        if (window.themeTransitionManager) {
-          window.themeTransitionManager.startTransition();
+        if ((window as any).themeTransitionManager) {
+          (window as any).themeTransitionManager.startTransition();
         } else {
           // Fallback: Add transition class to coordinate all theme changes
           root.classList.add("theme-transitioning");
@@ -165,24 +165,10 @@
       });
 
     // Expose toggle function globally for compatibility
-    window.toggleTheme = () => {
+    (window as any).toggleTheme = () => {
       const isDark = document.documentElement.classList.contains("dark");
       const newTheme = isDark ? "light" : "dark";
       applyTheme(newTheme, true);
     };
   });
-</script>
-
-<script is:inline>
-  // Type declaration for global objects
-  declare global {
-    interface Window {
-      themeTransitionManager?: {
-        startTransition: () => void;
-        endTransition: () => void;
-        isTransitioning: boolean;
-      };
-      toggleTheme?: () => void;
-    }
-  }
 </script>

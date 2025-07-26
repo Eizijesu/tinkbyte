@@ -1,0 +1,81 @@
+---
+// src/components/ui/SquareSpinner.astro
+
+interface Props {
+  size?: "small" | "medium" | "large";
+  color?: string;
+}
+
+const { size = "medium", color } = Astro.props;
+---
+
+<div class={`square-spinner square-spinner-${size}`} data-color={color}></div>
+
+<style define:vars={{ color }}>
+  .square-spinner {
+    border: 2px solid rgba(36, 55, 136, 0.2);
+    border-top: 2px solid var(--color, #243788);
+    animation: square-spin 1s linear infinite;
+    background: transparent;
+    border-radius: 0px; /* Square design */
+  }
+
+  .square-spinner-small {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+  }
+
+  .square-spinner-medium {
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
+  }
+
+  .square-spinner-large {
+    width: 48px;
+    height: 48px;
+    border-width: 3px;
+  }
+
+  @keyframes square-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(90deg);
+    }
+    50% {
+      transform: rotate(180deg);
+    }
+    75% {
+      transform: rotate(270deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Dark mode support */
+  :global(.dark) .square-spinner {
+    border-color: rgba(180, 188, 225, 0.2);
+    border-top-color: var(--color, #b4bce1);
+  }
+
+  /* Auto theme support */
+  @media (prefers-color-scheme: dark) {
+    .square-spinner {
+      border-color: rgba(180, 188, 225, 0.2);
+      border-top-color: var(--color, #b4bce1);
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .square-spinner {
+      animation: none;
+      border: 2px solid var(--color, #243788);
+      border-radius: 0px;
+    }
+  }
+</style>

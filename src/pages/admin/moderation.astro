@@ -1,107 +1,93 @@
 ---
-// src/pages/admin/moderation.astro - Updated to use your existing APIs
+// src/pages/admin/moderation.astro - SINGLETON VERSION
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import { supabase } from "../../lib/supabase";
-
-// Get real moderation data using your existing structure
-const { data: pendingComments } = await supabase
-  .from("comments")
-  .select(
-    `
-    *,
-    profiles:user_id(
-      display_name,
-      avatar_type,
-      avatar_preset_id,
-      avatar_url,
-      reputation_score,
-      is_admin
-    ),
-    articles(title, slug)
-  `
-  )
-  .eq("moderation_status", "pending")
-  .eq("is_deleted", false)
-  .order("created_at", { ascending: false })
-  .limit(20);
-
-const { data: flaggedComments } = await supabase
-  .from("comments")
-  .select(
-    `
-    *,
-    profiles:user_id(
-      display_name,
-      avatar_type,
-      avatar_preset_id,
-      avatar_url,
-      reputation_score,
-      is_admin
-    ),
-    articles(title, slug)
-  `
-  )
-  .eq("moderation_status", "flagged")
-  .eq("is_deleted", false)
-  .order("created_at", { ascending: false })
-  .limit(20);
-
-const { data: approvedComments } = await supabase
-  .from("comments")
-  .select(
-    `
-    *,
-    profiles:user_id(
-      display_name,
-      avatar_type,
-      avatar_preset_id,
-      avatar_url,
-      reputation_score,
-      is_admin
-    ),
-    articles(title, slug)
-  `
-  )
-  .eq("moderation_status", "approved")
-  .eq("is_deleted", false)
-  .order("created_at", { ascending: false })
-  .limit(20);
-
-// Get moderation statistics
-const { data: stats } = await supabase
-  .from("comments")
-  .select("moderation_status")
-  .eq("is_deleted", false)
-  .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-
-const moderationStats = {
-  pending: stats?.filter((s) => s.moderation_status === "pending").length || 0,
-  flagged: stats?.filter((s) => s.moderation_status === "flagged").length || 0,
-  approved:
-    stats?.filter((s) => s.moderation_status === "approved").length || 0,
-  autoApproved:
-    stats?.filter((s) => s.moderation_status === "auto_approved").length || 0,
-  hidden: stats?.filter((s) => s.moderation_status === "hidden").length || 0,
-};
 ---
 
 <AdminLayout title="Comment Moderation - TinkByte Admin">
   <div class="moderation-container">
-    <!-- Moderation Header -->
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+      <div class="loading-spinner">
+        <div class="spinner-square"></div>
+        <span>Processing moderation action...</span>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="error-banner" class="error-banner" style="display: none;">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+      </svg>
+      <span id="error-message">Unable to load moderation data</span>
+      <button id="retry-btn" class="retry-btn">
+        <span class="btn-text">Retry</span>
+        <div class="btn-spinner" style="display: none;">
+          <div class="spinner-square small"></div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Page Header -->
     <div class="moderation-header">
-      <h1>Comment Moderation</h1>
-      <div class="moderation-stats">
-        <div class="stat-item">
-          <span class="stat-number">{moderationStats.pending}</span>
-          <span class="stat-label">Pending</span>
+      <div class="header-content">
+        <h1>Comment Moderation</h1>
+        <p>Manage and moderate user comments across your platform</p>
+      </div>
+      <div class="header-actions">
+        <button class="export-btn" id="export-comments">
+          <i class="fas fa-download"></i>
+          Export Comments
+        </button>
+      </div>
+    </div>
+
+    <!-- Moderation Stats Cards -->
+    <div class="moderation-stats-grid">
+      <div class="stat-card urgent">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
         </div>
-        <div class="stat-item">
-          <span class="stat-number">{moderationStats.flagged}</span>
-          <span class="stat-label">Flagged</span>
+        <div class="stat-content">
+          <div class="stat-number" id="pending-stat">-</div>
+          <div class="stat-label">Pending Review</div>
+          <div class="stat-action">
+            <a href="#" data-tab="pending">Review Now</a>
+          </div>
         </div>
-        <div class="stat-item">
-          <span class="stat-number">{moderationStats.approved}</span>
-          <span class="stat-label">Approved</span>
+      </div>
+
+      <div class="stat-card warning">
+        <div class="stat-icon">
+          <i class="fas fa-flag"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="flagged-stat">0</div>
+          <div class="stat-label">Flagged</div>
+          <div class="stat-action">
+            <a href="#" data-tab="flagged">View All</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">
+          <i class="fas fa-check"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number" id="approved-stat">0</div>
+          <div class="stat-label">Approved</div>
+          <div class="stat-action">
+            <a href="#" data-tab="approved">View All</a>
+          </div>
         </div>
       </div>
     </div>
@@ -110,1082 +96,599 @@ const moderationStats = {
     <div class="tab-navigation">
       <button class="tab-button active" data-tab="pending">
         <i class="fas fa-clock"></i>
-        Pending Review ({moderationStats.pending})
+        <span>Pending Comments</span>
+        <span class="tab-count" id="pending-tab-count">(0)</span>
       </button>
       <button class="tab-button" data-tab="flagged">
         <i class="fas fa-flag"></i>
-        Flagged Content ({moderationStats.flagged})
+        <span>Flagged Content</span>
+        <span class="tab-count" id="flagged-tab-count">(0)</span>
       </button>
       <button class="tab-button" data-tab="approved">
         <i class="fas fa-check"></i>
-        Approved ({moderationStats.approved})
+        <span>Approved</span>
+        <span class="tab-count" id="approved-tab-count">(0)</span>
       </button>
     </div>
 
-    <!-- Pending Comments Tab -->
-    <div id="pending-tab" class="tab-content active">
-      <div class="tab-header">
-        <h2>Pending Comments</h2>
-        <div class="bulk-actions">
-          <button class="bulk-btn approve-bulk">
-            <i class="fas fa-check"></i>
-            Approve Selected
-          </button>
-          <button class="bulk-btn reject-bulk">
-            <i class="fas fa-times"></i>
-            Reject Selected
-          </button>
+    <!-- Tab Content Areas -->
+    <div class="tab-content-container">
+      <!-- Pending Comments Tab -->
+      <div id="pending-tab" class="tab-content active">
+        <div class="tab-header">
+          <h2>Pending Comments</h2>
+          <div class="bulk-actions">
+            <button class="bulk-btn approve-bulk" id="bulk-approve">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
+              </div>
+              <i class="fas fa-check"></i>
+              Approve Selected
+            </button>
+            <button class="bulk-btn reject-bulk" id="bulk-reject">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
+              </div>
+              <i class="fas fa-times"></i>
+              Reject Selected
+            </button>
+          </div>
+        </div>
+
+        <div class="comments-list" id="pending-comments">
+          <div class="empty-state" id="pending-empty">
+            <i class="fas fa-comments"></i>
+            <h3>Loading pending comments...</h3>
+            <p>Please wait while we load the moderation queue</p>
+          </div>
         </div>
       </div>
 
-      <div class="comments-list">
-        {
-          pendingComments && pendingComments.length > 0 ? (
-            pendingComments.map((comment) => (
-              <div class="comment-item" data-comment-id={comment.id}>
-                <div class="comment-header">
-                  <div class="comment-checkbox">
-                    <input
-                      type="checkbox"
-                      class="comment-select"
-                      value={comment.id}
-                    />
-                  </div>
-                  <div class="user-info">
-                    <div class="user-avatar">
-                      {comment.profiles?.avatar_type === "preset" ? (
-                        <div
-                          class="avatar-preset"
-                          data-preset={comment.profiles.avatar_preset_id}
-                        >
-                          {comment.profiles.display_name?.charAt(0) ||
-                            comment.guest_name?.charAt(0) ||
-                            "U"}
-                        </div>
-                      ) : comment.profiles?.avatar_url ? (
-                        <img src={comment.profiles.avatar_url} alt="Avatar" />
-                      ) : (
-                        <div class="avatar-preset">
-                          {comment.profiles?.display_name?.charAt(0) ||
-                            comment.guest_name?.charAt(0) ||
-                            "U"}
-                        </div>
-                      )}
-                    </div>
-                    <div class="user-details">
-                      <span class="user-name">
-                        {comment.profiles?.display_name ||
-                          comment.guest_name ||
-                          "Anonymous"}
-                      </span>
-                      <span class="user-rep">
-                        Rep: {comment.profiles?.reputation_score || 0}
-                      </span>
-                      {comment.profiles?.is_admin && (
-                        <span class="admin-badge">ADMIN</span>
-                      )}
-                    </div>
-                  </div>
-                  <div class="comment-meta">
-                    <span class="comment-date">
-                      {new Date(comment.created_at).toLocaleDateString()}
-                    </span>
-                    <span class="article-title">
-                      {comment.articles?.title || "Unknown Article"}
-                    </span>
-                  </div>
-                </div>
-
-                <div class="comment-content">
-                  <p>{comment.content}</p>
-                  {comment.mention_users?.length > 0 && (
-                    <div class="mentions">
-                      <i class="fas fa-at" />
-                      <span>
-                        Mentions: {comment.mention_users.length} users
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div class="comment-actions">
-                  <button
-                    class="action-btn approve"
-                    data-action="approve"
-                    data-comment-id={comment.id}
-                  >
-                    <i class="fas fa-check" />
-                    Approve
-                  </button>
-                  <button
-                    class="action-btn reject"
-                    data-action="reject"
-                    data-comment-id={comment.id}
-                  >
-                    <i class="fas fa-times" />
-                    Reject
-                  </button>
-                  <button
-                    class="action-btn flag"
-                    data-action="flag"
-                    data-comment-id={comment.id}
-                  >
-                    <i class="fas fa-flag" />
-                    Flag
-                  </button>
-                </div>
+      <!-- Flagged Comments Tab -->
+      <div id="flagged-tab" class="tab-content">
+        <div class="tab-header">
+          <h2>Flagged Comments</h2>
+          <div class="bulk-actions">
+            <button class="bulk-btn approve-bulk" id="bulk-restore">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
               </div>
-            ))
-          ) : (
-            <div class="empty-state">
-              <h3>No pending comments</h3>
-              <p>All comments have been moderated. Great job!</p>
-            </div>
-          )
-        }
-      </div>
-    </div>
+              <i class="fas fa-undo"></i>
+              Restore Selected
+            </button>
+            <button class="bulk-btn reject-bulk" id="bulk-delete">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
+              </div>
+              <i class="fas fa-trash"></i>
+              Delete Selected
+            </button>
+          </div>
+        </div>
 
-    <!-- Flagged Comments Tab -->
-    <div id="flagged-tab" class="tab-content">
-      <div class="tab-header">
-        <h2>Flagged Comments</h2>
-        <div class="bulk-actions">
-          <button class="bulk-btn restore-bulk">
-            <i class="fas fa-undo"></i>
-            Restore Selected
-          </button>
-          <button class="bulk-btn delete-bulk">
-            <i class="fas fa-trash"></i>
-            Delete Selected
-          </button>
+        <div class="comments-list" id="flagged-comments">
+          <div class="empty-state" id="flagged-empty">
+            <i class="fas fa-flag"></i>
+            <h3>Loading flagged comments...</h3>
+            <p>Please wait while we load flagged content</p>
+          </div>
         </div>
       </div>
 
-      <div class="comments-list">
-        {
-          flaggedComments && flaggedComments.length > 0 ? (
-            flaggedComments.map((comment) => (
-              <div class="comment-item flagged" data-comment-id={comment.id}>
-                <div class="comment-header">
-                  <div class="comment-checkbox">
-                    <input
-                      type="checkbox"
-                      class="comment-select"
-                      value={comment.id}
-                    />
-                  </div>
-                  <div class="user-info">
-                    <div class="user-avatar">
-                      {comment.profiles?.display_name?.charAt(0) ||
-                        comment.guest_name?.charAt(0) ||
-                        "U"}
-                    </div>
-                    <div class="user-details">
-                      <span class="user-name">
-                        {comment.profiles?.display_name ||
-                          comment.guest_name ||
-                          "Anonymous"}
-                      </span>
-                      <span class="user-rep">
-                        Rep: {comment.profiles?.reputation_score || 0}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="comment-meta">
-                    <span class="comment-date">
-                      {new Date(comment.created_at).toLocaleDateString()}
-                    </span>
-                    <span class="article-title">
-                      {comment.articles?.title || "Unknown Article"}
-                    </span>
-                  </div>
-                </div>
+      <!-- Approved Comments Tab -->
+      <div id="approved-tab" class="tab-content">
+        <div class="tab-header">
+          <h2>Recently Approved Comments</h2>
+        </div>
 
-                <div class="comment-content">
-                  <p>{comment.content}</p>
-                  {comment.moderation_reason && (
-                    <div class="moderation-reason">
-                      <i class="fas fa-info-circle" />
-                      <span>Reason: {comment.moderation_reason}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div class="comment-actions">
-                  <button
-                    class="action-btn approve"
-                    data-action="approve"
-                    data-comment-id={comment.id}
-                  >
-                    <i class="fas fa-check" />
-                    Restore
-                  </button>
-                  <button
-                    class="action-btn delete"
-                    data-action="delete"
-                    data-comment-id={comment.id}
-                  >
-                    <i class="fas fa-trash" />
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div class="empty-state">
-              <h3>No flagged comments</h3>
-              <p>No comments are currently flagged for review.</p>
-            </div>
-          )
-        }
-      </div>
-    </div>
-
-    <!-- Approved Comments Tab -->
-    <div id="approved-tab" class="tab-content">
-      <div class="tab-header">
-        <h2>Recently Approved Comments</h2>
-      </div>
-
-      <div class="comments-list">
-        {
-          approvedComments && approvedComments.length > 0 ? (
-            approvedComments.map((comment) => (
-              <div class="comment-item approved" data-comment-id={comment.id}>
-                <div class="comment-header">
-                  <div class="user-info">
-                    <div class="user-avatar">
-                      {comment.profiles?.display_name?.charAt(0) ||
-                        comment.guest_name?.charAt(0) ||
-                        "U"}
-                    </div>
-                    <div class="user-details">
-                      <span class="user-name">
-                        {comment.profiles?.display_name ||
-                          comment.guest_name ||
-                          "Anonymous"}
-                      </span>
-                      <span class="user-rep">
-                        Rep: {comment.profiles?.reputation_score || 0}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="comment-meta">
-                    <span class="comment-date">
-                      {new Date(comment.created_at).toLocaleDateString()}
-                    </span>
-                    <span class="article-title">
-                      {comment.articles?.title || "Unknown Article"}
-                    </span>
-                  </div>
-                </div>
-
-                <div class="comment-content">
-                  <p>{comment.content}</p>
-                </div>
-
-                <div class="comment-actions">
-                  <button
-                    class="action-btn flag"
-                    data-action="flag"
-                    data-comment-id={comment.id}
-                  >
-                    <i class="fas fa-flag" />
-                    Flag
-                  </button>
-                  <button
-                    class="action-btn hide"
-                    data-action="reject"
-                    data-comment-id={comment.id}
-                  >
-                    <i class="fas fa-eye-slash" />
-                    Hide
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div class="empty-state">
-              <h3>No approved comments</h3>
-              <p>No comments have been approved recently.</p>
-            </div>
-          )
-        }
+        <div class="comments-list" id="approved-comments">
+          <div class="empty-state" id="approved-empty">
+            <i class="fas fa-check-circle"></i>
+            <h3>Loading approved comments...</h3>
+            <p>Please wait while we load recent approvals</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </AdminLayout>
 
-<style>
-  .moderation-panel {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-    background: #0d1117;
-    min-height: 100vh;
-    color: #f0f6fc;
-  }
-
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #21262d;
-  }
-
-  .panel-header h1 {
-    color: #f0f6fc;
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
-  }
-
-  .stats-overview {
-    display: flex;
-    gap: 2rem;
-  }
-
-  .stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1rem;
-    background: #161b22;
-    border: 1px solid #21262d;
-    min-width: 80px;
-  }
-
-  .stat-number {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #4285f4;
-  }
-
-  .stat-label {
-    font-size: 0.875rem;
-    color: #8b949e;
-    margin-top: 0.25rem;
-  }
-
-  .tab-navigation {
-    display: flex;
-    gap: 0;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid #21262d;
-    background: #161b22;
-  }
-
-  .tab-button {
-    padding: 1rem 1.5rem;
-    border: none;
-    background: transparent;
-    color: #8b949e;
-    font-weight: 500;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-  }
-
-  .tab-button.active {
-    color: #4285f4;
-    border-bottom-color: #4285f4;
-    background: #0d1117;
-  }
-
-  .tab-button:hover:not(.active) {
-    color: #f0f6fc;
-    background: #21262d;
-  }
-
-  .tab-content {
-    display: none;
-  }
-
-  .tab-content.active {
-    display: block;
-  }
-
-  .tab-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: #161b22;
-    border: 1px solid #21262d;
-  }
-
-  .tab-header h2 {
-    color: #f0f6fc;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-  }
-
-  .bulk-actions {
-    display: flex;
-    gap: 1rem;
-  }
-
-  .bulk-btn {
-    padding: 0.5rem 1rem;
-    border: 1px solid #30363d;
-    background: #21262d;
-    color: #f0f6fc;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .bulk-btn:hover {
-    background: #30363d;
-  }
-
-  .bulk-btn.approve-bulk:hover {
-    background: #238636;
-    border-color: #238636;
-  }
-
-  .bulk-btn.reject-bulk:hover {
-    background: #da3633;
-    border-color: #da3633;
-  }
-
-  .comments-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .comment-item {
-    background: #161b22;
-    border: 1px solid #21262d;
-    padding: 1.5rem;
-    transition: all 0.2s ease;
-  }
-
-  .comment-item:hover {
-    border-color: #4285f4;
-  }
-
-  .comment-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .comment-checkbox {
-    flex-shrink: 0;
-  }
-
-  .comment-select {
-    width: 16px;
-    height: 16px;
-    accent-color: #4285f4;
-  }
-
-  .user-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .user-avatar {
-    width: 40px;
-    height: 40px;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-
-  .user-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .avatar-preset {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #4285f4;
-    color: white;
-    font-weight: 600;
-    font-size: 1.25rem;
-  }
-
-  .user-details {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .user-name {
-    font-weight: 600;
-    color: #f0f6fc;
-  }
-
-  .user-rep {
-    font-size: 0.75rem;
-    color: #8b949e;
-  }
-
-  .comment-meta {
-    display: flex;
-    flex-direction: column;
-    margin-left: auto;
-    text-align: right;
-  }
-
-  .comment-date {
-    font-size: 0.875rem;
-    color: #8b949e;
-  }
-
-  .article-title {
-    font-size: 0.75rem;
-    color: #8b949e;
-    font-weight: 500;
-  }
-
-  .comment-content {
-    margin-bottom: 1rem;
-  }
-
-  .comment-content p {
-    color: #f0f6fc;
-    line-height: 1.6;
-    margin: 0;
-  }
-
-  .mentions {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    font-size: 0.75rem;
-    color: #8b949e;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .comment-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .action-btn {
-    padding: 0.5rem 1rem;
-    border: 1px solid #30363d;
-    background: #21262d;
-    color: #f0f6fc;
-    cursor: pointer;
-    font-size: 0.75rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .action-btn:hover {
-    background: #30363d;
-  }
-
-  .action-btn.approve:hover {
-    background: #238636;
-    border-color: #238636;
-  }
-
-  .action-btn.reject:hover {
-    background: #da3633;
-    border-color: #da3633;
-  }
-
-  .action-btn.flag:hover {
-    background: #fb8500;
-    border-color: #fb8500;
-  }
-
-  /* Light mode styles */
-  :global(.light) .moderation-panel {
-    background: white;
-    color: #374151;
-  }
-
-  :global(.light) .panel-header {
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .panel-header h1 {
-    color: #374151;
-  }
-
-  :global(.light) .stat-item {
-    background: #f8f9fa;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .stat-number {
-    color: #243788;
-  }
-
-  :global(.light) .stat-label {
-    color: #6b7280;
-  }
-
-  :global(.light) .tab-navigation {
-    background: #f8f9fa;
-    border-bottom-color: #e2e8f0;
-  }
-
-  :global(.light) .tab-button {
-    color: #6b7280;
-  }
-
-  :global(.light) .tab-button.active {
-    color: #243788;
-    border-bottom-color: #243788;
-    background: white;
-  }
-
-  :global(.light) .tab-button:hover:not(.active) {
-    color: #374151;
-    background: #e2e8f0;
-  }
-
-  :global(.light) .tab-header {
-    background: #f8f9fa;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .tab-header h2 {
-    color: #374151;
-  }
-
-  :global(.light) .bulk-btn {
-    background: white;
-    border-color: #d1d5db;
-    color: #374151;
-  }
-
-  :global(.light) .bulk-btn:hover {
-    background: #f9fafb;
-  }
-
-  :global(.light) .comment-item {
-    background: white;
-    border-color: #e2e8f0;
-  }
-
-  :global(.light) .comment-item:hover {
-    border-color: #243788;
-  }
-
-  :global(.light) .user-name {
-    color: #374151;
-  }
-
-  :global(.light) .user-rep {
-    color: #6b7280;
-  }
-
-  :global(.light) .comment-date {
-    color: #6b7280;
-  }
-
-  :global(.light) .article-title {
-    color: #6b7280;
-  }
-
-  :global(.light) .comment-content p {
-    color: #374151;
-  }
-
-  :global(.light) .mentions {
-    background: #f9fafb;
-    border-color: #e2e8f0;
-    color: #6b7280;
-  }
-
-  :global(.light) .action-btn {
-    background: white;
-    border-color: #d1d5db;
-    color: #374151;
-  }
-
-  :global(.light) .action-btn:hover {
-    background: #f9fafb;
-  }
-
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .moderation-panel {
-      padding: 1rem;
-    }
-
-    .panel-header {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: flex-start;
-    }
-
-    .stats-overview {
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .tab-navigation {
-      flex-wrap: wrap;
-      gap: 0;
-    }
-
-    .tab-button {
-      padding: 0.75rem 1rem;
-      font-size: 0.8125rem;
-    }
-
-    .tab-header {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: flex-start;
-    }
-
-    .bulk-actions {
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .comment-header {
-      flex-direction: column;
-      gap: 0.5rem;
-      align-items: flex-start;
-    }
-
-    .comment-meta {
-      margin-left: 0;
-      text-align: left;
-    }
-
-    .comment-actions {
-      flex-wrap: wrap;
-      gap: 0.25rem;
-    }
-
-    .action-btn {
-      flex: 1;
-      min-width: 100px;
-      justify-content: center;
-    }
-  }
-
-  <style>
-  /* All previous styles plus: */
-  .admin-badge {
-    background: rgba(66, 133, 244, 0.1);
-    color: #4285f4;
-    padding: 0.125rem 0.5rem;
-    font-size: 0.625rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border: 1px solid #4285f4;
-    margin-left: 0.5rem;
-  }
-
-  .moderation-reason {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
-    background: rgba(218, 54, 51, 0.1);
-    border: 1px solid #da3633;
-    color: #da3633;
-    font-size: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .mentions {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
-    background: #21262d;
-    border: 1px solid #30363d;
-    font-size: 0.75rem;
-    color: #8b949e;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .comment-item.flagged {
-    border-left: 4px solid #da3633;
-  }
-
-  .comment-item.approved {
-    border-left: 4px solid #238636;
-  }
-
-  /* Light mode additions */
-  :global(.light) .admin-badge {
-    background: rgba(36, 55, 136, 0.1);
-    color: #243788;
-    border-color: #243788;
-  }
-
-  :global(.light) .moderation-reason {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: #ef4444;
-    color: #dc2626;
-  }
-
-  :global(.light) .mentions {
-    background: #f9fafb;
-    border-color: #e2e8f0;
-    color: #6b7280;
-  }
-</style>
-
 <script>
-  import { ClientAdminAuth } from "../../lib/admin/auth.js";
+  import { adminAPIManager } from "../../lib/admin-api.js";
+  import { adminAuthManager } from "../../lib/admin/auth.js";
+  import { getAdminRealtimeManager } from "../../lib/admin/realtime-manager.js";
 
-  // Fixed TypeScript interfaces
-  interface TabButtonElement extends HTMLButtonElement {
-    dataset: DOMStringMap;
-  }
-
-  interface ActionButtonElement extends HTMLButtonElement {
-    dataset: DOMStringMap;
-  }
-
-  interface CheckboxElement extends HTMLInputElement {
-    value: string;
-    checked: boolean;
-  }
-
-  document.addEventListener("DOMContentLoaded", async () => {
-    try {
-      // Check auth
-      await ClientAdminAuth.requireAdmin();
-      setupModerationEventListeners();
-    } catch (error) {
-      console.error("Moderation error:", error);
+  declare global {
+    interface WindowEventMap {
+      adminMetricsUpdate: CustomEvent;
     }
-  });
-
-  function setupModerationEventListeners() {
-    // Tab switching with proper typing
-    const tabButtons = document.querySelectorAll(
-      ".tab-button"
-    ) as NodeListOf<TabButtonElement>;
-    const tabContents = document.querySelectorAll(".tab-content");
-
-    tabButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const targetTab = button.dataset.tab;
-        if (!targetTab) return;
-
-        tabButtons.forEach((btn) => btn.classList.remove("active"));
-        tabContents.forEach((content) => content.classList.remove("active"));
-
-        button.classList.add("active");
-        const targetContent = document.getElementById(`${targetTab}-tab`);
-        if (targetContent) {
-          targetContent.classList.add("active");
-        }
-      });
-    });
-
-    // Action buttons with proper typing
-    const actionButtons = document.querySelectorAll(
-      ".action-btn"
-    ) as NodeListOf<ActionButtonElement>;
-    actionButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const action = button.dataset.action;
-        const commentId = button.dataset.commentId;
-
-        if (action && commentId) {
-          if (
-            action === "delete" &&
-            !confirm(
-              "Are you sure you want to delete this comment? This action cannot be undone."
-            )
-          ) {
-            return;
-          }
-          moderateComment(commentId, action);
-        }
-      });
-    });
-
-    // Bulk actions
-    setupBulkActions();
   }
 
-  function setupBulkActions() {
-    const bulkApproveBtn = document.querySelector(".approve-bulk");
-    const bulkRejectBtn = document.querySelector(".reject-bulk");
-    const bulkRestoreBtn = document.querySelector(".restore-bulk");
-    const bulkDeleteBtn = document.querySelector(".delete-bulk");
+  // Singleton-based Moderation Manager
+  class ModerationManager {
+    private static instance: ModerationManager;
+    private isInitialized: boolean = false;
+    private isLoading: boolean = false;
+    private realtimeManager: any = null;
+    private currentData: any = {
+      pending: [],
+      flagged: [],
+      approved: [],
+    };
 
-    bulkApproveBtn?.addEventListener("click", () => {
-      const selectedComments = getSelectedComments();
-      if (selectedComments.length > 0) {
-        bulkModerateComments(selectedComments, "approve");
+    private constructor() {}
+
+    static getInstance(): ModerationManager {
+      if (!ModerationManager.instance) {
+        ModerationManager.instance = new ModerationManager();
       }
-    });
+      return ModerationManager.instance;
+    }
 
-    bulkRejectBtn?.addEventListener("click", () => {
-      const selectedComments = getSelectedComments();
-      if (selectedComments.length > 0) {
-        bulkModerateComments(selectedComments, "reject");
+    async initialize(): Promise<void> {
+      if (this.isInitialized) return;
+
+      try {
+        console.log("🚀 Initializing Moderation Manager...");
+
+        // Initialize admin API manager
+        await adminAPIManager.initialize();
+
+        // Initialize realtime manager
+        this.realtimeManager = getAdminRealtimeManager();
+        await this.realtimeManager.initialize();
+
+        // Setup event listeners
+        this.setupEventListeners();
+        this.setupRealtimeUpdates();
+
+        // Load initial data
+        await this.loadModerationData();
+
+        this.isInitialized = true;
+        console.log("✅ Moderation Manager initialized successfully");
+      } catch (error) {
+        console.error("❌ Moderation Manager initialization failed:", error);
+        this.showError(
+          error.message || "Failed to initialize moderation system"
+        );
+        throw error;
       }
-    });
+    }
 
-    bulkRestoreBtn?.addEventListener("click", () => {
-      const selectedComments = getSelectedComments();
-      if (selectedComments.length > 0) {
-        bulkModerateComments(selectedComments, "approve");
-      }
-    });
+    private setupRealtimeUpdates(): void {
+      window.addEventListener("adminMetricsUpdate", (event: CustomEvent) => {
+        console.log("📊 Moderation real-time update:", event.detail);
 
-    bulkDeleteBtn?.addEventListener("click", () => {
-      const selectedComments = getSelectedComments();
-      if (
-        selectedComments.length > 0 &&
-        confirm(
-          "Are you sure you want to delete these comments? This action cannot be undone."
-        )
-      ) {
-        bulkModerateComments(selectedComments, "delete");
-      }
-    });
-  }
-
-  function getSelectedComments(): string[] {
-    const checkboxes = document.querySelectorAll(
-      ".comment-select:checked"
-    ) as NodeListOf<CheckboxElement>;
-    return Array.from(checkboxes).map((checkbox) => checkbox.value);
-  }
-
-  async function moderateComment(commentId: string, action: string) {
-    try {
-      // Get admin session token
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
-      }
-
-      const session = JSON.parse(adminSession);
-      const reason =
-        action === "reject" || action === "flag"
-          ? prompt(`Please provide a reason for ${action}ing this comment:`)
-          : null;
-
-      if ((action === "reject" || action === "flag") && !reason) {
-        return;
-      }
-
-      const response = await fetch("/api/admin/comments/moderate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify({
-          comment_id: commentId,
-          action,
-          reason,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // Remove comment from UI
-        const commentElement = document.querySelector(
-          `[data-comment-id="${commentId}"]`
-        ) as HTMLElement;
-        if (commentElement) {
-          commentElement.style.opacity = "0.5";
+        if (
+          event.detail.type === "comment" ||
+          event.detail.type === "moderation"
+        ) {
+          // Refresh data after a short delay
           setTimeout(() => {
-            commentElement.remove();
-          }, 300);
+            this.loadModerationData();
+          }, 1000);
         }
-
-        showNotification(
-          result.message || `Comment ${action}ed successfully`,
-          "success"
-        );
-
-        // Update stats
-        updateStatsDisplay();
-      } else {
-        showNotification(
-          result.error || `Failed to ${action} comment`,
-          "error"
-        );
-      }
-    } catch (error) {
-      console.error("Moderation error:", error);
-      showNotification("An error occurred", "error");
+      });
     }
-  }
 
-  async function bulkModerateComments(commentIds: string[], action: string) {
-    try {
-      const adminSession = localStorage.getItem("tinkbyte-admin-session");
-      if (!adminSession) {
-        throw new Error("No admin session found");
+    private async loadModerationData(): Promise<void> {
+      if (this.isLoading) return;
+
+      try {
+        this.showLoading();
+        this.hideError();
+
+        console.log(
+          "🔄 Loading moderation data using singleton API manager..."
+        );
+
+        const [pendingResult, flaggedResult, approvedResult] =
+          await Promise.allSettled([
+            adminAPIManager.getComments({ status: "pending", limit: 50 }),
+            adminAPIManager.getComments({ status: "flagged", limit: 50 }),
+            adminAPIManager.getComments({ status: "approved", limit: 50 }),
+          ]);
+
+        this.currentData = {
+          pending:
+            pendingResult.status === "fulfilled" && pendingResult.value.success
+              ? pendingResult.value.data || []
+              : [],
+          flagged:
+            flaggedResult.status === "fulfilled" && flaggedResult.value.success
+              ? flaggedResult.value.data || []
+              : [],
+          approved:
+            approvedResult.status === "fulfilled" &&
+            approvedResult.value.success
+              ? approvedResult.value.data || []
+              : [],
+        };
+
+        this.updateModerationUI();
+        this.updateStats();
+        console.log(
+          "✅ Moderation data loaded successfully:",
+          this.currentData
+        );
+      } catch (error: any) {
+        console.error("❌ Moderation loading error:", error);
+        this.showError(error.message || "Failed to load moderation data");
+      } finally {
+        this.hideLoading();
       }
+    }
 
-      const session = JSON.parse(adminSession);
-      const reason =
-        action === "reject" || action === "flag"
-          ? prompt(
-              `Please provide a reason for bulk ${action}ing these comments:`
-            )
-          : null;
+    private updateModerationUI(): void {
+      this.updateCommentsTab("pending", this.currentData.pending);
+      this.updateCommentsTab("flagged", this.currentData.flagged);
+      this.updateCommentsTab("approved", this.currentData.approved);
+    }
 
-      if ((action === "reject" || action === "flag") && !reason) {
+    private updateCommentsTab(tabType: string, comments: any[]): void {
+      const container = document.getElementById(`${tabType}-comments`);
+      const emptyState = document.getElementById(`${tabType}-empty`);
+
+      if (!container || !emptyState) return;
+
+      if (!comments || comments.length === 0) {
+        emptyState.innerHTML = `
+          <i class="fas fa-${this.getTabIcon(tabType)}"></i>
+          <h3>No ${tabType} comments</h3>
+          <p>${this.getEmptyMessage(tabType)}</p>
+        `;
+        emptyState.style.display = "block";
         return;
       }
 
-      // Process comments one by one (you could create a bulk endpoint later)
-      let successCount = 0;
-      for (const commentId of commentIds) {
-        try {
-          const response = await fetch("/api/admin/comments/moderate", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.token}`,
-            },
-            body: JSON.stringify({
-              comment_id: commentId,
-              action,
-              reason,
-            }),
-          });
+      emptyState.style.display = "none";
 
-          if (response.ok) {
-            successCount++;
-            // Remove comment from UI
+      const commentsHTML = comments
+        .map((comment) => {
+          const userProfile = comment.profiles;
+          const displayName =
+            userProfile?.display_name ||
+            comment.guest_name ||
+            (userProfile?.email ? userProfile.email.split("@")[0] : null) ||
+            "Anonymous User";
+
+          const isGuest = !comment.user_id;
+          const hasProfile = !!userProfile;
+
+          return `
+            <div class="comment-item ${tabType}" data-comment-id="${comment.id}">
+              <div class="comment-header">
+                ${
+                  tabType !== "approved"
+                    ? `
+                  <div class="comment-checkbox">
+                    <input type="checkbox" class="comment-select" value="${comment.id}" />
+                  </div>
+                `
+                    : ""
+                }
+                <div class="user-info">
+                  <div class="user-avatar">
+                    ${
+                      hasProfile && userProfile.avatar_url
+                        ? `<img src="${userProfile.avatar_url}" alt="Avatar" />`
+                        : `<div class="avatar-preset ${isGuest ? "guest-avatar" : ""}">
+                          ${displayName.charAt(0).toUpperCase()}
+                        </div>`
+                    }
+                  </div>
+                  <div class="user-details">
+                    <span class="user-name">
+                      ${displayName}
+                      ${isGuest ? '<span class="guest-badge">GUEST</span>' : ""}
+                      ${hasProfile && userProfile.is_admin ? '<span class="admin-badge">ADMIN</span>' : ""}
+                    </span>
+                    <span class="user-rep">
+                      ${isGuest ? "Guest User" : `Rep: ${userProfile?.reputation_score || 0}`}
+                    </span>
+                  </div>
+                </div>
+                <div class="comment-meta">
+                  <span class="comment-date">
+                    ${new Date(comment.created_at).toLocaleDateString()}
+                  </span>
+                  <span class="article-title">
+                    ${comment.articles?.title || "Unknown Article"}
+                  </span>
+                </div>
+              </div>
+
+              <div class="comment-content">
+                <p>${comment.content}</p>
+                ${
+                  comment.mention_users?.length > 0
+                    ? `
+                  <div class="mentions">
+                    <i class="fas fa-at"></i>
+                    <span>Mentions: ${comment.mention_users.length} users</span>
+                  </div>
+                `
+                    : ""
+                }
+                ${
+                  comment.moderation_reason
+                    ? `
+                  <div class="moderation-reason">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Reason: ${comment.moderation_reason}</span>
+                  </div>
+                `
+                    : ""
+                }
+              </div>
+
+              <div class="comment-actions">
+                ${this.getActionButtons(tabType, comment.id)}
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+
+      container.innerHTML = commentsHTML;
+      this.attachCommentActionListeners();
+    }
+
+    private getTabIcon(tabType: string): string {
+      switch (tabType) {
+        case "pending":
+          return "clock";
+        case "flagged":
+          return "flag";
+        case "approved":
+          return "check-circle";
+        default:
+          return "comments";
+      }
+    }
+
+    private getActionButtons(tabType: string, commentId: string): string {
+      switch (tabType) {
+        case "pending":
+          return `
+            <button class="action-btn approve" data-action="approve" data-comment-id="${commentId}">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
+              </div>
+              <i class="fas fa-check"></i>
+              Approve
+            </button>
+            <button class="action-btn reject" data-action="reject" data-comment-id="${commentId}">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
+              </div>
+              <i class="fas fa-times"></i>
+              Reject
+            </button>
+            <button class="action-btn flag" data-action="flag" data-comment-id="${commentId}">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
+              </div>
+              <i class="fas fa-flag"></i>
+              Flag
+            </button>
+          `;
+        case "flagged":
+          return `
+            <button class="action-btn approve" data-action="approve" data-comment-id="${commentId}">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
+              </div>
+              <i class="fas fa-check"></i>
+              Restore
+            </button>
+            <button class="action-btn delete" data-action="hide" data-comment-id="${commentId}">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
+              </div>
+              <i class="fas fa-trash"></i>
+              Delete
+            </button>
+          `;
+        case "approved":
+          return `
+            <button class="action-btn flag" data-action="flag" data-comment-id="${commentId}">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
+              </div>
+              <i class="fas fa-flag"></i>
+              Flag
+            </button>
+            <button class="action-btn hide" data-action="reject" data-comment-id="${commentId}">
+              <div class="btn-spinner" style="display: none;">
+                <div class="spinner-square small"></div>
+              </div>
+              <i class="fas fa-eye-slash"></i>
+              Hide
+            </button>
+          `;
+        default:
+          return "";
+      }
+    }
+
+    private getEmptyMessage(tabType: string): string {
+      switch (tabType) {
+        case "pending":
+          return "All comments have been moderated. Great job!";
+        case "flagged":
+          return "No comments are currently flagged for review.";
+        case "approved":
+          return "No comments have been approved recently.";
+        default:
+          return "No comments found.";
+      }
+    }
+
+    private updateStats(): void {
+      const stats = {
+        pending: this.currentData.pending?.length || 0,
+        flagged: this.currentData.flagged?.length || 0,
+        approved: this.currentData.approved?.length || 0,
+      };
+
+      // Update stat numbers
+      const elements = {
+        pendingStat: document.getElementById("pending-stat"),
+        flaggedStat: document.getElementById("flagged-stat"),
+        approvedStat: document.getElementById("approved-stat"),
+        pendingTabCount: document.getElementById("pending-tab-count"),
+        flaggedTabCount: document.getElementById("flagged-tab-count"),
+        approvedTabCount: document.getElementById("approved-tab-count"),
+      };
+
+      if (elements.pendingStat)
+        elements.pendingStat.textContent = stats.pending.toString();
+      if (elements.flaggedStat)
+        elements.flaggedStat.textContent = stats.flagged.toString();
+      if (elements.approvedStat)
+        elements.approvedStat.textContent = stats.approved.toString();
+      if (elements.pendingTabCount)
+        elements.pendingTabCount.textContent = `(${stats.pending})`;
+      if (elements.flaggedTabCount)
+        elements.flaggedTabCount.textContent = `(${stats.flagged})`;
+      if (elements.approvedTabCount)
+        elements.approvedTabCount.textContent = `(${stats.approved})`;
+    }
+
+    private attachCommentActionListeners(): void {
+      const actionButtons = document.querySelectorAll(".action-btn");
+      actionButtons.forEach((button) => {
+        button.addEventListener("click", async (e) => {
+          const btn = e.currentTarget as HTMLButtonElement;
+          const action = btn.dataset.action;
+          const commentId = btn.dataset.commentId;
+
+          if (action && commentId) {
+            if (
+              action === "hide" &&
+              !confirm(
+                "Are you sure you want to delete this comment? This action cannot be undone."
+              )
+            ) {
+              return;
+            }
+            await this.moderateComment(commentId, action, btn);
+          }
+        });
+      });
+    }
+
+    private async moderateComment(
+      commentId: string,
+      action: string,
+      buttonElement: HTMLButtonElement
+    ): Promise<void> {
+      const spinner = buttonElement.querySelector(
+        ".btn-spinner"
+      ) as HTMLElement;
+      const icon = buttonElement.querySelector("i") as HTMLElement;
+
+      // Show loading state
+      buttonElement.disabled = true;
+      if (spinner) spinner.style.display = "flex";
+      if (icon) icon.style.display = "none";
+
+      try {
+        const reason =
+          action === "reject" || action === "flag"
+            ? prompt(`Please provide a reason for ${action}ing this comment:`)
+            : null;
+
+        if ((action === "reject" || action === "flag") && !reason) {
+          return;
+        }
+
+        // Use singleton API manager
+        const result = await adminAPIManager.moderateComment(
+          commentId,
+          action,
+          reason || undefined
+        );
+
+        if (result.success) {
+          // Remove comment from UI
+          const commentElement = document.querySelector(
+            `[data-comment-id="${commentId}"]`
+          ) as HTMLElement;
+          if (commentElement) {
+            commentElement.style.opacity = "0.5";
+            setTimeout(() => {
+              commentElement.remove();
+              this.updateStatsAfterAction();
+            }, 300);
+          }
+
+          this.showNotification(
+            result.message || `Comment ${action}ed successfully`,
+            "success"
+          );
+        } else {
+          this.showNotification(
+            result.error || `Failed to ${action} comment`,
+            "error"
+          );
+        }
+      } catch (error) {
+        console.error("Moderation error:", error);
+        this.showNotification("An error occurred", "error");
+      } finally {
+        // Hide loading state
+        buttonElement.disabled = false;
+        if (spinner) spinner.style.display = "none";
+        if (icon) icon.style.display = "inline";
+      }
+    }
+
+    private async bulkModerateComments(
+      action: string,
+      buttonElement: HTMLButtonElement
+    ): Promise<void> {
+      const selectedComments = this.getSelectedComments();
+
+      if (selectedComments.length === 0) {
+        this.showNotification("Please select comments to moderate", "error");
+        return;
+      }
+
+      const spinner = buttonElement.querySelector(
+        ".btn-spinner"
+      ) as HTMLElement;
+      const icon = buttonElement.querySelector("i") as HTMLElement;
+
+      // Show loading state
+      buttonElement.disabled = true;
+      if (spinner) spinner.style.display = "flex";
+      if (icon) icon.style.display = "none";
+
+      try {
+        const reason =
+          action === "reject" || action === "flag"
+            ? prompt(
+                `Please provide a reason for bulk ${action}ing these comments:`
+              )
+            : null;
+
+        if ((action === "reject" || action === "flag") && !reason) {
+          return;
+        }
+
+        // Use singleton API manager
+        const result = await adminAPIManager.bulkModerateComments(
+          selectedComments,
+          action,
+          reason || undefined
+        );
+
+        if (result.success) {
+          // Remove comments from UI
+          selectedComments.forEach((commentId) => {
             const commentElement = document.querySelector(
               `[data-comment-id="${commentId}"]`
             ) as HTMLElement;
@@ -1195,55 +698,243 @@ const moderationStats = {
                 commentElement.remove();
               }, 300);
             }
-          }
-        } catch (error) {
-          console.error(`Error moderating comment ${commentId}:`, error);
+          });
+
+          this.showNotification(
+            result.message || "Bulk moderation completed",
+            "success"
+          );
+          this.updateStatsAfterAction();
+        } else {
+          this.showNotification(
+            result.error || "Bulk moderation failed",
+            "error"
+          );
         }
+      } catch (error) {
+        console.error("Bulk moderation error:", error);
+        this.showNotification(
+          "An error occurred during bulk moderation",
+          "error"
+        );
+      } finally {
+        // Hide loading state
+        buttonElement.disabled = false;
+        if (spinner) spinner.style.display = "none";
+        if (icon) icon.style.display = "inline";
+      }
+    }
+
+    private getSelectedComments(): string[] {
+      const checkboxes = document.querySelectorAll(
+        ".comment-select:checked"
+      ) as NodeListOf<HTMLInputElement>;
+      return Array.from(checkboxes).map((checkbox) => checkbox.value);
+    }
+
+    private updateStatsAfterAction(): void {
+      // Recount visible comments
+      const pendingCount = document.querySelectorAll(
+        "#pending-comments .comment-item"
+      ).length;
+      const flaggedCount = document.querySelectorAll(
+        "#flagged-comments .comment-item"
+      ).length;
+      const approvedCount = document.querySelectorAll(
+        "#approved-comments .comment-item"
+      ).length;
+
+      // Update current data
+      this.currentData = {
+        pending: Array(pendingCount).fill({}),
+        flagged: Array(flaggedCount).fill({}),
+        approved: Array(approvedCount).fill({}),
+      };
+
+      this.updateStats();
+    }
+
+    private setupEventListeners(): void {
+      // Tab switching
+      const tabButtons = document.querySelectorAll(".tab-button");
+      const tabContents = document.querySelectorAll(".tab-content");
+
+      tabButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const targetTab = (button as HTMLElement).dataset.tab;
+          if (!targetTab) return;
+
+          tabButtons.forEach((btn) => btn.classList.remove("active"));
+          tabContents.forEach((content) => content.classList.remove("active"));
+
+          button.classList.add("active");
+          const targetContent = document.getElementById(`${targetTab}-tab`);
+          if (targetContent) {
+            targetContent.classList.add("active");
+          }
+        });
+      });
+
+      // Stat action links
+      const statActions = document.querySelectorAll(".stat-action a");
+      statActions.forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const targetTab = (link as HTMLElement).dataset.tab;
+
+          if (targetTab) {
+            const tabButton = document.querySelector(
+              `[data-tab="${targetTab}"]`
+            );
+            if (tabButton) {
+              (tabButton as HTMLElement).click();
+            }
+          }
+        });
+      });
+
+      // Bulk action buttons
+      const bulkButtons = {
+        approve: document.getElementById("bulk-approve"),
+        reject: document.getElementById("bulk-reject"),
+        restore: document.getElementById("bulk-restore"),
+        delete: document.getElementById("bulk-delete"),
+      };
+
+      if (bulkButtons.approve) {
+        bulkButtons.approve.addEventListener("click", () =>
+          this.bulkModerateComments(
+            "approve",
+            bulkButtons.approve as HTMLButtonElement
+          )
+        );
+      }
+      if (bulkButtons.reject) {
+        bulkButtons.reject.addEventListener("click", () =>
+          this.bulkModerateComments(
+            "reject",
+            bulkButtons.reject as HTMLButtonElement
+          )
+        );
+      }
+      if (bulkButtons.restore) {
+        bulkButtons.restore.addEventListener("click", () =>
+          this.bulkModerateComments(
+            "approve",
+            bulkButtons.restore as HTMLButtonElement
+          )
+        );
+      }
+      if (bulkButtons.delete) {
+        bulkButtons.delete.addEventListener("click", () =>
+          this.bulkModerateComments(
+            "hide",
+            bulkButtons.delete as HTMLButtonElement
+          )
+        );
       }
 
-      showNotification(
-        `${successCount} of ${commentIds.length} comments ${action}ed successfully`,
-        "success"
-      );
-      updateStatsDisplay();
-    } catch (error) {
-      console.error("Bulk moderation error:", error);
-      showNotification("An error occurred during bulk moderation", "error");
+      // Retry button
+      const retryBtn = document.getElementById("retry-btn");
+      if (retryBtn) {
+        retryBtn.addEventListener("click", async () => {
+          const btnText = retryBtn.querySelector(".btn-text") as HTMLElement;
+          const btnSpinner = retryBtn.querySelector(
+            ".btn-spinner"
+          ) as HTMLElement;
+
+          if (btnText) btnText.style.display = "none";
+          if (btnSpinner) btnSpinner.style.display = "flex";
+
+          await this.loadModerationData();
+
+          if (btnText) btnText.style.display = "block";
+          if (btnSpinner) btnSpinner.style.display = "none";
+        });
+      }
+    }
+
+    private showLoading(): void {
+      this.isLoading = true;
+      const overlay = document.getElementById("loading-overlay");
+      if (overlay) overlay.style.display = "flex";
+    }
+
+    private hideLoading(): void {
+      this.isLoading = false;
+      const overlay = document.getElementById("loading-overlay");
+      if (overlay) overlay.style.display = "none";
+    }
+
+    private showError(message: string): void {
+      const banner = document.getElementById("error-banner");
+      const messageEl = document.getElementById("error-message");
+      if (banner && messageEl) {
+        messageEl.textContent = message;
+        banner.style.display = "flex";
+      }
+    }
+
+    private hideError(): void {
+      const banner = document.getElementById("error-banner");
+      if (banner) banner.style.display = "none";
+    }
+
+    private showNotification(
+      message: string,
+      type: "success" | "error" = "success"
+    ): void {
+      const notification = document.createElement("div");
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem;
+        color: white; font-weight: 500; z-index: 10000; border-radius: 4px;
+        background: ${type === "success" ? "#238636" : "#da3633"};
+        animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 0.5rem;
+      `;
+
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 3000);
+    }
+
+    public async refresh(): Promise<void> {
+      await this.loadModerationData();
+    }
+
+    public destroy(): void {
+      if (this.realtimeManager) {
+        this.realtimeManager.destroy();
+      }
+      this.isInitialized = false;
     }
   }
 
-  function updateStatsDisplay() {
-    // Refresh the page to update stats (you could make this more sophisticated)
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
-  }
+  // Initialize singleton manager
+  let moderationManager: ModerationManager | null = null;
 
-  function showNotification(
-    message: string,
-    type: "success" | "error" = "success"
-  ) {
-    const notification = document.createElement("div");
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 1rem 1.5rem;
-      color: white;
-      font-weight: 500;
-      z-index: 10000;
-      background: ${type === "success" ? "#238636" : "#da3633"};
-      animation: slideIn 0.3s ease;
-    `;
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      console.log("🚀 Moderation dashboard initializing...");
 
-    document.body.appendChild(notification);
+      moderationManager = ModerationManager.getInstance();
+      await moderationManager.initialize();
 
-    setTimeout(() => {
-      notification.remove();
-    }, 3000);
-  }
+      // Make globally available
+      (window as any).moderationManager = moderationManager;
+
+      console.log("✅ Moderation dashboard initialized successfully");
+    } catch (error) {
+      console.error("❌ Moderation dashboard initialization failed:", error);
+    }
+  });
+
+  // Cleanup on page unload
+  window.addEventListener("beforeunload", () => {
+    if (moderationManager) {
+      moderationManager.destroy();
+    }
+  });
 
   // Add animation styles
   if (!document.getElementById("moderation-animations")) {
@@ -1251,14 +942,8 @@ const moderationStats = {
     style.id = "moderation-animations";
     style.textContent = `
       @keyframes slideIn {
-        from {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
       }
     `;
     document.head.appendChild(style);

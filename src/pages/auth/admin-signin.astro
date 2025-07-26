@@ -272,20 +272,229 @@ import Layout from "../../layouts/Layout.astro";
 </style>
 
 <script>
-  import { createClient } from "@supabase/supabase-js";
+  import { adminAuthManager } from "../../lib/admin/auth.js";
 
-  // Admin authentication system
-  const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-  const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+  // Admin authentication system using singleton
+  class AdminSignInManager {
+    private initialized: boolean = false;
+    private form: HTMLFormElement | null = null;
+    private emailInput: HTMLInputElement | null = null;
+    private passwordInput: HTMLInputElement | null = null;
+    private submitBtn: HTMLButtonElement | null = null;
+    private errorMessageEl: HTMLElement | null = null;
+    private errorText: HTMLElement | null = null;
+    private successMessage: HTMLElement | null = null;
+    private successText: HTMLElement | null = null;
 
-  // Initialize Supabase client
-  const supabase = createClient(supabaseUrl, supabaseKey);
+    constructor() {
+      this.init();
+    }
+
+    async init() {
+      if (this.initialized) return;
+
+      try {
+        console.log("🔄 Admin Sign In: Initializing...");
+
+        // Initialize admin auth manager
+        await adminAuthManager.initialize();
+
+        this.setupDOM();
+        this.handleURLParams();
+        await this.checkExistingSession();
+        this.setupEventListeners();
+
+        this.initialized = true;
+        console.log("✅ Admin Sign In: Initialized successfully");
+      } catch (error) {
+        console.error("❌ Admin Sign In: Initialization failed:", error);
+        this.showError("Failed to initialize sign in form");
+      }
+    }
+
+    private setupDOM() {
+      this.form = document.getElementById(
+        "admin-signin-form"
+      ) as HTMLFormElement;
+      this.emailInput = document.getElementById("email") as HTMLInputElement;
+      this.passwordInput = document.getElementById(
+        "password"
+      ) as HTMLInputElement;
+      this.submitBtn = document.getElementById(
+        "signin-btn"
+      ) as HTMLButtonElement;
+      this.errorMessageEl = document.getElementById(
+        "error-message"
+      ) as HTMLElement;
+      this.errorText = document.getElementById("error-text") as HTMLElement;
+      this.successMessage = document.getElementById(
+        "success-message"
+      ) as HTMLElement;
+      this.successText = document.getElementById("success-text") as HTMLElement;
+
+      // Focus on email input
+      if (this.emailInput) {
+        this.emailInput.focus();
+      }
+    }
+
+    private handleURLParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const error = urlParams.get("error");
+      const message = urlParams.get("message");
+
+      if (error) {
+        const errorMessages: Record<string, string> = {
+          access_denied: "Access denied. Admin privileges required.",
+          session_expired: "Your session has expired. Please sign in again.",
+          not_admin: "You don't have admin privileges.",
+          invalid_session: "Invalid session data. Please sign in again.",
+          no_session: "No admin session found. Please sign in.",
+        };
+        this.showError(
+          errorMessages[error] || "An error occurred. Please try again."
+        );
+      }
+
+      if (message === "signed_out") {
+        this.showSuccess("You have been signed out successfully.");
+      }
+    }
+
+    private async checkExistingSession() {
+      try {
+        const user = await adminAuthManager.getCurrentUser();
+        if (user && !window.location.href.includes("redirecting")) {
+          const redirect =
+            new URLSearchParams(window.location.search).get("redirect") ||
+            "/admin/dashboard";
+          console.log(
+            "✅ Admin Sign In: Existing session found, redirecting..."
+          );
+          window.location.href = redirect + "?from=signin";
+        }
+      } catch (error) {
+        console.log(
+          "ℹ️ Admin Sign In: No existing session, continuing with sign in flow"
+        );
+      }
+    }
+
+    private setupEventListeners() {
+      if (!this.form) return;
+
+      this.form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await this.handleSignIn();
+      });
+    }
+
+    private async handleSignIn() {
+      if (!this.emailInput || !this.passwordInput || !this.submitBtn) return;
+
+      this.hideMessages();
+
+      const email = this.emailInput.value.trim();
+      const password = this.passwordInput.value.trim();
+
+      if (!email || !password) {
+        this.showError("Please enter both email and password");
+        return;
+      }
+
+      this.updateButtonState(true, "Signing in...");
+
+      try {
+        console.log("🔄 Admin Sign In: Attempting sign in for:", email);
+
+        const result = await adminAuthManager.signIn(email, password);
+
+        if (result.success) {
+          console.log("✅ Admin Sign In: Sign in successful");
+          this.showSuccess("Sign in successful! Redirecting...");
+
+          const redirect =
+            new URLSearchParams(window.location.search).get("redirect") ||
+            "/admin/dashboard";
+
+          setTimeout(() => {
+            window.location.href = redirect;
+          }, 1000);
+        } else {
+          console.error("❌ Admin Sign In: Sign in failed:", result.error);
+          this.showError(result.error || "Sign in failed");
+        }
+      } catch (error: any) {
+        console.error("❌ Admin Sign In: Sign in exception:", error);
+        this.showError(error.message || "Sign in failed");
+      } finally {
+        this.updateButtonState(false);
+      }
+    }
+
+    private showError(message: string) {
+      if (this.errorText && this.errorMessageEl) {
+        this.errorText.textContent = message;
+        this.errorMessageEl.style.display = "flex";
+        if (this.successMessage) this.successMessage.style.display = "none";
+      }
+    }
+
+    private showSuccess(message: string) {
+      if (this.successText && this.successMessage) {
+        this.successText.textContent = message;
+        this.successMessage.style.display = "flex";
+        if (this.errorMessageEl) this.errorMessageEl.style.display = "none";
+      }
+    }
+
+    private hideMessages() {
+      if (this.errorMessageEl) this.errorMessageEl.style.display = "none";
+      if (this.successMessage) this.successMessage.style.display = "none";
+    }
+
+    private updateButtonState(
+      isLoading: boolean,
+      loadingText: string = "Signing in...",
+      defaultText: string = "Sign In"
+    ) {
+      if (!this.submitBtn) return;
+
+      const btnContent = this.submitBtn.querySelector(".btn-content");
+
+      if (btnContent) {
+        btnContent.innerHTML = isLoading
+          ? `${this.createSpinnerSVG(true)} <span class="btn-text">${loadingText}</span>`
+          : `${this.createSpinnerSVG(false)} <span class="btn-text">${defaultText}</span>`;
+      }
+
+      this.submitBtn.disabled = isLoading;
+    }
+
+    private createSpinnerSVG(isLoading: boolean, size: number = 16) {
+      return isLoading
+        ? `<svg class="animate-spin" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="12" y1="2" x2="12" y2="6"/>
+            <line x1="12" y1="18" x2="12" y2="22"/>
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+            <line x1="2" y1="12" x2="6" y2="12"/>
+            <line x1="18" y1="12" x2="22" y2="12"/>
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+          </svg>`
+        : `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+          </svg>`;
+    }
+  }
 
   // Initialize animations
   function initializeAnimations() {
-    if (!document.getElementById("tinkbyte-animations")) {
+    if (!document.getElementById("admin-signin-animations")) {
       const style = document.createElement("style");
-      style.id = "tinkbyte-animations";
+      style.id = "admin-signin-animations";
       style.textContent = `
         @keyframes spin {
           from { transform: rotate(0deg); }
@@ -297,236 +506,9 @@ import Layout from "../../layouts/Layout.astro";
     }
   }
 
-  // Create spinner SVG
-  function createSpinnerSVG(isLoading: boolean, size: number = 16) {
-    return isLoading
-      ? `<svg class="animate-spin" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <line x1="12" y1="2" x2="12" y2="6"/>
-          <line x1="12" y1="18" x2="12" y2="22"/>
-          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
-          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
-          <line x1="2" y1="12" x2="6" y2="12"/>
-          <line x1="18" y1="12" x2="22" y2="12"/>
-          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
-          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
-        </svg>`
-      : `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <line x1="22" y1="2" x2="11" y2="13"/>
-          <polygon points="22,2 15,22 11,13 2,9 22,2"/>
-        </svg>`;
-  }
-
-  // Update button state
-  function updateButtonState(
-    button: HTMLButtonElement,
-    isLoading: boolean,
-    loadingText: string = "Signing in...",
-    defaultText: string = "Sign In"
-  ) {
-    const btnContent = button.querySelector(".btn-content");
-
-    if (btnContent) {
-      btnContent.innerHTML = isLoading
-        ? `${createSpinnerSVG(true)} <span class="btn-text">${loadingText}</span>`
-        : `${createSpinnerSVG(false)} <span class="btn-text">${defaultText}</span>`;
-    }
-
-    button.disabled = isLoading;
-  }
-
-  class ClientAdminAuth {
-    static ADMIN_EMAILS = ["tinkbytehq@gmail.com"];
-    static STORAGE_KEY = "tinkbyte-admin-session";
-
-    static async signIn(email: string, password: string) {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          return { success: false, error: error.message };
-        }
-
-        if (!data.user || !data.session) {
-          return { success: false, error: "Authentication failed" };
-        }
-
-        const isAdmin = this.ADMIN_EMAILS.includes(data.user.email || "");
-
-        if (!isAdmin) {
-          await supabase.auth.signOut();
-          return {
-            success: false,
-            error: "Access denied. Admin privileges required.",
-          };
-        }
-
-        const adminUser = {
-          id: data.user.id,
-          email: data.user.email,
-          isAdmin: true,
-        };
-
-        const sessionData = {
-          user: adminUser,
-          token: data.session.access_token,
-          expiresAt: data.session.expires_at,
-        };
-
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(sessionData));
-
-        return { success: true, user: adminUser };
-      } catch (error: any) {
-        return { success: false, error: error.message || "Signin failed" };
-      }
-    }
-
-    static async getCurrentUser() {
-      try {
-        const stored = localStorage.getItem(this.STORAGE_KEY);
-        if (!stored) return null;
-
-        const session = JSON.parse(stored);
-
-        if (Date.now() > session.expiresAt * 1000) {
-          this.signOut();
-          return null;
-        }
-
-        return session.user;
-      } catch (error) {
-        this.signOut();
-        return null;
-      }
-    }
-
-    static signOut() {
-      localStorage.removeItem(this.STORAGE_KEY);
-      supabase.auth.signOut();
-    }
-  }
-
-  function initializeAdminSignin() {
-    initializeAnimations();
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const error = urlParams.get("error");
-    const message = urlParams.get("message");
-    const redirect = urlParams.get("redirect") || "/admin/dashboard";
-
-    const form = document.getElementById(
-      "admin-signin-form"
-    ) as HTMLFormElement;
-    const emailInput = document.getElementById("email") as HTMLInputElement;
-    const passwordInput = document.getElementById(
-      "password"
-    ) as HTMLInputElement;
-    const submitBtn = document.getElementById(
-      "signin-btn"
-    ) as HTMLButtonElement;
-    const errorMessageEl = document.getElementById(
-      "error-message"
-    ) as HTMLElement;
-    const errorText = document.getElementById("error-text") as HTMLElement;
-    const successMessage = document.getElementById(
-      "success-message"
-    ) as HTMLElement;
-    const successText = document.getElementById("success-text") as HTMLElement;
-
-    function showError(message: string) {
-      if (errorText && errorMessageEl) {
-        errorText.textContent = message;
-        errorMessageEl.style.display = "flex";
-        if (successMessage) successMessage.style.display = "none";
-      }
-    }
-
-    function showSuccess(message: string) {
-      if (successText && successMessage) {
-        successText.textContent = message;
-        successMessage.style.display = "flex";
-        if (errorMessageEl) errorMessageEl.style.display = "none";
-      }
-    }
-
-    function hideMessages() {
-      if (errorMessageEl) errorMessageEl.style.display = "none";
-      if (successMessage) successMessage.style.display = "none";
-    }
-
-    // Handle URL parameters
-    if (error) {
-      const errorMessages: Record<string, string> = {
-        access_denied: "Access denied. Admin privileges required.",
-        session_expired: "Your session has expired. Please sign in again.",
-        not_admin: "You don't have admin privileges.",
-      };
-      showError(errorMessages[error] || "An error occurred. Please try again.");
-    }
-
-    if (message === "signed_out") {
-      showSuccess("You have been signed out successfully.");
-    }
-
-    // Check if already signed in
-    ClientAdminAuth.getCurrentUser()
-      .then((user) => {
-        if (user && !window.location.href.includes("redirecting")) {
-          window.location.href = redirect + "?from=signin";
-          return;
-        }
-      })
-      .catch(() => {
-        // Continue with normal flow
-      });
-
-    // Form submission handler
-    if (form) {
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        hideMessages();
-
-        const email = emailInput?.value.trim();
-        const password = passwordInput?.value.trim();
-
-        if (!email || !password) {
-          showError("Please enter both email and password");
-          return;
-        }
-
-        updateButtonState(submitBtn, true, "Signing in...");
-
-        try {
-          const result = await ClientAdminAuth.signIn(email, password);
-
-          if (result.success) {
-            showSuccess("Signin successful! Redirecting...");
-            setTimeout(() => {
-              window.location.href = redirect;
-            }, 1000);
-          } else {
-            showError(result.error || "Signin failed");
-          }
-        } catch (error) {
-          showError((error as Error).message || "Signin failed");
-        } finally {
-          updateButtonState(submitBtn, false);
-        }
-      });
-    }
-
-    // Focus on email input
-    if (emailInput) {
-      emailInput.focus();
-    }
-  }
-
   // Initialize when DOM is ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initializeAdminSignin);
-  } else {
-    initializeAdminSignin();
-  }
+  document.addEventListener("DOMContentLoaded", () => {
+    initializeAnimations();
+    new AdminSignInManager();
+  });
 </script>

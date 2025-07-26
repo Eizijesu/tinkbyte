@@ -42,24 +42,34 @@ import Layout from "../../layouts/Layout.astro";
   .square-spinner-large {
     width: 48px;
     height: 48px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
+    border: 3px solid rgba(36, 55, 136, 0.2);
     border-top: 3px solid #243788;
-    animation: spin 1s linear infinite;
+    background: transparent;
     margin: 0 auto 2rem;
+    animation: square-spin 1s linear infinite;
+  }
+
+  @keyframes square-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(90deg);
+    }
+    50% {
+      transform: rotate(180deg);
+    }
+    75% {
+      transform: rotate(270deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
   }
 
   :global(.dark) .square-spinner-large {
-    border-color: rgba(180, 188, 225, 0.3);
+    border-color: rgba(180, 188, 225, 0.2);
     border-top-color: #b4bce1;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
   }
 
   h1 {
@@ -85,27 +95,27 @@ import Layout from "../../layouts/Layout.astro";
 </style>
 
 <script>
-  import { auth } from "../../lib/auth.js";
+  import { authManager } from "../../lib/auth.js";
 
   document.addEventListener("DOMContentLoaded", async () => {
     console.log("🔄 Callback: Processing authentication...");
 
     try {
-      // Initialize auth
-      await auth.initialize();
+      // Initialize auth manager
+      await authManager.initialize();
 
       // Wait a moment for auth state to settle
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Check if user is authenticated
-      const isAuthenticated = await auth.isAuthenticated();
-      const user = auth.getUser();
+      const isAuthenticated = await authManager.isAuthenticated();
+      const user = authManager.getUser();
 
       if (isAuthenticated && user) {
         console.log("🔄 Callback: User authenticated, redirecting...");
 
         // Check if user needs to set password (first time login)
-        const profile = auth.getProfile();
+        const profile = authManager.getProfile();
         if (!profile) {
           // New user, redirect to password setup
           window.location.href = "/profile?setup=password";
