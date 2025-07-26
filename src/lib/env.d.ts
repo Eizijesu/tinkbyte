@@ -40,7 +40,6 @@ interface ImportMetaEnv {
   readonly RESEND_FROM_EMAIL: string;
   
   // Giscus
-=
 
   // Site Configuration
   readonly PUBLIC_SITE_URL: string;
