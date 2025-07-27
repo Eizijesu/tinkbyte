@@ -330,7 +330,7 @@ const optimizedImageUrl = image ? getOptimizedImageUrl(image, 600, 400) : '';
             const audioContainer = audioElement.closest('.audio-player-container');
             const container = audioContainer?.parentElement;
             if (container && container instanceof HTMLElement) {
-              container.style.display = 'none';
+              (container as HTMLElement).style.display = 'none';
             }
           });
         }
