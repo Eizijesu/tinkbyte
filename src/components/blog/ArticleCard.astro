@@ -221,14 +221,6 @@ const optimizedImageUrl = image ? getOptimizedImageUrl(image, 600, 400) : '';
           controls 
           preload="metadata"
           class="w-full rounded-sm"
-          onError={() => {
-            console.log('Audio file not found:', audioUrl);
-            // Hide the audio player if file not found
-            const container = document.querySelector('.audio-player-container');
-            if (container) {
-              container.style.display = 'none';
-            }
-          }}
         >
           <source src={audioUrl} type="audio/mpeg" />
           Your browser does not support the audio element.
@@ -282,12 +274,15 @@ const optimizedImageUrl = image ? getOptimizedImageUrl(image, 600, 400) : '';
 </style>
 
 <script>
-  // FIXED: Safer script execution without document.currentScript dependency
+  // FIXED: Proper TypeScript handling without interface conflicts
   document.addEventListener('DOMContentLoaded', () => {
     try {
-      // Device capability detection with proper null safety
+      // Device capability detection with proper type safety
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const isLowEndDevice = navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4;
+      
+      // Safe hardware concurrency check without extending Navigator
+      const hardwareConcurrency = (navigator as any).hardwareConcurrency;
+      const isLowEndDevice = hardwareConcurrency && hardwareConcurrency < 4;
       const isMobile = window.innerWidth < 768;
 
       // Find article cards in a safer way
@@ -328,13 +323,13 @@ const optimizedImageUrl = image ? getOptimizedImageUrl(image, 600, 400) : '';
           articleCard.classList.add('reduced-motion');
         }
 
-        // Handle audio player errors
-        const audioElement = articleCard.querySelector('audio');
+        // Handle audio player errors with proper type checking
+        const audioElement = articleCard.querySelector('audio') as HTMLAudioElement | null;
         if (audioElement) {
-          audioElement.addEventListener('error', (e) => {
-            console.log('Audio file not found or cannot be loaded');
-            const container = audioElement.closest('.audio-player-container');
-            if (container) {
+          audioElement.addEventListener('error', () => {
+            const audioContainer = audioElement.closest('.audio-player-container');
+            const container = audioContainer?.parentElement;
+            if (container && container instanceof HTMLElement) {
               container.style.display = 'none';
             }
           });

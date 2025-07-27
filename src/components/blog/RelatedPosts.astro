@@ -402,7 +402,7 @@ const formatPost = (post: any) => {
     const relatedWrappers = document.querySelectorAll('.related-article-wrapper');
     
     relatedWrappers.forEach((wrapper, index) => {
-      wrapper.style.setProperty('--animation-delay', `${index * 0.1}s`);
+      (wrapper as HTMLElement).style.setProperty('--animation-delay', `${index * 0.1}s`);
     });
 
     // Intersection Observer for scroll animations
@@ -414,8 +414,8 @@ const formatPost = (post: any) => {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+          (entry.target as HTMLElement).style.opacity = '1';
+          (entry.target as HTMLElement).style.transform = 'translateY(0)';
           observer.unobserve(entry.target);
         }
       });
@@ -428,15 +428,14 @@ const formatPost = (post: any) => {
     // Analytics tracking for related posts
     const relatedLinks = document.querySelectorAll('.related-article-wrapper a[href^="/blog/"]');
     relatedLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        if (typeof gtag !== 'undefined') {
-          gtag('event', 'related_post_click', {
-            event_category: 'Related Posts',
-            event_label: link.href,
-            timestamp: Date.now()
-          });
-        }
-      });
+    link.addEventListener('click', () => {
+      if (typeof window !== 'undefined' && 'gtag' in window) {
+        (window as any).gtag('event', 'related_post_click', {
+          event_category: 'engagement',
+          event_label: (link as HTMLAnchorElement).href,
+        });
+      }
+    });
     });
   });
 </script>

@@ -23,7 +23,7 @@ const {
 // Filter out any undefined/empty images and ensure proper typing
 const validImages = images.filter(
   (img): img is { src: string; alt: string; caption?: string } =>
-    img && typeof img === "object" && img.src && img.alt
+    img && typeof img === "object" && Boolean(img.src) && Boolean(img.alt)
 );
 
 const layoutClasses = {

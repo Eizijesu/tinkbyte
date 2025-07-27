@@ -830,13 +830,11 @@ const getNewsletterTypeDisplay = (newsletterType: string) => {
 </style>
 
 <script>
-  // Type declarations for better TypeScript support
-  declare global {
-    interface Window {
-      gtag?: (command: string, targetId: string, config?: any) => void;
-    }
+ declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
   }
-
+}
   document.addEventListener("DOMContentLoaded", () => {
     // Get all filter tabs and newsletter cards with proper typing
     const filterTabs = document.querySelectorAll('.filter-tab') as NodeListOf<HTMLButtonElement>;

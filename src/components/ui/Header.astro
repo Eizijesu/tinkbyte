@@ -15,7 +15,7 @@ const navigationLinks = [
 ];
 
 // Try to get topics from CMS, fallback to hardcoded
-let allTopicsData, pageData, topicsData;
+let allTopicsData: any, pageData: any, topicsData: any;
 
 try {
   allTopicsData = await getCollection("allTopics");
@@ -66,7 +66,7 @@ const allTopics = topicsData || fallbackTopics;
 const featuredTopics = allTopics.slice(0, 6);
 
 // All topics for mobile (just names)
-const allTopicsMobile = allTopics.map(topic => topic.name);
+const allTopicsMobile = allTopics.map((topic: any) => topic.name);
 ---
 
 <header class="tinkbyte-header">

@@ -10,19 +10,19 @@ const allPosts = await getCollection("blog", ({ data }) => !data.draft);
 
 // Sort posts by publication date (newest first)
 const sortedPosts = allPosts.sort(
-  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+  (a: any, b: any) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
 );
 
 // Get featured posts
-const featuredPosts = sortedPosts.filter(post => post.data.featured);
+const featuredPosts = sortedPosts.filter((post: any) => post.data.featured);
 
 // Get recent posts (excluding featured ones)
 const recentPosts = sortedPosts
-  .filter(post => !post.data.featured)
-  .slice(0, 9); // Show 9 recent posts
+  .filter((post: any) => !post.data.featured)
+  .slice(0, 6);
 
 // Get categories with post counts - Complete mapping for all TinkByte topics
-const allCategories = [...new Set(allPosts.map(post => post.data.category).filter(Boolean))];
+const allCategories = [...new Set(allPosts.map((post: any) => post.data.category).filter(Boolean))];
 const categoriesWithCounts = allCategories.map(category => ({
   name: category as string,
   slug: (category as string)?.toLowerCase().replace(/\s+/g, '-') || '',

@@ -13,16 +13,7 @@
       "@/assets/*": ["src/assets/*"],
       "@/types/*": ["src/types/*", "src/lib/types/*"],
       "@/lib/*": ["src/lib/*"],
-      "@/scripts/*": ["src/scripts/*"],
-      "strict": true,
-      "noImplicitAny": false,
-      "strictNullChecks": true,
-      "strictFunctionTypes": true,
-      "strictBindCallApply": true,
-      "strictPropertyInitialization": true,
-      "noImplicitReturns": true,
-      "noFallthroughCasesInSwitch": true,
-      "noUncheckedIndexedAccess": false
+      "@/scripts/*": ["src/scripts/*"]
     },
     "types": [
       "astro/client",
@@ -34,6 +25,14 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": false,
     "skipLibCheck": true,
     "isolatedModules": true,
     "allowJs": true,
@@ -45,9 +44,6 @@
     "target": "ES2022",
     "module": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "strictNullChecks": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
     "verbatimModuleSyntax": false
   },
   "include": [

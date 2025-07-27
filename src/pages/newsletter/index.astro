@@ -1307,11 +1307,11 @@ const pageDescription =
 
 <script>
   // Type declarations for better TypeScript support
-  declare global {
-    interface Window {
-      gtag?: (command: string, targetId: string, config?: any) => void;
-    }
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
   }
+}
 
   document.addEventListener("DOMContentLoaded", () => {
     // Get all checkboxes with proper typing

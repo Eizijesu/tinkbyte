@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/[slug].astro - ENHANCED VERSION
+// src/pages/blog/[slug].astro - ENHANCED VERSION WITH PROPER TYPING
 import { type CollectionEntry, getCollection } from "astro:content";
 import BlogPost from "../../layouts/BlogPost.astro";
 
@@ -15,9 +15,61 @@ import ImageGallery from "../../components/tina/ImageGallery.astro";
 import Newsletter from "../../components/tina/Newsletter.astro";
 import TwoColumnLayout from "../../components/tina/TwoColumnLayout.astro";
 
+// Type definitions
+interface PostData {
+  title: string;
+  subtitle?: string;
+  excerpt?: string;
+  description?: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  readTime?: string;
+  tags?: string[];
+  category?: string;
+  authorInfo?: {
+    name: string;
+    role?: string;
+  };
+  heroImage?: any;
+  image?: string;
+  imageAlt?: string;
+  audioUrl?: string;
+  audioDuration?: string;
+  featured?: boolean;
+  trending?: boolean;
+  editorial?: {
+    status?: string;
+    assignedEditor?: string;
+  };
+  seo?: {
+    title?: string;
+    description?: string;
+    canonical?: string;
+  };
+  draft?: boolean;
+}
+
+interface NavigationContext {
+  currentIndex: number;
+  totalPosts: number;
+  isFirst: boolean;
+  isLast: boolean;
+}
+
+interface AnalyticsData {
+  contentType: string;
+  category: string;
+  author: string;
+  publishDate: Date;
+  wordCount: number;
+  hasAudio: boolean;
+  hasFeaturedImage: boolean;
+  tagCount: number;
+}
+
 // ENHANCED: Static path generation with better filtering and sorting
 export async function getStaticPaths() {
-  const posts = await getCollection("blog", ({ data }) => {
+  const posts = await getCollection("blog", ({ data }: { data: PostData }) => {
     // Filter out drafts and future posts
     const now = new Date();
     const postDate = new Date(data.pubDate);
@@ -32,34 +84,34 @@ export async function getStaticPaths() {
 
   // Sort posts by publication date (newest first)
   const sortedPosts = posts.sort(
-    (a, b) =>
+    (a: CollectionEntry<"blog">, b: CollectionEntry<"blog">) =>
       new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
   );
 
-  return sortedPosts.map((post) => ({
+  return sortedPosts.map((post: CollectionEntry<"blog">) => ({
     params: { slug: post.slug },
     props: {
       post,
       // Pass additional context for better performance
       allPosts: sortedPosts.length,
-      postIndex: sortedPosts.findIndex((p) => p.slug === post.slug),
+      postIndex: sortedPosts.findIndex(
+        (p: CollectionEntry<"blog">) => p.slug === post.slug
+      ),
     },
   }));
 }
 
-// ENHANCED: Type definition with additional props
-type Props = {
+// FIXED: Proper type definition - use Astro.props directly
+const { post, allPosts, postIndex } = Astro.props as {
   post: CollectionEntry<"blog">;
   allPosts: number;
   postIndex: number;
 };
 
-const { post, allPosts, postIndex } = Astro.props;
-
 // ENHANCED: Error handling for content rendering
-let Content;
-let headings = [];
-let renderError = null;
+let Content: any;
+let headings: any[] = [];
+let renderError: Error | null = null;
 
 try {
   const rendered = await post.render();
@@ -67,7 +119,7 @@ try {
   headings = rendered.headings || [];
 } catch (error) {
   console.error(`Error rendering post ${post.slug}:`, error);
-  renderError = error;
+  renderError = error as Error;
   // Create fallback content
   Content = () => `
     <div class="error-fallback">
@@ -135,7 +187,7 @@ const seoDescription = processedData.seo?.description || processedData.excerpt;
 const canonicalUrl = processedData.seo?.canonical;
 
 // ENHANCED: Article navigation context
-const navigationContext = {
+const navigationContext: NavigationContext = {
   currentIndex: postIndex,
   totalPosts: allPosts,
   isFirst: postIndex === 0,
@@ -143,10 +195,10 @@ const navigationContext = {
 };
 
 // ENHANCED: Content analytics data
-const analyticsData = {
+const analyticsData: AnalyticsData = {
   contentType: "blog-post",
   category: processedData.category,
-  author: processedData.authorInfo?.name,
+  author: processedData.authorInfo?.name || "Unknown",
   publishDate: processedData.date,
   wordCount: post.body?.split(/\s+/).length || 0,
   hasAudio: !!processedData.audioUrl,
@@ -283,7 +335,10 @@ const showEditorialInfo =
 </BlogPost>
 
 <!-- ENHANCED: Performance monitoring script -->
-<script define:vars={{ analyticsData, navigationContext, isInDevelopment }}>
+<script
+  is:inline
+  define:vars={{ analyticsData, navigationContext, isInDevelopment }}
+>
   // Performance monitoring
   if (typeof window !== "undefined") {
     window.addEventListener("load", () => {

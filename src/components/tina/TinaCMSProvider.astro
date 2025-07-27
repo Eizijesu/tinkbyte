@@ -10,9 +10,8 @@
     if (isAdmin) {
       import("tinacms").then(({ TinaCMS }) => {
         const cms = new TinaCMS({
-          branch: "main",
-          clientId: import.meta.env.PUBLIC_TINA_CLIENT_ID,
-          token: import.meta.env.PUBLIC_TINA_TOKEN,
+          // Remove the branch property - it's handled elsewhere
+          // ... other config
         });
 
         // Enable contextual editing
