@@ -1,14 +1,20 @@
 ---
-// src/components/ui/ThemeToggle.astro - Fixed Global Declaration
+// src/components/ui/ThemeToggle.astro - WITH SYSTEM SUPPORT
 ---
 
 <button
   data-theme-toggle
   class="theme-toggle"
-  aria-label="Toggle dark mode"
-  title="Toggle dark mode"
+  aria-label="Toggle theme (Light, Dark, System)"
+  title="Toggle theme"
 >
-  <svg class="sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- Light mode icon -->
+  <svg
+    class="sun-icon theme-icon"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
     <path
       stroke-linecap="round"
       stroke-linejoin="round"
@@ -16,7 +22,14 @@
       d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
     ></path>
   </svg>
-  <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+  <!-- Dark mode icon -->
+  <svg
+    class="moon-icon theme-icon"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
     <path
       stroke-linecap="round"
       stroke-linejoin="round"
@@ -24,6 +37,28 @@
       d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
     ></path>
   </svg>
+
+  <!-- System mode icon -->
+  <svg
+    class="system-icon theme-icon"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+    ></path>
+  </svg>
+
+  <!-- Theme indicator text (optional) -->
+  <span class="theme-indicator" id="theme-indicator">
+    <span class="theme-text light-text">Light</span>
+    <span class="theme-text dark-text">Dark</span>
+    <span class="theme-text system-text">Auto</span>
+  </span>
 </button>
 
 <style>
@@ -32,7 +67,6 @@
     border: 2px solid transparent;
     cursor: pointer;
     padding: 0.5rem;
-    border-radius: 0; /* Square corners for TinkByte design */
     color: #6b7280;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -70,50 +104,127 @@
     outline-color: #b4bce1;
   }
 
-  .theme-toggle svg {
+  .theme-icon {
     width: 1.25rem;
     height: 1.25rem;
     position: absolute;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* Default state - show system icon */
   .sun-icon {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
-  }
-
-  .moon-icon {
     opacity: 0;
     transform: rotate(90deg) scale(0.8);
   }
 
-  :global(.dark) .sun-icon {
+  .moon-icon {
     opacity: 0;
     transform: rotate(-90deg) scale(0.8);
   }
 
-  :global(.dark) .moon-icon {
+  .system-icon {
     opacity: 1;
     transform: rotate(0deg) scale(1);
   }
 
+  /* Light theme active */
+  :global([data-theme="light"]) .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+
+  :global([data-theme="light"]) .moon-icon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.8);
+  }
+
+  :global([data-theme="light"]) .system-icon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.8);
+  }
+
+  /* Dark theme active */
+  :global([data-theme="dark"]) .sun-icon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.8);
+  }
+
+  :global([data-theme="dark"]) .moon-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+
+  :global([data-theme="dark"]) .system-icon {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.8);
+  }
+
+  /* Theme indicator text (hidden by default, can be shown if needed) */
+  .theme-indicator {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .theme-toggle:hover .theme-indicator {
+    opacity: 1;
+  }
+
+  .theme-text {
+    display: none;
+  }
+
+  :global([data-theme="light"]) .light-text {
+    display: block;
+  }
+
+  :global([data-theme="dark"]) .dark-text {
+    display: block;
+  }
+
+  :global([data-theme="system"]) .system-text {
+    display: block;
+  }
+
   /* Enhanced transition synchronization */
   :global(.theme-transitioning) .theme-toggle,
-  :global(.theme-transitioning) .theme-toggle svg {
+  :global(.theme-transitioning) .theme-toggle .theme-icon {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
 </style>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const themeToggle = document.querySelector("[data-theme-toggle]") as HTMLButtonElement | null;
+    const themeToggle = document.querySelector(
+      "[data-theme-toggle]"
+    ) as HTMLButtonElement | null;
 
     if (!themeToggle) return;
 
+    // Theme options: light, dark, system
+    const themes = ["light", "dark", "system"] as const;
+    type Theme = (typeof themes)[number];
+
+    // Function to get system preference
+    const getSystemTheme = (): "light" | "dark" => {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    };
+
     // Function to apply theme with smooth transition
-    const applyTheme = (theme: string, withTransition = true) => {
+    const applyTheme = (theme: Theme, withTransition = true) => {
       const root = document.documentElement;
-      
+
       if (withTransition) {
         // Use the global transition manager if available
         if ((window as any).themeTransitionManager) {
@@ -121,7 +232,7 @@
         } else {
           // Fallback: Add transition class to coordinate all theme changes
           root.classList.add("theme-transitioning");
-          
+
           // Remove transition class after animation completes
           setTimeout(() => {
             root.classList.remove("theme-transitioning");
@@ -129,46 +240,94 @@
         }
       }
 
-      // Small delay to ensure transition starts before theme change
-      setTimeout(() => {
-        if (theme === "dark") {
-          root.classList.add("dark");
-        } else {
-          root.classList.remove("dark");
-        }
+      // Set data attribute for icon state
+      root.setAttribute("data-theme", theme);
 
-        localStorage.setItem("theme", theme);
-      }, withTransition ? 10 : 0);
+      // Small delay to ensure transition starts before theme change
+      setTimeout(
+        () => {
+          // Apply actual theme class
+          if (theme === "system") {
+            const systemTheme = getSystemTheme();
+            if (systemTheme === "dark") {
+              root.classList.add("dark");
+            } else {
+              root.classList.remove("dark");
+            }
+          } else if (theme === "dark") {
+            root.classList.add("dark");
+          } else {
+            root.classList.remove("dark");
+          }
+
+          // Update theme-color meta tag
+          const themeColorMeta = document.querySelector(
+            'meta[name="theme-color"]'
+          );
+          if (themeColorMeta) {
+            const isDark =
+              theme === "dark" ||
+              (theme === "system" && getSystemTheme() === "dark");
+            themeColorMeta.setAttribute(
+              "content",
+              isDark ? "#0f172a" : "#ffffff"
+            );
+          }
+
+          localStorage.setItem("theme", theme);
+        },
+        withTransition ? 10 : 0
+      );
     };
 
     // Initialize theme without transition on page load
-    const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
-    
+    const savedTheme = localStorage.getItem("theme") as Theme | null;
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    const initialTheme: Theme = savedTheme || "system";
+
     applyTheme(initialTheme, false);
 
-    // Toggle theme with smooth transition
+    // Cycle through themes on click
     themeToggle.addEventListener("click", () => {
-      const isDark = document.documentElement.classList.contains("dark");
-      const newTheme = isDark ? "light" : "dark";
-      applyTheme(newTheme, true);
+      const currentTheme = (localStorage.getItem("theme") as Theme) || "system";
+      const currentIndex = themes.indexOf(currentTheme);
+      const nextIndex = (currentIndex + 1) % themes.length;
+      const nextTheme = themes[nextIndex];
+
+      applyTheme(nextTheme, true);
+
+      // Update aria-label for accessibility
+      const themeLabels = {
+        light: "Switch to dark theme",
+        dark: "Switch to system theme",
+        system: "Switch to light theme",
+      };
+      themeToggle.setAttribute("aria-label", themeLabels[nextTheme]);
     });
 
-    // Listen for system theme changes
+    // Listen for system theme changes when in system mode
     window
       .matchMedia("(prefers-color-scheme: dark)")
       .addEventListener("change", (e) => {
-        if (!localStorage.getItem("theme")) {
-          applyTheme(e.matches ? "dark" : "light", true);
+        const currentTheme = localStorage.getItem("theme") as Theme;
+        if (currentTheme === "system") {
+          applyTheme("system", true);
         }
       });
 
     // Expose toggle function globally for compatibility
     (window as any).toggleTheme = () => {
-      const isDark = document.documentElement.classList.contains("dark");
-      const newTheme = isDark ? "light" : "dark";
-      applyTheme(newTheme, true);
+      themeToggle.click();
     };
+
+    // Keyboard shortcut (Ctrl/Cmd + Shift + T for theme)
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "T") {
+        e.preventDefault();
+        themeToggle.click();
+      }
+    });
   });
 </script>

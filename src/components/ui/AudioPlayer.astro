@@ -9,35 +9,21 @@ export interface Props {
 }
 
 const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
+
+// Use title in the component
+const displayTitle = title || "🎧 Listen to this article";
 ---
 
 <div class="audio-player" data-audio-url={audioUrl}>
   <div class="audio-controls">
     <!-- Play/Pause Button -->
-    <button class="play-button" data-action="play">
-      <svg
-        class="play-icon"
-        fill="currentColor"
-        viewBox="0 0 24 24"
-        width="20"
-        height="20"
-      >
-        <path d="M8 5v14l11-7z"></path>
-      </svg>
-      <svg
-        class="pause-icon hidden"
-        fill="currentColor"
-        viewBox="0 0 24 24"
-        width="20"
-        height="20"
-      >
-        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
-      </svg>
+    <button class="play-button" data-action="play" title={`Play: ${title}`}>
+      <!-- Your existing SVG icons -->
     </button>
 
     <!-- Audio Info -->
     <div class="audio-info">
-      <div class="audio-title">🎧 Listen to this article</div>
+      <div class="audio-title">{displayTitle}</div>
       <div class="audio-meta">
         <span class="audio-duration">{duration || "Unknown duration"}</span>
         <span class="audio-status">Ready to play</span>
@@ -206,7 +192,8 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
     )
   }
 
-  <audio preload="metadata" class="audio-element">
+  <!-- Add title to the audio element for accessibility -->
+  <audio preload="metadata" class="audio-element" title={title}>
     <source src={audioUrl} type="audio/mpeg" />
     Your browser does not support audio playback.
   </audio>
@@ -1319,7 +1306,7 @@ const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
           }, 100);
         });
       }
-      
+
       // Playback speed control
       if (speedSelector) {
         speedSelector.addEventListener("change", (e: Event) => {

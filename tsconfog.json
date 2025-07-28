@@ -21,7 +21,10 @@
       "@types/node"
     ],
     "typeRoots": ["./node_modules/@types", "./src/types", "./src/lib/types"],
-    "moduleResolution": "node",
+    
+    
+    "moduleResolution": "bundler",
+    
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "strict": true,

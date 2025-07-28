@@ -53,8 +53,8 @@ const { title, description, preloadData = true } = Astro.props;
   </head>
 
   <script>
-  import { adminAPIManager } from "../lib/admin-api.js";
-  import { adminAuthManager } from "../lib/admin/auth.js";
+    import { adminAPIManager } from "../lib/admin-api.js";
+    import { adminAuthManager } from "../lib/admin/auth.js";
 
     // Global admin layout management
     class AdminLayout {
@@ -370,23 +370,20 @@ const { title, description, preloadData = true } = Astro.props;
 
       private async handleSignOut(): Promise<void> {
         try {
+          console.log("🔄 Layout: Starting sign out...");
+
           this.showGlobalLoading("Signing out...");
 
-          // Clear session
-          localStorage.removeItem("tinkbyte-admin-session");
-
-          // Small delay for UX
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          // Redirect to sign in
-          window.location.href = "/auth/admin-signin?message=signed_out";
+          // ✅ REDIRECT IMMEDIATELY TO SIGN OUT PAGE
+          window.location.href = "/auth/admin-signout";
         } catch (error) {
-          console.error("Sign out error:", error);
+          console.error("❌ Layout sign out error:", error);
           this.hideGlobalLoading();
-          this.showNotification("Failed to sign out properly", "error");
+
+          // ✅ FALLBACK: Direct redirect
+          window.location.href = "/auth/admin-signout";
         }
       }
-
       // Public methods for other scripts to use
       public showGlobalLoading(message: string = "Loading..."): void {
         const loadingElement = document.getElementById("global-loading");

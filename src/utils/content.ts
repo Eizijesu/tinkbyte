@@ -3,6 +3,8 @@ import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 
 export type BlogPost = CollectionEntry<'blog'>;
+export type Newsletter = CollectionEntry<'newsletter'>;
+export type Category = CollectionEntry<'categories'>;
 
 /**
  * Get tag color based on tag slug - Complete TinkByte mapping
@@ -126,6 +128,92 @@ export function getTagColor(tagSlug: string): string {
   };
   
   return colorMap[tagSlug] || 'blue';
+}
+
+/**
+ * Get published posts (alias for getAllPosts for RSS compatibility)
+ */
+export async function getPublishedPosts(): Promise<BlogPost[]> {
+  return getAllPosts(); // Use your existing getAllPosts function
+}
+
+/**
+ * Newsletter types
+ */
+
+/**
+ * Get published newsletters
+ */
+export async function getPublishedNewsletters(): Promise<Newsletter[]> {
+  const newsletters = await getCollection('newsletter', ({ data }) => 
+    data.status === 'published'
+  );
+  
+  return newsletters.sort((a, b) => 
+    new Date(b.data.publishDate).getTime() - new Date(a.data.publishDate).getTime()
+  );
+}
+
+/**
+ * Get newsletters by type
+ */
+export async function getNewslettersByType(type: string, limit?: number): Promise<Newsletter[]> {
+  const newsletters = await getPublishedNewsletters();
+  const filtered = newsletters.filter(newsletter => newsletter.data.newsletterType === type);
+  return limit ? filtered.slice(0, limit) : filtered;
+}
+
+/**
+ * Get all categories with stats
+ */
+export async function getAllCategoriesWithStats(): Promise<Array<Category & { stats: { lastUpdated: Date; articleCount: number } }>> {
+  const posts = await getPublishedPosts();
+  const categories = await getCollection('categories');
+  
+  return categories.map(category => {
+    const categoryPosts = posts.filter(post => post.data.category === category.slug);
+    const lastPost = categoryPosts[0];
+    
+    return {
+      ...category,
+      stats: {
+        articleCount: categoryPosts.length,
+        lastUpdated: lastPost ? new Date(lastPost.data.pubDate) : new Date(),
+      }
+    };
+  });
+}
+
+/**
+ * Get category name
+ */
+export function getCategoryName(categorySlug: string): string {
+  // Use your existing getCategoryColor logic but for names
+  const categoryNames: Record<string, string> = {
+    'build-thinking': 'Build Thinking',
+    'learning-by-doing': 'Learning by Doing',
+    'fail-iterate-ship': 'Fail / Iterate / Ship',
+    'product-lessons': 'Product Lessons',
+    'startup-insight': 'Startup Insight',
+    'product-strategy': 'Product Strategy',
+    'ai-evolution': 'AI Evolution',
+    'developer-stack-tools': 'Developer Stack & Tools',
+    'research-bites': 'Research Bites',
+    'system-thinking': 'System Thinking',
+    'the-interface': 'The Interface',
+    'tech-culture': 'Tech Culture',
+    'global-perspective': 'Global Perspective',
+    'community-innovation': 'Community Innovation',
+    'career-stacks': 'Career Stacks',
+    'future-stacks': 'Future Stacks',
+    'business-models-monetization': 'Business Models & Monetization',
+    'creator-economy': 'Creator Economy',
+    'consumer-behavior-attention': 'Consumer Behavior & Attention',
+    'ecosystem-shifts-market-maps': 'Ecosystem Shifts & Market Maps',
+    'people-systems': 'People Systems',
+  };
+  
+  return categoryNames[categorySlug] || categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 /**

@@ -219,24 +219,37 @@ class AdminAuthManager {
     }
   }
 
-  async signOut(): Promise<void> {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(AdminAuthManager.STORAGE_KEY);
-      }
-      
-      if (this.sessionCheckInterval) {
-        clearInterval(this.sessionCheckInterval);
-        this.sessionCheckInterval = null;
-      }
-      
-      await supabase.auth.signOut();
-      this.currentUser = null;
-      console.log('✅ Admin signout successful');
-    } catch (error) {
-      console.error('❌ Signout error:', error);
+async signOut(): Promise<void> {
+  try {
+    console.log("🔄 Starting admin sign out...");
+    
+    // Clear local storage first
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(AdminAuthManager.STORAGE_KEY);
+    }
+    
+    // Clear intervals
+    if (this.sessionCheckInterval) {
+      clearInterval(this.sessionCheckInterval);
+      this.sessionCheckInterval = null;
+    }
+    
+    // Clear current user
+    this.currentUser = null;
+    
+    // Sign out from Supabase
+    await supabase.auth.signOut();
+    
+    console.log('✅ Admin signout completed');
+  } catch (error) {
+    console.error('❌ Signout error:', error);
+    // Even on error, ensure local state is cleared
+    this.currentUser = null;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(AdminAuthManager.STORAGE_KEY);
     }
   }
+}
 
   async requireAdmin() {
     if (!this.initialized) {

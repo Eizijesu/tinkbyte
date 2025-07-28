@@ -1,9 +1,10 @@
 ---
-// src/layouts/ProfileLayout.astro - SINGLETON VERSION
+// src/layouts/ProfileLayout.astro - FIXED WITH NOTIFICATION DOT & BETTER FOOTER
 import "../styles/global.css";
 import Logo from "../components/ui/Logo.astro";
 import NotificationBell from "../components/ui/NotificationBell.astro";
 import FeedbackWidget from "../components/ui/FeedbackWidget.astro";
+import ThemeToggle from "../components/ui/ThemeToggle.astro";
 
 export interface Props {
   title: string;
@@ -20,7 +21,6 @@ const { title, description } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
-
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -32,29 +32,28 @@ const { title, description } = Astro.props;
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
-
     <script is:inline>
       const savedTheme = localStorage.getItem("theme");
       const prefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)"
       ).matches;
-      const theme = savedTheme || (prefersDark ? "dark" : "light");
+      const theme = savedTheme || "system";
 
-      if (theme === "dark") {
+      if (theme === "dark" || (theme === "system" && prefersDark)) {
         document.documentElement.classList.add("dark");
       } else {
         document.documentElement.classList.remove("dark");
       }
 
+      document.documentElement.setAttribute("data-theme", theme);
       localStorage.setItem("theme", theme);
     </script>
   </head>
-
   <body class="h-full">
-    <!-- Loading Overlay -->
+    <!-- Loading Overlay with Square Spinner -->
     <div class="auth-loading" id="auth-loading">
       <div class="loading-content">
-        <div class="loading-spinner"></div>
+        <div class="loading-spinner-square"></div>
         <p>Checking authentication...</p>
       </div>
     </div>
@@ -65,20 +64,27 @@ const { title, description } = Astro.props;
       <nav class="top-nav">
         <div class="nav-container">
           <Logo size="default" />
-
           <div class="nav-secondary">
             <div class="user-menu">
-              <!-- Profile Avatar as Clickable Element -->
+              <!-- FIXED: Profile Avatar with Notification Dot -->
               <button class="user-avatar-btn" id="user-menu" type="button">
-                <img
-                  id="nav-avatar"
-                  src="/images/avatars/preset-1.svg"
-                  alt="User Avatar"
-                  class="nav-avatar"
-                />
+                <div class="avatar-wrapper">
+                  <img
+                    id="nav-avatar"
+                    src="/images/avatars/preset-1.svg"
+                    alt="User Avatar"
+                    class="nav-avatar"
+                  />
+                  <!-- FIXED: Added notification dot -->
+                  <div
+                    class="notification-dot"
+                    id="profile-notification-dot"
+                    style="display: none;"
+                  >
+                  </div>
+                </div>
                 <i class="fas fa-chevron-down avatar-dropdown-arrow"></i>
               </button>
-
               <div class="user-dropdown" id="user-dropdown">
                 <div class="dropdown-header">
                   <img
@@ -95,10 +101,12 @@ const { title, description } = Astro.props;
                 </div>
                 <div class="dropdown-divider"></div>
                 <a href="/profile" class="dropdown-item">
-                  <i class="fas fa-user"></i> My Profile
+                  <i class="fas fa-user"></i>
+                  My Profile
                 </a>
                 <a href="/profile/account" class="dropdown-item">
-                  <i class="fas fa-cog"></i> Account
+                  <i class="fas fa-cog"></i>
+                  Account
                 </a>
                 <div class="dropdown-divider"></div>
                 <button
@@ -106,7 +114,8 @@ const { title, description } = Astro.props;
                   id="logout-btn"
                   type="button"
                 >
-                  <i class="fas fa-sign-out-alt"></i> Sign out
+                  <i class="fas fa-sign-out-alt"></i>
+                  Sign out
                 </button>
               </div>
             </div>
@@ -151,24 +160,35 @@ const { title, description } = Astro.props;
         </div>
       </main>
 
-      <!-- Footer -->
+      <!-- FIXED: Footer with Better Layout -->
       <footer class="profile-footer">
         <div class="footer-container">
           <div class="footer-content">
+            <!-- FIXED: Better brand section with more content -->
             <div class="footer-brand">
-              <Logo size="small" />
-              <p>&copy; 2025 TinkByte. Built for builders, by builders.</p>
+              <div class="brand-info">
+                <Logo size="small" />
+                <p>&copy; 2025 TinkByte. Built for builders, by builders.</p>
+              </div>
             </div>
 
-            <div class="footer-links">
-              <div class="footer-section">
-                <h4>Connect</h4>
-                <div class="social-links">
+            <!-- FIXED: Combined links and social section -->
+            <div class="footer-actions">
+              <!-- Legal Links -->
+              <div class="footer-links">
+                <a href="/contact">Contact</a>
+                <a href="/terms">Terms</a>
+              </div>
+
+              <!-- FIXED: Social Links with Theme Toggle - Single Row -->
+              <div class="social-section">
+                <div class="social-links-with-theme">
                   <a
                     href="https://twitter.com/tinkbytehq"
                     target="_blank"
                     rel="noopener"
                     class="social-link"
+                    aria-label="Follow TinkByte on Twitter"
                   >
                     <i class="fab fa-twitter"></i>
                   </a>
@@ -177,6 +197,7 @@ const { title, description } = Astro.props;
                     target="_blank"
                     rel="noopener"
                     class="social-link"
+                    aria-label="Follow TinkByte on LinkedIn"
                   >
                     <i class="fab fa-linkedin"></i>
                   </a>
@@ -185,6 +206,7 @@ const { title, description } = Astro.props;
                     target="_blank"
                     rel="noopener"
                     class="social-link"
+                    aria-label="Follow TinkByte on YouTube"
                   >
                     <i class="fab fa-youtube"></i>
                   </a>
@@ -193,43 +215,17 @@ const { title, description } = Astro.props;
                     target="_blank"
                     rel="noopener"
                     class="social-link"
+                    aria-label="Follow TinkByte on Instagram"
                   >
                     <i class="fab fa-instagram"></i>
                   </a>
-                  <a href="/rss.xml" class="social-link">
+                  <a href="/rss.xml" class="social-link" aria-label="RSS Feed">
                     <i class="fas fa-rss"></i>
                   </a>
-                </div>
-              </div>
-
-              <div class="footer-section">
-                <h4>Legal</h4>
-                <a href="/contact">Contact</a>
-                <a href="/terms">Terms</a>
-              </div>
-            </div>
-
-            <div class="footer-theme">
-              <h4>Theme</h4>
-              <div class="theme-dropdown">
-                <button class="theme-toggle" id="theme-toggle">
-                  <i class="fas fa-desktop theme-icon"></i>
-                  <span class="theme-text">System</span>
-                  <i class="fas fa-chevron-down theme-arrow"></i>
-                </button>
-                <div class="theme-options" id="theme-options">
-                  <button class="theme-option" data-theme="light">
-                    <i class="fas fa-sun"></i>
-                    <span>Light</span>
-                  </button>
-                  <button class="theme-option" data-theme="dark">
-                    <i class="fas fa-moon"></i>
-                    <span>Dark</span>
-                  </button>
-                  <button class="theme-option" data-theme="system">
-                    <i class="fas fa-desktop"></i>
-                    <span>System</span>
-                  </button>
+                  <!-- FIXED: Theme Toggle as Social Icon -->
+                  <div class="theme-toggle-wrapper">
+                    <ThemeToggle />
+                  </div>
                 </div>
               </div>
             </div>
@@ -237,6 +233,7 @@ const { title, description } = Astro.props;
         </div>
       </footer>
     </div>
+
     <FeedbackWidget
       position="bottom-right"
       theme="auto"
@@ -276,30 +273,8 @@ const { title, description } = Astro.props;
     background: #0f172a;
     color: #f8fafc;
   }
-  /* Auth Loading Overlay - SQUARE SPINNER */
-  .loading-spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid #e2e8f0;
-    border-top: 3px solid #243788;
-    border-radius: 0; /* SQUARE - not round */
-    animation: spin 1s linear infinite;
-  }
 
-  html.dark .loading-spinner {
-    border-color: #334155;
-    border-top-color: #b4bce1;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-  /* Auth Loading Overlay */
+  /* Auth Loading Overlay with SQUARE SPINNER */
   .auth-loading {
     position: fixed;
     top: 0;
@@ -325,16 +300,17 @@ const { title, description } = Astro.props;
     gap: 1rem;
   }
 
-  .loading-spinner {
+  /* Square Loading Spinner - NOT ROUND */
+  .loading-spinner-square {
     width: 32px;
     height: 32px;
     border: 3px solid #e2e8f0;
     border-top: 3px solid #243788;
-    border-radius: 50%;
+    border-radius: 0; /* SQUARE - not round */
     animation: spin 1s linear infinite;
   }
 
-  html.dark .loading-spinner {
+  html.dark .loading-spinner-square {
     border-color: #334155;
     border-top-color: #b4bce1;
   }
@@ -396,7 +372,7 @@ const { title, description } = Astro.props;
     gap: 1rem;
   }
 
-  /* User Menu - Mobile Optimized */ /* User Menu - Avatar-Based */
+  /* FIXED: User Menu with Notification Dot */
   .user-menu {
     position: relative;
   }
@@ -426,6 +402,14 @@ const { title, description } = Astro.props;
     background: rgba(180, 188, 225, 0.05);
   }
 
+  /* FIXED: Avatar wrapper for notification dot positioning */
+  .avatar-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   /* Square Navigation Avatar */
   .nav-avatar {
     width: 40px;
@@ -448,6 +432,36 @@ const { title, description } = Astro.props;
 
   html.dark .user-avatar-btn:hover .nav-avatar {
     border-color: #b4bce1;
+  }
+
+  /* FIXED: Notification Dot for Profile Avatar */
+  .notification-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background: #ef4444;
+    border: 2px solid white;
+    border-radius: 50%;
+    animation: pulse-notification 2s infinite;
+    z-index: 2;
+  }
+
+  html.dark .notification-dot {
+    border-color: #0f172a;
+  }
+
+  @keyframes pulse-notification {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.15);
+    }
   }
 
   /* Small Dropdown Arrow on Avatar */
@@ -655,29 +669,6 @@ const { title, description } = Astro.props;
     }
   }
 
-  .dropdown-item:hover {
-    background: #f8fafc;
-    border-left-color: #243788;
-    color: #243788;
-    transform: translateX(4px);
-  }
-
-  html.dark .dropdown-item {
-    color: #e2e8f0;
-  }
-
-  html.dark .dropdown-item:hover {
-    background: #334155;
-    border-left-color: #b4bce1;
-    color: #b4bce1;
-  }
-
-  .logout-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
-    border-left-color: #ef4444;
-    color: #ef4444;
-  }
-
   /* Profile Navigation - Mobile First */
   .profile-nav-container {
     background: white;
@@ -860,7 +851,7 @@ const { title, description } = Astro.props;
     padding: 0 1rem;
   }
 
-  /* Footer - Mobile First */
+  /* FIXED: Better Footer Layout - Mobile First */
   .profile-footer {
     background: #0f172a;
     border-top: 2px solid #1e293b;
@@ -874,67 +865,86 @@ const { title, description } = Astro.props;
     padding: 0 1rem;
   }
 
+  /* FIXED: Better footer content layout */
   .footer-content {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    align-items: start;
+    gap: 1.5rem;
+    align-items: center;
+    text-align: center;
   }
 
+  /* FIXED: Brand section with better spacing */
   .footer-brand {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 1rem;
     width: 100%;
+  }
+
+  .brand-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
   }
 
   .footer-brand p {
     color: #64748b;
     font-size: 0.875rem;
     margin: 0;
+    text-align: center;
   }
 
-  .footer-links {
+  /* FIXED: Footer actions section - combines links and social */
+  .footer-actions {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    align-items: center;
+    gap: 1.5rem;
     width: 100%;
   }
 
-  .footer-section {
+  /* FIXED: Footer links - inline */
+  .footer-links {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    gap: 2rem;
+    align-items: center;
+    justify-content: center;
   }
 
-  .footer-section h4 {
-    color: #f8fafc;
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    margin: 0 0 0.75rem 0;
-  }
-
-  .footer-section a {
+  .footer-links a {
     color: #94a3b8;
     text-decoration: none;
     font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
     transition: color 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 2px solid transparent;
   }
 
-  .footer-section a:hover {
+  .footer-links a:hover {
     color: #b4bce1;
+    border-bottom-color: #b4bce1;
   }
 
-  /* Social Links - Mobile First */
-  .social-links {
+  /* FIXED: Social section with proper alignment */
+  .social-section {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* FIXED: Social Links with Theme Toggle - Single Row, Better Spacing */
+  .social-links-with-theme {
     display: flex;
     gap: 0.75rem;
-    margin-top: 0.5rem;
+    align-items: center;
+    justify-content: center;
     flex-wrap: wrap;
   }
 
@@ -942,13 +952,35 @@ const { title, description } = Astro.props;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
     background: #1e293b;
     color: #94a3b8;
     text-decoration: none;
     transition: all 0.3s ease;
     border: 1px solid #334155;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .social-link::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(36, 55, 136, 0.2),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  .social-link:hover::before {
+    left: 100%;
   }
 
   .social-link:hover {
@@ -961,112 +993,77 @@ const { title, description } = Astro.props;
 
   .social-link i {
     font-size: 1rem;
-  }
-
-  /* Theme Dropdown - Mobile First */
-  .footer-theme h4 {
-    color: #f8fafc;
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    margin: 0 0 0.75rem 0;
-  }
-
-  .theme-dropdown {
     position: relative;
-    width: 100%;
+    z-index: 1;
   }
 
-  .theme-toggle {
+  /* FIXED: Theme Toggle Wrapper - Perfect Match with Social Icons */
+  .theme-toggle-wrapper {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: #1e293b;
-    border: 2px solid #334155;
-    color: #94a3b8;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    font-family: inherit;
-    width: 100%;
+    justify-content: center;
   }
 
-  .theme-toggle:hover {
-    border-color: #b4bce1;
-    color: #b4bce1;
-    background: rgba(180, 188, 225, 0.05);
+  /* FIXED: Override theme toggle styles to match social icons exactly */
+  .theme-toggle-wrapper :global(.theme-toggle) {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border: 1px solid #334155 !important;
+    padding: 0 !important;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease !important;
   }
 
-  .theme-arrow {
-    margin-left: auto;
-    font-size: 0.75rem;
-    transition: transform 0.2s ease;
+  .theme-toggle-wrapper :global(.theme-toggle svg) {
+    width: 1rem !important;
+    height: 1rem !important;
   }
 
-  .theme-dropdown.open .theme-arrow {
-    transform: rotate(180deg);
-  }
-
-  .theme-options {
+  .theme-toggle-wrapper :global(.theme-toggle::before) {
+    content: "";
     position: absolute;
-    bottom: 100%;
-    left: 0;
-    right: 0;
-    background: #0f172a;
-    border: 2px solid #334155;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.2s ease;
-    z-index: 1000;
-    margin-bottom: 0.5rem;
-  }
-
-  .theme-options.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-
-  .theme-option {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: transparent;
-    border: none;
-    color: #94a3b8;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    font-family: inherit;
+    top: 0;
+    left: -100%;
     width: 100%;
-    text-align: left;
-    border-left: 3px solid transparent;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(36, 55, 136, 0.2),
+      transparent
+    );
+    transition: left 0.5s ease;
   }
 
-  .theme-option:hover {
-    background: rgba(180, 188, 225, 0.05);
-    color: #b4bce1;
-    border-left-color: #b4bce1;
-    transform: translateX(4px);
+  .theme-toggle-wrapper :global(.theme-toggle:hover::before) {
+    left: 100%;
   }
 
-  .theme-option.active {
-    color: #b4bce1;
-    background: rgba(180, 188, 225, 0.1);
-    border-left-color: #b4bce1;
+  .theme-toggle-wrapper :global(.theme-toggle:hover) {
+    background: #243788 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    border-color: #243788 !important;
+    box-shadow: 0 4px 12px rgba(36, 55, 136, 0.3);
   }
 
-  /* Tablet Styles (768px and up) */
+  :global(.dark) .theme-toggle-wrapper :global(.theme-toggle) {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border-color: #334155 !important;
+  }
+
+  :global(.dark) .theme-toggle-wrapper :global(.theme-toggle:hover) {
+    background: #b4bce1 !important;
+    color: #0f172a !important;
+    border-color: #b4bce1 !important;
+    box-shadow: 0 4px 12px rgba(180, 188, 225, 0.3);
+  }
+
+  /* FIXED: Tablet Styles - Better Layout */
   @media (min-width: 768px) {
     .nav-container {
       height: 4.5rem;
@@ -1075,16 +1072,6 @@ const { title, description } = Astro.props;
 
     .nav-secondary {
       gap: 1.5rem;
-    }
-
-    .username {
-      display: block;
-      font-size: 0.875rem;
-    }
-
-    .user-display {
-      padding: 0.5rem 0.75rem;
-      font-size: 0.875rem;
     }
 
     .dropdown-header img {
@@ -1157,30 +1144,34 @@ const { title, description } = Astro.props;
       padding: 3rem 0 2rem 0;
     }
 
+    /* FIXED: Tablet footer layout - horizontal */
     .footer-content {
-      display: grid;
-      grid-template-columns: 2fr 1fr auto;
-      gap: 3rem;
-      align-items: start;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      text-align: left;
     }
 
     .footer-brand {
-      width: auto;
+      align-items: flex-start;
+      text-align: left;
+      flex: 1;
     }
 
-    .footer-links {
-      display: flex;
+    .brand-info {
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .footer-brand p {
+      text-align: left;
+    }
+
+    .footer-actions {
       flex-direction: row;
-      gap: 3rem;
+      align-items: center;
+      gap: 2rem;
       width: auto;
-    }
-
-    .theme-dropdown {
-      width: 140px;
-    }
-
-    .theme-toggle {
-      width: 100%;
     }
 
     .social-link i {
@@ -1205,16 +1196,72 @@ const { title, description } = Astro.props;
     .profile-footer {
       margin-top: 4rem;
     }
+
+    .footer-actions {
+      gap: 3rem;
+    }
+  }
+
+  /* FIXED: Mobile fine-tuning - No line breaks */
+  @media (max-width: 640px) {
+    .footer-content {
+      gap: 1rem;
+    }
+
+    .footer-actions {
+      gap: 1rem;
+    }
+
+    .footer-links {
+      gap: 1.5rem;
+    }
+
+    .social-links-with-theme {
+      gap: 0.5rem;
+    }
+
+    .social-link {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .social-link i {
+      font-size: 0.875rem;
+    }
+
+    .theme-toggle-wrapper :global(.theme-toggle) {
+      width: 2rem !important;
+      height: 2rem !important;
+    }
+
+    .theme-toggle-wrapper :global(.theme-toggle svg) {
+      width: 0.875rem !important;
+      height: 0.875rem !important;
+    }
+  }
+
+  /* FIXED: Extra small screens */
+  @media (max-width: 380px) {
+    .footer-links {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .social-links-with-theme {
+      gap: 0.375rem;
+    }
   }
 </style>
 
 <script>
   import { authManager } from "../lib/auth.js";
+  import { TinkByteAPI } from "../lib/supabase.js";
 
+  // FIXED: Profile Layout Manager with Notification Dot Support
   class ProfileLayoutManager {
     private initialized = false;
-    private authManager = authManager;
     private unsubscribeAuth: (() => void) | null = null;
+    private notificationInterval: NodeJS.Timeout | null = null;
 
     constructor() {
       this.init();
@@ -1234,19 +1281,18 @@ const { title, description } = Astro.props;
         }
 
         // Initialize auth manager
-        await this.authManager.initialize();
+        await authManager.initialize();
 
         // Check authentication
-        if (!(await this.authManager.isAuthenticated())) {
+        if (!(await authManager.isAuthenticated())) {
           console.log("❌ Not authenticated, redirecting to signin");
           window.location.href = "/auth/signin";
           return;
         }
 
         // Get user data
-        const user = this.authManager.getUser();
-        const profile = this.authManager.getProfile();
-
+        const user = authManager.getUser();
+        const profile = authManager.getProfile();
         console.log("✅ User authenticated:", user?.email);
 
         // Show app and update UI
@@ -1255,17 +1301,20 @@ const { title, description } = Astro.props;
         this.setupEventListeners();
         this.setupOtherElements();
 
-        // Listen for auth changes
-        this.unsubscribeAuth = this.authManager.onAuthChange(
-          (user, profile) => {
-            if (!user) {
-              console.log("🔄 User signed out, redirecting...");
-              window.location.href = "/auth/signin";
-            } else {
-              this.updateUI(user, profile);
-            }
+        // FIXED: Setup notification system
+        this.setupNotificationSystem();
+
+        // Improved auth change listener with proper cleanup
+        this.unsubscribeAuth = authManager.onAuthChange((user, profile) => {
+          if (!user) {
+            console.log("🔄 User signed out, redirecting...");
+            // Clean up before redirect
+            this.cleanup();
+            window.location.href = "/auth/signin";
+          } else {
+            this.updateUI(user, profile);
           }
-        );
+        });
 
         this.initialized = true;
         console.log("✅ ProfileLayout: Initialization complete");
@@ -1279,15 +1328,14 @@ const { title, description } = Astro.props;
     private showMainApp() {
       const authLoading = document.getElementById("auth-loading");
       const mainApp = document.getElementById("main-app");
-
       if (authLoading) authLoading.style.display = "none";
       if (mainApp) mainApp.style.display = "flex";
     }
 
     private updateUI(user: any, profile: any) {
       try {
-        const displayName = this.authManager.getDisplayName();
-        const avatarUrl = this.authManager.getAvatarUrl();
+        const displayName = authManager.getDisplayName();
+        const avatarUrl = authManager.getAvatarUrl();
 
         // Update navigation elements
         const navAvatar = document.getElementById(
@@ -1310,11 +1358,60 @@ const { title, description } = Astro.props;
       }
     }
 
+    // FIXED: Setup notification system for profile layout
+    private async setupNotificationSystem(): Promise<void> {
+      try {
+        const isAuthenticated = await authManager.isAuthenticated();
+        if (!isAuthenticated) return;
+
+        // Load initial notification count and show/hide dot
+        await this.loadNotificationCount();
+
+        // Poll for new notifications every 30 seconds
+        this.notificationInterval = setInterval(() => {
+          this.loadNotificationCount();
+        }, 30000);
+
+        console.log("✅ ProfileLayout: Notification system initialized");
+      } catch (error) {
+        console.error(
+          "❌ ProfileLayout: Error setting up notification system:",
+          error
+        );
+      }
+    }
+
+    // FIXED: Load notification count and update dot
+    private async loadNotificationCount(): Promise<void> {
+      try {
+        const result = await TinkByteAPI.getUnreadNotificationCount();
+
+        if (result.success) {
+          const count = result.count || 0;
+          const hasNotifications = count > 0;
+
+          // Update profile notification dot
+          const profileNotificationDot = document.getElementById(
+            "profile-notification-dot"
+          );
+          if (profileNotificationDot) {
+            profileNotificationDot.style.display = hasNotifications
+              ? "block"
+              : "none";
+          }
+        }
+      } catch (error) {
+        console.error(
+          "❌ ProfileLayout: Error loading notification count:",
+          error
+        );
+      }
+    }
+
     private setupEventListeners() {
       this.setupLogout();
       this.setupUserMenu();
       this.setupMobileNav();
-      this.setupThemeDropdown();
       this.setActiveNavItem();
       this.setupProfileUpdateListener();
     }
@@ -1323,38 +1420,24 @@ const { title, description } = Astro.props;
       const logoutBtn = document.getElementById(
         "logout-btn"
       ) as HTMLButtonElement;
-
       if (logoutBtn) {
         logoutBtn.addEventListener("click", async (e) => {
           e.preventDefault();
-
           if (confirm("Are you sure you want to sign out?")) {
             try {
-              // Store original content BEFORE modifying
               const originalContent = logoutBtn.innerHTML;
-
               logoutBtn.innerHTML =
                 '<i class="fas fa-spinner fa-spin"></i> Signing out...';
               logoutBtn.disabled = true;
 
-              // Use singleton auth manager
-              await this.authManager.signOut();
+              // Proper cleanup before signout
+              this.cleanup();
+              await authManager.signOut();
 
               // Redirect will happen automatically via auth change listener
               window.location.href = "/";
             } catch (error) {
               console.error("❌ ProfileLayout: Signout error:", error);
-
-              // Restore button state using the stored original content
-              const originalContent = logoutBtn.innerHTML.includes(
-                "Signing out"
-              )
-                ? '<i class="fas fa-sign-out-alt"></i> Sign out'
-                : logoutBtn.innerHTML;
-
-              logoutBtn.innerHTML = originalContent;
-              logoutBtn.disabled = false;
-
               // Force redirect anyway
               window.location.href = "/";
             }
@@ -1404,7 +1487,6 @@ const { title, description } = Astro.props;
         mobileNavToggle.addEventListener("click", (e) => {
           e.stopPropagation();
           navItems.classList.toggle("show");
-
           const icon = mobileNavToggle.querySelector("i");
           if (icon) {
             if (navItems.classList.contains("show")) {
@@ -1429,93 +1511,6 @@ const { title, description } = Astro.props;
       }
     }
 
-    private setupThemeDropdown() {
-      const themeToggle = document.getElementById(
-        "theme-toggle"
-      ) as HTMLButtonElement;
-      const themeOptions = document.getElementById(
-        "theme-options"
-      ) as HTMLElement;
-      const themeDropdown = themeToggle?.parentElement;
-      const themeOptionButtons = document.querySelectorAll(
-        ".theme-option"
-      ) as NodeListOf<HTMLButtonElement>;
-      const themeIcon = document.querySelector(".theme-icon") as HTMLElement;
-      const themeText = document.querySelector(".theme-text") as HTMLElement;
-
-      const currentTheme = localStorage.getItem("theme") || "system";
-      this.updateThemeDisplay(currentTheme, themeIcon, themeText);
-
-      if (themeToggle && themeOptions && themeDropdown) {
-        themeToggle.addEventListener("click", (e) => {
-          e.stopPropagation();
-          themeDropdown.classList.toggle("open");
-          themeOptions.classList.toggle("show");
-        });
-
-        document.addEventListener("click", () => {
-          themeDropdown.classList.remove("open");
-          themeOptions.classList.remove("show");
-        });
-
-        themeOptionButtons.forEach((option) => {
-          const theme = option.getAttribute("data-theme");
-          if (theme === currentTheme) {
-            option.classList.add("active");
-          }
-
-          option.addEventListener("click", () => {
-            themeOptionButtons.forEach((opt) => opt.classList.remove("active"));
-            option.classList.add("active");
-
-            if (theme === "dark") {
-              document.documentElement.classList.add("dark");
-              localStorage.setItem("theme", "dark");
-            } else if (theme === "light") {
-              document.documentElement.classList.remove("dark");
-              localStorage.setItem("theme", "light");
-            } else {
-              const prefersDark = window.matchMedia(
-                "(prefers-color-scheme: dark)"
-              ).matches;
-              if (prefersDark) {
-                document.documentElement.classList.add("dark");
-              } else {
-                document.documentElement.classList.remove("dark");
-              }
-              localStorage.setItem("theme", "system");
-            }
-
-            this.updateThemeDisplay(theme || "system", themeIcon, themeText);
-            themeDropdown.classList.remove("open");
-            themeOptions.classList.remove("show");
-          });
-        });
-      }
-    }
-
-    private updateThemeDisplay(
-      theme: string,
-      themeIcon: HTMLElement,
-      themeText: HTMLElement
-    ) {
-      if (!themeIcon || !themeText) return;
-
-      switch (theme) {
-        case "light":
-          themeIcon.className = "fas fa-sun theme-icon";
-          themeText.textContent = "Light";
-          break;
-        case "dark":
-          themeIcon.className = "fas fa-moon theme-icon";
-          themeText.textContent = "Dark";
-          break;
-        default:
-          themeIcon.className = "fas fa-desktop theme-icon";
-          themeText.textContent = "System";
-      }
-    }
-
     private setActiveNavItem() {
       const currentPath = window.location.pathname;
       const navItems = document.querySelectorAll(
@@ -1525,7 +1520,6 @@ const { title, description } = Astro.props;
       navItems.forEach((item) => {
         const href = item.getAttribute("href");
         item.classList.remove("active");
-
         if (
           href &&
           (href === currentPath ||
@@ -1540,35 +1534,62 @@ const { title, description } = Astro.props;
     private setupProfileUpdateListener() {
       window.addEventListener("profile-updated", (event: any) => {
         console.log("🔄 ProfileLayout: Profile updated, refreshing UI");
-        const user = this.authManager.getUser();
-        const profile = this.authManager.getProfile();
+        const user = authManager.getUser();
+        const profile = authManager.getProfile();
         this.updateUI(user, profile);
       });
     }
 
     private setupOtherElements() {
       // Setup any other elements that don't require authentication
-      this.setupThemeDropdown();
       this.setActiveNavItem();
     }
 
-    // Cleanup method
-    destroy() {
-      if (this.unsubscribeAuth) {
-        this.unsubscribeAuth();
-        this.unsubscribeAuth = null;
+    // FIXED: Proper cleanup method
+    private cleanup() {
+      try {
+        if (this.unsubscribeAuth) {
+          this.unsubscribeAuth();
+          this.unsubscribeAuth = null;
+        }
+
+        if (this.notificationInterval) {
+          clearInterval(this.notificationInterval);
+          this.notificationInterval = null;
+        }
+
+        this.initialized = false;
+        console.log("✅ ProfileLayout: Cleanup completed");
+      } catch (error) {
+        console.error("❌ ProfileLayout: Error during cleanup:", error);
       }
-      this.initialized = false;
+    }
+
+    // Public cleanup method
+    destroy() {
+      this.cleanup();
+    }
+
+    // FIXED: Public method to refresh notification count
+    public async refreshNotificationCount(): Promise<void> {
+      await this.loadNotificationCount();
     }
   }
 
   // Initialize when DOM is ready
   document.addEventListener("DOMContentLoaded", () => {
-    new ProfileLayoutManager();
-  });
+    const profileManager = new ProfileLayoutManager();
 
-  // Cleanup on page unload
-  window.addEventListener("beforeunload", () => {
-    // Any cleanup if needed
+    // Proper cleanup on page unload
+    window.addEventListener("beforeunload", () => {
+      profileManager.destroy();
+    });
+
+    window.addEventListener("pagehide", () => {
+      profileManager.destroy();
+    });
+
+    // Make globally available for notification updates
+    (window as any).profileLayoutManager = profileManager;
   });
 </script>

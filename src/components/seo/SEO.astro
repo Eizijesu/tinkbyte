@@ -1,0 +1,332 @@
+---
+// src/components/seo/SEO.astro - FIXED TYPESCRIPT ERRORS
+import { SITE } from "../../config/site";
+
+export interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  image?: string;
+  imageAlt?: string;
+  type?: 'website' | 'article' | 'profile';
+  publishedTime?: string;
+  modifiedTime?: string;
+  author?: string;
+  tags?: string[];
+  category?: string;
+  newsletter?: string;
+  noindex?: boolean;
+  nofollow?: boolean;
+  article?: {
+    publishedTime: string;
+    modifiedTime?: string;
+    author: string;
+    section?: string;
+    tags?: string[];
+    readingTime?: string;
+  };
+  breadcrumbs?: Array<{
+    name: string;
+    url: string;
+  }>;
+}
+
+const props = Astro.props;
+
+// Enhanced title generation
+const pageTitle = props.title === SITE.title ? props.title : `${props.title || SITE.title} | ${SITE.name}`;
+const finalDescription = props.description || SITE.description;
+const finalCanonical = props.canonical || Astro.url.href;
+const finalImage = props.image ? 
+  (props.image.startsWith('http') ? props.image : SITE.url + props.image) : 
+  SITE.url + SITE.defaultImage;
+const finalImageAlt = props.imageAlt || props.title || SITE.title;
+const finalType = props.type || 'website';
+const finalAuthor = props.author || SITE.author;
+const finalTags = props.tags || [];
+const finalNoindex = props.noindex || false;
+const finalNofollow = props.nofollow || false;
+const finalBreadcrumbs = props.breadcrumbs || [];
+
+// Generate structured data
+const generateStructuredData = () => {
+  const baseStructuredData: Record<string, any> = {
+    "@context": "https://schema.org",
+    "@type": finalType === 'article' ? 'Article' : 'WebPage',
+    headline: props.title || SITE.title,
+    description: finalDescription,
+    url: finalCanonical,
+    image: {
+      "@type": "ImageObject",
+      url: finalImage,
+      width: 1200,
+      height: 630,
+      alt: finalImageAlt
+    },
+    publisher: {
+      "@type": "Organization",
+      name: SITE.name,
+      logo: {
+        "@type": "ImageObject",
+        url: SITE.url + SITE.logo,
+        width: 400,
+        height: 400
+      },
+      url: SITE.url,
+      sameAs: [
+        `https://twitter.com/${SITE.social.twitter.replace('@', '')}`,
+        `https://linkedin.com/${SITE.social.linkedin}`,
+        `https://github.com/${SITE.social.github}`,
+        `https://youtube.com/${SITE.social.youtube.replace('@', '')}`,
+        `https://instagram.com/${SITE.social.instagram.replace('@', '')}`,
+        `https://substack.com/${SITE.social.substack}`,
+        `https://medium.com/${SITE.social.medium}`,
+        `https://dev.to/${SITE.social.devto}`
+      ]
+    },
+    potentialAction: {
+      "@type": "ReadAction",
+      target: finalCanonical
+    }
+  };
+
+  // Add article-specific structured data
+  if (finalType === 'article' && props.article) {
+    baseStructuredData["@type"] = "Article";
+    baseStructuredData.author = {
+      "@type": "Person",
+      name: props.article.author,
+      url: `${SITE.url}/authors/${props.article.author.toLowerCase().replace(/\s+/g, '-')}`
+    };
+    baseStructuredData.datePublished = props.article.publishedTime;
+    baseStructuredData.dateModified = props.article.modifiedTime || props.article.publishedTime;
+    baseStructuredData.articleSection = props.article.section || props.category;
+    baseStructuredData.keywords = props.article.tags?.join(', ') || finalTags.join(', ');
+    baseStructuredData.wordCount = props.article.readingTime ? parseInt(props.article.readingTime) * 200 : undefined;
+    baseStructuredData.mainEntityOfPage = {
+      "@type": "WebPage",
+      "@id": finalCanonical
+    };
+  }
+
+  // Add breadcrumbs if provided
+  if (finalBreadcrumbs.length > 0) {
+    baseStructuredData.breadcrumb = {
+      "@type": "BreadcrumbList",
+      itemListElement: finalBreadcrumbs.map((crumb, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: crumb.name,
+        item: crumb.url
+      }))
+    };
+  }
+
+  return baseStructuredData;
+};
+
+const structuredData = generateStructuredData();
+
+// Generate robots meta
+const robotsContent = () => {
+  const robots: string[] = [];
+  if (finalNoindex) robots.push('noindex');
+  if (finalNofollow) robots.push('nofollow');
+  if (robots.length === 0) robots.push('index', 'follow');
+  return robots.join(', ');
+};
+
+---
+
+<!-- Primary Meta Tags -->
+<title>{pageTitle}</title>
+<meta name="title" content={pageTitle} />
+<meta name="description" content={finalDescription} />
+<meta name="author" content={finalAuthor} />
+<meta name="robots" content={robotsContent()} />
+<link rel="canonical" href={finalCanonical} />
+
+<!-- Enhanced Meta Tags -->
+<meta name="language" content={SITE.locale} />
+<meta name="revisit-after" content="7 days" />
+<meta name="rating" content="general" />
+<meta name="distribution" content="global" />
+<meta name="theme-color" content={SITE.brand.primary} />
+<meta name="msapplication-TileColor" content={SITE.brand.primary} />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="format-detection" content="telephone=no" />
+
+<!-- Category and Tags -->
+{props.category && <meta name="article:section" content={props.category} />}
+{props.newsletter && <meta name="newsletter" content={props.newsletter} />}
+{finalTags.length > 0 && <meta name="keywords" content={finalTags.join(', ')} />}
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content={finalType} />
+<meta property="og:url" content={finalCanonical} />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={finalDescription} />
+<meta property="og:image" content={finalImage} />
+<meta property="og:image:alt" content={finalImageAlt} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:locale" content={SITE.locale} />
+
+<!-- Article specific Open Graph -->
+{finalType === 'article' && props.article && (
+  <>
+    <meta property="article:published_time" content={props.article.publishedTime} />
+    {props.article.modifiedTime && <meta property="article:modified_time" content={props.article.modifiedTime} />}
+    <meta property="article:author" content={props.article.author} />
+    {props.article.section && <meta property="article:section" content={props.article.section} />}
+    {props.article.tags?.map(tag => <meta property="article:tag" content={tag} />)}
+  </>
+)}
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:url" content={finalCanonical} />
+<meta property="twitter:title" content={pageTitle} />
+<meta property="twitter:description" content={finalDescription} />
+<meta property="twitter:image" content={finalImage} />
+<meta property="twitter:image:alt" content={finalImageAlt} />
+<meta property="twitter:site" content={SITE.social.twitter} />
+<meta property="twitter:creator" content={SITE.social.twitter} />
+
+<!-- Additional Social Meta -->
+<meta property="linkedin:owner" content={SITE.social.linkedin} />
+<meta name="pinterest-rich-pin" content="true" />
+
+<!-- Favicon and Icons -->
+<link rel="icon" type="image/svg+xml" href={SITE.favicon} />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color={SITE.brand.primary} />
+
+<!-- RSS and Feeds -->
+<link rel="alternate" type="application/rss+xml" title={`${SITE.name} RSS Feed`} href="/rss.xml" />
+<link rel="alternate" type="application/atom+xml" title={`${SITE.name} Atom Feed`} href="/atom.xml" />
+<link rel="alternate" type="application/json" title={`${SITE.name} JSON Feed`} href="/feed.json" />
+
+<!-- Newsletter Feeds -->
+<link rel="alternate" type="application/rss+xml" title="TinkByte Weekly" href="/newsletters/tinkbyte-weekly/rss.xml" />
+<link rel="alternate" type="application/rss+xml" title="Build Sheet" href="/newsletters/build-sheet/rss.xml" />
+<link rel="alternate" type="application/rss+xml" title="StackDown" href="/newsletters/stackdown/rss.xml" />
+
+<!-- Preconnect to external domains -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="preconnect" href="https://api.tinkbyte.com" />
+<link rel="preconnect" href="https://cdn.tinkbyte.com" />
+
+<!-- DNS Prefetch -->
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+<link rel="dns-prefetch" href="//fonts.gstatic.com" />
+<link rel="dns-prefetch" href="//api.tinkbyte.com" />
+<link rel="dns-prefetch" href="//cdn.tinkbyte.com" />
+
+<!-- Structured Data -->
+<script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+
+<!-- Additional Structured Data for Organization -->
+<script is:inline type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: SITE.name,
+  url: SITE.url,
+  logo: SITE.url + SITE.logo,
+  description: SITE.description,
+  foundingDate: "2024",
+  contactPoint: {
+    "@type": "ContactPoint",
+    email: SITE.social.email,
+    contactType: "customer service"
+  },
+  sameAs: [
+    `https://twitter.com/${SITE.social.twitter.replace('@', '')}`,
+    `https://linkedin.com/${SITE.social.linkedin}`,
+    `https://github.com/${SITE.social.github}`,
+    `https://youtube.com/${SITE.social.youtube.replace('@', '')}`,
+    `https://instagram.com/${SITE.social.instagram.replace('@', '')}`,
+    `https://substack.com/${SITE.social.substack}`,
+    `https://medium.com/${SITE.social.medium}`,
+    `https://dev.to/${SITE.social.devto}`
+  ]
+})} />
+
+<!-- Website Structured Data -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE.name,
+  url: SITE.url,
+  description: SITE.description,
+  inLanguage: SITE.locale,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${SITE.url}/search?q={search_term_string}`
+    },
+    "query-input": "required name=search_term_string"
+  },
+  publisher: {
+    "@type": "Organization",
+    name: SITE.name,
+    logo: {
+      "@type": "ImageObject",
+      url: SITE.url + SITE.logo
+    }
+  }
+})} />
+
+<!-- Google Analytics -->
+{SITE.analytics.googleAnalytics && (
+  <>
+    <script async src={`https://www.googletagmanager.com/gtag/js?id=${SITE.analytics.googleAnalytics}`}></script>
+    <script is:inline define:vars={{ 
+      GA_ID: SITE.analytics.googleAnalytics, 
+      pageTitle: pageTitle, 
+      canonical: finalCanonical, 
+      category: props.category || "general", 
+      newsletter: props.newsletter || "website" 
+    }}>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', GA_ID, {
+        page_title: pageTitle,
+        page_location: canonical,
+        content_group1: category,
+        content_group2: newsletter,
+        custom_map: {
+          'dimension1': 'article_category',
+          'dimension2': 'newsletter_type',
+          'dimension3': 'reading_time'
+        }
+      });
+    </script>
+  </>
+)}
+
+<!-- Plausible Analytics -->
+{SITE.analytics.plausible && (
+  <script defer data-domain={SITE.analytics.plausible} src="https://plausible.io/js/script.js"></script>
+)}
+
+<!-- Cloudflare Web Analytics -->
+{SITE.analytics.cloudflareAnalytics && (
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "your-cloudflare-token"}'></script>
+)}
+
+<!-- Security Headers -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://plausible.io https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.tinkbyte.com https://www.google-analytics.com https://plausible.io;" />
+<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+<meta http-equiv="X-Frame-Options" content="DENY" />
+<meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />

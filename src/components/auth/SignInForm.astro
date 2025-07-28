@@ -280,7 +280,7 @@
   }
 
   .option-link {
-    color: #243788;
+    color: #dfe1ec;
     font-size: 0.8125rem;
     text-decoration: none;
     font-family: inherit;
@@ -605,10 +605,21 @@
       const urlParams = new URLSearchParams(window.location.search);
       this.redirectTo = urlParams.get("redirect") || "/profile";
       const prefillEmail = urlParams.get("email") || "";
+      const message = urlParams.get("message");
 
       if (prefillEmail) {
         const emailInput = document.getElementById("email") as HTMLInputElement;
         if (emailInput) emailInput.value = prefillEmail;
+      }
+
+      // Handle password reset success message
+      if (message === "password-reset-complete") {
+        setTimeout(() => {
+          this.showToast(
+            "Password reset successful! You can now sign in with your new password.",
+            "success"
+          );
+        }, 500);
       }
     }
 

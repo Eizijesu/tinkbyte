@@ -1,47 +1,97 @@
 // public/scripts/comments.js
 console.log('TinkByte Comments loading...');
 
+const DEBUG = false;
 
-  const DEBUG = false;
+// Debug logging function
+function debugLog(...args) {
+  if (DEBUG) console.log(...args);
+}
 
-  // Debug logging function
-  function debugLog(...args) {
-    if (DEBUG) console.log(...args);
+// ✅ IMPORT YOUR SINGLETON DIRECTLY
+async function getSupabaseSingleton() {
+  try {
+    // Import your singleton
+    const { supabase } = await import('/src/lib/supabase.js');
+    console.log('✅ Supabase singleton imported directly');
+    return supabase;
+  } catch (error) {
+    console.error('❌ Failed to import Supabase singleton:', error);
+    // Fallback to window if import fails
+    return window.supabase;
   }
+}
 
-  // Additional delay for static sites
-  setTimeout(() => {
-    if (window.tinkbyteComments) {
-      debugLog('🔄DOM fully loaded, updating permissions...');
-      window.tinkbyteComments.updateAllCommentPermissions();
+// Wait for auth modules to be ready
+function waitForAuth() {
+  return new Promise((resolve, reject) => {
+    // Check if auth is already available
+    if (window.authManager && window.supabase) {
+      console.log('✅ Auth modules already available');
+      resolve({
+        authManager: window.authManager,
+        supabase: window.supabase
+      });
+      return;
     }
-  }, 1000);
 
-// Also listen for window load
-  window.addEventListener('load', () => {
+    // Listen for the authReady event from your layout
+    const authReadyHandler = (event) => {
+      console.log('✅ Auth ready event received');
+      window.removeEventListener('authReady', authReadyHandler);
+      resolve({
+        authManager: event.detail.authManager,
+        supabase: event.detail.supabase
+      });
+    };
+
+    window.addEventListener('authReady', authReadyHandler);
+
+    // Fallback timeout
     setTimeout(() => {
-      if (window.tinkbyteComments) {
-        debugLog('🔄Window fully loaded, final permission update...');
-        window.tinkbyteComments.updateAllCommentPermissions();
+      window.removeEventListener('authReady', authReadyHandler);
+      
+      // Try one more time to get from window
+      if (window.authManager && window.supabase) {
+        console.log('✅ Auth found via fallback');
+        resolve({
+          authManager: window.authManager,
+          supabase: window.supabase
+        });
+      } else {
+        console.error('❌ Auth modules not available after timeout');
+        reject(new Error('Auth modules not available'));
       }
-    }, 500);
+    }, 5000); // 5 second timeout
   });
+}
 
+// Initialize comments when DOM and auth are ready
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('🚀 Initializing TinkByte Comments (Static Mode)');
   
   try {
-    // Import Supabase with fallback paths for static deployment
-    const imports = await importSupabase();
-    
-    // *** FIX: Create the instance and assign it to a variable ***
-    const commentSystem = new TinkByteCommentSystem(imports.supabase, imports.TinkByteAPI, imports.AuthState);
+    // Wait for auth modules to be available
+    console.log('⏳ Waiting for auth modules...');
+    const { authManager, supabase } = await waitForAuth();
+    console.log('✅ Auth modules received');
 
-    // *** FIX: Now expose it to window ***
+    // Create comment system instance
+    const commentSystem = new TinkByteCommentSystem(authManager, supabase);
+
+    // Expose to window
     if (typeof window !== 'undefined') {
       window.tinkbyteComments = commentSystem;
       console.log('✅ Comment system exposed to window.tinkbyteComments');
     }
+
+    // Additional permission updates for static sites
+    setTimeout(() => {
+      if (window.tinkbyteComments) {
+        debugLog('🔄 DOM fully loaded, updating permissions...');
+        window.tinkbyteComments.updateAllCommentPermissions();
+      }
+    }, 1000);
 
   } catch (error) {
     console.error('❌ Failed to initialize comments:', error);
@@ -49,27 +99,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-
-// Static-compatible import with fallbacks
-async function importSupabase() {
-  const importPaths = [
-    '/src/lib/supabase.js',
-    '/src/lib/supabase.js?v=' + Date.now(),
-    new URL('/src/lib/supabase.js', window.location.origin).href
-  ];
-
-  for (const path of importPaths) {
-    try {
-      const imports = await import(path);
-      console.log('✅ Supabase imported from:', path);
-      return imports;
-    } catch (error) {
-      console.log('❌ Failed path:', path);
+// Also listen for window load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (window.tinkbyteComments) {
+      debugLog('🔄 Window fully loaded, final permission update...');
+      window.tinkbyteComments.updateAllCommentPermissions();
     }
-  }
-  
-  throw new Error('Could not import Supabase');
-}
+  }, 500);
+});
 
 function showInitializationError() {
   const errorDiv = document.createElement('div');
@@ -88,13 +126,11 @@ function showInitializationError() {
 }
 
 class TinkByteCommentSystem {
-  constructor(supabase, TinkByteAPI, AuthState) {
+  constructor(authManager, supabase) {
+    this.authManager = authManager;
     this.supabase = supabase;
-    this.TinkByteAPI = TinkByteAPI;
-    this.AuthState = AuthState;
-    this.authState = AuthState.getInstance();
-
-   
+    
+    this.authState = authManager.authState || null;
     
     // State management
     this.currentUser = null;
@@ -102,7 +138,7 @@ class TinkByteCommentSystem {
     this.articleId = null;
     this.isAuthenticated = false;
     this.authInitialized = false;
-    this.authPromise = null; // Cache the auth promise for performance
+    this.authPromise = null;
 
     this.environment = 'production';
     
@@ -122,7 +158,7 @@ class TinkByteCommentSystem {
     this.currentEmojiTextarea = null;
     this.emojiPickerVisible = false;
     
-    // MENTION PROPERTIES ***
+    // Mention properties
     this.currentMentionDropdown = null;
     this.currentMentionTextarea = null;
     this.currentMentionStart = -1;
@@ -130,7 +166,7 @@ class TinkByteCommentSystem {
     this.mentionInputHandler = null;
     this.mentionKeyHandler = null;
   
-    // *** PAGINATION PROPERTIES ***
+    // Pagination properties
     this.commentsPerPage = 5;
     this.currentPage = 1;
     this.totalComments = 0;
@@ -140,7 +176,52 @@ class TinkByteCommentSystem {
     this.init();
   }
 
-  // ADD THIS METHOD HERE - inside the class
+  async init() {
+    try {
+      console.log('🔄 Initializing comment system...');
+      
+      // Initialize auth
+      if (this.authManager && this.authManager.initialize) {
+        await this.authManager.initialize();
+        console.log('✅ Auth manager initialized');
+        
+        // Get current user
+        this.currentUser = this.authManager.getUser();
+        this.profile = this.authManager.getProfile();
+        this.isAuthenticated = !!this.currentUser;
+        
+        console.log('🔐 Auth status:', {
+          isAuthenticated: this.isAuthenticated,
+          userId: this.currentUser?.id,
+          profile: !!this.profile
+        });
+      }
+      
+      // Set up auth change listener
+      if (this.authManager && this.authManager.onAuthChange) {
+        this.authManager.onAuthChange((user, profile) => {
+          console.log('🔄 Auth state changed:', { user: !!user, profile: !!profile });
+          this.currentUser = user;
+          this.profile = profile;
+          this.isAuthenticated = !!user;
+          this.updateAllCommentPermissions();
+        });
+      }
+      
+      this.authInitialized = true;
+      console.log('✅ Comment system initialized successfully');
+      
+      // Update permissions after initialization
+      setTimeout(() => {
+        this.updateAllCommentPermissions();
+      }, 500);
+      
+    } catch (error) {
+      console.error('❌ Error initializing comment system:', error);
+    }
+  }
+
+  // Method to wait for comments to render
   waitForCommentsToRender(callback, maxAttempts = 10, attempt = 1) {
     const commentCards = document.querySelectorAll('.comment-card[data-comment-id], .reply-card[data-comment-id]');
     
@@ -161,93 +242,152 @@ class TinkByteCommentSystem {
     }, 200);
   }
 
-updateCommentDataAttributes() {
-  debugLog('🔄 Updating comment data attributes after auth...');
-  
-  if (!this.currentUser) {
-    debugLog('❌ No current user, skipping data attribute update');
-    return;
-  }
-  
-  // Find all comment cards that might be missing user data
-  const commentCards = document.querySelectorAll('.comment-card[data-comment-id], .reply-card[data-comment-id]');
-  
-  commentCards.forEach(card => {
-    const commentId = card.dataset.commentId;
-    const currentUserId = card.dataset.userId;
-    
-    // If the data-user-id is empty/null/undefined, try to get it from the comment data
-    if (!currentUserId || currentUserId.trim() === '' || currentUserId === 'null' || currentUserId === 'undefined') {
-      debugLog(`⚠️ Comment ${commentId} has invalid user_id, attempting to fix...`);
-      
-      // Try to get comment data from the server to fix the attribute
-      this.fixCommentDataAttribute(commentId, card);
+  updateAllCommentPermissions() {
+    if (!this.authInitialized) {
+      console.log('⏳ Auth not initialized yet, skipping permission update');
+      return;
     }
-  });
-}
 
-// Method to fix individual comment data attributes
-async fixCommentDataAttribute(commentId, commentCard) {
-  try {
-    console.log(`🔧 Attempting to fix data attributes for comment: ${commentId}`);
+    console.log('🔄 Updating all comment permissions...');
     
-    // Get comment data from server
-    const { data, error } = await this.supabase
-      .from('comments')
-      .select('user_id, created_at')
-      .eq('id', commentId)
-      .eq('environment', environment)
-      .single();
+    // Wait for comments to render, then update permissions
+    this.waitForCommentsToRender(() => {
+      const commentCards = document.querySelectorAll('.comment-card[data-comment-id], .reply-card[data-comment-id]');
+      
+      commentCards.forEach(card => {
+        const commentId = card.dataset.commentId;
+        if (commentId) {
+          this.updateCommentPermissions(commentId);
+        }
+      });
+      
+      console.log(`✅ Updated permissions for ${commentCards.length} comments`);
+    });
+  }
+
+  updateCommentPermissions(commentId) {
+    if (!commentId) return;
     
-    if (error) {
-      console.error(`❌ Error fetching comment ${commentId}:`, error);
+    const commentCard = document.querySelector(`[data-comment-id="${commentId}"]`);
+    if (!commentCard) {
+      debugLog(`⚠️ Comment card not found for ID: ${commentId}`);
+      return;
+    }
+
+    const editBtn = commentCard.querySelector('.edit-comment-btn');
+    const deleteBtn = commentCard.querySelector('.delete-comment-btn');
+    const replyBtn = commentCard.querySelector('.reply-btn');
+
+    // Show/hide reply button based on auth status
+    if (replyBtn) {
+      replyBtn.style.display = this.isAuthenticated ? 'inline-flex' : 'none';
+    }
+
+    // Handle edit/delete buttons
+    if (editBtn || deleteBtn) {
+      const isOwner = this.isCommentOwner(commentCard);
+      
+      if (editBtn) {
+        editBtn.style.display = isOwner ? 'inline-flex' : 'none';
+      }
+      
+      if (deleteBtn) {
+        deleteBtn.style.display = isOwner ? 'inline-flex' : 'none';
+      }
+    }
+  }
+
+  isCommentOwner(commentCard) {
+    if (!this.currentUser || !commentCard) return false;
+    
+    const commentUserId = commentCard.dataset.userId;
+    const currentUserId = this.currentUser.id;
+    
+    debugLog(`🔍 Checking ownership: comment user ${commentUserId} vs current user ${currentUserId}`);
+    
+    return commentUserId === currentUserId;
+  }
+
+  updateCommentDataAttributes() {
+    debugLog('🔄 Updating comment data attributes after auth...');
+    
+    if (!this.currentUser) {
+      debugLog('❌ No current user, skipping data attribute update');
       return;
     }
     
-    if (data) {
-      console.log(`✅ Found comment data for ${commentId}:`, data);
+    const commentCards = document.querySelectorAll('.comment-card[data-comment-id], .reply-card[data-comment-id]');
+    
+    commentCards.forEach(card => {
+      const commentId = card.dataset.commentId;
+      const currentUserId = card.dataset.userId;
       
-      // Update the data attributes
-      if (data.user_id) {
-        commentCard.setAttribute('data-user-id', data.user_id);
-        commentCard.dataset.userId = data.user_id;
-        console.log(`✅ Updated user_id for comment ${commentId}: ${data.user_id}`);
+      if (!currentUserId || currentUserId.trim() === '' || currentUserId === 'null' || currentUserId === 'undefined') {
+        debugLog(`⚠️ Comment ${commentId} has invalid user_id, attempting to fix...`);
+        this.fixCommentDataAttribute(commentId, card);
+      }
+    });
+  }
+
+  async fixCommentDataAttribute(commentId, commentCard) {
+    try {
+      console.log(`🔧 Attempting to fix data attributes for comment: ${commentId}`);
+      
+      const { data, error } = await this.supabase
+        .from('comments')
+        .select('user_id, created_at')
+        .eq('id', commentId)
+        .eq('environment', this.environment)
+        .single();
+      
+      if (error) {
+        console.error(`❌ Error fetching comment ${commentId}:`, error);
+        return;
       }
       
-      if (data.created_at) {
-        commentCard.setAttribute('data-created-at', data.created_at);
-        commentCard.dataset.createdAt = data.created_at;
-        console.log(`✅ Updated created_at for comment ${commentId}: ${data.created_at}`);
+      if (data) {
+        console.log(`✅ Found comment data for ${commentId}:`, data);
+        
+        if (data.user_id) {
+          commentCard.setAttribute('data-user-id', data.user_id);
+          commentCard.dataset.userId = data.user_id;
+          console.log(`✅ Updated user_id for comment ${commentId}: ${data.user_id}`);
+        }
+        
+        if (data.created_at) {
+          commentCard.setAttribute('data-created-at', data.created_at);
+          commentCard.dataset.createdAt = data.created_at;
+          console.log(`✅ Updated created_at for comment ${commentId}: ${data.created_at}`);
+        }
+        
+        setTimeout(() => {
+          this.updateCommentPermissions(commentId);
+        }, 100);
       }
       
-      // Update permissions after fixing data
-      setTimeout(() => {
-        this.updateCommentPermissions(commentId);
-      }, 100);
+    } catch (error) {
+      console.error(`❌ Error fixing comment ${commentId} data:`, error);
     }
-    
-  } catch (error) {
-    console.error(`❌ Error fixing comment ${commentId} data:`, error);
   }
-}
+
   async identifyCommentOwnership(commentId) {
-  if (!this.currentUser) return false;
-  
-  try {
-    const { data, error } = await this.supabase
-      .from('comments')
-      .select('user_id')
-      .eq('id', commentId)
-      .eq('user_id', this.currentUser.id)
-      .eq('environment', environment)
-      .single();
+    if (!this.currentUser) return false;
     
-    return !error && !!data;
-  } catch (error) {
-    console.error('Error checking comment ownership:', error);
-    return false;
+    try {
+      const { data, error } = await this.supabase
+        .from('comments')
+        .select('user_id')
+        .eq('id', commentId)
+        .eq('user_id', this.currentUser.id)
+        .eq('environment', this.environment)
+        .single();
+      
+      return !error && !!data;
+    } catch (error) {
+      console.error('Error checking comment ownership:', error);
+      return false;
+    }
   }
-}
 
 // Add this method to your TinkByteCommentSystem class
 async forceFixCommentData() {
@@ -3456,58 +3596,122 @@ closeMentionDropdown() {
   }
 
     // Optimized draft management with auth check
-    async saveDraft() {
-      await this.ensureAuth();
-      
-      if (!this.isAuthenticated || !this.currentUser) return;
-      
-      const textarea = document.getElementById('comment-textarea');
-      if (!textarea) return;
-      
-      const content = textarea.value.trim();
-      if (!content) return;
-      
-      clearTimeout(this.draftTimeout);
-      this.draftTimeout = setTimeout(async () => {
-        try {
-          await this.TinkByteAPI.saveCommentDraft(this.articleId, content);
-          console.log('Draft saved');
-        } catch (error) {
-          console.error('Draft save error:', error);
-        }
-      }, 2000);
-    }
-
-    async loadDrafts() {
-      if (!this.isAuthenticated) return;
-      
+async saveDraft() {
+  await this.ensureAuth();
+  
+  if (!this.isAuthenticated || !this.currentUser) return;
+  
+  const textarea = document.getElementById('comment-textarea');
+  if (!textarea) return;
+  
+  const content = textarea.value.trim();
+  if (!content) return;
+  
+  clearTimeout(this.draftTimeout);
+  this.draftTimeout = setTimeout(async () => {
+    try {
+      // Check if the API method exists before calling it
+      if (this.TinkByteAPI && typeof this.TinkByteAPI.saveCommentDraft === 'function') {
+        await this.TinkByteAPI.saveCommentDraft(this.articleId, content);
+        console.log('✅ Draft saved via API');
+      } else {
+        // Fallback to localStorage
+        const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
+        localStorage.setItem(draftKey, content);
+        console.log('✅ Draft saved to localStorage (API method not available)');
+      }
+    } catch (error) {
+      console.error('❌ Draft save error:', error);
+      // Fallback to localStorage if API fails
       try {
-        const result = await this.TinkByteAPI.getCommentDraft(this.articleId);
-        
-        if (result.success && result.data?.content) {
-          const textarea = document.getElementById('comment-textarea');
-          if (textarea) {
-            textarea.value = result.data.content;
-            this.updateCharacterCount();
-          }
-        }
-      } catch (error) {
-        console.error('Draft load error:', error);
+        const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
+        localStorage.setItem(draftKey, content);
+        console.log('✅ Draft saved to localStorage (API fallback)');
+      } catch (localError) {
+        console.error('❌ localStorage fallback failed:', localError);
       }
     }
+  }, 2000);
+}
 
-    clearDraft() {
-      if (!this.isAuthenticated) return;
+// Update  existing loadDrafts method:
+async loadDrafts() {
+  if (!this.isAuthenticated || !this.currentUser) return;
+  
+  try {
+    // Try API first if available
+    if (this.TinkByteAPI && typeof this.TinkByteAPI.getCommentDraft === 'function') {
+      const result = await this.TinkByteAPI.getCommentDraft(this.articleId);
       
-      setTimeout(async () => {
-        try {
-          await this.TinkByteAPI.saveCommentDraft(this.articleId, '');
-          console.log('Draft cleared');
-        } catch (error) {
-          console.error('Draft clear error:', error);
+      if (result.success && result.data?.content) {
+        const textarea = document.getElementById('comment-textarea');
+        if (textarea) {
+          textarea.value = result.data.content;
+          this.updateCharacterCount();
+          console.log('✅ Draft loaded via API');
+          return; // Exit early if API worked
         }
-      }, 500);
+      }
     }
+    
+    // Fallback to localStorage
+    const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
+    const savedDraft = localStorage.getItem(draftKey);
+    
+    if (savedDraft) {
+      const textarea = document.getElementById('comment-textarea');
+      if (textarea) {
+        textarea.value = savedDraft;
+        this.updateCharacterCount();
+        console.log('✅ Draft loaded from localStorage');
+      }
+    }
+  } catch (error) {
+    console.error('❌ Draft load error:', error);
+    // Try localStorage as fallback
+    try {
+      const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      
+      if (savedDraft) {
+        const textarea = document.getElementById('comment-textarea');
+        if (textarea) {
+          textarea.value = savedDraft;
+          this.updateCharacterCount();
+          console.log('✅ Draft loaded from localStorage (API fallback)');
+        }
+      }
+    } catch (localError) {
+      console.error('❌ localStorage fallback failed:', localError);
+    }
+  }
+}
+
+// Update existing clearDraft method:
+clearDraft() {
+  if (!this.isAuthenticated || !this.currentUser) return;
+  
+  setTimeout(async () => {
+    try {
+      // Try API first if available
+      if (this.TinkByteAPI && typeof this.TinkByteAPI.saveCommentDraft === 'function') {
+        await this.TinkByteAPI.saveCommentDraft(this.articleId, '');
+        console.log('✅ Draft cleared via API');
+      }
+    } catch (error) {
+      console.error('❌ API draft clear error:', error);
+    }
+    
+    // Also clear localStorage
+    try {
+      const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
+      localStorage.removeItem(draftKey);
+      console.log('✅ Draft cleared from localStorage');
+    } catch (error) {
+      console.error('❌ localStorage clear error:', error);
+    }
+  }, 500);
+}
 
     // Sorting and pagination
     async sortComments(sortBy) {

@@ -219,7 +219,7 @@ async function syncAllTopics() {
   }
 }
 
-// Sync Blog Articles
+// UPDATED: Sync Blog Articles - Now handles drafts properly
 async function syncArticles() {
   console.log('🔄 Syncing articles...');
   
@@ -230,10 +230,11 @@ async function syncArticles() {
       const { data, content } = readMarkdownFile(filePath);
       const slug = path.basename(filePath, path.extname(filePath));
       
-      if (data.draft) {
-        console.log(`⏭️  Skipping draft: ${data.title}`);
-        continue;
-      }
+      // 🔥 FIXED: Don't skip drafts, sync them with correct publication status
+      const isDraft = data.draft === true;
+      const isPublished = !isDraft;
+      
+      console.log(`📝 Processing: ${data.title} (${isDraft ? 'DRAFT' : 'PUBLISHED'})`);
       
       // Handle author - support your TinaCMS structure
       let authorSlug;
@@ -315,14 +316,14 @@ async function syncArticles() {
         author_id: validAuthorSlug,
         category_slug: categorySlug,
         featured_image_url: imageUrl,
-        is_published: !data.draft,
+        is_published: isPublished, // 🔥 FIXED: Properly set publication status
         is_premium: data.premium || false,
         is_featured: data.featured || false,
         read_time_minutes: calculateReadTime(data.readTime, content),
         view_count: 0,
         like_count: 0,
         comment_count: 0,
-        published_at: data.pubDate ? new Date(data.pubDate).toISOString() : new Date().toISOString(),
+        published_at: isPublished && data.pubDate ? new Date(data.pubDate).toISOString() : null, // Only set if published
         created_at: data.pubDate ? new Date(data.pubDate).toISOString() : new Date().toISOString(),
         updated_at: data.updatedDate ? new Date(data.updatedDate).toISOString() : new Date().toISOString(),
         is_deleted: false,
@@ -335,7 +336,7 @@ async function syncArticles() {
       if (error) {
         console.error(`❌ Error with article ${data.title}:`, error.message);
       } else {
-        console.log(`✅ Synced article: ${data.title}`);
+        console.log(`✅ Synced article: ${data.title} (${isPublished ? 'Published' : 'Draft'})`);
       }
       
     } catch (error) {
@@ -344,7 +345,7 @@ async function syncArticles() {
   }
 }
 
-// Sync Podcasts
+// UPDATED: Sync Podcasts - Also handle draft status
 async function syncPodcasts() {
   console.log('🔄 Syncing podcasts...');
   
@@ -360,6 +361,11 @@ async function syncPodcasts() {
       const { data, content } = readMarkdownFile(filePath);
       const slug = path.basename(filePath, path.extname(filePath));
       
+      const isDraft = data.draft === true || data.status === 'draft';
+      const isPublished = !isDraft;
+      
+      console.log(`🎙️ Processing podcast: ${data.title} (${isDraft ? 'DRAFT' : 'PUBLISHED'})`);
+      
       const podcastData = {
         slug: slug,
         title: data.title,
@@ -367,10 +373,10 @@ async function syncPodcasts() {
         duration: data.duration || null,
         audio_url: data.audioUrl || data.audio_url || null,
         image_url: data.imageUrl || data.image_url || data.image || null,
-        episode_number: data.episodeNumber || data.episode_number || null,
+        episode_number: data.episodeNumber || data.episode_number || data.episode || null,
         season_number: data.seasonNumber || data.season_number || null,
-        published_at: data.pubDate ? new Date(data.pubDate).toISOString() : new Date().toISOString(),
-        is_published: !data.draft,
+        published_at: isPublished && data.pubDate ? new Date(data.pubDate).toISOString() : null,
+        is_published: isPublished, // 🔥 FIXED: Properly handle draft status
         featured: data.featured || false,
         created_at: data.createdAt ? new Date(data.createdAt).toISOString() : new Date().toISOString(),
         updated_at: data.updatedAt ? new Date(data.updatedAt).toISOString() : new Date().toISOString()
@@ -383,7 +389,7 @@ async function syncPodcasts() {
       if (error) {
         console.error(`❌ Error with podcast ${data.title}:`, error.message);
       } else {
-        console.log(`✅ Synced podcast: ${data.title}`);
+        console.log(`✅ Synced podcast: ${data.title} (${isPublished ? 'Published' : 'Draft'})`);
       }
     } catch (error) {
       console.error(`❌ Error processing ${filePath}:`, error.message);
@@ -437,7 +443,7 @@ async function syncNewsletters() {
   }
 }
 
-// Update author stats
+// UPDATED: Update author stats - Only count published articles
 async function updateAuthorStats() {
   console.log('🔄 Updating author stats...');
   
@@ -452,11 +458,12 @@ async function updateAuthorStats() {
     }
 
     for (const author of authors) {
+      // 🔥 FIXED: Only count published articles for stats
       const { count, error: countError } = await supabase
         .from('articles')
         .select('*', { count: 'exact', head: true })
         .eq('author_id', author.slug)
-        .eq('is_published', true)
+        .eq('is_published', true) // Only published articles
         .eq('is_deleted', false);
 
       if (countError) {
@@ -472,11 +479,64 @@ async function updateAuthorStats() {
       if (updateError) {
         console.error(`❌ Error updating stats for ${author.slug}:`, updateError.message);
       } else {
-        console.log(`✅ Updated stats for author ${author.slug}: ${count} articles`);
+        console.log(`✅ Updated stats for author ${author.slug}: ${count} published articles`);
       }
     }
   } catch (error) {
     console.error('❌ Error updating author stats:', error.message);
+  }
+}
+
+// NEW: Function to clean up orphaned articles (articles that no longer exist in markdown)
+async function cleanupOrphanedArticles() {
+  console.log('🧹 Cleaning up orphaned articles...');
+  
+  try {
+    // Get all article slugs from database
+    const { data: dbArticles, error: dbError } = await supabase
+      .from('articles')
+      .select('slug')
+      .eq('is_deleted', false);
+
+    if (dbError) {
+      console.error('❌ Error fetching database articles:', dbError.message);
+      return;
+    }
+
+    // Get all markdown file slugs
+    const blogFiles = getMarkdownFiles(COLLECTIONS.blog);
+    const markdownSlugs = new Set(
+      blogFiles.map(filePath => path.basename(filePath, path.extname(filePath)))
+    );
+
+    // Find orphaned articles
+    const orphanedArticles = dbArticles.filter(article => !markdownSlugs.has(article.slug));
+
+    if (orphanedArticles.length === 0) {
+      console.log('✅ No orphaned articles found');
+      return;
+    }
+
+    console.log(`🗑️  Found ${orphanedArticles.length} orphaned articles`);
+
+    for (const orphan of orphanedArticles) {
+      const { error } = await supabase
+        .from('articles')
+        .update({ 
+          is_deleted: true, 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('slug', orphan.slug);
+
+      if (error) {
+        console.error(`❌ Error marking ${orphan.slug} as deleted:`, error.message);
+      } else {
+        console.log(`🗑️  Marked as deleted: ${orphan.slug}`);
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ Error during cleanup:', error.message);
   }
 }
 
@@ -510,7 +570,7 @@ function calculateReadTime(readTimeString, content) {
   return Math.ceil(wordCount / wordsPerMinute);
 }
 
-// Main function
+// UPDATED: Main function with cleanup
 async function main() {
   console.log('🚀 Starting comprehensive sync...\n');
 
@@ -525,16 +585,19 @@ async function main() {
     await syncAllTopics();
     console.log('');
     
-    await syncArticles();
+    await syncArticles(); // 🔥 Now properly handles drafts
     console.log('');
     
-    await syncPodcasts();
+    await syncPodcasts(); // 🔥 Now properly handles drafts
     console.log('');
     
     await syncNewsletters();
     console.log('');
     
-    await updateAuthorStats();
+    await updateAuthorStats(); // 🔥 Only counts published articles
+    console.log('');
+    
+    await cleanupOrphanedArticles(); // 🔥 NEW: Clean up deleted articles
     console.log('');
     
     // Get final counts
@@ -548,7 +611,20 @@ async function main() {
     
     const { count: articlesCount } = await supabase
       .from('articles')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .eq('is_deleted', false);
+
+    const { count: publishedCount } = await supabase
+      .from('articles')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_published', true)
+      .eq('is_deleted', false);
+
+    const { count: draftCount } = await supabase
+      .from('articles')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_published', false)
+      .eq('is_deleted', false);
     
     const { count: podcastsCount } = await supabase
       .from('podcasts')
@@ -562,7 +638,7 @@ async function main() {
     console.log(`📊 Final Results:`);
     console.log(`   • ${authorsCount} authors`);
     console.log(`   • ${categoriesCount} categories/topics`);
-    console.log(`   • ${articlesCount} articles`);
+    console.log(`   • ${articlesCount} total articles (${publishedCount} published, ${draftCount} drafts)`);
     console.log(`   • ${podcastsCount} podcasts`);
     console.log(`   • ${newslettersCount} newsletters`);
     

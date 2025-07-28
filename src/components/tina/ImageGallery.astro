@@ -34,16 +34,29 @@ const layoutClasses = {
   carousel: "flex overflow-x-auto snap-x snap-mandatory",
   lightbox: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
 };
+
+// Use autoplay settings for carousel
+const carouselSettings = {
+  autoplay,
+  autoplaySpeed: autoplaySpeed * 1000, // Convert to milliseconds
+};
 ---
 
 {
   validImages.length > 0 ? (
-    <div class="tinkbyte-gallery" style="opacity: 1; visibility: visible;">
+    <div
+      class="tinkbyte-gallery"
+      style="opacity: 1; visibility: visible;"
+      data-autoplay={layout === "carousel" ? autoplay : false}
+      data-autoplay-speed={
+        layout === "carousel" ? carouselSettings.autoplaySpeed : 0
+      }
+    >
       {caption && <h3 class="gallery-caption">{caption}</h3>}
 
       {layout === "carousel" ? (
         <div class={`gallery-carousel ${layoutClasses[layout]}`}>
-          {validImages.map((image, index) => (
+          {validImages.map((image, _) => (
             <div class="carousel-item">
               <figure class="gallery-figure">
                 <img
@@ -64,7 +77,7 @@ const layoutClasses = {
         </div>
       ) : layout === "masonry" ? (
         <div class={`gallery-masonry ${layoutClasses[layout]}`}>
-          {validImages.map((image, index) => (
+          {validImages.map((image, _) => (
             <figure class="gallery-figure masonry-item">
               <img
                 src={image.src}
@@ -83,7 +96,7 @@ const layoutClasses = {
         </div>
       ) : (
         <div class={`gallery-grid grid ${layoutClasses[layout]}`}>
-          {validImages.map((image, index) => (
+          {validImages.map((image, _) => (
             <figure class="gallery-figure grid-item">
               <img
                 src={image.src}
@@ -170,6 +183,24 @@ const layoutClasses = {
 
   :global(.dark) .gallery-caption {
     color: #e2e8f0;
+  }
+
+  /* Add autoplay styles */
+  .gallery-carousel[data-autoplay="true"] {
+    animation: autoScroll var(--autoplay-speed, 15s) linear infinite;
+  }
+
+  @keyframes autoScroll {
+    0% {
+      scroll-behavior: smooth;
+    }
+    100% {
+      scroll-behavior: smooth;
+    }
+  }
+
+  .gallery-carousel[data-autoplay="true"]:hover {
+    animation-play-state: paused;
   }
 
   /* Gallery Figure - NO TRANSITIONS */
@@ -358,3 +389,53 @@ const layoutClasses = {
     image-rendering: -webkit-optimize-contrast;
   }
 </style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const carousels = document.querySelectorAll(
+      '.gallery-carousel[data-autoplay="true"]'
+    );
+
+    carousels.forEach((carousel: Element) => {
+      const autoplaySpeed = parseInt(
+        carousel.getAttribute("data-autoplay-speed") || "3000"
+      );
+
+      // Fix: Use proper typing for browser environment
+      let intervalId: ReturnType<typeof setInterval>;
+
+      const startAutoplay = () => {
+        intervalId = setInterval(() => {
+          const scrollWidth = carousel.scrollWidth;
+          const clientWidth = carousel.clientWidth;
+          const currentScroll = carousel.scrollLeft;
+
+          if (currentScroll + clientWidth >= scrollWidth) {
+            carousel.scrollTo({ left: 0, behavior: "smooth" });
+          } else {
+            carousel.scrollBy({ left: clientWidth, behavior: "smooth" });
+          }
+        }, autoplaySpeed);
+      };
+
+      const stopAutoplay = () => {
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+      };
+
+      // Start autoplay
+      startAutoplay();
+
+      // Pause on hover
+      carousel.addEventListener("mouseenter", stopAutoplay);
+      carousel.addEventListener("mouseleave", startAutoplay);
+
+      // Pause on touch/interaction
+      carousel.addEventListener("touchstart", stopAutoplay);
+      carousel.addEventListener("touchend", () => {
+        setTimeout(startAutoplay, 2000); // Resume after 2 seconds
+      });
+    });
+  });
+</script>

@@ -33,21 +33,27 @@ const typeIcons = {
 };
 
 const iconColors = {
-  info: "#3b82f6", // Blue
-  warning: "#eab308", // Yellow
-  success: "#10b981", // Green
-  error: "#ef4444", // Red
-  tip: "#8b5cf6", // Purple
-  note: "#6b7280", // Gray
-  custom: "#243788", // TinkByte primary
+  info: "#3b82f6",
+  warning: "#eab308",
+  success: "#10b981",
+  error: "#ef4444",
+  tip: "#8b5cf6",
+  note: "#6b7280",
+  custom: "#243788",
 };
+
+// Use the iconColors for dynamic styling
+const currentIconColor = iconColors[type];
 ---
 
 <div class={`tinkbyte-callout border-l-4 p-6 my-6 ${typeStyles[type]}`}>
   {
     title && (
       <div class="flex items-center mb-3">
-        <span class={`callout-icon callout-icon-${type}`}>
+        <span
+          class={`callout-icon callout-icon-${type}`}
+          style={`background-color: ${currentIconColor};`}
+        >
           {typeIcons[type]}
         </span>
         <h4 class="callout-title">{title}</h4>

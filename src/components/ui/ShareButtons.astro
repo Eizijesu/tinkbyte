@@ -213,12 +213,6 @@ const { url, title, description = "", className = "" } = Astro.props;
 </style>
 
 <script>
-  // Declare gtag as optional global function
-  declare global {
-    interface Window {
-      gtag?: (...args: any[]) => void;
-    }
-  }
 
   document.addEventListener("DOMContentLoaded", () => {
     const shareButtons = document.querySelectorAll(".share-button");

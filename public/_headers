@@ -1,0 +1,31 @@
+#public/_headers
+
+# CSS files - Fix MIME type issues
+/*.css
+  Content-Type: text/css; charset=utf-8
+  Cache-Control: public, max-age=31536000
+
+# JavaScript files
+/*.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=31536000
+
+# Admin routes - Security headers
+/admin/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Auth routes - Security headers  
+/auth/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Static assets
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# API routes
+/api/*
+  Cache-Control: no-store, no-cache, must-revalidate

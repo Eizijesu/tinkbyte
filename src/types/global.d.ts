@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 declare global {
   interface Window {
     supabase: SupabaseClient;
+    authManager?: any;
     tinkbyteInitialized?: boolean;
     themeTransitionManager?: {
       startTransition: () => void;
@@ -11,8 +12,10 @@ declare global {
     };
     toggleTheme?: () => void;
     gtag?: (...args: any[]) => void;
+    dataLayer?: any[];
   }
 }
+
 
 // Common types for your project
 export interface Post {

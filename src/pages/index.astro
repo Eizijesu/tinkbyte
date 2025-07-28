@@ -1,9 +1,10 @@
 ---
-// src/pages/index.astro -
+// src/pages/index.astro - Fixed with consistent SITE config
 import Layout from "../layouts/Layout.astro";
 import PillarSection from "../components/magazine/PillarSection.astro";
 import NewsletterCTA from "../components/magazine/NewsletterCTA.astro";
 import { getCollection } from "astro:content";
+import { SITE } from "../config/site";
 
 // Get real content from TinaCMS
 let allPosts: any[] = [];
@@ -125,7 +126,6 @@ const contentPillars = [
     articles: getPostsByCategory("community-innovation", 4),
     color: "#10B981",
   },
-  // ADD NEW PILLARS AS NEEDED:
   {
     name: "Developer Tools",
     description: "Tools and technologies that make developers more productive",
@@ -160,9 +160,7 @@ const formatPost = (post: any) => {
         post.data.image ||
         "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=600&fit=crop",
       category: post.data.category,
-      // FIXED: Only show name (required), other fields are optional
       author: post.data.authorInfo?.name || post.data.author || "TinkByte Team",
-      // Optional: Include full author data for components that need it
       authorData:
         post.data.authorInfo ||
         (post.data.author
@@ -174,10 +172,7 @@ const formatPost = (post: any) => {
 };
 ---
 
-<Layout
-  title="TinkByte - Building Meaningful Tech Products"
-  description="Practical insights for builders who value substance over hype. Real stories from product development, global innovation, and community building."
->
+<Layout title={SITE.title} description={SITE.description} canonical={SITE.url}>
   <main class="magazine-layout">
     <!-- Enhanced Hero Section with Search-Style Design -->
     <section class="relative py-16 lg:py-24 overflow-hidden">
@@ -286,12 +281,12 @@ const formatPost = (post: any) => {
         )
       }
     </section>
-
   </main>
 </Layout>
 
+<!-- Keep your existing styles -->
 <style>
-  /* Consistent Design System Styles */
+  /* Your existing styles remain the same */
   .magazine-layout {
     background: white;
     min-height: 100vh;
@@ -317,7 +312,7 @@ const formatPost = (post: any) => {
     position: relative;
     aspect-ratio: 16/9;
     margin-bottom: 2rem;
-    border-radius: var(--tinkbyte-radius-card, 4px); /* rounded-sm */
+    border-radius: var(--tinkbyte-radius-card, 4px);
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
@@ -343,7 +338,7 @@ const formatPost = (post: any) => {
 
   .category-tag {
     padding: 0.5rem 1rem;
-    border-radius: var(--tinkbyte-radius, 2px); /* rounded-sm */
+    border-radius: var(--tinkbyte-radius, 2px);
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -423,7 +418,7 @@ const formatPost = (post: any) => {
     background: white;
     border: 1px solid #e5e7eb;
     padding: 2rem;
-    border-radius: var(--tinkbyte-radius-card, 4px); /* rounded-sm */
+    border-radius: var(--tinkbyte-radius-card, 4px);
     height: fit-content;
     transition: all 0.3s ease;
   }
@@ -591,24 +586,6 @@ const formatPost = (post: any) => {
 
   .pillars-section {
     padding: 2rem 0;
-  }
-
-  /* Gradient text animation */
-  @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
-
-  .bg-gradient-to-r.bg-clip-text {
-    background-size: 200% 200%;
-    animation: gradient 3s ease-in-out infinite;
   }
 
   /* Mobile Responsiveness */

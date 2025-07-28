@@ -1,4 +1,4 @@
-// astro.config.mjs - FIXED VERSION
+// astro.config.mjs - CORRECTED VERSION
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
@@ -6,15 +6,15 @@ import tailwind from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
 import robotsTxt from 'astro-robots-txt';
 
-// Import rehype and remark plugins for enhanced markdown processing
+// Import rehype and remark plugins
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import remarkGfm from 'remark-gfm';
 
 export default defineConfig({
-  // Site configuration
   site: 'https://tinkbyte.com',
-
+  trailingSlash: 'never',
+  
   redirects: {
     '/privacy': '/legal/privacy-policy',
     '/terms': '/legal/terms-of-service',
@@ -22,7 +22,6 @@ export default defineConfig({
     '/legal/contact': '/contact', 
   },
   
-  // Integrations
   integrations: [
     mdx({
       syntaxHighlight: 'shiki',
@@ -33,7 +32,6 @@ export default defineConfig({
           dark: 'github-dark',
         },
         wrap: true,
-        transformers: [],
       },
       remarkPlugins: [remarkGfm],
       rehypePlugins: [
@@ -50,7 +48,6 @@ export default defineConfig({
         ],
       ],
     }),
-    
     
     react(),
     tailwind({
@@ -83,7 +80,6 @@ export default defineConfig({
     }),
   ], 
 
-  // Markdown configuration
   markdown: {
     syntaxHighlight: 'shiki',
     shikiConfig: {
@@ -108,19 +104,10 @@ export default defineConfig({
         },
       ],
     ],
-    extendMarkdownConfig: false,
   },
 
-  // Vite configuration - CLEANED UP
+  
   vite: {
-    resolve: {
-      alias: {
-        '/lib/supabase': '/src/lib/supabase.js',
-        '/lib/auth': '/src/lib/auth.js',
-        '@/lib/supabase': '/src/lib/supabase.js',
-        '@/lib/auth': '/src/lib/auth.js',
-      }
-    },
     optimizeDeps: {
       include: ['react', 'react-dom', 'date-fns', 'fuse.js'],
       exclude: ['shiki'],
@@ -128,10 +115,10 @@ export default defineConfig({
     ssr: {
       noExternal: ['shiki'],
     },
-    css: {
-      devSourcemap: true,
-    },
     build: {
+      target: 'es2020',
+      minify: 'esbuild',
+      sourcemap: false,
       rollupOptions: {
         output: {
           manualChunks: {
@@ -146,54 +133,33 @@ export default defineConfig({
       fs: {
         allow: ['..'],
       },
-       middlewareMode: false,
-    },
-    
-    // Clean define section - removed problematic env var aliases
-    define: {
-      'globalThis.astroMDXComponents': JSON.stringify({
-        ImageBlock: true,
-        VideoBlock: true,
-        Callout: true,
-        ButtonBlock: true,
-        CodeBlock: true,
-        Quote: true,
-        TableBlock: true,
-        ImageGallery: true,
-        Newsletter: true,
-        TwoColumnLayout: true,
-      }),
     },
   },
 
-  // Build configuration
+  
   build: {
+    format: 'file',
     inlineStylesheets: 'auto',
     assets: '_astro',
   },
 
-  // Output configuration
   output: 'static',
   
-  // Server configuration for development
   server: {
     port: 4321,
     host: true,
   },
 
-  // Preview configuration
   preview: {
     port: 4322,
     host: true,
   },
 
-  // Prefetch configuration
   prefetch: {
     prefetchAll: true,
     defaultStrategy: 'viewport',
   },
 
-  // Image optimization
   image: {
     domains: ['images.unsplash.com', 'cdn.tinkbyte.com'],
     remotePatterns: [
@@ -204,7 +170,6 @@ export default defineConfig({
     ],
   },
 
-  // Security headers
   security: {
     checkOrigin: true,
   },

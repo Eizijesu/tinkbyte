@@ -1,10 +1,18 @@
 ---
-// src/layouts/Layout.astro - Enhanced Theme-Aware Layout
-import { SITE } from "../config/site";
+// src/layouts/Layout.astro - Updated with new site config
+import { SITE, getAllCategories } from "../config/site";
 import Header from "../components/ui/Header.astro";
 import Footer from "../components/ui/Footer.astro";
 import "../styles/global.css";
 import FeedbackWidget from "../components/ui/FeedbackWidget.astro";
+
+// Type-safe window property assignment
+declare global {
+  interface Window {
+    authManager?: any;
+    supabase?: any;
+  }
+}
 
 export interface Props {
   title?: string;
@@ -68,7 +76,7 @@ const getSafeSocialImage = () => {
 const canonicalURL = getSafeCanonicalURL();
 const socialImage = getSafeSocialImage();
 
-// Enhanced structured data
+// Enhanced structured data with all social platforms
 const getStructuredData = () => {
   const baseData = {
     "@context": "https://schema.org",
@@ -84,6 +92,7 @@ const getStructuredData = () => {
         url: `${Astro.url.origin}/logo.png`,
       },
       url: SITE.url,
+      // Updated with all your social platforms
       sameAs: [
         `https://twitter.com/${SITE.social.twitter.replace("@", "")}`,
         `https://linkedin.com/${SITE.social.linkedin}`,
@@ -91,6 +100,12 @@ const getStructuredData = () => {
         `https://youtube.com/${SITE.social.youtube.replace("@", "")}`,
         `https://instagram.com/${SITE.social.instagram.replace("@", "")}`,
         `https://tiktok.com/${SITE.social.tiktok.replace("@", "")}`,
+        `https://substack.com/${SITE.social.substack}`,
+        `https://medium.com/${SITE.social.medium}`,
+        `https://dev.to/${SITE.social.devto}`,
+        `https://hashnode.com/${SITE.social.hashnode}`,
+        `https://discord.gg/${SITE.social.discord}`,
+        `https://t.me/${SITE.social.telegram}`,
       ],
     },
   };
@@ -406,7 +421,7 @@ const structuredData = getStructuredData();
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content="#243788" />
+    <meta name="theme-color" content={SITE.brand.primary} />
 
     <!-- RSS and Alternate Links -->
     <link
@@ -572,6 +587,122 @@ const structuredData = getStructuredData();
       theme="auto"
       hideOnPages={["/admin"]}
     />
+
+    <!-- FIXED: Updated Auth Manager for custom comments -->
+    <script is:inline define:vars={{ commentsEnabled: SITE.comments.enabled }}>
+      document.addEventListener("DOMContentLoaded", async function () {
+        // Only load auth if custom comments are enabled
+        if (!commentsEnabled) {
+          return;
+        }
+
+        try {
+          console.log("⏳ Loading auth modules for custom comments...");
+
+          // ✅ IMPORT THE SINGLETON DIRECTLY
+          const authModule = await import("/src/lib/auth.js");
+          const supabaseModule = await import("/src/lib/supabase.js");
+
+          // ✅ GET THE SINGLETON INSTANCE
+          const supabaseSingleton = supabaseModule.supabase;
+          const authManager = authModule.authManager;
+
+          // ✅ VERIFY IT'S A SINGLETON
+          console.log("🔍 Supabase singleton info:", {
+            instanceId: supabaseSingleton._instanceId,
+            createdAt: supabaseSingleton._createdAt,
+            hasAuth: !!supabaseSingleton.auth,
+          });
+
+          // ✅ EXPOSE SINGLETON TO WINDOW (NOT A NEW INSTANCE)
+          window.authManager = authManager;
+          window.supabase = supabaseSingleton; // This is the singleton
+          window.supabaseInstanceId = supabaseSingleton._instanceId; // For tracking
+
+          console.log("✅ Auth modules loaded and exposed to window");
+
+          if (window.authManager && window.authManager.initialize) {
+            await window.authManager.initialize();
+            console.log("✅ Auth manager ready for custom comments");
+
+            // ✅ DISPATCH EVENT WITH SINGLETON
+            window.dispatchEvent(
+              new CustomEvent("authReady", {
+                detail: {
+                  authManager: window.authManager,
+                  supabase: window.supabase, // This is the singleton
+                },
+              })
+            );
+          }
+        } catch (error) {
+          console.error("❌ Failed to load auth modules:", error);
+
+          // Fallback timeout
+          setTimeout(function () {
+            if (window.authManager && window.supabase) {
+              console.log("✅ Found existing auth manager via fallback");
+              window.dispatchEvent(
+                new CustomEvent("authReady", {
+                  detail: {
+                    authManager: window.authManager,
+                    supabase: window.supabase,
+                  },
+                })
+              );
+            }
+          }, 1000);
+        }
+      });
+    </script>
+    <script is:inline>
+      // Add singleton verification
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          if (window.supabase) {
+            console.log("🔍 Final Supabase verification:", {
+              instanceId: window.supabase._instanceId,
+              createdAt: window.supabase._createdAt,
+              hasAuth: !!window.supabase.auth,
+              authState: window.supabase.auth?.getSession
+                ? "ready"
+                : "not ready",
+            });
+
+            // Check if there are multiple instances
+            const allSupabaseInstances = [];
+            if (window.supabase) allSupabaseInstances.push("window.supabase");
+            if (window.tinkbyteComments?.supabase)
+              allSupabaseInstances.push("comments.supabase");
+
+            console.log(
+              "📊 Supabase instances found:",
+              allSupabaseInstances.length
+            );
+
+            if (allSupabaseInstances.length === 1) {
+              console.log("✅ Perfect! Using singleton correctly");
+            } else if (allSupabaseInstances.length > 1) {
+              console.warn(
+                "⚠️ Multiple Supabase instances detected:",
+                allSupabaseInstances
+              );
+
+              // Check if they're the same instance
+              if (window.supabase === window.tinkbyteComments?.supabase) {
+                console.log("✅ Multiple references but same instance - OK");
+              } else {
+                console.error(
+                  "❌ Different Supabase instances - NOT using singleton properly"
+                );
+              }
+            }
+          } else {
+            console.warn("⚠️ No Supabase instance found on window");
+          }
+        }, 2000);
+      });
+    </script>
 
     <!-- Enhanced Theme and Functionality Script -->
     <script is:inline>
@@ -754,6 +885,43 @@ const structuredData = getStructuredData();
           subtree: true,
         });
       });
+    </script>
+
+    <!-- ✅ CONSOLE CLEANUP SCRIPT (Optional - for production) -->
+    <script is:inline>
+      // Clean console in production
+      const PRODUCTION_MODE = false; // Set to true to clean console
+
+      if (PRODUCTION_MODE) {
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+
+        console.log = (...args) => {
+          const message = String(args[0] || "");
+          // Only show critical messages
+          if (
+            message.includes("❌") ||
+            message.includes("Error") ||
+            message.includes("Failed") ||
+            message.includes("✅ Perfect! Using singleton correctly") ||
+            message.includes("TinkByte Comments initialized") ||
+            message.includes("Auth manager ready")
+          ) {
+            originalLog(...args);
+          }
+        };
+
+        console.warn = (...args) => {
+          const message = String(args[0] || "");
+          // Suppress known warnings
+          if (
+            !message.includes("Multiple GoTrueClient") &&
+            !message.includes("detected in the same browser")
+          ) {
+            originalWarn(...args);
+          }
+        };
+      }
     </script>
   </body>
 </html>

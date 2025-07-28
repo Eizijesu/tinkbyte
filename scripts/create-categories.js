@@ -1,6 +1,15 @@
 // scripts/create-categories.js
 import fs from 'fs';
 import path from 'path';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const supabase = createClient(
+  process.env.PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 const categories = [
   // Core Themes (6)
@@ -355,10 +364,19 @@ if (!fs.existsSync(categoriesDir)) {
   fs.mkdirSync(categoriesDir, { recursive: true });
 }
 
-categories.forEach(category => {
-  const aliasNote = category.isAlias ? `\n\n> **Note:** This is a legacy alias for [${category.aliasFor}](/blog/categories/${category.aliasFor}). New content should use the main category.` : '';
+
+// Enhanced content generation with better SEO and structured data
+function generateCategoryContent(category) {
+  const aliasNote = category.isAlias ? 
+    `\n\n> **Note:** This is a legacy alias for [${category.aliasFor}](/blog/categories/${category.aliasFor}). New content should use the main category.` : '';
   
-  const content = `---
+  const relatedCategories = categories
+    .filter(c => c.categoryGroup === category.categoryGroup && c.slug !== category.slug && !c.isAlias)
+    .slice(0, 3)
+    .map(c => `- [${c.name}](/blog/categories/${c.slug})`)
+    .join('\n');
+
+  return `---
 name: "${category.name}"
 slug: "${category.slug}"
 description: "${category.description}"
@@ -371,34 +389,54 @@ categoryGroup: "${category.categoryGroup}"
 tags: ${JSON.stringify(category.tags)}
 ${category.isAlias ? `isAlias: true\naliasFor: "${category.aliasFor}"` : ''}
 seo:
-  title: "${category.name} Articles | TinkByte"
-  description: "${category.description} - practical insights for builders and innovators."
+  title: "${category.name} Articles & Insights | TinkByte"
+  description: "${category.description} Practical insights, real stories, and actionable advice for ${category.audience.toLowerCase()}."
+  canonical: "https://tinkbyte.com/blog/categories/${category.slug}"
 ---
 
 # ${category.name}
 
 ${category.description}
 
-## Target Audience
+## Who This Is For
 
-This content is designed for: **${category.audience}**
+**Target Audience:** ${category.audience}
 
-## What You'll Find Here
+Our ${category.name.toLowerCase()} content is crafted for professionals who value substance over hype and prefer practical insights they can actually use.
 
-Articles focused on practical insights and real-world applications in ${category.name.toLowerCase()}.${aliasNote}
+## What You'll Discover
 
-## Our Approach
+- Real-world case studies and lessons learned
+- Practical frameworks and mental models
+- Tools and techniques that actually work
+- Stories from the trenches of building products
+- Analysis that cuts through the noise${aliasNote}
 
-We focus on actionable content that helps you build better products and grow your skills.
+## Content Philosophy
 
-## Topics Covered
+We believe in:
+- **Substance over hype** - No buzzwords, just practical insights
+- **Real stories** - Actual experiences from builders and makers
+- **Actionable content** - Information you can apply immediately
+- **Global perspective** - Learning from innovators worldwide
 
-${category.tags.map(tag => `- ${tag.charAt(0).toUpperCase() + tag.slice(1).replace('-', ' ')}`).join('\n')}
+## Key Topics
+
+${category.tags.map(tag => `- **${tag.charAt(0).toUpperCase() + tag.slice(1).replace('-', ' ')}** - Practical applications and insights`).join('\n')}
+
+${relatedCategories.length > 0 ? `## Related Categories\n\n${relatedCategories}` : ''}
+
+## Stay Updated
+
+Subscribe to our [${category.categoryGroup === 'core' ? 'TinkByte Weekly' : category.categoryGroup === 'specialized' ? 'Build Sheet' : 'The Real Build'}](/newsletters) to get the latest ${category.name.toLowerCase()} insights delivered to your inbox.
 `;
+}
 
+// Create category files
+categories.forEach(category => {
+  const content = generateCategoryContent(category);
   const filePath = path.join(categoriesDir, `${category.slug}.md`);
   
-  // Only create if file doesn't exist
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, content);
     console.log(`✅ Created: ${category.slug}.md`);
@@ -407,6 +445,45 @@ ${category.tags.map(tag => `- ${tag.charAt(0).toUpperCase() + tag.slice(1).repla
   }
 });
 
+// Sync to database
+async function syncCategoriesToDatabase() {
+  console.log('\n🔄 Syncing categories to database...');
+  
+  for (const category of categories) {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .upsert({
+          name: category.name,
+          slug: category.slug,
+          description: category.description,
+          target_audience: category.audience,
+          color: category.color,
+          icon: category.icon,
+          is_premium: false,
+          sort_order: category.sortOrder,
+          is_featured: category.featured,
+          tags: category.tags,
+          seo_title: `${category.name} Articles & Insights | TinkByte`,
+          seo_description: `${category.description} Practical insights for ${category.audience.toLowerCase()}.`,
+          newsletter_enabled: false,
+          created_at: new Date().toISOString()
+        }, { onConflict: 'slug' });
+
+      if (error) {
+        console.error(`❌ Error syncing ${category.slug}:`, error.message);
+      } else {
+        console.log(`✅ Synced to DB: ${category.slug}`);
+      }
+    } catch (error) {
+      console.error(`❌ Database error for ${category.slug}:`, error.message);
+    }
+  }
+}
+
+// Run the sync
+await syncCategoriesToDatabase();
+
 console.log(`\n🎉 Processed ${categories.length} category files!`);
 console.log(`📊 Breakdown:`);
 console.log(`   • Core themes: ${categories.filter(c => c.categoryGroup === 'core').length}`);
@@ -414,5 +491,6 @@ console.log(`   • Specialized themes: ${categories.filter(c => c.categoryGroup
 console.log(`   • Extended themes: ${categories.filter(c => c.categoryGroup === 'extended').length}`);
 console.log(`   • Legacy aliases: ${categories.filter(c => c.categoryGroup === 'legacy').length}`);
 console.log(`\n📝 Next steps:`);
-console.log(`   1. Run: node scripts/sync-content.mjs`);
+console.log(`   1. Categories synced to database ✅`);
 console.log(`   2. Check your TinaCMS admin at /admin`);
+console.log(`   3. Run: npm run build`);

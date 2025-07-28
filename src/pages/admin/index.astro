@@ -1,23 +1,23 @@
 ---
-// src/pages/admin/index.astro
+// src/pages/admin/index.astro - FIXED VERSION
+import { adminAuthManager } from "../../lib/admin/auth.js";
 
-// Type assertion to ensure TypeScript recognizes the properties
-const user = (Astro.locals as any).user;
-const isAdmin = (Astro.locals as any).isAdmin;
+// Initialize admin auth
+await adminAuthManager.initialize();
 
-console.log("Admin redirect check:", {
+// Check admin status
+const user = await adminAuthManager.getCurrentUser();
+
+console.log("Admin index check:", {
   hasUser: !!user,
-  isAdmin,
   userEmail: user?.email,
 });
 
-if (!user || !isAdmin) {
-  console.log("Redirecting to admin signin");
-  return Astro.redirect(
-    "/auth/admin-signin?redirect=" + encodeURIComponent("/admin/index.html")
-  );
+if (!user) {
+  console.log("No admin user, redirecting to signin");
+  return Astro.redirect("/auth/admin-signin");
 }
 
-console.log("Admin verified, redirecting to TinaCMS");
-return Astro.redirect("/admin/index.html");
+console.log("Admin verified, redirecting to dashboard");
+return Astro.redirect("/admin/dashboard");
 ---

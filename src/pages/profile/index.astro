@@ -1,5 +1,5 @@
 ---
-// src/pages/profile/index.astro - OPTIMIZED SINGLETON VERSION
+// src/pages/profile/index.astro - RESTORED STYLES VERSION
 import ProfileLayout from "../../layouts/ProfileLayout.astro";
 ---
 
@@ -126,7 +126,33 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 </ProfileLayout>
 
 <style is:global>
-  /* FIXED: Profile Container Layout */
+  :root {
+    --tinkbyte-primary: #243788;
+    --tinkbyte-accent: #b4bce1;
+    --tinkbyte-spacing: 1rem;
+    --tinkbyte-border: 2px solid #e2e8f0;
+    --tinkbyte-radius: 0;
+    --tinkbyte-transition: all 0.2s ease;
+  }
+
+  /* Consolidate common card styles */
+  .tinkbyte-card {
+    background: white;
+    border: var(--tinkbyte-border);
+    border-radius: var(--tinkbyte-radius);
+    transition: var(--tinkbyte-transition);
+  }
+
+  .tinkbyte-card:hover {
+    border-color: var(--tinkbyte-primary);
+    transform: translateY(-2px);
+  }
+
+  html.dark .tinkbyte-card {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
   .profile-page {
     font-family: "Space Grotesk", sans-serif;
     background: white;
@@ -144,23 +170,23 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   .profile-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 1rem;
+    padding: 2rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    width: 100%; /* Ensure full width within max-width */
-    box-sizing: border-box; /* Include padding in width calculation */
+    gap: 2rem;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   /* FIXED: Profile Header Card - Proper width constraints */
   .profile-header-card {
     background: white;
     border: 2px solid #e2e8f0;
-    padding: 1.5rem;
+    padding: 2rem;
     border-radius: 0;
-    width: 100%; /* Stay within container */
-    box-sizing: border-box; /* Include padding and border in width */
-    overflow: hidden; /* Prevent content overflow */
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   html.dark .profile-header-card {
@@ -171,22 +197,20 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
   /* FIXED: Profile Info Layout - Prevent overflow */
   .profile-info {
     display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    text-align: center;
+    gap: 2rem;
+    align-items: flex-start;
     width: 100%;
-    max-width: 100%; /* Prevent expansion beyond container */
+    max-width: 100%;
   }
 
   .avatar-section {
     position: relative;
-    align-self: center;
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
   }
 
   .profile-avatar {
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
     border: 3px solid #e2e8f0;
     object-fit: cover;
     display: block;
@@ -199,10 +223,10 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
   .avatar-edit-btn {
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 28px;
-    height: 28px;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
     background: #243788;
     color: white;
     border: 2px solid white;
@@ -210,7 +234,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     transition: all 0.2s ease;
     border-radius: 0;
   }
@@ -231,18 +255,18 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
   .profile-details {
     flex: 1;
-    min-width: 0; /* Allow text truncation if needed */
+    min-width: 0;
   }
 
   .profile-username {
-    font-size: 1.75rem;
+    font-size: 2rem;
     font-weight: 800;
     color: #1e293b;
     margin: 0 0 0.5rem 0;
     text-transform: uppercase;
     letter-spacing: -0.025em;
     line-height: 1.2;
-    word-break: break-word; /* Handle long usernames */
+    word-break: break-word;
   }
 
   html.dark .profile-username {
@@ -286,8 +310,9 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
   /* FIXED: Profile Stats - Proper width constraints */
   .profile-stats {
-    width: 100%;
-    max-width: 100%; /* Prevent overflow */
+    flex-shrink: 0;
+    min-width: 300px;
+    max-width: 350px;
   }
 
   .following-stats {
@@ -312,7 +337,6 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     margin-bottom: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
-    text-align: center;
   }
 
   html.dark .following-label {
@@ -329,19 +353,19 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
   .stat-item {
     color: #1e293b;
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.025em;
-    padding: 0.75rem 0.5rem;
+    padding: 0.5rem;
     background: white;
     border: 1px solid #e2e8f0;
     text-align: center;
     border-radius: 0;
-    min-width: 0; /* Allow shrinking */
-    overflow: hidden; /* Prevent text overflow */
-    text-overflow: ellipsis; /* Add ellipsis for long text */
-    white-space: nowrap; /* Keep text on one line */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
   }
 
   html.dark .stat-item {
@@ -350,103 +374,11 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     border-color: #334155;
   }
 
-  /* TABLET: 768px and up - FIXED HORIZONTAL LAYOUT */
-  @media (min-width: 768px) {
-    .profile-container {
-      padding: 1.5rem;
-      gap: 1.5rem;
-    }
-
-    .profile-header-card {
-      padding: 2rem;
-    }
-
-    /* CRITICAL FIX: Horizontal layout with proper constraints */
-    .profile-info {
-      flex-direction: row;
-      text-align: left;
-      gap: 2rem;
-      align-items: flex-start;
-      max-width: 100%; /* Stay within container */
-    }
-
-    .avatar-section {
-      align-self: flex-start;
-      flex-shrink: 0;
-    }
-
-    .profile-avatar {
-      width: 120px;
-      height: 120px;
-    }
-
-    .avatar-edit-btn {
-      top: 8px;
-      right: 8px;
-      width: 32px;
-      height: 32px;
-      font-size: 0.875rem;
-    }
-
-    .profile-username {
-      font-size: 2rem;
-    }
-
-    .profile-details {
-      flex: 1;
-      min-width: 0; /* Allow shrinking */
-    }
-
-    /* FIXED: Stats section width constraints */
-    .profile-stats {
-      min-width: 280px; /* Reduced from 300px */
-      max-width: 320px; /* Add max-width constraint */
-      flex-shrink: 0;
-    }
-
-    .following-label {
-      text-align: left;
-    }
-
-    .stats-row {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .stat-item {
-      font-size: 0.875rem;
-      padding: 0.5rem;
-      white-space: normal; /* Allow wrapping on larger screens */
-    }
-  }
-
-  /* DESKTOP: 1024px and up - Enhanced constraints */
-  @media (min-width: 1024px) {
-    .profile-container {
-      padding: 2rem;
-      gap: 2rem;
-    }
-
-    .profile-stats {
-      min-width: 300px;
-      max-width: 350px; /* Ensure it doesn't get too wide */
-    }
-  }
-
-  /* LARGE DESKTOP: 1200px and up - Final constraints */
-  @media (min-width: 1200px) {
-    .profile-info {
-      gap: 3rem; /* More space on very large screens */
-    }
-
-    .profile-stats {
-      max-width: 380px; /* Allow slightly more width on very large screens */
-    }
-  }
-
+  /* Content Grid */
   .content-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
   }
 
   .stats-card,
@@ -466,21 +398,421 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     border-color: #334155;
   }
 
-  @media (min-width: 768px) {
-    .content-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
+  .notifications-card {
+    grid-column: 1 / -1; /* Full width */
+  }
+
+  .card-header {
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  html.dark .card-header {
+    background: #0f172a;
+    border-bottom-color: #334155;
+  }
+
+  .card-title {
+    color: #1e293b;
+    font-size: 1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  html.dark .card-title {
+    color: #f8fafc;
+  }
+
+  .clear-all-btn {
+    background: none;
+    border: 1px solid #64748b;
+    color: #64748b;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+    border-radius: 0;
+  }
+
+  .clear-all-btn:hover {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+  }
+
+  /* Stats Grid - UPDATED: Only 2 columns now */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+
+  .stat-box {
+    background: #f8fafc;
+    padding: 1.5rem;
+    text-align: center;
+    border: 2px solid #e2e8f0;
+    transition: all 0.2s ease;
+    border-radius: 0;
+  }
+
+  .stat-box:hover {
+    border-color: #243788;
+    transform: translateY(-2px);
+  }
+
+  html.dark .stat-box {
+    background: #0f172a;
+    border-color: #334155;
+  }
+
+  html.dark .stat-box:hover {
+    border-color: #b4bce1;
+  }
+
+  .stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #243788;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+
+  html.dark .stat-number {
+    color: #b4bce1;
+  }
+
+  .stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-weight: 600;
+  }
+
+  html.dark .stat-label {
+    color: #94a3b8;
+  }
+
+  /* Quick Settings */
+  .quick-settings {
+    padding: 1.5rem;
+    border-top: 2px solid #e2e8f0;
+  }
+
+  html.dark .quick-settings {
+    border-top-color: #334155;
+  }
+
+  .settings-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 1rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  html.dark .settings-title {
+    color: #f8fafc;
+  }
+
+  .settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .setting-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border: 2px solid transparent;
+    color: #1e293b;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border-radius: 0;
+  }
+
+  .setting-item:hover {
+    background: white;
+    border-color: #243788;
+    color: #243788;
+    transform: translateX(4px);
+  }
+
+  html.dark .setting-item {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+  }
+
+  html.dark .setting-item:hover {
+    background: #1e293b;
+    border-color: #b4bce1;
+    color: #b4bce1;
+  }
+
+  /* Activity Timeline */
+  .activity-timeline {
+    padding: 1.5rem;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .timeline-date {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  html.dark .timeline-date {
+    color: #94a3b8;
+    border-bottom-color: #334155;
+  }
+
+  .timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .timeline-item:last-child {
+    border-bottom: none;
+  }
+
+  html.dark .timeline-item {
+    border-bottom-color: #334155;
+  }
+
+  .timeline-marker {
+    width: 8px;
+    height: 8px;
+    background: #243788;
+    flex-shrink: 0;
+    margin-top: 0.5rem;
+    border-radius: 0;
+  }
+
+  html.dark .timeline-marker {
+    background: #b4bce1;
+  }
+
+  .timeline-content {
+    flex: 1;
+  }
+
+  .timeline-action {
+    color: #1e293b;
+    font-size: 0.875rem;
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  html.dark .timeline-action {
+    color: #f8fafc;
+  }
+
+  .timeline-meta {
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  html.dark .timeline-meta {
+    color: #94a3b8;
+  }
+
+  /* Notification Timeline */
+  .notification-timeline {
+    padding: 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .notification-timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .notification-timeline-item:last-child {
+    border-bottom: none;
+  }
+
+  .notification-timeline-item.unread {
+    background: #f0f9ff;
+  }
+
+  .notification-timeline-item:hover {
+    background: #f8fafc;
+  }
+
+  html.dark .notification-timeline-item {
+    border-bottom-color: #334155;
+  }
+
+  html.dark .notification-timeline-item.unread {
+    background: #1e293b;
+  }
+
+  html.dark .notification-timeline-item:hover {
+    background: #334155;
+  }
+
+  .notification-timeline-marker {
+    width: 8px;
+    height: 8px;
+    background: #3b82f6;
+    flex-shrink: 0;
+    margin-top: 0.5rem;
+    border-radius: 50%;
+  }
+
+  .notification-timeline-content {
+    flex: 1;
+  }
+
+  .notification-timeline-action {
+    color: #1e293b;
+    font-size: 0.875rem;
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  html.dark .notification-timeline-action {
+    color: #f8fafc;
+  }
+
+  .notification-timeline-meta {
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  html.dark .notification-timeline-meta {
+    color: #94a3b8;
+  }
+
+  .loading-state {
+    color: #64748b;
+    text-align: center;
+    padding: 2rem;
+    font-style: italic;
+    font-size: 0.875rem;
+  }
+
+  html.dark .loading-state {
+    color: #94a3b8;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .profile-container {
+      padding: 1rem;
+      gap: 1rem;
     }
 
-    .notifications-card {
-      grid-column: 1 / -1;
+    .profile-info {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .profile-stats {
+      min-width: auto;
+      max-width: none;
+    }
+
+    .stats-row {
+      grid-template-columns: 1fr;
+    }
+
+    .content-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+    }
+
+    .avatar-edit-btn {
+      top: 6px;
+      right: 6px;
+      width: 28px;
+      height: 28px;
+      font-size: 0.75rem;
+    }
+
+    .profile-username {
+      font-size: 1.75rem;
+    }
+
+    .notification-timeline {
+      padding: 1rem;
+      max-height: 300px;
     }
   }
 
   @media (min-width: 1024px) {
-    .content-grid {
+    .profile-container {
       gap: 2rem;
+    }
+
+    .profile-stats {
+      min-width: 300px;
+      max-width: 350px;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .profile-info {
+      gap: 3rem;
+    }
+
+    .profile-stats {
+      max-width: 380px;
     }
   }
 </style>

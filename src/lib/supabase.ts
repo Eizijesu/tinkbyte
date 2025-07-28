@@ -1,10 +1,11 @@
 // src/lib/supabase.ts
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { config } from './config';
 
-let supabaseInstance: any = null;
+let supabaseInstance: SupabaseClient | null = null;
+const instanceId = Math.random().toString(36).substr(2, 9); // Unique ID for tracking
 
-function getSupabaseClient() {
+function getSupabaseClient(): SupabaseClient {
   if (!supabaseInstance) {
     const supabaseUrl = config.supabase.url;
     const supabaseAnonKey = config.supabase.anonKey;
@@ -31,21 +32,28 @@ function getSupabaseClient() {
       }
     });
 
-    console.log('✅ Supabase singleton created');
+   
+    (supabaseInstance as any)._instanceId = instanceId;
+    (supabaseInstance as any)._createdAt = new Date().toISOString();
+
+    console.log(`✅ Supabase singleton created with ID: ${instanceId}`);
+  } else {
+    console.log(`♻️ Reusing Supabase singleton (ID: ${instanceId})`);
   }
   return supabaseInstance;
 }
 
 export const supabase = getSupabaseClient();
+export { getSupabaseClient };
 
-// ✅ Keep all your existing code exactly as it is below:
 export const getEnvironment = () => config.environment;
 export const isProductionEnvironment = () => config.environment === 'production';
 
+
 export const db = {
-  profiles: () => supabase.from('profiles'),
-  comments: () => supabase.from('comments'),
-  commentLikes: () => supabase.from('comment_likes'),
+  profiles: () => getSupabaseClient().from('profiles'),
+  comments: () => getSupabaseClient().from('comments'),
+  commentLikes: () => getSupabaseClient().from('comment_likes'),
   commentModeration: () => supabase.from('comment_moderation'),
   commentReactions: () => supabase.from('comment_reactions'),
   commentBookmarks: () => supabase.from('comment_bookmarks'),
@@ -54,6 +62,7 @@ export const db = {
   commentNotifications: () => supabase.from('comment_notifications'),
   userRateLimits: () => supabase.from('user_rate_limits'),
   newsletterSubscriptions: () => supabase.from('newsletter_subscriptions'),
+  userCategoryFollows: () => supabase.from('user_category_follows'),
   
   // These tables might be shared across environments
   articles: () => supabase.from('articles'),
@@ -123,6 +132,12 @@ export const envDb = {
     update: (data: any) => db.userRateLimits().update({ ...data, environment: config.environment }),
     delete: () => db.userRateLimits().delete().eq('environment', config.environment),
   },
+    userCategoryFollows: {
+    select: (columns: string = '*') => db.userCategoryFollows().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.userCategoryFollows().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.userCategoryFollows().update({ ...data, environment: config.environment }),
+    delete: () => db.userCategoryFollows().delete().eq('environment', config.environment),
+  },
   newsletterSubscriptions: {
     select: (columns: string = '*') => db.newsletterSubscriptions().select(columns).eq('environment', config.environment),
     insert: (data: any) => db.newsletterSubscriptions().insert({ ...data, environment: config.environment }),
@@ -157,6 +172,15 @@ export interface User {
     provider?: string;
     providers?: string[];
   };
+}
+
+export interface UserCategoryFollow {
+  id: string;
+  user_id: string;
+  category_slug: string;
+  environment: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AdminUser extends User {
@@ -353,24 +377,32 @@ export class AuthState {
     if (this.initialized) return;
     
     try {
-      console.log('🔄 Initializing auth state...');
+      if (config.environment !== 'production') {
+        console.log('🔄 Initializing auth state...');
+      }
       
-      const { data: { session } } = await supabase.auth.getSession();
+      const client = getSupabaseClient(); // Use singleton
+      const { data: { session } } = await client.auth.getSession();
       
+      // Rest of your existing initialization code...
       if (session?.user) {
         this.user = session.user as User;
         await this.loadProfile();
-        console.log('✅ User session found:', this.user.email);
-      } else {
-        console.log('❌ No user session found');
+        if (config.environment !== 'production') {
+          console.log('✅ User session found:', this.user.email);
+        }
       }
 
       this.notifyListeners();
       this.initialized = true;
 
+
       // Listen for auth changes
-      supabase.auth.onAuthStateChange(async (event, session) => {
+    getSupabaseClient().auth.onAuthStateChange(async (event, session) => {
+      if (config.environment !== 'production') {
         console.log('🔄 Auth state changed:', event, session?.user?.email);
+      }
+      
         
         if (event === 'SIGNED_IN' && session?.user) {
           this.user = session.user as User;
@@ -810,9 +842,11 @@ export class TinkByteAPI {
   // Get comments for an article with environment filtering
 static async getComments(articleId) {
   try {
-    console.log('🔍 Fetching comments for article:', articleId);
+    if (config.environment !== 'production') {
+      console.log('🔍 Fetching comments for article:', articleId);
+    }
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('comments')
       .select(`
         *,
@@ -848,13 +882,16 @@ static async getComments(articleId) {
       throw error;
     }
 
-    console.log(`✅ Fetched ${data?.length || 0} comments`);
+    if (config.environment !== 'production') {
+      console.log(`✅ Fetched ${data?.length || 0} comments`);
+    }
     return { success: true, data: data || [] };
   } catch (error) {
     console.error('❌ Error fetching comments:', error);
     return { success: false, error: error.message };
   }
 }
+
   // Fixed addComment method with single foreign key relationship
 static async addComment(articleSlug, content, parentId = null) {
   try {
