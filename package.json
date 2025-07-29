@@ -6,7 +6,14 @@
   "scripts": {
     "dev": "tinacms dev -c \"astro dev\"",
     "dev:tina": "tinacms dev --local -c \"astro dev\"",
-    "build": "npm run sync:content && tinacms build && astro check && astro build",
+    "dev:clean": "astro dev",
+    
+    
+    "build": "astro check && astro build",
+    "build:tina": "npm run sync:content && tinacms build && astro check && astro build",
+    "build:prod": "NODE_ENV=production npm run sync:prod && astro build",
+    "build:debug": "astro build --verbose",
+    
     "preview": "astro preview",
     "astro": "astro",
     "sync": "astro sync",
@@ -16,19 +23,29 @@
     "type-check": "astro check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "rm -rf dist .astro node_modules/.cache",
-    "clean:win": "if exist node_modules rmdir /s /q node_modules && if exist package-lock.json del package-lock.json && if exist .astro rmdir /s /q .astro && if exist dist rmdir /s /q dist",
+    
+    
+    "clean": "rm -rf dist .astro node_modules/.cache .tina",
+    "clean:win": "if exist node_modules rmdir /s /q node_modules && if exist package-lock.json del package-lock.json && if exist .astro rmdir /s /q .astro && if exist dist rmdir /s /q dist && if exist .tina rmdir /s /q .tina",
     "reset": "npm run clean:win && npm install && npm run sync",
+    
+    
     "tina:build": "tinacms build",
     "tina:init": "tinacms init",
     "tina:dev": "tinacms dev --local",
+    
+    
     "create-categories": "node scripts/create-categories.js",
     "sync:content": "node scripts/sync-content.mjs",
     "sync:dev": "node scripts/sync-content.mjs --env=development",
     "sync:prod": "node scripts/sync-content.mjs --env=production",
     "sync-content:force": "node scripts/sync-content.mjs --force",
-    "build:full": "npm run sync:prod && astro build",
+    
+    
     "deploy": "npm run build",
+    "deploy:tina": "npm run build:tina",
+    "deploy:debug": "npm run clean && npm run build:debug",
+    
     "dev:sync": "npm run sync-content && npm run dev"
   },
   "dependencies": {

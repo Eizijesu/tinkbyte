@@ -5,3 +5,16 @@
 
 # Fallback for SPA routes
 /* /index.html 200
+
+# Handle auth module imports
+/src/lib/* /_astro/:splat 200
+
+# Handle blog routes
+/blog/* /blog/:splat 200
+
+# Handle auth routes
+/auth/* /auth/:splat 200
+
+# Handle API routes
+/api/* /api/:splat 200
+
