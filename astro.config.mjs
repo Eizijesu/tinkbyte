@@ -131,7 +131,7 @@ export default defineConfig({
     },
     server: {
       fs: {
-        allow: ['..'],
+        allow: ['..',  './public'],
       },
     },
   },

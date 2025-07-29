@@ -92,7 +92,7 @@ const getStructuredData = () => {
         url: `${Astro.url.origin}/logo.png`,
       },
       url: SITE.url,
-      // Updated with all your social platforms
+      // Social plateform
       sameAs: [
         `https://twitter.com/${SITE.social.twitter.replace("@", "")}`,
         `https://linkedin.com/${SITE.social.linkedin}`,
@@ -326,7 +326,7 @@ const structuredData = getStructuredData();
         border-color: var(--color-border) !important;
       }
 
-      /* Force theme consistency for specific elements */
+      /* theme consistency for specific elements */
       .bg-white {
         background-color: var(--color-bg-primary) !important;
       }
@@ -599,25 +599,11 @@ const structuredData = getStructuredData();
         try {
           console.log("⏳ Loading auth modules for custom comments...");
 
-          // ✅ IMPORT THE SINGLETON DIRECTLY
           const authModule = await import("/src/lib/auth.js");
           const supabaseModule = await import("/src/lib/supabase.js");
 
-          // ✅ GET THE SINGLETON INSTANCE
-          const supabaseSingleton = supabaseModule.supabase;
-          const authManager = authModule.authManager;
-
-          // ✅ VERIFY IT'S A SINGLETON
-          console.log("🔍 Supabase singleton info:", {
-            instanceId: supabaseSingleton._instanceId,
-            createdAt: supabaseSingleton._createdAt,
-            hasAuth: !!supabaseSingleton.auth,
-          });
-
-          // ✅ EXPOSE SINGLETON TO WINDOW (NOT A NEW INSTANCE)
-          window.authManager = authManager;
-          window.supabase = supabaseSingleton; // This is the singleton
-          window.supabaseInstanceId = supabaseSingleton._instanceId; // For tracking
+          window.authManager = authModule.authManager;
+          window.supabase = supabaseModule.supabase;
 
           console.log("✅ Auth modules loaded and exposed to window");
 
@@ -625,12 +611,11 @@ const structuredData = getStructuredData();
             await window.authManager.initialize();
             console.log("✅ Auth manager ready for custom comments");
 
-            // ✅ DISPATCH EVENT WITH SINGLETON
             window.dispatchEvent(
               new CustomEvent("authReady", {
                 detail: {
                   authManager: window.authManager,
-                  supabase: window.supabase, // This is the singleton
+                  supabase: window.supabase,
                 },
               })
             );
@@ -638,10 +623,9 @@ const structuredData = getStructuredData();
         } catch (error) {
           console.error("❌ Failed to load auth modules:", error);
 
-          // Fallback timeout
           setTimeout(function () {
-            if (window.authManager && window.supabase) {
-              console.log("✅ Found existing auth manager via fallback");
+            if (window.authManager) {
+              console.log("✅ Found existing auth manager");
               window.dispatchEvent(
                 new CustomEvent("authReady", {
                   detail: {
@@ -653,54 +637,6 @@ const structuredData = getStructuredData();
             }
           }, 1000);
         }
-      });
-    </script>
-    <script is:inline>
-      // Add singleton verification
-      window.addEventListener("load", function () {
-        setTimeout(function () {
-          if (window.supabase) {
-            console.log("🔍 Final Supabase verification:", {
-              instanceId: window.supabase._instanceId,
-              createdAt: window.supabase._createdAt,
-              hasAuth: !!window.supabase.auth,
-              authState: window.supabase.auth?.getSession
-                ? "ready"
-                : "not ready",
-            });
-
-            // Check if there are multiple instances
-            const allSupabaseInstances = [];
-            if (window.supabase) allSupabaseInstances.push("window.supabase");
-            if (window.tinkbyteComments?.supabase)
-              allSupabaseInstances.push("comments.supabase");
-
-            console.log(
-              "📊 Supabase instances found:",
-              allSupabaseInstances.length
-            );
-
-            if (allSupabaseInstances.length === 1) {
-              console.log("✅ Perfect! Using singleton correctly");
-            } else if (allSupabaseInstances.length > 1) {
-              console.warn(
-                "⚠️ Multiple Supabase instances detected:",
-                allSupabaseInstances
-              );
-
-              // Check if they're the same instance
-              if (window.supabase === window.tinkbyteComments?.supabase) {
-                console.log("✅ Multiple references but same instance - OK");
-              } else {
-                console.error(
-                  "❌ Different Supabase instances - NOT using singleton properly"
-                );
-              }
-            }
-          } else {
-            console.warn("⚠️ No Supabase instance found on window");
-          }
-        }, 2000);
       });
     </script>
 
@@ -885,43 +821,6 @@ const structuredData = getStructuredData();
           subtree: true,
         });
       });
-    </script>
-
-    <!-- ✅ CONSOLE CLEANUP SCRIPT (Optional - for production) -->
-    <script is:inline>
-      // Clean console in production
-      const PRODUCTION_MODE = false; // Set to true to clean console
-
-      if (PRODUCTION_MODE) {
-        const originalLog = console.log;
-        const originalWarn = console.warn;
-
-        console.log = (...args) => {
-          const message = String(args[0] || "");
-          // Only show critical messages
-          if (
-            message.includes("❌") ||
-            message.includes("Error") ||
-            message.includes("Failed") ||
-            message.includes("✅ Perfect! Using singleton correctly") ||
-            message.includes("TinkByte Comments initialized") ||
-            message.includes("Auth manager ready")
-          ) {
-            originalLog(...args);
-          }
-        };
-
-        console.warn = (...args) => {
-          const message = String(args[0] || "");
-          // Suppress known warnings
-          if (
-            !message.includes("Multiple GoTrueClient") &&
-            !message.includes("detected in the same browser")
-          ) {
-            originalWarn(...args);
-          }
-        };
-      }
     </script>
   </body>
 </html>
