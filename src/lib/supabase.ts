@@ -1,55 +1,75 @@
-// src/lib/supabase.ts
+// src/lib/supabase.ts - STATIC SITE OPTIMIZED
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { config } from './config';
+import { config, shouldLog } from './config';
 
+// Single global instance for static site
 let supabaseInstance: SupabaseClient | null = null;
-const instanceId = Math.random().toString(36).substr(2, 9); // Unique ID for tracking
+let instanceId: string | null = null;
+let isInitializing = false;
+
 
 function getSupabaseClient(): SupabaseClient {
-  if (!supabaseInstance) {
-    const supabaseUrl = config.supabase.url;
-    const supabaseAnonKey = config.supabase.anonKey;
-
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Missing Supabase environment variables');
-    }
-
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-        flowType: 'pkce',
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        storageKey: `tinkbyte-auth-token-${config.environment}`,
-        debug: false
-      },
-      global: {
-        headers: {
-          'X-Environment': config.environment,
-          'X-Client-Info': `tinkbyte-web-${config.environment}`
-        }
-      }
-    });
-
-   
-    (supabaseInstance as any)._instanceId = instanceId;
-    (supabaseInstance as any)._createdAt = new Date().toISOString();
-
-    console.log(`✅ Supabase singleton created with ID: ${instanceId}`);
-  } else {
-    console.log(`♻️ Reusing Supabase singleton (ID: ${instanceId})`);
+  // Return existing instance immediately
+  if (supabaseInstance && instanceId) {
+    return supabaseInstance;
   }
+  
+  // Prevent multiple simultaneous initializations
+  if (isInitializing) {
+    throw new Error('Supabase client is already initializing');
+  }
+
+  isInitializing = true;
+
+  // Validate environment variables
+  const supabaseUrl = config.supabase.url;
+  const supabaseAnonKey = config.supabase.anonKey;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase environment variables. Check your .env file.');
+  }
+
+  // Generate instance ID for tracking
+  instanceId = Math.random().toString(36).substr(2, 9);
+
+  // Create new instance optimized for static site
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      storageKey: `tinkbyte-auth-${config.environment}`,
+      debug: shouldLog('supabase')
+    },
+    global: {
+      headers: {
+        'X-Environment': config.environment,
+        'X-Client-Info': `tinkbyte-static-${config.environment}`,
+        'X-Deployment-Type': 'static'
+      }
+    }
+  });
+
+  // Log only in development
+  if (shouldLog('supabase')) {
+    console.log(`✅ Supabase singleton created with ID: ${instanceId}`);
+  }
+
   return supabaseInstance;
 }
 
+// Export the singleton
 export const supabase = getSupabaseClient();
 export { getSupabaseClient };
 
+// Simple utility exports
 export const getEnvironment = () => config.environment;
 export const isProductionEnvironment = () => config.environment === 'production';
+export const isDevelopmentEnvironment = () => config.environment === 'development';
 
-
+// Database helpers
 export const db = {
   profiles: () => getSupabaseClient().from('profiles'),
   comments: () => getSupabaseClient().from('comments'),
@@ -64,7 +84,7 @@ export const db = {
   newsletterSubscriptions: () => supabase.from('newsletter_subscriptions'),
   userCategoryFollows: () => supabase.from('user_category_follows'),
   
-  // These tables might be shared across environments
+  // Shared tables
   articles: () => supabase.from('articles'),
   articleLikes: () => supabase.from('article_likes'),
   moderationRules: () => supabase.from('moderation_rules'),
@@ -76,7 +96,7 @@ export const db = {
   userPreferences: () => supabase.from('user_preferences'),
 };
 
-// Environment-aware query helpers
+// Environment-aware query helpers (only dev/prod)
 export const envDb = {
   profiles: {
     select: (columns: string = '*') => db.profiles().select(columns).eq('environment', config.environment),
@@ -132,7 +152,7 @@ export const envDb = {
     update: (data: any) => db.userRateLimits().update({ ...data, environment: config.environment }),
     delete: () => db.userRateLimits().delete().eq('environment', config.environment),
   },
-    userCategoryFollows: {
+  userCategoryFollows: {
     select: (columns: string = '*') => db.userCategoryFollows().select(columns).eq('environment', config.environment),
     insert: (data: any) => db.userCategoryFollows().insert({ ...data, environment: config.environment }),
     update: (data: any) => db.userCategoryFollows().update({ ...data, environment: config.environment }),
@@ -150,10 +170,9 @@ export const envDb = {
 export const rpc = (fn: string, params: object) => 
   supabase.rpc(fn, params);
 
-// Add this type for better type safety
 export type TableName = keyof typeof db;
 
-// Type definitions
+// All your existing interfaces stay exactly the same
 export interface User {
   id: string;
   email?: string;
@@ -377,18 +396,17 @@ export class AuthState {
     if (this.initialized) return;
     
     try {
-      if (config.environment !== 'production') {
+      if (shouldLog()) {
         console.log('🔄 Initializing auth state...');
       }
       
-      const client = getSupabaseClient(); // Use singleton
+      const client = getSupabaseClient();
       const { data: { session } } = await client.auth.getSession();
       
-      // Rest of your existing initialization code...
       if (session?.user) {
         this.user = session.user as User;
         await this.loadProfile();
-        if (config.environment !== 'production') {
+        if (shouldLog()) {
           console.log('✅ User session found:', this.user.email);
         }
       }
@@ -396,13 +414,11 @@ export class AuthState {
       this.notifyListeners();
       this.initialized = true;
 
-
       // Listen for auth changes
-    getSupabaseClient().auth.onAuthStateChange(async (event, session) => {
-      if (config.environment !== 'production') {
-        console.log('🔄 Auth state changed:', event, session?.user?.email);
-      }
-      
+      getSupabaseClient().auth.onAuthStateChange(async (event, session) => {
+        if (shouldLog()) {
+          console.log('🔄 Auth state changed:', event, session?.user?.email);
+        }
         
         if (event === 'SIGNED_IN' && session?.user) {
           this.user = session.user as User;

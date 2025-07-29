@@ -35,7 +35,7 @@ export class CommentService {
       }
       
       // Use appropriate SQL function based on user type
-      let result;
+      let result: ApiResponse | null = null;
       
       if (userId) {
         // Authenticated user

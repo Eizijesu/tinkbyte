@@ -1,5 +1,5 @@
 ---
-// src/pages/contact.astro - TinaCMS ready version with HTML links
+// src/pages/contact.astro
 import Layout from "../layouts/Layout.astro";
 import Button from "../components/ui/Button.astro";
 import { getEntry } from "astro:content";
@@ -527,9 +527,11 @@ const faqItems = faqData.enabled ? faqData.items.filter(item => item.featured !=
 
       if (!content || !icon || !index) return;
 
-      // Type assertions for HTMLElement
-      const contentElement = content as HTMLElement;
-      const iconElement = icon as HTMLElement;
+      // Check if elements are HTMLElements before proceeding
+      if (!(content instanceof HTMLElement) || !(icon instanceof HTMLElement)) return;
+
+      const contentElement = content;
+      const iconElement = icon;
 
       let isExpanded = false;
 
@@ -579,11 +581,13 @@ const faqItems = faqData.enabled ? faqData.items.filter(item => item.featured !=
       resizeTimeout = setTimeout(() => {
         // Recalculate all expanded elements
         const expandedFaqItems = document.querySelectorAll('[data-faq-content]');
-        expandedFaqItems.forEach(item => {
-          const itemElement = item as HTMLElement;
-          if (itemElement.style.maxHeight !== "0px" && itemElement.style.maxHeight !== "") {
-            const newHeight = getContentHeight(itemElement);
-            itemElement.style.maxHeight = newHeight + "px";
+        expandedFaqItems.forEach((item) => {
+          // Check if it's an HTMLElement before accessing style
+          if (item instanceof HTMLElement) {
+            if (item.style.maxHeight !== "0px" && item.style.maxHeight !== "") {
+              const newHeight = getContentHeight(item);
+              item.style.maxHeight = newHeight + "px";
+            }
           }
         });
         

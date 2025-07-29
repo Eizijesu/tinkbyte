@@ -1,0 +1,7 @@
+# Handle client-side routing
+/auth/* /auth/signin 200
+/blog/* /blog/[slug] 200
+/api/* /api/[path] 200
+
+# Fallback for SPA routes
+/* /index.html 200

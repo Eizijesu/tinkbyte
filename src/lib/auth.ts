@@ -1,5 +1,4 @@
-// src/lib/auth.ts - COMPLETE STATIC CUSTOM EMAIL FLOW
-
+// src/lib/auth.ts - Production Ready with Clean Logging
 import { AuthState, type User, type Profile, supabase } from './supabase.js';
 import { EmailService } from './email.js';
 import type { Session } from '@supabase/supabase-js';
@@ -27,7 +26,6 @@ interface CustomUserMetadata {
   picture?: string;
   name?: string;
   provider?: string;
-  // Our custom properties
   needs_password_setup?: boolean;
   temp_password?: boolean;
   password_set_at?: string;
@@ -47,6 +45,23 @@ class TinkByteAuthManager {
   private listeners: Array<(user: User | null, profile: Profile | null) => void> = [];
   private initialized = false;
   private initPromise: Promise<void> | null = null;
+  
+  // Production logging control
+  private readonly DEBUG = typeof window !== 'undefined' && 
+    (window.location.hostname === 'localhost' || window.location.hostname.includes('dev'));
+
+  private debugLog(...args: any[]) {
+    if (this.DEBUG) console.log(...args);
+  }
+
+  private errorLog(...args: any[]) {
+    if (this.DEBUG) {
+      console.error(...args);
+    } else {
+      // Only log critical errors in production
+      console.error(args[0]);
+    }
+  }
 
   private constructor() {
     this.authState = AuthState.getInstance();
@@ -69,7 +84,7 @@ class TinkByteAuthManager {
 
   private async _initialize(): Promise<void> {
     try {
-      console.log('🔐 TinkByteAuth: Initializing...');
+      this.debugLog('🔐 TinkByteAuth: Initializing...');
       
       await this.authState.initialize();
       
@@ -84,7 +99,7 @@ class TinkByteAuthManager {
       this.notifyListeners(user, profile);
       
     } catch (error) {
-      console.error('🔐 TinkByteAuth: Initialization failed:', error);
+      this.errorLog('🔐 TinkByteAuth: Initialization failed:', error);
       this.initialized = true;
       this.notifyListeners(null, null);
     }
@@ -114,7 +129,7 @@ class TinkByteAuthManager {
       try {
         callback(user, profile);
       } catch (error) {
-        console.error('Error in auth listener:', error);
+        this.errorLog('Error in auth listener:', error);
       }
     });
   }
@@ -127,12 +142,10 @@ class TinkByteAuthManager {
     return this.authState.getProfile();
   }
 
-  // Fix the getDisplayName method - remove full_name reference
   getDisplayName(): string {
     const profile = this.authState.getProfile();
     const user = this.authState.getUser();
     
-    // Use only properties that exist in your Profile type
     return profile?.display_name || 
            user?.user_metadata?.display_name ||
            user?.user_metadata?.full_name ||
@@ -164,13 +177,11 @@ class TinkByteAuthManager {
     }
   }
 
-  // Check if user needs to set up their password (first-time user)
   async needsPasswordSetup(): Promise<boolean> {
     try {
       const user = this.getUser();
       if (!user) return false;
       
-      // Type assertion to include our custom properties
       const metadata = user.user_metadata as CustomUserMetadata;
       return metadata?.needs_password_setup === true;
     } catch (error) {
@@ -183,7 +194,7 @@ class TinkByteAuthManager {
       const { data: { session }, error } = await this.supabase.auth.getSession();
       
       if (error) {
-        console.error('Auth check error:', error);
+        this.errorLog('Auth check error:', error);
         return { isAuthenticated: false, user: null, session: null };
       }
 
@@ -193,12 +204,11 @@ class TinkByteAuthManager {
         session: session
       };
     } catch (error) {
-      console.error('Auth check failed:', error);
+      this.errorLog('Auth check failed:', error);
       return { isAuthenticated: false, user: null, session: null };
     }
   }
 
-  // Generate secure temporary password
   private generateSecurePassword(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let password = '';
@@ -241,42 +251,36 @@ class TinkByteAuthManager {
   // Enhanced email signup with conflict detection
   async signUpWithEmail(email: string, displayName: string) {
     try {
-      console.log('🔐 Email signup for:', email);
+      this.debugLog('🔐 Email signup for:', email);
       
-      // Check if there's already a pending OTP for this email
       const existingOTP = localStorage.getItem(`otp_${email}`);
       if (existingOTP) {
         const otpData = JSON.parse(existingOTP);
         
-        // If OTP is still valid, don't send a new one
         if (Date.now() < otpData.expires) {
-          console.log('🔐 OTP already exists and is still valid');
+          this.debugLog('🔐 OTP already exists and is still valid');
           return { 
             success: true, 
             message: 'Verification code already sent. Check your email or wait for it to expire to request a new one.' 
           };
         } else {
-          // Clean up expired OTP
           localStorage.removeItem(`otp_${email}`);
         }
       }
       
-      // Generate 6-digit OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       
-      // Store OTP temporarily in localStorage
       const otpData = {
         email,
         otp,
         displayName,
         created: Date.now(),
-        expires: Date.now() + (30 * 60 * 1000), // 30 minutes
+        expires: Date.now() + (30 * 60 * 1000),
         isNewUser: true
       };
       
       localStorage.setItem(`otp_${email}`, JSON.stringify(otpData));
       
-      // Send custom verification email with OTP
       const result = await EmailService.sendVerificationEmail(
         email, 
         otp, 
@@ -285,25 +289,22 @@ class TinkByteAuthManager {
       );
       
       if (!result.success) {
-        // Clean up OTP data if email failed
         localStorage.removeItem(`otp_${email}`);
         throw new Error(result.error || 'Failed to send verification email');
       }
 
-      console.log('✅ Verification email sent successfully');
+      this.debugLog('✅ Verification email sent successfully');
       return { success: true };
     } catch (error: any) {
-      console.error('🔐 Email signup error:', error);
+      this.errorLog('🔐 Email signup error:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // User enters OTP code → Account created + Auto sign in
   async verifyOTP(email: string, token: string) {
     try {
-      console.log('🔐 Verifying OTP for:', email);
+      this.debugLog('🔐 Verifying OTP for:', email);
       
-      // Get stored OTP data
       const storedData = localStorage.getItem(`otp_${email}`);
       if (!storedData) {
         throw new Error('No verification code found. Please request a new one.');
@@ -311,18 +312,15 @@ class TinkByteAuthManager {
       
       const otpData = JSON.parse(storedData);
       
-      // Check if OTP has expired
       if (Date.now() > otpData.expires) {
         localStorage.removeItem(`otp_${email}`);
         throw new Error('Verification code has expired. Please request a new one.');
       }
       
-      // Verify OTP
       if (otpData.otp !== token) {
         throw new Error('Invalid verification code. Please try again.');
       }
       
-      // Create account with temporary password
       const tempPassword = this.generateSecurePassword();
       
       const { data, error } = await this.supabase.auth.signUp({
@@ -339,24 +337,19 @@ class TinkByteAuthManager {
         }
       });
 
-      // Handle duplicate email error from Supabase
       if (error) {
-        console.log('🔐 Supabase signup error:', error);
+        this.debugLog('🔐 Supabase signup error:', error);
         
         if (error.message.includes('already registered') || 
             error.message.includes('already been registered') ||
             error.message.includes('User already registered')) {
           
-          // Clean up OTP data
           localStorage.removeItem(`otp_${email}`);
-          
-          // Try to sign in the existing user instead
           throw new Error('You already have an account with this email. Please use the Sign In page instead.');
         }
         throw error;
       }
       
-      // Account created successfully - sign them in
       const { data: signInData, error: signInError } = await this.supabase.auth.signInWithPassword({
         email: email,
         password: tempPassword
@@ -364,10 +357,7 @@ class TinkByteAuthManager {
       
       if (signInError) throw signInError;
       
-      // Clean up OTP data
       localStorage.removeItem(`otp_${email}`);
-      
-      // Send welcome email
       this.sendWelcomeEmailAsync(email, otpData.displayName);
 
       return { 
@@ -377,30 +367,28 @@ class TinkByteAuthManager {
       };
       
     } catch (error: any) {
-      console.error('🔐 OTP verification error:', error);
+      this.errorLog('🔐 OTP verification error:', error);
       return { success: false, error: error.message };
     }
   }
 
+
   // Step 3: User creates their real password (called from profile page)
   async setFirstTimePassword(password: string) {
     try {
-      console.log('🔐 Setting first-time password');
+      this.debugLog('🔐 Setting first-time password');
       
       const user = this.getUser();
       if (!user) {
         throw new Error('No authenticated user found');
       }
       
-      // Type assertion for custom metadata
       const metadata = user.user_metadata as CustomUserMetadata;
       
-      // Check if user needs password setup
       if (!metadata?.needs_password_setup) {
         throw new Error('Password setup not required for this user');
       }
       
-      // Update to real password and clear setup flags
       const { error } = await this.supabase.auth.updateUser({
         password: password,
         data: {
@@ -413,13 +401,14 @@ class TinkByteAuthManager {
 
       if (error) throw error;
 
-      console.log('✅ First-time password set successfully');
+      this.debugLog('✅ First-time password set successfully');
       return { success: true };
     } catch (error: any) {
-      console.error('🔐 Set first-time password error:', error);
+      this.errorLog('🔐 Set first-time password error:', error);
       return { success: false, error: error.message };
     }
   }
+
 
   // ===========================================
   // FLOW 2: EXISTING USER SIGNIN
@@ -427,7 +416,7 @@ class TinkByteAuthManager {
   
   async signInWithEmail(email: string, password: string) {
     try {
-      console.log('🔐 Email signin for:', email);
+      this.debugLog('🔐 Email signin for:', email);
       
       const { data, error } = await this.supabase.auth.signInWithPassword({
         email,
@@ -435,7 +424,6 @@ class TinkByteAuthManager {
       });
 
       if (error) {
-        // Enhanced error handling for common scenarios
         if (error.message.includes('Invalid login credentials')) {
           return {
             success: false,
@@ -455,7 +443,6 @@ class TinkByteAuthManager {
         throw error;
       }
 
-      // Type assertion for custom metadata
       const metadata = data.user?.user_metadata as CustomUserMetadata;
       const needsSetup = metadata?.needs_password_setup === true;
 
@@ -465,7 +452,7 @@ class TinkByteAuthManager {
         needsPasswordSetup: needsSetup
       };
     } catch (error: any) {
-      console.error('🔐 Email signin error:', error);
+      this.errorLog('🔐 Email signin error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -476,7 +463,7 @@ class TinkByteAuthManager {
   
   async signInWithGoogle() {
     try {
-      console.log('🔐 Google signin starting...');
+      this.debugLog('🔐 Google signin starting...');
       
       const { data, error } = await this.supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -490,17 +477,18 @@ class TinkByteAuthManager {
       });
 
       if (error) {
-        console.error('🔐 Google signin error details:', error);
+        this.errorLog('🔐 Google signin error details:', error);
         throw error;
       }
 
-      console.log('🔐 Google signin successful, redirecting...');
+      this.debugLog('🔐 Google signin successful, redirecting...');
       return { success: true, data };
     } catch (error: any) {
-      console.error('🔐 Google signin error:', error);
+      this.errorLog('🔐 Google signin error:', error);
       return { success: false, error: error.message };
     }
   }
+
 
   // Handle auth callback (for Google signin)
   async handleAuthCallback(): Promise<{
@@ -522,10 +510,8 @@ class TinkByteAuthManager {
         const isNewUser = !metadata?.last_sign_in_at;
         const provider = user.app_metadata?.provider;
         
-        // For Google users, they never need password setup
         const needsPasswordSetup = metadata?.needs_password_setup === true && provider !== 'google';
         
-        // Send welcome email for new Google users
         if (isNewUser && provider === 'google') {
           const displayName = metadata?.full_name || user.email?.split('@')[0] || 'New User';
           this.sendWelcomeEmailAsync(user.email!, displayName);
@@ -541,7 +527,7 @@ class TinkByteAuthManager {
       
       return { success: false, error: 'No session found' };
     } catch (error: any) {
-      console.error('🔐 Auth callback error:', error);
+      this.errorLog('🔐 Auth callback error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -550,9 +536,10 @@ class TinkByteAuthManager {
   // FLOW 4: PASSWORD RESET (OTP Based)
   // ===========================================
   
+
   async setPassword(password: string) {
     try {
-      console.log('🔐 Setting password');
+      this.debugLog('🔐 Setting password');
       
       const { error } = await this.supabase.auth.updateUser({
         password: password,
@@ -562,32 +549,30 @@ class TinkByteAuthManager {
 
       return { success: true };
     } catch (error: any) {
-      console.error('🔐 Set password error:', error);
+      this.errorLog('🔐 Set password error:', error);
       return { success: false, error: error.message };
     }
   }
 
-  // Step 1: User requests password reset
-async resetPassword(email: string) {
-  try {
-    console.log('🔐 Password reset for:', email);
-    
-    // Use Supabase's built-in password reset (more reliable for static sites)
-    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-    
-    if (error) {
-      throw error;
-    }
 
-    console.log('✅ Password reset email sent successfully');
-    return { success: true };
-  } catch (error: any) {
-    console.error('🔐 Password reset error:', error);
-    return { success: false, error: error.message };
+  // Step 1: User requests password reset
+ async resetPassword(email: string) {
+    try {
+      this.debugLog('🔐 Password reset for:', email);
+      
+      const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      
+      if (error) throw error;
+
+      this.debugLog('✅ Password reset email sent successfully');
+      return { success: true };
+    } catch (error: any) {
+      this.errorLog('🔐 Password reset error:', error);
+      return { success: false, error: error.message };
+    }
   }
-}
 
   async sendPasswordResetEmail(email: string): Promise<{ success: boolean; error?: string }> {
     try {
@@ -622,8 +607,6 @@ async resetPassword(email: string) {
         throw new Error('Invalid password reset code.');
       }
       
-      // For password reset, we need the user to sign in first
-      // So we'll store the verified new password and let them sign in
       const passwordChangeData = {
         email,
         newPassword,
@@ -641,7 +624,7 @@ async resetPassword(email: string) {
         requiresSignIn: true
       };      
     } catch (error: any) {
-      console.error('🔐 Password reset OTP error:', error);
+      this.errorLog('🔐 Password reset OTP error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -806,7 +789,7 @@ async resetPassword(email: string) {
       
       return { success: true };
     } catch (error: any) {
-      console.error('🔐 Resend verification error:', error);
+      this.errorLog('🔐 Resend verification error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -835,14 +818,15 @@ async resetPassword(email: string) {
     try {
       const result = await EmailService.sendWelcomeEmail(email, displayName);
       if (result.success) {
-        console.log('✅ Welcome email sent to:', email);
+        this.debugLog('✅ Welcome email sent to:', email);
       } else {
-        console.warn('⚠️ Welcome email failed:', result.error);
+        this.debugLog('⚠️ Welcome email failed:', result.error);
       }
     } catch (error) {
-      console.error('❌ Welcome email error:', error);
+      this.errorLog('❌ Welcome email error:', error);
     }
   }
+
 
   async subscribeToNewsletter(email: string, name?: string): Promise<{ success: boolean; error?: string }> {
     try {
@@ -852,33 +836,31 @@ async resetPassword(email: string) {
       const result = await EmailService.sendNewsletterSubscriptionEmail(email, confirmationUrl, unsubscribeUrl, name);
       return result;
     } catch (error: any) {
-      console.error('❌ Newsletter subscription email error:', error);
+      this.errorLog('❌ Newsletter subscription email error:', error);
       return { success: false, error: error.message };
     }
   }
 
   async signOut() {
     try {
-      console.log('🔐 Signing out');
+      this.debugLog('🔐 Signing out');
       
       const { error } = await this.supabase.auth.signOut();
       
       if (error) {
-        console.error('🔐 Signout error:', error);
+        this.errorLog('🔐 Signout error:', error);
       }
       
-      // Clear everything
       this.initialized = false;
       this.initPromise = null;
       this.listeners = [];
       
-      // Clear storage
       localStorage.clear();
       sessionStorage.clear();
       
       return { success: true };
     } catch (error: any) {
-      console.error('🔐 Signout error:', error);
+      this.errorLog('🔐 Signout error:', error);
       
       localStorage.clear();
       sessionStorage.clear();
@@ -907,7 +889,7 @@ async resetPassword(email: string) {
       const profile = this.authState.getProfile();
       
       if (!user) {
-        console.error('🔐 TinkByteAuth: No authenticated user');
+        this.errorLog('🔐 TinkByteAuth: No authenticated user');
         return null;
       }
 
@@ -919,7 +901,7 @@ async resetPassword(email: string) {
         stats
       } as AuthProfileData;
     } catch (error) {
-      console.error('🔐 TinkByteAuth: Error loading profile data:', error);
+      this.errorLog('🔐 TinkByteAuth: Error loading profile data:', error);
       return null;
     }
   }
@@ -940,7 +922,7 @@ async resetPassword(email: string) {
         comments_posted: 0
       };
     } catch (error) {
-      console.error('Error loading user stats:', error);
+      this.errorLog('Error loading user stats:', error);
       return {
         followed_articles: 0,
         following_topics: 0,

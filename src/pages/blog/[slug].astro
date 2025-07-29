@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/[slug].astro - ENHANCED VERSION WITH PROPER TYPING
+// src/pages/blog/[slug].astro - CLEAN VERSION
 import { type CollectionEntry, getCollection } from "astro:content";
 import BlogPost from "../../layouts/BlogPost.astro";
 
@@ -16,39 +16,6 @@ import Newsletter from "../../components/tina/Newsletter.astro";
 import TwoColumnLayout from "../../components/tina/TwoColumnLayout.astro";
 
 // Type definitions
-interface PostData {
-  title: string;
-  subtitle?: string;
-  excerpt?: string;
-  description?: string;
-  pubDate: Date;
-  updatedDate?: Date;
-  readTime?: string;
-  tags?: string[];
-  category?: string;
-  authorInfo?: {
-    name: string;
-    role?: string;
-  };
-  heroImage?: any;
-  image?: string;
-  imageAlt?: string;
-  audioUrl?: string;
-  audioDuration?: string;
-  featured?: boolean;
-  trending?: boolean;
-  editorial?: {
-    status?: string;
-    assignedEditor?: string;
-  };
-  seo?: {
-    title?: string;
-    description?: string;
-    canonical?: string;
-  };
-  draft?: boolean;
-}
-
 interface NavigationContext {
   currentIndex: number;
   totalPosts: number;
@@ -67,22 +34,46 @@ interface AnalyticsData {
   tagCount: number;
 }
 
-// ENHANCED: Static path generation with better filtering and sorting
+interface BlogPostProps {
+  title: string;
+  subtitle?: string;
+  description?: string;
+  excerpt?: string;
+  date: Date;
+  updatedDate?: Date;
+  readTime?: string;
+  tags?: string[];
+  category?: string;
+  authorInfo?: {
+    name: string;
+    role?: string;
+  };
+  heroImage?: any;
+  image?: string;
+  imageAlt?: string;
+  audioUrl?: string;
+  audioDuration?: string;
+  slug: string;
+  featured?: boolean;
+  trending?: boolean;
+  navigationContext?: NavigationContext;
+  analyticsData?: AnalyticsData;
+  seoTitle?: string;
+  seoDescription?: string;
+  canonicalUrl?: string;
+  headings?: any[];
+  renderError?: Error | null;
+}
+
+// Static path generation
 export async function getStaticPaths() {
-  const posts = await getCollection("blog", ({ data }: { data: PostData }) => {
-    // Filter out drafts and future posts
+  const posts = await getCollection("blog", ({ data }) => {
     const now = new Date();
     const postDate = new Date(data.pubDate);
 
-    return (
-      data.draft !== true &&
-      postDate <= now &&
-      data.title && // Ensure title exists
-      data.excerpt // Ensure excerpt exists
-    );
+    return data.draft !== true && postDate <= now && data.title && data.excerpt;
   });
 
-  // Sort posts by publication date (newest first)
   const sortedPosts = posts.sort(
     (a: CollectionEntry<"blog">, b: CollectionEntry<"blog">) =>
       new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
@@ -92,7 +83,6 @@ export async function getStaticPaths() {
     params: { slug: post.slug },
     props: {
       post,
-      // Pass additional context for better performance
       allPosts: sortedPosts.length,
       postIndex: sortedPosts.findIndex(
         (p: CollectionEntry<"blog">) => p.slug === post.slug
@@ -101,14 +91,14 @@ export async function getStaticPaths() {
   }));
 }
 
-// FIXED: Proper type definition - use Astro.props directly
+// Get props
 const { post, allPosts, postIndex } = Astro.props as {
   post: CollectionEntry<"blog">;
   allPosts: number;
   postIndex: number;
 };
 
-// ENHANCED: Error handling for content rendering
+// Content rendering with error handling
 let Content: any;
 let headings: any[] = [];
 let renderError: Error | null = null;
@@ -120,20 +110,15 @@ try {
 } catch (error) {
   console.error(`Error rendering post ${post.slug}:`, error);
   renderError = error as Error;
-  // Create fallback content
   Content = () => `
     <div class="error-fallback">
       <h2>Content Rendering Error</h2>
       <p>There was an issue rendering this article. Please check the content format.</p>
-      <details>
-        <summary>Technical Details</summary>
-        <pre>${error}</pre>
-      </details>
     </div>
   `;
 }
 
-// ENHANCED: Component mapping with error boundaries
+// Component mapping for TinaCMS
 const components = {
   ImageBlock,
   VideoBlock,
@@ -147,8 +132,8 @@ const components = {
   TwoColumnLayout,
 };
 
-// ENHANCED: Content processing and validation
-const processedData = {
+// Process content data
+const processedData: BlogPostProps = {
   title: post.data.title || "Untitled Article",
   subtitle: post.data.subtitle,
   description: post.data.excerpt || post.data.description,
@@ -167,37 +152,43 @@ const processedData = {
   imageAlt: post.data.imageAlt,
   audioUrl: post.data.audioUrl,
   audioDuration: post.data.audioDuration,
+  slug: post.slug,
   featured: post.data.featured || false,
   trending: post.data.trending || false,
-  // Editorial workflow fields
-  editorial: post.data.editorial || {},
-  seo: post.data.seo || {},
+  navigationContext: undefined,
+  analyticsData: undefined,
+  seoTitle: undefined,
+  seoDescription: undefined,
+  canonicalUrl: undefined,
+  headings: headings,
+  renderError: renderError,
 };
 
-// ENHANCED: Auto-generate reading time if missing
+// Auto-generate reading time if missing
 if (!processedData.readTime || processedData.readTime === "Unknown") {
   const content = post.body || "";
   const wordCount = content.split(/\s+/).length;
   processedData.readTime = `${Math.ceil(wordCount / 200)} min read`;
 }
 
-// ENHANCED: SEO optimization
-const seoTitle = processedData.seo?.title || processedData.title;
-const seoDescription = processedData.seo?.description || processedData.excerpt;
-const canonicalUrl = processedData.seo?.canonical;
+// SEO data
+processedData.seoTitle = post.data.seo?.title || processedData.title;
+processedData.seoDescription =
+  post.data.seo?.description || processedData.excerpt;
+processedData.canonicalUrl = post.data.seo?.canonical;
 
-// ENHANCED: Article navigation context
-const navigationContext: NavigationContext = {
+// Navigation context
+processedData.navigationContext = {
   currentIndex: postIndex,
   totalPosts: allPosts,
   isFirst: postIndex === 0,
   isLast: postIndex === allPosts - 1,
 };
 
-// ENHANCED: Content analytics data
-const analyticsData: AnalyticsData = {
+// Analytics data
+processedData.analyticsData = {
   contentType: "blog-post",
-  category: processedData.category,
+  category: processedData.category || "uncategorized",
   author: processedData.authorInfo?.name || "Unknown",
   publishDate: processedData.date,
   wordCount: post.body?.split(/\s+/).length || 0,
@@ -207,54 +198,9 @@ const analyticsData: AnalyticsData = {
     processedData.heroImage?.uploadedImage ||
     processedData.image
   ),
-  tagCount: processedData.tags.length,
+  tagCount: processedData.tags?.length || 0,
 };
-
-// ENHANCED: Debug logging with performance metrics
-const debugStart = Date.now();
-console.log("=== ENHANCED POST DEBUG ===");
-console.log("Post slug:", post.slug);
-console.log("Post title:", processedData.title);
-console.log("Render error:", renderError ? "YES" : "NO");
-console.log("Headings found:", headings.length);
-console.log("Navigation context:", navigationContext);
-console.log("Analytics data:", analyticsData);
-console.log("Processing time:", Date.now() - debugStart, "ms");
-console.log("================================");
-
-// ENHANCED: Editorial workflow status check
-const isInDevelopment = import.meta.env.DEV;
-const editorialStatus = processedData.editorial?.status;
-const showEditorialInfo =
-  isInDevelopment && editorialStatus && editorialStatus !== "published";
 ---
-
-<!-- ENHANCED: Editorial workflow indicator for development -->{
-  showEditorialInfo && (
-    <div class="editorial-status-banner">
-      <div class="max-w-6xl mx-auto px-4 py-2">
-        <div class="flex items-center justify-between bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 rounded px-4 py-2">
-          <div class="flex items-center gap-2">
-            <span class="text-yellow-800 dark:text-yellow-200 text-sm font-medium">
-              📝 Editorial Status: {editorialStatus?.toUpperCase()}
-            </span>
-            {processedData.editorial?.assignedEditor && (
-              <span class="text-yellow-700 dark:text-yellow-300 text-xs">
-                • Assigned to: {processedData.editorial.assignedEditor}
-              </span>
-            )}
-          </div>
-          <a
-            href="/admin"
-            class="text-yellow-800 dark:text-yellow-200 text-xs hover:underline"
-          >
-            Edit in TinaCMS →
-          </a>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 <BlogPost
   title={processedData.title}
@@ -272,18 +218,17 @@ const showEditorialInfo =
   imageAlt={processedData.imageAlt}
   audioUrl={processedData.audioUrl}
   audioDuration={processedData.audioDuration}
-  slug={post.slug}
+  slug={processedData.slug}
   featured={processedData.featured}
   trending={processedData.trending}
-  navigationContext={navigationContext}
-  analyticsData={analyticsData}
-  seoTitle={seoTitle}
-  seoDescription={seoDescription}
-  canonicalUrl={canonicalUrl}
-  headings={headings}
-  renderError={renderError}
+  navigationContext={processedData.navigationContext}
+  analyticsData={processedData.analyticsData}
+  seoTitle={processedData.seoTitle}
+  seoDescription={processedData.seoDescription}
+  canonicalUrl={processedData.canonicalUrl}
+  headings={processedData.headings}
+  renderError={processedData.renderError}
 >
-  <!-- ENHANCED: Content rendering with error boundary -->
   {
     renderError ? (
       <div class="content-error-boundary">
@@ -311,18 +256,6 @@ const showEditorialInfo =
                   There was an issue rendering this article. The content may
                   contain invalid MDX syntax or missing components.
                 </p>
-                {isInDevelopment && renderError && (
-                  <details class="mt-3">
-                    <summary class="text-xs text-red-600 dark:text-red-400 cursor-pointer hover:underline">
-                      Show Technical Details
-                    </summary>
-                    <pre class="mt-2 text-xs bg-red-100 dark:bg-red-900/40 p-3 rounded overflow-auto">
-                      {typeof renderError === "string"
-                        ? renderError
-                        : JSON.stringify(renderError, null, 2)}
-                    </pre>
-                  </details>
-                )}
               </div>
             </div>
           </div>
@@ -334,17 +267,17 @@ const showEditorialInfo =
   }
 </BlogPost>
 
-<!-- ENHANCED: Performance monitoring script -->
 <script
   is:inline
-  define:vars={{ analyticsData, navigationContext, isInDevelopment }}
+  define:vars={{
+    analyticsData: processedData.analyticsData,
+    navigationContext: processedData.navigationContext,
+  }}
 >
-  // Performance monitoring
   if (typeof window !== "undefined") {
     window.addEventListener("load", () => {
       const loadTime = performance.now();
 
-      // Track content performance
       if (window.gtag) {
         window.gtag("event", "page_load_time", {
           value: Math.round(loadTime),
@@ -354,41 +287,14 @@ const showEditorialInfo =
           word_count: analyticsData.wordCount,
         });
       }
-
-      // Development debugging
-      if (isInDevelopment) {
-        console.log("🚀 Article Performance:", {
-          loadTime: `${Math.round(loadTime)}ms`,
-          navigation: navigationContext,
-          analytics: analyticsData,
-        });
-      }
     });
   }
 </script>
 
 <style>
-  .editorial-status-banner {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    backdrop-filter: blur(8px);
-  }
-
   .content-error-boundary {
     min-height: 50vh;
     display: flex;
     align-items: center;
-  }
-
-  /* Development-only styles */
-  .editorial-status-banner {
-    display: var(--show-editorial, block);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .editorial-status-banner {
-      backdrop-filter: none;
-    }
   }
 </style>

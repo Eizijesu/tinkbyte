@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/categories/[category].astro - FIXED VERSION
+// src/pages/blog/categories/[category].astro - Complete Production Version
 import Layout from "../../../layouts/Layout.astro";
 import ArticleCard from "../../../components/blog/ArticleCard.astro";
 import Button from "../../../components/ui/Button.astro";
@@ -12,13 +12,15 @@ type BlogPost = CollectionEntry<"blog">;
 export async function getStaticPaths() {
   const allPosts = await getCollection("blog", ({ data }) => !data.draft);
 
-  // ✅ MOVE THE DISPLAY NAMES LOGIC INSIDE getStaticPaths
+  // Category display names mapping
   const displayNames: Record<string, string> = {
     "build-thinking": "Build Thinking",
     "learning-by-doing": "Learning by Doing",
     "product-lessons": "Product Lessons", 
     "fail-iterate-ship": "Fail / Iterate / Ship",
     "startup-insight": "Startup Insight",
+    "startup-insights": "Startup Insights", // Handle both variants
+    "building-thinking": "Building Thinking", // Handle both variants
     "product-strategy": "Product Strategy",
     "ai-evolution": "AI Evolution",
     "developer-tools": "Developer Tools",
@@ -37,23 +39,24 @@ export async function getStaticPaths() {
     "people-systems": "People Systems"
   };
 
-  // Helper function inside getStaticPaths
   const getCategoryDisplayName = (slug: string): string => {
     return displayNames[slug] || slug.split('-').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
   };
 
-  // Get unique categories from posts
+  // Get categories from posts
   const postCategories: string[] = [...new Set(allPosts.map((post: BlogPost) => post.data.category))].filter((cat): cat is string => Boolean(cat));
   
-  // Define all possible categories
-  const allCategories: string[] = [
+  // Define all static categories (prevents 404s)
+  const staticCategories: string[] = [
     "build-thinking",
+    "building-thinking",
     "learning-by-doing", 
     "product-lessons",
     "fail-iterate-ship",
     "startup-insight",
+    "startup-insights",
     "product-strategy",
     "ai-evolution",
     "developer-tools",
@@ -73,17 +76,17 @@ export async function getStaticPaths() {
   ];
 
   // Combine and deduplicate
-  const finalCategories: string[] = [...new Set([...postCategories, ...allCategories])];
+  const allCategories: string[] = [...new Set([...postCategories, ...staticCategories])];
 
-  return finalCategories.map((category: string) => {
-    // Filter posts for this exact category
+  return allCategories.map((category: string) => {
     const categoryPosts: BlogPost[] = allPosts.filter((post: BlogPost) => post.data.category === category);
 
     return {
       params: { category },
       props: {
-        categoryName: getCategoryDisplayName(category), // ✅ Now this works!
+        categoryName: getCategoryDisplayName(category),
         posts: categoryPosts,
+        categorySlug: category,
       },
     };
   });
@@ -92,71 +95,76 @@ export async function getStaticPaths() {
 interface Props {
   categoryName: string;
   posts: BlogPost[];
+  categorySlug: string;
 }
 
-const { categoryName, posts }: Props = Astro.props;
+const { categoryName, posts, categorySlug }: Props = Astro.props;
 
-// Enhanced category color and icon mapping
-const getCategoryColor = (categoryName: string): string => {
+// Category styling system
+const getCategoryColor = (slug: string): string => {
   const colorMap: Record<string, string> = {
-    "Build Thinking": "blue",
-    "Learning by Doing": "purple",
-    "Product Lessons": "green",
-    "Startup Insight": "red",
-    "Product Strategy": "indigo",
-    "AI Evolution": "violet",
-    "Developer Tools": "emerald",
-    "Research Bites": "pink",
-    "Global Perspective": "cyan",
-    "Community Innovation": "green",
-    "Tech Culture": "pink",
-    "System Thinking": "emerald",
-    "The Interface": "blue",
-    "Fail / Iterate / Ship": "orange",
-    "Career Stacks": "red",
-    "Future Stacks": "violet",
-    "Creator Economy": "pink",
-    "Business Models & Monetization": "indigo",
-    "Consumer Behavior & Attention": "cyan",
-    "Ecosystem Shifts & Market Maps": "emerald",
-    "People Systems": "orange"
+    "build-thinking": "#2563eb",
+    "building-thinking": "#2563eb",
+    "learning-by-doing": "#8b5cf6",
+    "product-lessons": "#10b981",
+    "startup-insight": "#ef4444",
+    "startup-insights": "#ef4444",
+    "product-strategy": "#f59e0b",
+    "ai-evolution": "#8b5cf6",
+    "developer-tools": "#06b6d4",
+    "research-bites": "#ec4899",
+    "global-perspective": "#06b6d4",
+    "community-innovation": "#10b981",
+    "tech-culture": "#ec4899",
+    "system-thinking": "#059669",
+    "the-interface": "#3b82f6",
+    "fail-iterate-ship": "#f97316",
+    "career-stacks": "#dc2626",
+    "future-stacks": "#7c3aed",
+    "creator-economy": "#f472b6",
+    "business-models-monetization": "#6366f1",
+    "consumer-behavior-attention": "#0891b2",
+    "ecosystem-shifts-market-maps": "#059669",
+    "people-systems": "#ea580c"
   };
   
-  return colorMap[categoryName] || "blue";
+  return colorMap[slug] || "#2563eb";
 };
 
-const getCategoryIcon = (categoryName: string): string => {
+const getCategoryIcon = (slug: string): string => {
   const iconMap: Record<string, string> = {
-    "Build Thinking": "fas fa-hammer",
-    "Learning by Doing": "fas fa-book",
-    "Product Lessons": "fas fa-lightbulb",
-    "Startup Insight": "fas fa-rocket",
-    "Product Strategy": "fas fa-chess",
-    "AI Evolution": "fas fa-brain",
-    "Developer Tools": "fas fa-tools",
-    "Research Bites": "fas fa-chart-line",
-    "Global Perspective": "fas fa-globe",
-    "Community Innovation": "fas fa-users",
-    "Tech Culture": "fas fa-users-cog",
-    "System Thinking": "fas fa-sitemap",
-    "The Interface": "fas fa-desktop",
-    "Fail / Iterate / Ship": "fas fa-repeat",
-    "Career Stacks": "fas fa-briefcase",
-    "Future Stacks": "fas fa-rocket",
-    "Creator Economy": "fas fa-paint-brush",
-    "Business Models & Monetization": "fas fa-dollar-sign",
-    "Consumer Behavior & Attention": "fas fa-eye",
-    "Ecosystem Shifts & Market Maps": "fas fa-map",
-    "People Systems": "fas fa-network-wired"
+    "build-thinking": "fas fa-hammer",
+    "building-thinking": "fas fa-hammer",
+    "learning-by-doing": "fas fa-book-open",
+    "product-lessons": "fas fa-lightbulb",
+    "startup-insight": "fas fa-rocket",
+    "startup-insights": "fas fa-rocket",
+    "product-strategy": "fas fa-chess",
+    "ai-evolution": "fas fa-brain",
+    "developer-tools": "fas fa-tools",
+    "research-bites": "fas fa-chart-line",
+    "global-perspective": "fas fa-globe",
+    "community-innovation": "fas fa-users",
+    "tech-culture": "fas fa-users-cog",
+    "system-thinking": "fas fa-sitemap",
+    "the-interface": "fas fa-desktop",
+    "fail-iterate-ship": "fas fa-repeat",
+    "career-stacks": "fas fa-briefcase",
+    "future-stacks": "fas fa-rocket",
+    "creator-economy": "fas fa-paint-brush",
+    "business-models-monetization": "fas fa-dollar-sign",
+    "consumer-behavior-attention": "fas fa-eye",
+    "ecosystem-shifts-market-maps": "fas fa-map",
+    "people-systems": "fas fa-network-wired"
   };
   
-  return iconMap[categoryName] || "fas fa-tag";
+  return iconMap[slug] || "fas fa-tag";
 };
 
-const categoryColor = getCategoryColor(categoryName);
-const categoryIcon = getCategoryIcon(categoryName);
+const categoryColor = getCategoryColor(categorySlug);
+const categoryIcon = getCategoryIcon(categorySlug);
 
-// Format post data with consistent author handling
+// Format post data
 const formatPost = (post: BlogPost) => {
   let authorData: {
     name: string;
@@ -178,13 +186,6 @@ const formatPost = (post: BlogPost) => {
       avatar: post.data.authorAvatar,
       bio: post.data.authorBio,
       role: post.data.authorRole,
-    };
-  } else if (typeof post.data.author === "object" && post.data.author !== null) {
-    authorData = {
-      name: (post.data.author as any).name || "TinkByte Team",
-      avatar: (post.data.author as any).avatar || post.data.authorAvatar,
-      bio: (post.data.author as any).bio || post.data.authorBio,
-      role: (post.data.author as any).role || post.data.authorRole,
     };
   } else {
     authorData = {
@@ -223,206 +224,122 @@ const trendingPosts = posts.filter(post => post.data.trending);
 const sortedPosts = posts.sort((a, b) => 
   new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
 );
-
-const safeCategoryName = typeof categoryName === "string" ? categoryName.toLowerCase() : "unknown";
 ---
 
 <Layout
   title={`${categoryName} Articles | ${SITE.name}`}
-  description={`Explore our ${safeCategoryName} articles. Deep insights and practical knowledge for builders and innovators.`}
+  description={`Explore our ${categoryName.toLowerCase()} articles. Deep insights and practical knowledge for builders and innovators.`}
 >
-  <!-- Compact Category Hero -->
-  <section class="relative py-12 lg:py-16 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-5"></div>
-    <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-0"></div>
+  <!-- Category Hero Section -->
+  <section class="category-hero">
+    <div class="container">
+      <!-- Breadcrumb Navigation -->
+      <nav class="breadcrumb-nav">
+        <a href="/blog" class="breadcrumb-link">BLOG</a>
+        <span class="breadcrumb-separator">></span>
+        <a href="/blog/categories" class="breadcrumb-link">CATEGORIES</a>
+        <span class="breadcrumb-separator">></span>
+        <span class="breadcrumb-current">{categoryName.toUpperCase()}</span>
+      </nav>
 
-    <div class="container mx-auto px-4 relative z-10">
-      <div class="max-w-4xl mx-auto">
-<!-- Breadcrumb Navigation - FIXED FOR MOBILE -->
-        <nav class="breadcrumb-container">
-          <div class="breadcrumb-wrapper">
-            <a href="/blog" class="breadcrumb-item">BLOG</a>
-            <span class="breadcrumb-arrow">></span>
-            <a href="/blog/categories" class="breadcrumb-item">CATEGORIES</a>
-            <span class="breadcrumb-arrow">></span>
-            <span class="breadcrumb-current">{categoryName.toUpperCase()}</span>
-          </div>
-        </nav>
+      <div class="hero-content">
+        <!-- Category Badge -->
+        <div class="category-badge">
+          <div class="category-dot" style={`background-color: ${categoryColor}`}></div>
+          <span class="category-label">CATEGORY</span>
+        </div>
 
-        <div class="text-center">
-          <!-- Category Badge -->
-          <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 mb-4">
-            <div class={`w-3 h-3 rounded-full ${
-              categoryColor === "purple" ? "bg-purple-500" :
-              categoryColor === "blue" ? "bg-blue-500" :
-              categoryColor === "green" ? "bg-green-500" :
-              categoryColor === "orange" ? "bg-orange-500" :
-              categoryColor === "red" ? "bg-red-500" :
-              categoryColor === "cyan" ? "bg-cyan-500" :
-              categoryColor === "pink" ? "bg-pink-500" :
-              categoryColor === "indigo" ? "bg-indigo-500" :
-              categoryColor === "violet" ? "bg-violet-500" :
-              categoryColor === "emerald" ? "bg-emerald-500" :
-              "bg-blue-500"
-            }`}></div>
-            <span class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
-              CATEGORY
+        <!-- Category Title with Icon -->
+        <div class="category-title-section">
+          <i class={`${categoryIcon} category-icon`} style={`color: ${categoryColor}`}></i>
+          <h1 class="category-title">
+            <span class="title-gradient" style={`background: linear-gradient(135deg, ${categoryColor}, ${categoryColor}aa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;`}>
+              {categoryName}
             </span>
-          </div>
+          </h1>
+        </div>
 
-          <!-- Category Title with Icon -->
-          <div class="flex items-center justify-center gap-3 mb-4">
-            <i class={`${categoryIcon} text-2xl ${
-              categoryColor === "purple" ? "text-purple-600" :
-              categoryColor === "blue" ? "text-blue-600" :
-              categoryColor === "green" ? "text-green-600" :
-              categoryColor === "orange" ? "text-orange-600" :
-              categoryColor === "red" ? "text-red-600" :
-              categoryColor === "cyan" ? "text-cyan-600" :
-              categoryColor === "pink" ? "text-pink-600" :
-              categoryColor === "indigo" ? "text-indigo-600" :
-              categoryColor === "violet" ? "text-violet-600" :
-              categoryColor === "emerald" ? "text-emerald-600" :
-              "text-blue-600"
-            }`}></i>
-            <h1 class="text-3xl lg:text-4xl font-bold text-zinc-900 dark:text-white">
-              <span class={`bg-gradient-to-r ${
-                categoryColor === "purple" ? "from-purple-600 to-pink-600" :
-                categoryColor === "blue" ? "from-blue-600 to-indigo-600" :
-                categoryColor === "green" ? "from-green-600 to-emerald-600" :
-                categoryColor === "orange" ? "from-orange-600 to-red-600" :
-                categoryColor === "red" ? "from-red-600 to-pink-600" :
-                categoryColor === "cyan" ? "from-cyan-600 to-blue-600" :
-                categoryColor === "pink" ? "from-pink-600 to-rose-600" :
-                categoryColor === "indigo" ? "from-indigo-600 to-purple-600" :
-                categoryColor === "violet" ? "from-violet-600 to-purple-600" :
-                categoryColor === "emerald" ? "from-emerald-600 to-green-600" :
-                "from-blue-600 to-purple-600"
-              } bg-clip-text text-transparent`}>
-                {categoryName}
-              </span>
-            </h1>
+        <!-- Stats -->
+        <div class="category-stats">
+          <div class="stat-item">
+            <div class="stat-number">{posts.length}</div>
+            <div class="stat-label">ARTICLES</div>
           </div>
-
-          <!-- Stats -->
-          <div class="flex justify-center gap-6 mb-6 stats-grid">
-            <div class="text-center">
-              <div class="text-2xl font-bold text-zinc-900 dark:text-white">{posts.length}</div>
-              <div class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">ARTICLES</div>
+          {featuredPosts.length > 0 && (
+            <div class="stat-item">
+              <div class="stat-number">{featuredPosts.length}</div>
+              <div class="stat-label">FEATURED</div>
             </div>
-            {featuredPosts.length > 0 && (
-              <div class="text-center">
-                <div class="text-2xl font-bold text-zinc-900 dark:text-white">{featuredPosts.length}</div>
-                <div class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">FEATURED</div>
-              </div>
-            )}
-            {trendingPosts.length > 0 && (
-              <div class="text-center">
-                <div class="text-2xl font-bold text-zinc-900 dark:text-white">{trendingPosts.length}</div>
-                <div class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">TRENDING</div>
-              </div>
-            )}
-          </div>
+          )}
+          {trendingPosts.length > 0 && (
+            <div class="stat-item">
+              <div class="stat-number">{trendingPosts.length}</div>
+              <div class="stat-label">TRENDING</div>
+            </div>
+          )}
+        </div>
 
-          <!-- Description -->
-          <p class="text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-2xl mx-auto mb-6 category-description">
-            {posts.length === 0 
-              ? `No articles in ${categoryName} yet. Check back soon for fresh insights!`
-              : `Discover ${posts.length} ${posts.length === 1 ? 'article' : 'articles'} covering ${safeCategoryName}. Deep insights and practical knowledge for builders and innovators.`
-            }
-          </p>
+        <!-- Description -->
+        <p class="category-description">
+          {posts.length === 0 
+            ? `No articles in ${categoryName} yet. Check back soon for fresh insights!`
+            : `Discover ${posts.length} ${posts.length === 1 ? 'article' : 'articles'} covering ${categoryName.toLowerCase()}. Deep insights and practical knowledge for builders and innovators.`
+          }
+        </p>
 
-          <!-- Action Buttons -->
-          <div class="flex flex-col sm:flex-row gap-3 justify-center action-buttons">
-            <Button
-              variant="outline"
-              href="/blog"
-              className="group compact-btn"
-            >
-              <span class="flex items-center gap-2">
-                <i class="fas fa-arrow-left text-sm transition-transform duration-300 group-hover:-translate-x-1"></i>
-                ALL ARTICLES
-              </span>
-            </Button>
-            <Button
-              variant="outline"
-              href="/all-topics"
-              className="group compact-btn"
-            >
-              <span class="flex items-center gap-2">
-                <i class="fas fa-th-large text-sm"></i>
-                ALL TOPICS
-              </span>
-            </Button>
-          </div>
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <Button variant="outline" href="/blog" className="action-btn">
+            <i class="fas fa-arrow-left"></i>
+            ALL ARTICLES
+          </Button>
+          <Button variant="outline" href="/blog/categories" className="action-btn">
+            <i class="fas fa-th-large"></i>
+            ALL CATEGORIES
+          </Button>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Quick Actions Sidebar -->
-  <div class="quick-actions-sidebar" id="quick-actions">
-    <div class="actions-content">
-      <button 
-        id="follow-topic" 
-        class="action-btn follow-btn"
-        data-topic-name={categoryName}
-        data-topic-slug={Astro.params.category}
-      >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="follow-icon">
-          <path
-            d="M8 2V14M2 8H14"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" class="following-icon" style="display: none;">
-          <path
-            d="M13.5 3L6 10.5L2.5 7"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
+  <div class="quick-actions" id="quick-actions">
+    <button 
+      id="follow-topic" 
+      class="quick-action-btn follow-btn"
+      data-topic-name={categoryName}
+      data-topic-slug={categorySlug}
+      title="Follow this topic"
+    >
+      <i class="fas fa-plus follow-icon"></i>
+      <i class="fas fa-check following-icon" style="display: none;"></i>
+    </button>
 
-      <button id="share-category" class="action-btn secondary">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-          <path
-            d="M13 10.5C12.1716 10.5 11.5 11.1716 11.5 12C11.5 12.8284 12.1716 13.5 13 13.5C13.8284 13.5 14.5 12.8284 14.5 12C14.5 11.1716 13.8284 10.5 13 10.5ZM13 10.5L8.5 8M3 5.5C2.17157 5.5 1.5 6.17157 1.5 7C1.5 7.82843 2.17157 8.5 3 8.5C3.82843 8.5 4.5 7.82843 4.5 7C4.5 6.17157 3.82843 5.5 3 5.5ZM3 5.5L8.5 8M8.5 8L13 5.5"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
+    <button id="share-category" class="quick-action-btn share-btn" title="Share category">
+      <i class="fas fa-share-alt"></i>
+    </button>
 
-      <div class="follower-count" id="follower-count" style="display: none;">
-        <span class="count-number">0</span>
-      </div>
+    <div class="follower-count" id="follower-count" style="display: none;">
+      <span class="count-number">0</span>
     </div>
   </div>
 
   <!-- Articles Section -->
-  <main class="category-articles-page">
-    <div class="max-w-7xl mx-auto px-4 py-12">
+  <main class="articles-section">
+    <div class="container">
       
       {posts.length > 0 ? (
         <>
           <!-- Featured Articles -->
           {featuredPosts.length > 0 && (
-            <section class="mb-12">
-              <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center">
-                <i class="fas fa-star mr-3 text-yellow-500"></i>
+            <section class="featured-section">
+              <h2 class="section-title">
+                <i class="fas fa-star section-icon"></i>
                 Featured Articles
               </h2>
-              <div class="featured-articles-grid">
+              <div class="featured-grid">
                 {featuredPosts.slice(0, 3).map((post: BlogPost) => (
-                  <div class="featured-article-wrapper">
+                  <div class="featured-article">
                     <ArticleCard {...formatPost(post)} />
                   </div>
                 ))}
@@ -431,32 +348,20 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
           )}
 
           <!-- All Articles -->
-          <section>
-            <div class="flex items-center justify-between mb-8">
-              <h2 class="text-2xl font-bold text-zinc-900 dark:text-white flex items-center">
-                <i class={`${categoryIcon} mr-3 ${
-                  categoryColor === "purple" ? "text-purple-600" :
-                  categoryColor === "blue" ? "text-blue-600" :
-                  categoryColor === "green" ? "text-green-600" :
-                  categoryColor === "orange" ? "text-orange-600" :
-                  categoryColor === "red" ? "text-red-600" :
-                  categoryColor === "cyan" ? "text-cyan-600" :
-                  categoryColor === "pink" ? "text-pink-600" :
-                  categoryColor === "indigo" ? "text-indigo-600" :
-                  categoryColor === "violet" ? "text-violet-600" :
-                  categoryColor === "emerald" ? "text-emerald-600" :
-                  "text-blue-600"
-                }`}></i>
+          <section class="all-articles-section">
+            <div class="section-header">
+              <h2 class="section-title">
+                <i class={categoryIcon} style={`color: ${categoryColor}`}></i>
                 All {categoryName} Articles
               </h2>
-              <span class="text-sm text-zinc-500 dark:text-zinc-400">
+              <span class="article-count">
                 {posts.length} {posts.length === 1 ? 'article' : 'articles'}
               </span>
             </div>
 
             <div class="articles-grid">
               {sortedPosts.map((post: BlogPost, index) => (
-                <div class="article-wrapper" style={`--animation-delay: ${index * 0.1}s`}>
+                <div class="article-item" style={`--animation-delay: ${index * 0.1}s`}>
                   <ArticleCard {...formatPost(post)} />
                 </div>
               ))}
@@ -465,38 +370,22 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
         </>
       ) : (
         <!-- Empty State -->
-        <section class="text-center py-16">
-          <div class="max-w-md mx-auto">
-            <div class="mb-6">
-              <i class={`${categoryIcon} text-4xl ${
-                categoryColor === "purple" ? "text-purple-300 dark:text-purple-600" :
-                categoryColor === "blue" ? "text-blue-300 dark:text-blue-600" :
-                categoryColor === "green" ? "text-green-300 dark:text-green-600" :
-                categoryColor === "orange" ? "text-orange-300 dark:text-orange-600" :
-                categoryColor === "red" ? "text-red-300 dark:text-red-600" :
-                categoryColor === "cyan" ? "text-cyan-300 dark:text-cyan-600" :
-                categoryColor === "pink" ? "text-pink-300 dark:text-pink-600" :
-                categoryColor === "indigo" ? "text-indigo-300 dark:text-indigo-600" :
-                categoryColor === "violet" ? "text-violet-300 dark:text-violet-600" :
-                categoryColor === "emerald" ? "text-emerald-300 dark:text-emerald-600" :
-                "text-blue-300 dark:text-blue-600"
-              }`}></i>
-            </div>
-            <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
-              No {categoryName} Articles Yet
-            </h3>
-            <p class="text-zinc-600 dark:text-zinc-400 mb-6">
+        <section class="empty-state">
+          <div class="empty-content">
+            <i class={categoryIcon} style={`color: ${categoryColor}30`}></i>
+            <h3 class="empty-title">No {categoryName} Articles Yet</h3>
+            <p class="empty-description">
               We're working on creating amazing content for this category. 
               Check back soon or explore other categories!
             </p>
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button href="/blog" variant="primary" className="compact-btn">
-                <i class="fas fa-newspaper mr-2"></i>
+            <div class="empty-actions">
+              <Button href="/blog" variant="primary" className="action-btn">
+                <i class="fas fa-newspaper"></i>
                 EXPLORE ALL ARTICLES
               </Button>
-              <Button href="/all-topics" variant="outline" className="compact-btn">
-                <i class="fas fa-th-large mr-2"></i>
-                ALL TOPICS
+              <Button href="/blog/categories" variant="outline" className="action-btn">
+                <i class="fas fa-th-large"></i>
+                ALL CATEGORIES
               </Button>
             </div>
           </div>
@@ -507,85 +396,194 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
 </Layout>
 
 <style>
-  .category-articles-page {
-    font-family: "Space Grotesk", sans-serif;
-    background-color: var(--color-bg-primary);
-    color: var(--color-text-primary);
+  /* Base Styles */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
   }
 
-  .hero-section {
+  /* Category Hero */
+  .category-hero {
+    background: var(--color-bg-secondary);
+    border-bottom: 2px solid var(--color-border);
     padding: 3rem 0;
   }
 
+  .breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .breadcrumb-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .breadcrumb-link {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb-link:hover {
+    color: var(--color-text-secondary);
+  }
+
+  .breadcrumb-separator {
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  .breadcrumb-current {
+    color: var(--color-text-primary);
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .hero-content {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    margin-bottom: 1.5rem;
+  }
+
+  .category-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 0;
+  }
+
+  .category-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--color-text-secondary);
+  }
+
+  .category-title-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .category-icon {
+    font-size: 2.5rem;
+  }
+
+  .category-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 0;
+  }
+
+  .category-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+    margin-top: 0.25rem;
+  }
+
+  .category-description {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+    margin-bottom: 2rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   /* Quick Actions Sidebar */
-  .quick-actions-sidebar {
+  .quick-actions {
     position: fixed;
     right: 1.5rem;
     top: 50%;
     transform: translateY(-50%);
     z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .quick-action-btn {
+    width: 48px;
+    height: 48px;
     background: var(--color-bg-primary);
     border: 2px solid var(--color-border);
-    padding: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    opacity: 1;
-    min-width: 60px;
-  }
-
-  :global(.dark) .quick-actions-sidebar {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .actions-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: stretch;
-  }
-
-  .action-btn {
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem;
-    background: var(--color-bg-primary);
-    border: 2px solid #243788;
-    color: #243788;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: "Space Grotesk", sans-serif;
-    font-weight: 600;
-    width: 48px;
-    height: 48px;
-    position: relative;
+    font-size: 1rem;
   }
 
-  .action-btn:hover {
-    background: #243788;
+  .quick-action-btn:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
     color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(36, 55, 136, 0.3);
-  }
-
-  .action-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .action-btn.secondary {
-    border-color: var(--color-border);
-    color: var(--color-text-secondary);
-  }
-
-  .action-btn.secondary:hover {
-    background: var(--color-bg-secondary);
-    color: var(--color-text-primary);
-    border-color: var(--color-text-muted);
+    transform: translateY(-2px);
   }
 
   .follow-btn.following {
@@ -608,52 +606,78 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
   }
 
   .follower-count {
+    width: 48px;
+    height: 32px;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    text-align: center;
-    width: 48px;
-    height: 32px;
   }
 
   .count-number {
     font-size: 0.875rem;
     font-weight: 800;
     color: var(--color-text-primary);
-    line-height: 1;
   }
 
-  .compact-btn {
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+  /* Articles Section */
+  .articles-section {
+    padding: 4rem 0;
+  }
+
+  .featured-section,
+  .all-articles-section {
+    margin-bottom: 3rem;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
     font-weight: 700;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+  }
+
+  .section-icon {
+    color: #f59e0b;
+  }
+
+  .article-count {
     font-size: 0.875rem;
-    padding: 0.75rem 1.5rem;
+    color: var(--color-text-muted);
+    font-weight: 600;
   }
 
-  .featured-articles-grid {
+  .featured-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    max-width: 1200px;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
   }
 
-  .featured-article-wrapper {
+  .featured-article {
     position: relative;
   }
 
-  .featured-article-wrapper::before {
+  .featured-article::before {
     content: '';
     position: absolute;
     top: -2px;
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(45deg, #243788, #8B5CF6, #06B6D4);
-    border-radius: 4px;
+    background: linear-gradient(45deg, var(--color-accent), #8b5cf6, #06b6d4);
     z-index: -1;
     opacity: 0.6;
   }
@@ -664,7 +688,7 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     gap: 2rem;
   }
 
-  .article-wrapper {
+  .article-item {
     opacity: 0;
     transform: translateY(20px);
     animation: fadeInUp 0.6s ease forwards;
@@ -672,7 +696,7 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     transition: transform 0.3s ease;
   }
 
-  .article-wrapper:hover {
+  .article-item:hover {
     transform: translateY(-4px);
   }
 
@@ -683,6 +707,45 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     }
   }
 
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 0;
+  }
+
+  .empty-content {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .empty-content i {
+    font-size: 4rem;
+    margin-bottom: 2rem;
+    display: block;
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 1rem;
+  }
+
+  .empty-description {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .empty-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Toast Notification */
   .toast-notification {
     position: fixed;
     top: 2rem;
@@ -692,11 +755,8 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     padding: 0.75rem 1rem;
     font-size: 0.875rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    z-index: 1002;
+    z-index: 1000;
     border: 2px solid #10b981;
-    border-radius: 6px;
     animation: slideInRight 0.3s ease;
   }
 
@@ -711,269 +771,150 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
     }
   }
 
-  /* Breadcrumb Navigation - COMPLETE FIX */
-  .breadcrumb-container {
-    margin-bottom: 1.5rem;
-    width: 100%;
-  }
-
-  .breadcrumb-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 0.875rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    line-height: 1;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-
-  .breadcrumb-wrapper::-webkit-scrollbar {
-    display: none;
-  }
-
-  .breadcrumb-item {
-    color: #9ca3af;
-    text-decoration: none;
-    transition: color 0.3s ease;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .breadcrumb-item:hover {
-    color: #d1d5db;
-  }
-
-  .breadcrumb-arrow {
-    color: #6b7280;
-    font-size: 0.75rem;
-    font-weight: 400;
-    flex-shrink: 0;
-  }
-
-  .breadcrumb-current {
-    color: #d1d5db;
-    font-weight: 700;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  :global(.dark) .breadcrumb-item {
-    color: #9ca3af;
-  }
-
-  :global(.dark) .breadcrumb-item:hover {
-    color: #d1d5db;
-  }
-
-  :global(.dark) .breadcrumb-arrow {
-    color: #6b7280;
-  }
-
-  :global(.dark) .breadcrumb-current {
-    color: #d1d5db;
-  }
-
-  /* Mobile Responsive Fixes */
-  @media (max-width: 768px) {
-    .quick-actions-sidebar {
-      display: none !important;
+  /* Mobile Responsive */
+  @media (max-width: 1024px) {
+    .quick-actions {
+      display: none;
     }
 
-    .category-articles-page {
-      padding: 0;
+    .featured-grid,
+    .articles-grid {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .category-hero {
+      padding: 2rem 0;
     }
 
     .container {
-      padding-left: 1rem;
-      padding-right: 1rem;
+      padding: 0 0.75rem;
     }
 
-    .category-title {
-      font-size: 2rem !important;
-      line-height: 1.2;
+    .category-title-section {
+      flex-direction: column;
+      gap: 0.75rem;
     }
 
-    .stats-grid {
-      flex-wrap: wrap;
-      gap: 1rem;
+    .category-icon {
+      font-size: 2rem;
     }
 
-    .featured-articles-grid,
-    .articles-grid {
-      grid-template-columns: 1fr;
+    .category-stats {
       gap: 1rem;
     }
 
     .action-buttons {
       flex-direction: column;
+      align-items: center;
+    }
+
+    .action-btn {
       width: 100%;
+      max-width: 280px;
+      justify-content: center;
     }
 
-    .compact-btn {
-      width: 100%;
-      max-width: none;
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
     }
 
-    .hero-section {
-      padding: 2rem 0;
+    .featured-grid,
+    .articles-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
     }
 
-    .category-badge {
-      font-size: 0.75rem;
-      padding: 0.5rem 1rem;
+    .breadcrumb-nav {
+      font-size: 0.8125rem;
+      gap: 0.375rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .category-hero {
+      padding: 1.5rem 0;
+    }
+
+    .container {
+      padding: 0 0.5rem;
+    }
+
+    .category-title {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
     }
 
     .category-description {
       font-size: 1rem;
     }
 
-    .breadcrumb-wrapper {
-      font-size: 0.8125rem;
-      gap: 0.375rem;
-    }
-
-    .breadcrumb-arrow {
-      font-size: 0.6875rem;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .category-title {
-      font-size: 1.75rem !important;
-    }
-
-    .breadcrumb-wrapper {
+    .breadcrumb-nav {
       font-size: 0.75rem;
       gap: 0.25rem;
     }
-
-    .breadcrumb-arrow {
-      font-size: 0.625rem;
-      opacity: 0.7;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    .featured-articles-grid {
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    }
-    
-    .articles-grid {
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    }
-  }
-
-  @keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  .bg-gradient-to-r.bg-clip-text {
-    background-size: 200% 200%;
-    animation: gradient 3s ease-in-out infinite;
   }
 </style>
 
 <script>
-  import { getSupabaseClient } from '../../../lib/supabase.js';
-  import { config } from '../../../lib/config.js';
-  
+  // Production-ready script with minimal logging
+  const DEBUG = import.meta.env.DEV;
+
+  const debugLog = (message: string, data?: any) => {
+    if (DEBUG) console.log(`[CategoryPage] ${message}`, data || '');
+  };
+
   document.addEventListener('DOMContentLoaded', async () => {
-    const supabase = getSupabaseClient();
     const followBtn = document.getElementById('follow-topic') as HTMLButtonElement | null;
     const shareBtn = document.getElementById('share-category') as HTMLButtonElement | null;
     const followerCount = document.getElementById('follower-count') as HTMLElement | null;
     
     if (!followBtn) return;
-  
+
     const topicName = followBtn.getAttribute('data-topic-name');
     const topicSlug = followBtn.getAttribute('data-topic-slug');
     
     let currentUser: any = null;
     let isFollowing = false;
 
-    // Debug logging (only in development)
-    const debugLog = (message: string, data?: any) => {
-      if (config.environment !== 'production') {
-        console.log(`[CategoryFollow] ${message}`, data || '');
-      }
-    };
-  
     try {
-      debugLog('Initializing category follow functionality...');
+      // Import Supabase dynamically
+      const { supabase } = await import('../../../lib/supabase.js');
+      
+      debugLog('Initializing category functionality...');
       
       // Get current user
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
-      if (authError) {
-        debugLog('Auth error:', authError);
-      } else {
+      if (!authError && user) {
         currentUser = user;
-        debugLog('Current user:', user?.email || 'Anonymous');
-      }
-      
-      // Load follower count first (this should work for everyone)
-      await loadFollowerCount();
-      
-      // Check follow status only if user is logged in
-      if (user && topicSlug) {
-        debugLog('Checking follow status for authenticated user...');
+        debugLog('User authenticated:', user.email);
         
-        const { data: followData, error: followError } = await supabase
-          .from('user_category_follows')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('category_slug', topicSlug)
-          .eq('environment', config.environment)
-          .maybeSingle();
-        
-        if (followError) {
-          debugLog('Follow check error:', followError);
-          console.error('Error checking follow status:', followError);
-        } else {
+        // Check follow status
+        if (topicSlug) {
+          const { data: followData } = await supabase
+            .from('user_category_follows')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('category_slug', topicSlug)
+            .maybeSingle();
+          
           isFollowing = !!followData;
           debugLog('Follow status:', isFollowing);
         }
       }
       
-      updateFollowButton();
-      
-    } catch (error) {
-      console.error('Initialization failed:', error);
-    }
-
-    async function loadFollowerCount() {
-      try {
-        debugLog('Loading follower count...');
-        
-        // Use a simpler query that should work with RLS
-        const { data, error } = await supabase
+      // Load follower count
+      if (topicSlug) {
+        const { data } = await supabase
           .from('user_category_follows')
           .select('id')
-          .eq('category_slug', topicSlug)
-          .eq('environment', config.environment);
-
-        if (error) {
-          debugLog('Follower count error:', error);
-          // If we can't read due to RLS, that's okay for now
-          if (error.code !== 'PGRST301') {
-            console.error('Error loading follower count:', error);
-          }
-          return;
-        }
+          .eq('category_slug', topicSlug);
 
         const count = data?.length || 0;
-        debugLog('Follower count:', count);
-
         if (followerCount && count > 0) {
           const countElement = followerCount.querySelector('.count-number');
           if (countElement) {
@@ -981,133 +922,98 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
             followerCount.style.display = 'flex';
           }
         }
-      } catch (error) {
-        debugLog('Error loading follower count:', error);
       }
-    }
-  
-    followBtn.addEventListener('click', async () => {
-      debugLog('Follow button clicked');
       
-      if (!currentUser) {
-        if (confirm('Sign in to follow topics and get personalized content?')) {
-          window.location.href = '/auth/signin';
-        }
-        return;
-      }
-
-      try {
-        followBtn.disabled = true;
-        debugLog('Processing follow action...', { 
-          isFollowing, 
-          userId: currentUser.id, 
-          topicSlug,
-          environment: config.environment 
-        });
-        
-        if (isFollowing) {
-          // Unfollow
-          const { error } = await supabase
-            .from('user_category_follows')
-            .delete()
-            .eq('user_id', currentUser.id)
-            .eq('category_slug', topicSlug)
-            .eq('environment', config.environment);
-          
-          if (error) {
-            debugLog('Unfollow error:', error);
-            throw error;
-          }
-          
-          isFollowing = false;
-          debugLog('Successfully unfollowed');
-          showToast(`Unfollowed ${topicName}`);
-        } else {
-          // Follow - make sure we have all required fields
-          const followData = {
-            user_id: currentUser.id,
-            category_slug: topicSlug,
-            environment: config.environment,
-            created_at: new Date().toISOString()
-          };
-          
-          debugLog('Inserting follow data:', followData);
-          
-          const { error } = await supabase
-            .from('user_category_follows')
-            .insert(followData);
-          
-          if (error) {
-            debugLog('Follow error:', error);
-            throw error;
-          }
-          
-          isFollowing = true;
-          debugLog('Successfully followed');
-          showToast(`Now following ${topicName}!`);
-        }
-        
-        updateFollowButton();
-        await loadFollowerCount();
-        
-      } catch (error: any) {
-        console.error('Follow action failed:', error);
-        
-        // Handle specific error cases
-        if (error.code === '23505') {
-          showToast('Already following this topic');
-          isFollowing = true;
-          updateFollowButton();
-        } else if (error.code === 'PGRST301' || error.message?.includes('permission')) {
-          showToast('Permission denied. Please sign in again.');
-          // Redirect to sign in
-          setTimeout(() => {
+      updateFollowButton();
+      
+      // Follow button handler
+      followBtn.addEventListener('click', async () => {
+        if (!currentUser) {
+          if (confirm('Sign in to follow topics and get personalized content?')) {
             window.location.href = '/auth/signin';
-          }, 2000);
-        } else if (error.code === '23502') {
-          showToast('Missing required information');
-          debugLog('Missing required field error:', error);
-        } else {
-          showToast('Failed to update follow status');
+          }
+          return;
         }
-      } finally {
-        followBtn.disabled = false;
-      }
-    });
 
-    if (shareBtn) {
-      shareBtn.addEventListener('click', async () => {
-        const url = window.location.href;
-        const title = `${topicName} Articles | TinkByte`;
-        
-        if (navigator.share) {
-          try {
-            await navigator.share({
-              title: title,
-              text: `Check out these ${topicName} articles on TinkByte`,
-              url: url
-            });
-          } catch (error) {
-            debugLog('Share cancelled or failed');
+        try {
+          followBtn.disabled = true;
+          
+          if (isFollowing) {
+            await supabase
+              .from('user_category_follows')
+              .delete()
+              .eq('user_id', currentUser.id)
+              .eq('category_slug', topicSlug);
+            
+            isFollowing = false;
+            showToast(`Unfollowed ${topicName}`);
+          } else {
+            await supabase
+              .from('user_category_follows')
+              .insert({
+                user_id: currentUser.id,
+                category_slug: topicSlug,
+                environment: 'production',
+                created_at: new Date().toISOString()
+              });
+            
+            isFollowing = true;
+            showToast(`Now following ${topicName}!`);
           }
-        } else {
-          try {
-            await navigator.clipboard.writeText(url);
-            showToast('Link copied to clipboard!');
-          } catch (error) {
-            debugLog('Copy failed');
-            showToast('Failed to copy link');
+          
+          updateFollowButton();
+          
+        } catch (error: any) {
+          debugLog('Follow action failed:', error);
+          
+          if (error.code === '23505') {
+            isFollowing = true;
+            updateFollowButton();
+            showToast('Already following this topic');
+          } else {
+            showToast('Failed to update follow status');
           }
+        } finally {
+          followBtn.disabled = false;
         }
       });
+
+      // Share button handler
+      if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+          const url = window.location.href;
+          const title = `${topicName} Articles | TinkByte`;
+          
+          if (navigator.share) {
+            try {
+              await navigator.share({
+                title: title,
+                text: `Check out these ${topicName} articles on TinkByte`,
+                url: url
+              });
+            } catch (error) {
+              debugLog('Share cancelled');
+            }
+          } else {
+            try {
+              await navigator.clipboard.writeText(url);
+              showToast('Link copied to clipboard!');
+            } catch (error) {
+              showToast('Failed to copy link');
+            }
+          }
+        });
+      }
+      
+    } catch (error) {
+      debugLog('Initialization failed:', error);
     }
-  
+
     function updateFollowButton(): void {
       if (!followBtn) return;
       
       followBtn.classList.toggle('following', isFollowing);
       
-      // Update button text/state based on authentication and follow status
       if (!currentUser) {
         followBtn.title = 'Sign in to follow topics';
       } else if (isFollowing) {
@@ -1115,12 +1021,9 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
       } else {
         followBtn.title = `Follow ${topicName}`;
       }
-      
-      debugLog('Button updated:', { isFollowing, authenticated: !!currentUser });
     }
-  
+
     function showToast(message: string): void {
-      // Remove any existing toasts
       const existingToast = document.querySelector('.toast-notification');
       if (existingToast) {
         existingToast.remove();
@@ -1137,20 +1040,15 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
         }
       }, 3000);
     }
-  
-    // Animation setup remains the same...
-    const articleWrappers = document.querySelectorAll('.article-wrapper');
+
+    // Animation setup
+    const articleItems = document.querySelectorAll('.article-item');
     
-    articleWrappers.forEach((wrapper, index) => {
-      const element = wrapper as HTMLElement;
-      element.style.setProperty('--animation-delay', `${index * 0.1}s`);
-    });
-  
     const observerOptions: IntersectionObserverInit = {
       threshold: 0.1,
       rootMargin: '0px 0px -50px 0px',
     };
-  
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -1161,9 +1059,9 @@ const safeCategoryName = typeof categoryName === "string" ? categoryName.toLower
         }
       });
     }, observerOptions);
-  
-    articleWrappers.forEach((wrapper) => {
-      observer.observe(wrapper);
+
+    articleItems.forEach((item) => {
+      observer.observe(item);
     });
   });
 </script>

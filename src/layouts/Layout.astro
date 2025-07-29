@@ -1,5 +1,5 @@
 ---
-// src/layouts/Layout.astro - Updated with new site config
+// src/layouts/Layout.astro - Complete Optimized Version
 import { SITE, getAllCategories } from "../config/site";
 import Header from "../components/ui/Header.astro";
 import Footer from "../components/ui/Footer.astro";
@@ -9,8 +9,12 @@ import FeedbackWidget from "../components/ui/FeedbackWidget.astro";
 // Type-safe window property assignment
 declare global {
   interface Window {
-    authManager?: any;
+    TinkByteAuth?: any;
     supabase?: any;
+    TinkByteAuthInitialized?: boolean;
+    themeTransitionManager?: any;
+    toggleTheme?: () => void;
+    currentArticleId?: string;
   }
 }
 
@@ -40,7 +44,7 @@ const {
   tags = [],
 } = Astro.props;
 
-// Safe URL construction with proper error handling
+// Safe URL construction
 const getSafeCanonicalURL = () => {
   try {
     if (canonical) {
@@ -76,7 +80,7 @@ const getSafeSocialImage = () => {
 const canonicalURL = getSafeCanonicalURL();
 const socialImage = getSafeSocialImage();
 
-// Enhanced structured data with all social platforms
+// Enhanced structured data
 const getStructuredData = () => {
   const baseData = {
     "@context": "https://schema.org",
@@ -92,7 +96,6 @@ const getStructuredData = () => {
         url: `${Astro.url.origin}/logo.png`,
       },
       url: SITE.url,
-      // Social plateform
       sameAs: [
         `https://twitter.com/${SITE.social.twitter.replace("@", "")}`,
         `https://linkedin.com/${SITE.social.linkedin}`,
@@ -183,8 +186,6 @@ const structuredData = getStructuredData();
 
     <!-- Enhanced Theme CSS Variables -->
     <style is:inline>
-      @import "../styles/global.css";
-      @import "../styles/comments.css";
       :root {
         /* Light theme colors */
         --color-bg-primary: #ffffff;
@@ -195,27 +196,25 @@ const structuredData = getStructuredData();
         --color-text-muted: #64748b;
         --color-border: #e2e8f0;
         --color-border-light: #f1f5f9;
-        --color-accent: #243788;
-        --color-accent-hover: #1e3a8a;
+        --color-accent: #2563eb;
+        --color-accent-hover: #1e40af;
         --color-success: #059669;
         --color-warning: #d97706;
         --color-error: #dc2626;
         --color-info: #0284c7;
 
-        /* Featured post specific */
-        --featured-bg: #ffffff;
-        --featured-border: #e2e8f0;
-        --featured-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        --featured-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        --featured-text: #0f172a;
-        --featured-text-muted: #64748b;
-        --featured-overlay: rgba(0, 0, 0, 0.4);
-
-        /* Card backgrounds */
+        /* Component specific */
         --card-bg: #ffffff;
         --card-border: #e2e8f0;
-        --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-        --card-hover-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        --card-hover-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+
+        /* Perfect square design - no radius */
+        --border-radius: 0px;
+        --border-radius-sm: 0px;
+        --border-radius-md: 0px;
+        --border-radius-lg: 0px;
+        --border-radius-xl: 0px;
       }
 
       .dark {
@@ -235,131 +234,132 @@ const structuredData = getStructuredData();
         --color-error: #ef4444;
         --color-info: #06b6d4;
 
-        /* Featured post specific - Dark theme */
-        --featured-bg: #1e293b;
-        --featured-border: #374151;
-        --featured-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
-        --featured-hover-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4);
-        --featured-text: #f8fafc;
-        --featured-text-muted: #94a3b8;
-        --featured-overlay: rgba(0, 0, 0, 0.6);
-
-        /* Card backgrounds - Dark theme */
+        /* Dark theme components */
         --card-bg: #1e293b;
         --card-border: #374151;
-        --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
-        --card-hover-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+        --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        --card-hover-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
       }
 
-      /* Ensure all elements inherit theme properly */
-      * {
+      /* Base transitions for all elements */
+      *,
+      *::before,
+      *::after {
         transition:
-          background-color 0.3s ease,
-          color 0.3s ease,
-          border-color 0.3s ease;
+          background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+          color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+          border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+          box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      /* Featured post styling */
-      .featured-post {
-        background: var(--featured-bg) !important;
-        border-color: var(--featured-border) !important;
-        box-shadow: var(--featured-shadow) !important;
-        color: var(--featured-text) !important;
-      }
-
-      .featured-post:hover {
-        box-shadow: var(--featured-hover-shadow) !important;
-      }
-
-      .featured-post .text-gray-600 {
-        color: var(--featured-text-muted) !important;
-      }
-
-      .featured-post .text-gray-500 {
-        color: var(--featured-text-muted) !important;
-      }
-
-      .featured-post .bg-white {
-        background: var(--featured-bg) !important;
-      }
-
-      .featured-post .border-gray-200 {
-        border-color: var(--featured-border) !important;
-      }
-
-      /* Card styling */
+      /* Perfect square design system */
       .theme-card {
         background: var(--card-bg) !important;
-        border-color: var(--card-border) !important;
-        box-shadow: var(--card-shadow) !important;
+        border: 2px solid var(--card-border) !important;
         color: var(--color-text-primary) !important;
+        border-radius: var(--border-radius) !important;
+        box-shadow: var(--card-shadow) !important;
       }
 
       .theme-card:hover {
         box-shadow: var(--card-hover-shadow) !important;
+        border-color: var(--color-accent) !important;
       }
 
-      /* Text color overrides */
+      /* Text color utilities */
       .theme-text-primary {
         color: var(--color-text-primary) !important;
       }
-
       .theme-text-secondary {
         color: var(--color-text-secondary) !important;
       }
-
       .theme-text-muted {
         color: var(--color-text-muted) !important;
       }
 
-      /* Background overrides */
+      /* Background utilities */
       .theme-bg-primary {
         background-color: var(--color-bg-primary) !important;
       }
-
       .theme-bg-secondary {
         background-color: var(--color-bg-secondary) !important;
       }
+      .theme-bg-tertiary {
+        background-color: var(--color-bg-tertiary) !important;
+      }
 
-      /* Border overrides */
+      /* Border utilities */
       .theme-border {
         border-color: var(--color-border) !important;
       }
 
-      /* theme consistency for specific elements */
+      /* Override default rounded corners */
+      .bg-white,
+      .border-gray-200,
+      .border-gray-300,
+      button,
+      input,
+      textarea,
+      select,
+      .card,
+      .btn,
+      img {
+        border-radius: var(--border-radius) !important;
+      }
+
+      /* Ensure proper theme inheritance */
       .bg-white {
         background-color: var(--color-bg-primary) !important;
       }
-
-      .dark .bg-white {
-        background-color: var(--color-bg-primary) !important;
-      }
-
       .text-gray-900 {
         color: var(--color-text-primary) !important;
       }
-
       .text-gray-600 {
         color: var(--color-text-secondary) !important;
       }
-
       .text-gray-500 {
         color: var(--color-text-muted) !important;
       }
-
       .border-gray-200 {
         border-color: var(--color-border) !important;
       }
-
       .border-gray-300 {
         border-color: var(--color-border) !important;
       }
 
-      /* Ensure proper theme inheritance */
-      [data-theme-aware="true"] {
-        background-color: var(--color-bg-primary) !important;
-        color: var(--color-text-primary) !important;
-        border-color: var(--color-border) !important;
+      /* Enhanced contrast for better accessibility */
+      a {
+        color: var(--color-accent);
+        text-decoration: none;
+      }
+
+      a:hover {
+        color: var(--color-accent-hover);
+        text-decoration: underline;
+      }
+
+      /* Button improvements */
+      button {
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      /* Focus states for accessibility */
+      button:focus,
+      input:focus,
+      textarea:focus,
+      select:focus,
+      a:focus {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
       }
     </style>
 
@@ -465,14 +465,14 @@ const structuredData = getStructuredData();
             document.documentElement.classList.remove("dark");
           }
 
-          // Force update all theme-aware elements
+          // Update theme-aware elements
           setTimeout(function () {
             const themeAwareElements = document.querySelectorAll(
-              '.featured-post, .theme-card, [data-theme-aware="true"]'
+              '.theme-card, [data-theme-aware="true"]'
             );
-            for (let i = 0; i < themeAwareElements.length; i++) {
-              themeAwareElements[i].style.transition = "all 0.3s ease";
-            }
+            themeAwareElements.forEach(function (el) {
+              el.style.transition = "all 0.2s ease";
+            });
           }, 0);
         }
 
@@ -483,91 +483,35 @@ const structuredData = getStructuredData();
         if (typeof localStorage !== "undefined") {
           localStorage.setItem("theme", theme);
         }
-      })();
-    </script>
 
-    <script is:inline>
-      (function () {
-        // Theme transition coordinator for synchronized transitions
-        function initializeThemeTransitions() {
-          const html = document.documentElement;
+        // Global theme toggle function
+        window.toggleTheme = function () {
+          const currentTheme = document.documentElement.classList.contains(
+            "dark"
+          )
+            ? "dark"
+            : "light";
+          const newTheme = currentTheme === "dark" ? "light" : "dark";
 
-          // Create a centralized theme transition manager
-          if (!window.themeTransitionManager) {
-            window.themeTransitionManager = {
-              isTransitioning: false,
-              transitionDuration: 300,
+          applyTheme(newTheme);
 
-              startTransition: function () {
-                if (this.isTransitioning) return;
-
-                this.isTransitioning = true;
-                html.classList.add("theme-transitioning");
-
-                // Force all elements to use synchronized transitions
-                const style = document.createElement("style");
-                style.id = "theme-transition-override";
-                style.textContent =
-                  "*, *::before, *::after { " +
-                  "transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), " +
-                  "color 0.3s cubic-bezier(0.4, 0, 0.2, 1), " +
-                  "border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), " +
-                  "stroke 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; " +
-                  "}";
-                document.head.appendChild(style);
-
-                const self = this;
-                setTimeout(function () {
-                  self.endTransition();
-                }, this.transitionDuration);
-              },
-
-              endTransition: function () {
-                this.isTransitioning = false;
-                html.classList.remove("theme-transitioning");
-
-                const style = document.getElementById(
-                  "theme-transition-override"
-                );
-                if (style) style.remove();
-              },
-            };
+          if (typeof localStorage !== "undefined") {
+            localStorage.setItem("theme", newTheme);
           }
-
-          // Override existing theme toggle to use transition manager
-          const originalToggle = window.toggleTheme;
-          window.toggleTheme = function () {
-            if (window.themeTransitionManager) {
-              window.themeTransitionManager.startTransition();
-            }
-
-            setTimeout(function () {
-              if (originalToggle) originalToggle();
-            }, 10);
-          };
-        }
-
-        // Initialize when DOM is ready
-        if (document.readyState === "loading") {
-          document.addEventListener(
-            "DOMContentLoaded",
-            initializeThemeTransitions
-          );
-        } else {
-          initializeThemeTransitions();
-        }
+        };
       })();
     </script>
   </head>
 
   <body
-    class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 font-space-grotesk antialiased"
+    class="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-space-grotesk antialiased"
     style="background-color: var(--color-bg-primary); color: var(--color-text-primary);"
   >
     <!-- Skip Navigation Link -->
     <a
       href="#main-content"
-      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:bg-white focus:dark:bg-zinc-900 focus:px-4 focus:py-2 focus:rounded-sm focus:shadow-lg focus:z-50 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:bg-white focus:dark:bg-zinc-900 focus:px-4 focus:py-2 focus:shadow-lg focus:z-50 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+      style="border-radius: var(--border-radius) !important;"
     >
       Skip to main content
     </a>
@@ -588,78 +532,80 @@ const structuredData = getStructuredData();
       hideOnPages={["/admin"]}
     />
 
-    <!-- FIXED: Updated Auth Manager for custom comments -->
-    <script is:inline define:vars={{ commentsEnabled: SITE.comments.enabled }}>
-      document.addEventListener("DOMContentLoaded", async function () {
-        // Only load auth if custom comments are enabled
-        if (!commentsEnabled) {
-          return;
-        }
+    <!-- Auth Manager Initialization - Production Ready -->
+    <script
+      is:inline
+      define:vars={{
+        commentsEnabled: SITE.comments.enabled,
+        isDev: import.meta.env.DEV,
+      }}
+    >
+      if (commentsEnabled && !window.TinkByteAuthInitialized) {
+        window.TinkByteAuthInitialized = true;
 
-        try {
-          console.log("⏳ Loading auth modules for custom comments...");
+        document.addEventListener("DOMContentLoaded", async function () {
+          try {
+            if (isDev)
+              console.log("⏳ Loading auth modules for custom comments...");
 
-          const authModule = await import("/src/lib/auth.js");
-          const supabaseModule = await import("/src/lib/supabase.js");
+            const [authModule, supabaseModule] = await Promise.all([
+              import("/src/lib/auth.js"),
+              import("/src/lib/supabase.js"),
+            ]);
 
-          window.authManager = authModule.authManager;
-          window.supabase = supabaseModule.supabase;
+            window.TinkByteAuth = authModule.authManager;
+            window.supabase = supabaseModule.supabase;
 
-          console.log("✅ Auth modules loaded and exposed to window");
+            if (isDev)
+              console.log("✅ Auth modules loaded and exposed to window");
 
-          if (window.authManager && window.authManager.initialize) {
-            await window.authManager.initialize();
-            console.log("✅ Auth manager ready for custom comments");
+            if (window.TinkByteAuth && window.TinkByteAuth.initialize) {
+              await window.TinkByteAuth.initialize();
+              if (isDev) console.log("✅ Auth manager initialized");
+            }
 
             window.dispatchEvent(
               new CustomEvent("authReady", {
                 detail: {
-                  authManager: window.authManager,
+                  authManager: window.TinkByteAuth,
                   supabase: window.supabase,
                 },
               })
             );
-          }
-        } catch (error) {
-          console.error("❌ Failed to load auth modules:", error);
 
-          setTimeout(function () {
-            if (window.authManager) {
-              console.log("✅ Found existing auth manager");
-              window.dispatchEvent(
-                new CustomEvent("authReady", {
-                  detail: {
-                    authManager: window.authManager,
-                    supabase: window.supabase,
-                  },
-                })
-              );
-            }
-          }, 1000);
-        }
-      });
+            if (isDev) console.log("✅ Auth ready event dispatched");
+          } catch (error) {
+            if (isDev) console.error("❌ Failed to load auth modules:", error);
+
+            // Still dispatch event so comments don't hang
+            window.dispatchEvent(
+              new CustomEvent("authReady", {
+                detail: {
+                  authManager: null,
+                  supabase: window.supabase || null,
+                },
+              })
+            );
+          }
+        });
+      }
     </script>
 
     <!-- Enhanced Theme and Functionality Script -->
     <script is:inline>
       document.addEventListener("DOMContentLoaded", function () {
-        // Enhanced theme application
+        // Apply theme to all elements
         const applyThemeToAllElements = () => {
-          // Apply theme to featured posts
-          const featuredPosts = document.querySelectorAll(".featured-post");
-          featuredPosts.forEach((post) => {
-            post.setAttribute("data-theme-aware", "true");
-          });
-
-          // Apply theme to cards
+          // Apply theme classes to cards and components
           const cards = document.querySelectorAll(
-            ".theme-card, .bg-white, .border-gray-200"
+            ".bg-white, .border-gray-200, .border-gray-300"
           );
           cards.forEach((card) => {
+            card.classList.add("theme-card");
             card.setAttribute("data-theme-aware", "true");
           });
 
-          // Force repaint
+          // Force repaint for theme consistency
           document.body.style.display = "none";
           document.body.offsetHeight; // Trigger reflow
           document.body.style.display = "";
@@ -668,41 +614,18 @@ const structuredData = getStructuredData();
         // Apply theme immediately
         applyThemeToAllElements();
 
-        // Ensure FontAwesome icons are properly loaded
-        const icons = document.querySelectorAll(
-          '.fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"]'
-        );
-        icons.forEach(function (icon) {
-          if (icon.classList.contains("fab")) {
-            icon.style.fontFamily = '"Font Awesome 6 Brands" !important';
-          } else {
-            icon.style.fontFamily = '"Font Awesome 6 Free" !important';
-          }
-        });
-
         // Enhanced theme toggle functionality
         const themeToggle = document.querySelector("#theme-toggle");
         if (themeToggle) {
           themeToggle.addEventListener("click", () => {
-            const isDark = document.documentElement.classList.contains("dark");
-            const newTheme = isDark ? "light" : "dark";
+            if (window.toggleTheme) {
+              window.toggleTheme();
+            }
 
-            document.documentElement.classList.toggle("dark", !isDark);
-            localStorage.setItem("theme", newTheme);
-
-            // Force update all elements
+            // Force update all elements after theme change
             setTimeout(() => {
               applyThemeToAllElements();
             }, 50);
-
-            // Update theme toggle icons if they exist
-            const sunIcon = themeToggle.querySelector(".sun-icon");
-            const moonIcon = themeToggle.querySelector(".moon-icon");
-
-            if (sunIcon && moonIcon) {
-              sunIcon.style.display = isDark ? "block" : "none";
-              moonIcon.style.display = isDark ? "none" : "block";
-            }
           });
         }
 
@@ -718,6 +641,66 @@ const structuredData = getStructuredData();
               });
             }
           });
+        });
+
+        // External link handling
+        document.querySelectorAll('a[href^="http"]').forEach((link) => {
+          if (!link.href.includes(window.location.hostname)) {
+            link.setAttribute("target", "_blank");
+            link.setAttribute("rel", "noopener noreferrer");
+          }
+        });
+
+        // Mobile menu toggle
+        const mobileMenuToggle = document.querySelector("#mobile-menu-toggle");
+        const mobileMenu = document.querySelector("#mobile-menu");
+
+        if (mobileMenuToggle && mobileMenu) {
+          mobileMenuToggle.addEventListener("click", () => {
+            const isHidden = mobileMenu.classList.contains("hidden");
+            mobileMenu.classList.toggle("hidden", !isHidden);
+            mobileMenuToggle.setAttribute(
+              "aria-expanded",
+              isHidden ? "true" : "false"
+            );
+          });
+
+          // Close mobile menu when clicking outside
+          document.addEventListener("click", (e) => {
+            if (
+              !mobileMenuToggle.contains(e.target) &&
+              !mobileMenu.contains(e.target)
+            ) {
+              mobileMenu.classList.add("hidden");
+              mobileMenuToggle.setAttribute("aria-expanded", "false");
+            }
+          });
+        }
+
+        // Watch for dynamic content and apply theme
+        const mutationObserver = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === "childList") {
+              mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) {
+                  const element = node;
+                  if (
+                    element.classList &&
+                    (element.classList.contains("bg-white") ||
+                      element.classList.contains("border-gray-200"))
+                  ) {
+                    element.classList.add("theme-card");
+                    element.setAttribute("data-theme-aware", "true");
+                  }
+                }
+              });
+            }
+          });
+        });
+
+        mutationObserver.observe(document.body, {
+          childList: true,
+          subtree: true,
         });
 
         // Intersection Observer for animations
@@ -740,87 +723,49 @@ const structuredData = getStructuredData();
           observer.observe(el);
         });
 
-        // External link handling
-        document.querySelectorAll('a[href^="http"]').forEach((link) => {
-          const anchor = link;
-          if (!anchor.href.includes(window.location.hostname)) {
-            anchor.setAttribute("target", "_blank");
-            anchor.setAttribute("rel", "noopener noreferrer");
+        // Enhanced keyboard navigation
+        document.addEventListener("keydown", (e) => {
+          // Escape key to close modals/dropdowns
+          if (e.key === "Escape") {
+            document
+              .querySelectorAll(".modal, .dropdown-menu")
+              .forEach((el) => {
+                el.classList.add("hidden");
+              });
+          }
+
+          // Tab navigation improvements
+          if (e.key === "Tab") {
+            document.body.classList.add("keyboard-navigation");
           }
         });
 
-        // Reading progress bar (if exists)
-        const progressBar = document.querySelector(".reading-progress");
-        if (progressBar) {
-          window.addEventListener("scroll", () => {
-            const winScroll =
-              document.body.scrollTop || document.documentElement.scrollTop;
-            const height =
-              document.documentElement.scrollHeight -
-              document.documentElement.clientHeight;
-            const scrolled = (winScroll / height) * 100;
-            progressBar.style.width = scrolled + "%";
-          });
-        }
-
-        // Mobile menu toggle
-        const mobileMenuToggle = document.querySelector("#mobile-menu-toggle");
-        const mobileMenu = document.querySelector("#mobile-menu");
-
-        if (mobileMenuToggle && mobileMenu) {
-          mobileMenuToggle.addEventListener("click", () => {
-            const isHidden = mobileMenu.classList.contains("hidden");
-            mobileMenu.classList.toggle("hidden", !isHidden);
-
-            // Update ARIA attributes
-            mobileMenuToggle.setAttribute(
-              "aria-expanded",
-              isHidden ? "true" : "false"
-            );
-          });
-
-          // Close mobile menu when clicking outside
-          document.addEventListener("click", (e) => {
-            const target = e.target;
-
-            if (
-              target &&
-              !mobileMenuToggle.contains(target) &&
-              !mobileMenu.contains(target)
-            ) {
-              mobileMenu.classList.add("hidden");
-              mobileMenuToggle.setAttribute("aria-expanded", "false");
-            }
-          });
-        }
-
-        // Watch for dynamic content and apply theme
-        const mutationObserver = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.type === "childList") {
-              mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === 1) {
-                  // Element node
-                  const element = node;
-                  if (
-                    element.classList &&
-                    (element.classList.contains("featured-post") ||
-                      element.classList.contains("bg-white") ||
-                      element.classList.contains("border-gray-200"))
-                  ) {
-                    element.setAttribute("data-theme-aware", "true");
-                  }
-                }
-              });
-            }
-          });
-        });
-
-        mutationObserver.observe(document.body, {
-          childList: true,
-          subtree: true,
+        // Remove keyboard navigation class on mouse use
+        document.addEventListener("mousedown", () => {
+          document.body.classList.remove("keyboard-navigation");
         });
       });
     </script>
+
+    <!-- Add keyboard navigation styles -->
+    <style is:inline>
+      .keyboard-navigation *:focus {
+        outline: 2px solid var(--color-accent) !important;
+        outline-offset: 2px !important;
+      }
+
+      /* Hide focus outline when not using keyboard */
+      body:not(.keyboard-navigation) *:focus {
+        outline: none !important;
+      }
+
+      /* Ensure good contrast for focus states */
+      .keyboard-navigation button:focus,
+      .keyboard-navigation a:focus,
+      .keyboard-navigation input:focus,
+      .keyboard-navigation textarea:focus {
+        box-shadow: 0 0 0 2px var(--color-accent) !important;
+      }
+    </style>
   </body>
 </html>
