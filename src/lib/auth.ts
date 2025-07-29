@@ -1,5 +1,5 @@
-// src/lib/auth.ts - Production Ready with Clean Logging
-import { AuthState, type User, type Profile, supabase } from './supabase.js';
+// src/lib/auth.ts - FIXED TO WORK WITHOUT AUTHSTATE
+import { supabase, type User, type Profile } from './supabase.js';
 import { EmailService } from './email.js';
 import type { Session } from '@supabase/supabase-js';
 
@@ -41,10 +41,11 @@ export interface AuthCheckResult {
 
 class TinkByteAuthManager {
   private static instance: TinkByteAuthManager;
-  private authState: AuthState;
   private listeners: Array<(user: User | null, profile: Profile | null) => void> = [];
   private initialized = false;
   private initPromise: Promise<void> | null = null;
+  private currentUser: User | null = null;
+  private currentProfile: Profile | null = null;
   
   // Production logging control
   private readonly DEBUG = typeof window !== 'undefined' && 
@@ -64,7 +65,7 @@ class TinkByteAuthManager {
   }
 
   private constructor() {
-    this.authState = AuthState.getInstance();
+    // Private constructor for singleton
   }
 
   static getInstance(): TinkByteAuthManager {
@@ -82,27 +83,125 @@ class TinkByteAuthManager {
     return this.initPromise;
   }
 
-  private async _initialize(): Promise<void> {
+   private async _initialize(): Promise<void> {
     try {
       this.debugLog('🔐 TinkByteAuth: Initializing...');
       
-      await this.authState.initialize();
+      // Get initial session
+      const { data: { session }, error } = await supabase.auth.getSession();
       
-      this.authState.onAuthChange((user, profile) => {
-        this.notifyListeners(user, profile);
+      if (error) {
+        this.errorLog('❌ Auth initialization error:', error);
+        this.initialized = true;
+        return;
+      }
+
+      if (session?.user) {
+        await this.setUserData(session.user, session);
+      }
+
+      // Set up auth state change listener
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        this.debugLog('🔄 Auth state changed:', event);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          await this.setUserData(session.user, session);
+        } else if (event === 'SIGNED_OUT') {
+          this.clearUserData();
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          this.currentUser = session.user;
+        }
+        
+        this.notifyListeners(this.currentUser, this.currentProfile);
       });
 
       this.initialized = true;
-      
-      const user = this.authState.getUser();
-      const profile = this.authState.getProfile();
-      this.notifyListeners(user, profile);
+      this.notifyListeners(this.currentUser, this.currentProfile);
       
     } catch (error) {
       this.errorLog('🔐 TinkByteAuth: Initialization failed:', error);
       this.initialized = true;
       this.notifyListeners(null, null);
     }
+  }
+
+  private async setUserData(user: User, session: Session): Promise<void> {
+    this.debugLog('📝 Auth: Setting user data for:', user.email);
+    
+    this.currentUser = user;
+
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        this.errorLog('❌ Error loading profile:', error);
+        throw error;
+      }
+
+      if (profile) {
+        this.debugLog('✅ Auth: Profile loaded from database');
+        this.currentProfile = profile;
+      } else {
+        this.debugLog('🆕 Auth: Creating new profile');
+        await this.createProfile(user);
+      }
+    } catch (error) {
+      this.errorLog('❌ Error in setUserData:', error);
+      // Don't throw, just continue without profile
+    }
+  }
+
+  private async createProfile(user: User): Promise<void> {
+    const displayName = user.user_metadata?.display_name || 
+                       user.user_metadata?.full_name || 
+                       user.email?.split('@')[0] || 
+                       'TBMember';
+
+    const newProfile = {
+      id: user.id,
+      display_name: displayName,
+      first_name: user.user_metadata?.given_name || null,
+      last_name: user.user_metadata?.family_name || null,
+      avatar_url: user.user_metadata?.avatar_url || null,
+      avatar_type: user.user_metadata?.avatar_url ? 'uploaded' as const : 'preset' as const,
+      avatar_preset_id: 1,
+      total_reads: 0,
+      total_comments: 0,
+      total_articles: 0,
+      reputation_score: 0,
+      following_count: 0,
+      followers_count: 0,
+      is_public: true,
+      membership_type: 'free' as const,
+      is_admin: user.email === 'tinkbytehq@gmail.com',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(newProfile)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      this.debugLog('✅ Auth: Profile created successfully');
+      this.currentProfile = data;
+    } catch (error) {
+      this.errorLog('❌ Error creating profile:', error);
+    }
+  }
+
+  private clearUserData(): void {
+    this.debugLog('🧹 Auth: Clearing user data');
+    this.currentUser = null;
+    this.currentProfile = null;
   }
 
   get supabase() {
@@ -112,9 +211,10 @@ class TinkByteAuthManager {
   onAuthChange(callback: (user: User | null, profile: Profile | null) => void) {
     this.listeners.push(callback);
     
-    const user = this.authState.getUser();
-    const profile = this.authState.getProfile();
-    callback(user, profile);
+    // Call immediately if initialized
+    if (this.initialized) {
+      callback(this.currentUser, this.currentProfile);
+    }
 
     return () => {
       const index = this.listeners.indexOf(callback);
@@ -135,16 +235,16 @@ class TinkByteAuthManager {
   }
 
   getUser(): User | null {
-    return this.authState.getUser();
+    return this.currentUser;
   }
 
   getProfile(): Profile | null {
-    return this.authState.getProfile();
+    return this.currentProfile;
   }
 
   getDisplayName(): string {
-    const profile = this.authState.getProfile();
-    const user = this.authState.getUser();
+    const profile = this.currentProfile;
+    const user = this.currentUser;
     
     return profile?.display_name || 
            user?.user_metadata?.display_name ||
@@ -155,7 +255,7 @@ class TinkByteAuthManager {
   }
 
   getAvatarUrl(): string {
-    const profile = this.authState.getProfile();
+    const profile = this.currentProfile;
     
     if (profile?.avatar_type === 'uploaded' && profile?.avatar_url) {
       return profile.avatar_url;
@@ -170,13 +270,14 @@ class TinkByteAuthManager {
 
   async isAuthenticated(): Promise<boolean> {
     try {
-      const { data: { session } } = await this.supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       return !!session?.user;
     } catch (error) {
       return false;
     }
   }
 
+ 
   async needsPasswordSetup(): Promise<boolean> {
     try {
       const user = this.getUser();
@@ -189,9 +290,10 @@ class TinkByteAuthManager {
     }
   }
 
-  async simpleAuthCheck(): Promise<AuthCheckResult> {
+
+   async simpleAuthCheck(): Promise<AuthCheckResult> {
     try {
-      const { data: { session }, error } = await this.supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
         this.errorLog('Auth check error:', error);
@@ -208,6 +310,7 @@ class TinkByteAuthManager {
       return { isAuthenticated: false, user: null, session: null };
     }
   }
+
 
   private generateSecurePassword(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
@@ -874,35 +977,47 @@ class TinkByteAuthManager {
   }
 
   async updateProfile(updates: Partial<Profile>) {
-    return await this.authState.updateProfile(updates);
+    if (!this.currentUser) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', this.currentUser.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      this.currentProfile = data;
+      this.notifyListeners(this.currentUser, this.currentProfile);
+
+      return { success: true, data };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   }
 
-  async loadProfileData(): Promise<AuthProfileData | null> {
+ async refreshProfile() {
+    if (!this.currentUser) return;
+    
     try {
-      if (!this.initialized) {
-        await this.initialize();
-      }
-
-      await this.authState.refreshProfile();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', this.currentUser.id)
+        .single();
       
-      const user = this.authState.getUser();
-      const profile = this.authState.getProfile();
-      
-      if (!user) {
-        this.errorLog('🔐 TinkByteAuth: No authenticated user');
-        return null;
-      }
-
-      const stats = await this.loadUserStats(user.id);
-
-      return {
-        user,
-        profile,
-        stats
-      } as AuthProfileData;
+      if (error) throw error;
+      this.currentProfile = data;
+      this.notifyListeners(this.currentUser, this.currentProfile);
     } catch (error) {
-      this.errorLog('🔐 TinkByteAuth: Error loading profile data:', error);
-      return null;
+      this.errorLog('Error refreshing profile:', error);
     }
   }
 

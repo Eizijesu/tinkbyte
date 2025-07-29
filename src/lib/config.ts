@@ -1,24 +1,43 @@
-// src/lib/config.ts - SIMPLE DEV/PROD ONLY FOR STATIC SITE
+// src/lib/config.ts - FIXED VERSION
 import { deploymentManager } from './deployment.js';
 
 // Simple environment type matching your database
 export type Environment = 'development' | 'production';
 
-// Simple environment detection for static site
+// Fixed environment detection for static site
 const getEnvironment = (): Environment => {
-  // For static sites, check hostname on client-side
-  if (typeof window !== 'undefined') {
-    // Development: localhost and local IPs
-    if (window.location.hostname === 'localhost' || 
-        window.location.hostname.includes('127.0.0.1') ||
-        window.location.hostname.includes('192.168.') ||
-        window.location.port === '4321') { // Astro dev server
-      return 'development';
-    }
+  // Server-side: always return development during build
+  if (typeof window === 'undefined') {
+    return 'development';
   }
   
-  // Everything else is production (including staging/preview URLs)
-  return 'production';
+  // Client-side: check actual browser location
+  const hostname = window.location.hostname;
+  const port = window.location.port;
+  const protocol = window.location.protocol;
+  
+  // Development conditions (more comprehensive)
+  const isDev = 
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    hostname.endsWith('.local') ||
+    port === '4321' || // Astro dev server
+    port === '3000' || // Common dev ports
+    port === '5173' || // Vite dev server
+    protocol === 'http:' || // HTTP usually means dev
+    hostname.includes('localhost');
+  
+  console.log('🌍 Environment Detection:', {
+    hostname,
+    port,
+    protocol,
+    isDev,
+    result: isDev ? 'development' : 'production'
+  });
+  
+  return isDev ? 'development' : 'production';
 };
 
 export const config = {

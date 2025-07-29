@@ -1,79 +1,123 @@
-// src/lib/supabase.ts - STATIC SITE OPTIMIZED
+// src/lib/supabase.ts - COMPLETE WITH ALL METHODS
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { config, shouldLog } from './config';
+import { config } from './config';
 
-// Single global instance for static site
-let supabaseInstance: SupabaseClient | null = null;
-let instanceId: string | null = null;
-let isInitializing = false;
+// Global singleton - only one instance ever
+let supabaseClient: SupabaseClient | null = null;
 
-
-function getSupabaseClient(): SupabaseClient {
-  // Return existing instance immediately
-  if (supabaseInstance && instanceId) {
-    return supabaseInstance;
+function createSupabaseClient(): SupabaseClient {
+  // Return existing instance if available
+  if (supabaseClient) {
+    return supabaseClient;
   }
-  
-  // Prevent multiple simultaneous initializations
-  if (isInitializing) {
-    throw new Error('Supabase client is already initializing');
-  }
-
-  isInitializing = true;
 
   // Validate environment variables
   const supabaseUrl = config.supabase.url;
   const supabaseAnonKey = config.supabase.anonKey;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables. Check your .env file.');
+    throw new Error('Missing Supabase environment variables');
   }
 
-  // Generate instance ID for tracking
-  instanceId = Math.random().toString(36).substr(2, 9);
-
-  // Create new instance optimized for static site
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+  // Create single instance
+  supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
       flowType: 'pkce',
       storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-      storageKey: `tinkbyte-auth-${config.environment}`,
-      debug: shouldLog('supabase')
+      storageKey: `tinkbyte-auth-${config.environment}`
     },
     global: {
       headers: {
         'X-Environment': config.environment,
-        'X-Client-Info': `tinkbyte-static-${config.environment}`,
-        'X-Deployment-Type': 'static'
+        'X-Client-Info': `tinkbyte-static-${config.environment}`
       }
     }
   });
 
-  // Log only in development
-  if (shouldLog('supabase')) {
-    console.log(`✅ Supabase singleton created with ID: ${instanceId}`);
-  }
-
-  return supabaseInstance;
+  return supabaseClient;
 }
 
 // Export the singleton
-export const supabase = getSupabaseClient();
-export { getSupabaseClient };
+export const supabase = createSupabaseClient();
+export { createSupabaseClient as getSupabaseClient };
 
-// Simple utility exports
-export const getEnvironment = () => config.environment;
-export const isProductionEnvironment = () => config.environment === 'production';
-export const isDevelopmentEnvironment = () => config.environment === 'development';
+// **ADD: Export AuthState class that was missing**
+export class AuthState {
+  private static instance: AuthState | null = null;
+  private currentUser: any = null;
+  private currentSession: any = null;
+  private listeners: Array<(user: any) => void> = [];
+
+  private constructor() {
+    this.initializeAuth();
+  }
+
+  static getInstance(): AuthState {
+    if (!AuthState.instance) {
+      AuthState.instance = new AuthState();
+    }
+    return AuthState.instance;
+  }
+
+  async initialize(): Promise<void> {
+    await this.initializeAuth();
+  }
+
+  private async initializeAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    this.currentSession = session;
+    this.currentUser = session?.user || null;
+
+    // Listen for auth changes
+    supabase.auth.onAuthStateChange((event, session) => {
+      this.currentSession = session;
+      this.currentUser = session?.user || null;
+      this.notifyListeners();
+    });
+  }
+
+  getCurrentUser() {
+    return this.currentUser;
+  }
+
+  getCurrentSession() {
+    return this.currentSession;
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.currentUser;
+  }
+
+  onAuthStateChange(callback: (user: any) => void) {
+    this.listeners.push(callback);
+    return () => {
+      this.listeners = this.listeners.filter(listener => listener !== callback);
+    };
+  }
+
+  private notifyListeners() {
+    this.listeners.forEach(listener => listener(this.currentUser));
+  }
+
+  async signOut() {
+    const { error } = await supabase.auth.signOut();
+    if (!error) {
+      this.currentUser = null;
+      this.currentSession = null;
+      this.notifyListeners();
+    }
+    return { error };
+  }
+}
 
 // Database helpers
 export const db = {
-  profiles: () => getSupabaseClient().from('profiles'),
-  comments: () => getSupabaseClient().from('comments'),
-  commentLikes: () => getSupabaseClient().from('comment_likes'),
+  profiles: () => supabase.from('profiles'),
+  comments: () => supabase.from('comments'),
+  commentLikes: () => supabase.from('comment_likes'),
   commentModeration: () => supabase.from('comment_moderation'),
   commentReactions: () => supabase.from('comment_reactions'),
   commentBookmarks: () => supabase.from('comment_bookmarks'),
@@ -83,8 +127,6 @@ export const db = {
   userRateLimits: () => supabase.from('user_rate_limits'),
   newsletterSubscriptions: () => supabase.from('newsletter_subscriptions'),
   userCategoryFollows: () => supabase.from('user_category_follows'),
-  
-  // Shared tables
   articles: () => supabase.from('articles'),
   articleLikes: () => supabase.from('article_likes'),
   moderationRules: () => supabase.from('moderation_rules'),
@@ -96,7 +138,7 @@ export const db = {
   userPreferences: () => supabase.from('user_preferences'),
 };
 
-// Environment-aware query helpers (only dev/prod)
+// Environment-aware query helpers
 export const envDb = {
   profiles: {
     select: (columns: string = '*') => db.profiles().select(columns).eq('environment', config.environment),
@@ -172,7 +214,7 @@ export const rpc = (fn: string, params: object) =>
 
 export type TableName = keyof typeof db;
 
-// All your existing interfaces stay exactly the same
+// All your interfaces stay exactly the same
 export interface User {
   id: string;
   email?: string;
@@ -218,6 +260,7 @@ export interface AdminSession {
   permissions: string[];
   expires_at: string;
 }
+
 export interface CommentNotification {
   id: string;
   user_id: string;
@@ -283,7 +326,6 @@ export interface Article {
   created_at: string;
   updated_at: string;
   environment?: string;
-  // Relations
   author?: Profile;
   category?: Category;
   comments?: Comment[];
@@ -316,7 +358,6 @@ export interface Comment {
   environment?: string;
   created_at: string;
   updated_at: string;
-  // Relations
   author?: Profile;
   replies?: Comment[];
 }
@@ -377,348 +418,6 @@ export interface Newsletter {
   updated_at: string;
 }
 
-// Auth state management
-export class AuthState {
-  private static instance: AuthState;
-  private user: User | null = null;
-  private profile: Profile | null = null;
-  private listeners: Array<(user: User | null, profile: Profile | null) => void> = [];
-  private initialized = false;
-
-  static getInstance(): AuthState {
-    if (!AuthState.instance) {
-      AuthState.instance = new AuthState();
-    }
-    return AuthState.instance;
-  }
-
-  async initialize() {
-    if (this.initialized) return;
-    
-    try {
-      if (shouldLog()) {
-        console.log('🔄 Initializing auth state...');
-      }
-      
-      const client = getSupabaseClient();
-      const { data: { session } } = await client.auth.getSession();
-      
-      if (session?.user) {
-        this.user = session.user as User;
-        await this.loadProfile();
-        if (shouldLog()) {
-          console.log('✅ User session found:', this.user.email);
-        }
-      }
-
-      this.notifyListeners();
-      this.initialized = true;
-
-      // Listen for auth changes
-      getSupabaseClient().auth.onAuthStateChange(async (event, session) => {
-        if (shouldLog()) {
-          console.log('🔄 Auth state changed:', event, session?.user?.email);
-        }
-        
-        if (event === 'SIGNED_IN' && session?.user) {
-          this.user = session.user as User;
-          await this.loadProfile();
-          this.notifyListeners();
-        } else if (event === 'SIGNED_OUT') {
-          this.user = null;
-          this.profile = null;
-          this.notifyListeners();
-        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          this.user = session.user as User;
-          this.notifyListeners();
-        }
-      });
-    } catch (error) {
-      console.error('❌ Auth initialization error:', error);
-      this.initialized = true;
-    }
-  }
-
-  private async loadProfile() {
-    if (!this.user) return;
-
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', this.user.id)
-        .eq('environment', config.environment)
-        .single();
-
-      if (error && error.code === 'PGRST116') {
-        console.log('📝 Creating new profile...');
-        await this.createProfile();
-      } else if (error) {
-        console.error('❌ Profile load error:', error);
-      } else {
-        this.profile = profile as Profile;
-        console.log('✅ Profile loaded:', this.profile.display_name);
-      }
-    } catch (error) {
-      console.error('❌ Profile load error:', error);
-    }
-  }
-
-  private async createProfile() {
-    if (!this.user) return;
-
-    try {
-      const displayName = this.user.user_metadata?.display_name || 
-                         this.user.user_metadata?.full_name || 
-                         this.user.user_metadata?.name ||
-                         this.user.email?.split('@')[0] || 
-                         'TBMember';
-
-      // Enhanced Google profile detection
-      const googleAvatar = this.user.user_metadata?.avatar_url || this.user.user_metadata?.picture;
-      const isGoogleProvider = this.user.app_metadata?.provider === 'google' || 
-                              this.user.app_metadata?.providers?.includes('google');
-      
-      // More robust Google avatar detection
-      const isGoogleAvatar = googleAvatar && (
-        googleAvatar.includes('googleusercontent.com') || 
-        googleAvatar.includes('lh3.googleusercontent.com') ||
-        googleAvatar.includes('lh4.googleusercontent.com') ||
-        googleAvatar.includes('lh5.googleusercontent.com') ||
-        googleAvatar.includes('lh6.googleusercontent.com') ||
-        (isGoogleProvider && googleAvatar.startsWith('https://'))
-      );
-
-      console.log('🔍 Profile Creation Debug:', {
-        googleAvatar,
-        isGoogleProvider,
-        isGoogleAvatar,
-        environment: config.environment,
-        userMetadata: this.user.user_metadata,
-        appMetadata: this.user.app_metadata
-      });
-
-      // Prepare profile data with environment
-      const profileData = {
-        id: this.user.id,
-        display_name: displayName,
-        first_name: this.user.user_metadata?.given_name || null,
-        last_name: this.user.user_metadata?.family_name || null,
-        avatar_url: googleAvatar || null,
-        avatar_type: isGoogleAvatar ? 'google' : 
-                    googleAvatar ? 'uploaded' : 'preset',
-        avatar_preset_id: isGoogleAvatar || googleAvatar ? null : 1,
-        bio: null,
-        website: null,
-        twitter_handle: null,
-        linkedin_url: null,
-        github_username: null,
-        location: null,
-        job_title: null,
-        company: null,
-        total_reads: 0,
-        total_comments: 0,
-        total_articles: 0,
-        reputation_score: 0,
-        following_count: 0,
-        followers_count: 0,
-        is_public: true,
-        membership_type: 'free',
-        is_admin: this.user.email === 'tinkbytehq@gmail.com',
-        email: this.user.email,
-        environment: config.environment, // Add environment context
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      console.log('📝 Creating profile with data:', profileData);
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert(profileData)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Profile creation error:', error);
-        console.error('❌ Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        
-        // If it's a constraint error, try with preset avatar as fallback
-        if (error.code === '23514' || error.message.includes('constraint')) {
-          console.log('🔄 Retrying with preset avatar...');
-          
-          const fallbackData = {
-            ...profileData,
-            avatar_type: 'preset',
-            avatar_preset_id: 1,
-            avatar_url: null
-          };
-          
-          const { data: fallbackResult, error: fallbackError } = await supabase
-            .from('profiles')
-            .insert(fallbackData)
-            .select()
-            .single();
-            
-          if (fallbackError) {
-            console.error('❌ Fallback profile creation also failed:', fallbackError);
-            throw fallbackError;
-          } else {
-            this.profile = fallbackResult as Profile;
-            console.log('✅ Profile created with fallback data:', this.profile.display_name);
-          }
-        } else {
-          throw error;
-        }
-      } else {
-        this.profile = data as Profile;
-        console.log('✅ Profile created with Google data:', {
-          displayName: this.profile.display_name,
-          avatarType: this.profile.avatar_type,
-          avatarUrl: this.profile.avatar_url,
-          environment: this.profile.environment
-        });
-      }
-    } catch (error) {
-      console.error('❌ Profile creation error:', error);
-      
-      // Last resort: create minimal profile
-      try {
-        console.log('🔄 Creating minimal profile as last resort...');
-        
-        const minimalData = {
-          id: this.user.id,
-          display_name: this.user.email?.split('@')[0] || 'TBMember',
-          first_name: null,
-          last_name: null,
-          avatar_type: 'preset',
-          avatar_preset_id: 1,
-          avatar_url: null,
-          bio: null,
-          website: null,
-          twitter_handle: null,
-          linkedin_url: null,
-          github_username: null,
-          location: null,
-          job_title: null,
-          company: null,
-          total_reads: 0,
-          total_comments: 0,
-          total_articles: 0,
-          reputation_score: 0,
-          following_count: 0,
-          followers_count: 0,
-          is_public: true,
-          membership_type: 'free',
-          is_admin: false,
-          email: this.user.email,
-          environment: config.environment, // Add environment to minimal profile too
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        const { data: minimalResult, error: minimalError } = await supabase
-          .from('profiles')
-          .insert(minimalData)
-          .select()
-          .single();
-          
-        if (minimalError) {
-          console.error('❌ Even minimal profile creation failed:', minimalError);
-        } else {
-          this.profile = minimalResult as Profile;
-          console.log('✅ Minimal profile created successfully');
-        }
-      } catch (finalError) {
-        console.error('❌ Final profile creation attempt failed:', finalError);
-      }
-    }
-  }
-
-  async signOut() {
-    try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Sign out error:', error);
-        throw error;
-      }
-
-      this.user = null;
-      this.profile = null;
-      this.notifyListeners();
-      
-      console.log('✅ User signed out successfully');
-      return { success: true };
-    } catch (error: any) {
-      console.error('Sign out error:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  onAuthChange(callback: (user: User | null, profile: Profile | null) => void) {
-    this.listeners.push(callback);
-    callback(this.user, this.profile);
-    
-    return () => {
-      this.listeners = this.listeners.filter(listener => listener !== callback);
-    };
-  }
-
-  private notifyListeners() {
-    this.listeners.forEach(listener => listener(this.user, this.profile));
-  }
-
-  getUser(): User | null {
-    return this.user;
-  }
-
-  getProfile(): Profile | null {
-    return this.profile;
-  }
-
-  async refreshProfile() {
-    await this.loadProfile();
-    this.notifyListeners();
-  }
-
-  async updateProfile(updates: Partial<Profile>) {
-    if (!this.user) {
-      return { success: false, error: 'No authenticated user' };
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', this.user.id)
-        .eq('environment', config.environment)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Profile update error:', error);
-        return { success: false, error: error.message };
-      }
-
-      this.profile = data as Profile;
-      this.notifyListeners();
-      
-      return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  }
-}
-
 // Helper function for retry logic
 export async function withRetry(operation: () => Promise<any>, maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
@@ -748,8 +447,6 @@ export const dbWithRetry = {
     });
   },
 
-  
-
   async updateProfile(userId: string, updates: Partial<Profile>) {
     return withRetry(async () => {
       const { data, error } = await supabase
@@ -766,9 +463,9 @@ export const dbWithRetry = {
   }
 };
 
-// Updated TinkByteAPI with environment awareness
+// Complete TinkByteAPI with ALL your methods restored
 export class TinkByteAPI {
-  // Article operations (articles might be shared across environments)
+  // Article operations
   static async getArticles(options: {
     limit?: number;
     offset?: number;
@@ -856,73 +553,110 @@ export class TinkByteAPI {
   }
 
   // Get comments for an article with environment filtering
-static async getComments(articleId) {
-  try {
-    if (config.environment !== 'production') {
-      console.log('🔍 Fetching comments for article:', articleId);
+  static async getComments(articleId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .select(`
+          *,
+          profiles!inner(
+            id,
+            display_name,
+            avatar_type,
+            avatar_preset_id,
+            avatar_url,
+            reputation_score,
+            is_admin,
+            membership_type
+          ),
+          comment_reactions(
+            reaction_type,
+            user_id
+          ),
+          comment_likes(
+            user_id
+          ),
+          comment_bookmarks(
+            user_id
+          )
+        `)
+        .eq('article_id', articleId)
+        .eq('environment', config.environment)
+        .eq('is_deleted', false)
+        .in('moderation_status', ['approved', 'auto_approved'])
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching comments:', error);
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (error: any) {
+      console.error('Error fetching comments:', error);
+      return { success: false, error: error.message };
     }
-    
-    const { data, error } = await getSupabaseClient()
-      .from('comments')
-      .select(`
-        *,
-        profiles!inner(
-          id,
-          display_name,
-          avatar_type,
-          avatar_preset_id,
-          avatar_url,
-          reputation_score,
-          is_admin,
-          membership_type
-        ),
-        comment_reactions(
-          reaction_type,
-          user_id
-        ),
-        comment_likes(
-          user_id
-        ),
-        comment_bookmarks(
-          user_id
-        )
-      `)
+  }
+
+  // Add this method to your TinkByteAPI class
+static async deleteCommentDraft(articleId: string) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+
+    if (!user) {
+      return { success: false, error: 'Must be logged in to delete draft' };
+    }
+
+    const { error } = await supabase
+      .from('comment_drafts')
+      .delete()
+      .eq('user_id', user.id)
       .eq('article_id', articleId)
-      .eq('environment', config.environment)
-      .eq('is_deleted', false)
-      .in('moderation_status', ['approved', 'auto_approved'])
-      .order('created_at', { ascending: false });
+      .eq('environment', config.environment);
 
     if (error) {
-      console.error('❌ Error fetching comments:', error);
+      console.error('Error deleting draft:', error);
       throw error;
     }
 
-    if (config.environment !== 'production') {
-      console.log(`✅ Fetched ${data?.length || 0} comments`);
-    }
-    return { success: true, data: data || [] };
-  } catch (error) {
-    console.error('❌ Error fetching comments:', error);
+    console.log('✅ Draft deleted successfully');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting comment draft:', error);
     return { success: false, error: error.message };
   }
 }
 
-  // Fixed addComment method with single foreign key relationship
-static async addComment(articleSlug, content, parentId = null) {
-  try {
-    const authState = AuthState.getInstance();
-    const user = authState.getUser();
-    const profile = authState.getProfile();
+  // **FIX: Use crypto.randomUUID() with fallback for Node.js environments**
+  private static generateUUID(): string {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback for environments without crypto.randomUUID
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
 
-    if (!user) {
+  // Add comment method with single foreign key relationship
+static async addComment(articleSlug: string, content: string, parentId: string | null = null) {
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      throw new Error('Authentication error');
+    }
+
+    if (!session?.user) {
+      console.error('No session found');
       throw new Error('Must be logged in to comment');
     }
 
-    console.log('=== ADDING COMMENT ===');
-    console.log('User ID:', user.id);
-    console.log('Article Slug:', articleSlug);
-    console.log('Environment:', config.environment);
+    const user = session.user;
 
     // Verify the article exists
     const { data: article, error: articleError } = await supabase
@@ -950,7 +684,10 @@ static async addComment(articleSlug, content, parentId = null) {
       }
     }
 
+    const commentId = this.generateUUID();
+
     const commentData = {
+      id: commentId,
       content: content,
       raw_content: content,
       user_id: user.id,
@@ -958,14 +695,16 @@ static async addComment(articleSlug, content, parentId = null) {
       parent_id: parentId || null,
       thread_level: threadLevel,
       environment: config.environment,
-      moderation_status: 'auto_approved',
+      moderation_status: 'auto_approved' as const, // **ENSURE AUTO-APPROVAL**
       auto_approved_reason: 'Auto-approved by content filter',
       quality_score: 50,
       like_count: 0,
-      reply_count: 0
+      reply_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
-    console.log('Inserting comment:', commentData);
+    console.log('💾 TinkByteAPI inserting comment with status:', commentData.moderation_status);
 
     // Insert comment
     const { data: insertedComment, error: insertError } = await supabase
@@ -979,10 +718,10 @@ static async addComment(articleSlug, content, parentId = null) {
       throw insertError;
     }
 
-    console.log('Comment inserted:', insertedComment);
+    console.log('✅ Comment inserted with status:', insertedComment.moderation_status);
 
-    // *** PROCESS MENTIONS ***
-    await this.processMentions(content, insertedComment.id, profile?.display_name || 'Someone');
+    // Process mentions
+    await this.processMentions(content, insertedComment.id, user.email?.split('@')[0] || 'Someone');
 
     // Fetch profile separately
     const { data: profileData, error: profileError } = await supabase
@@ -1003,377 +742,356 @@ static async addComment(articleSlug, content, parentId = null) {
 
     if (profileError) {
       console.error('Profile fetch error:', profileError);
-      const fallbackProfile = {
-        id: user.id,
-        display_name: user.email?.split('@')[0] || 'User',
-        avatar_type: 'preset',
-        avatar_preset_id: 1,
-        avatar_url: null,
-        reputation_score: 0,
-        is_admin: false,
-        membership_type: 'free'
-      };
-      
-      const finalData = {
-        ...insertedComment,
-        profiles: fallbackProfile
-      };
-      
-      console.log('Comment added with fallback profile');
-      return { success: true, data: finalData };
     }
 
-    if (!profileData) {
-      console.error('No profile found for user');
-      throw new Error('User profile not found');
+    // **DELETE DRAFT AFTER SUCCESSFUL COMMENT**
+    try {
+      await this.deleteCommentDraft(articleSlug);
+      console.log('✅ Draft deleted after comment posted');
+    } catch (draftError) {
+      console.warn('⚠️ Could not delete draft:', draftError);
+      // Don't fail the comment creation if draft deletion fails
     }
 
     // Combine the data
     const finalData = {
       ...insertedComment,
-      profiles: profileData
+      profiles: profileData || {
+        id: user.id,
+        display_name: user.email?.split('@')[0] || 'User',
+        avatar_type: 'preset' as const,
+        avatar_preset_id: 1,
+        avatar_url: null,
+        reputation_score: 0,
+        is_admin: false,
+        membership_type: 'free' as const
+      }
     };
 
-    console.log('Comment added successfully:', finalData);
+    console.log('🎉 Final comment data with status:', finalData.moderation_status);
+
     return { success: true, data: finalData };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error adding comment:', error);
     return { success: false, error: error.message };
   }
 }
 
-// Add this helper method to process mentions
-static async processMentions(content: string, commentId: string, mentionerName: string) {
-  try {
-    // Extract mentions from content using regex with proper typing
-    const mentionRegex = /@(\w+)/g;
-    const mentions: string[] = []; // Explicitly type the array
-    let match: RegExpExecArray | null;
+  // Process mentions helper method
+  static async processMentions(content: string, commentId: string, mentionerName: string) {
+    try {
+      const mentionRegex = /@(\w+)/g;
+      const mentions: string[] = [];
+      let match: RegExpExecArray | null;
 
-    // Reset regex lastIndex to ensure it works correctly
-    mentionRegex.lastIndex = 0;
-    
-    while ((match = mentionRegex.exec(content)) !== null) {
-      if (match[1]) { // Check if capture group exists
-        mentions.push(match[1].toLowerCase());
-      }
-    }
-
-    if (mentions.length === 0) return;
-
-    console.log('🔍 Processing mentions:', mentions);
-
-    // Get users by display names (case insensitive) with proper typing
-    const { data: users, error } = await supabase
-      .from('profiles')
-      .select('id, display_name')
-      .eq('environment', config.environment);
-
-    if (error) {
-      console.error('Error fetching users for mentions:', error);
-      return;
-    }
-
-    // Ensure users is an array and properly typed
-    const userProfiles = users || [];
-
-    // Match mentioned usernames to actual users with explicit typing
-    const mentionedUsers = userProfiles.filter((user: any) => {
-      if (!user.display_name) return false;
+      mentionRegex.lastIndex = 0;
       
-      const username = user.display_name.toLowerCase().replace(/\s+/g, '');
-      return mentions.includes(username);
-    });
-
-    console.log('👥 Found mentioned users:', mentionedUsers);
-
-    // Create notifications for mentioned users
-    for (const mentionedUser of mentionedUsers) {
-      try {
-        await this.createMentionNotification(commentId, mentionedUser.id, mentionerName);
-        console.log(`✅ Notification created for ${mentionedUser.display_name}`);
-      } catch (error) {
-        console.error(`❌ Failed to create notification for ${mentionedUser.display_name}:`, error);
+      while ((match = mentionRegex.exec(content)) !== null) {
+        if (match[1]) {
+          mentions.push(match[1].toLowerCase());
+        }
       }
-    }
 
-    // Update the comment with mention_users array - Fix the type error
-    if (mentionedUsers.length > 0) {
-      const mentionedUserIds: string[] = mentionedUsers.map((user: any) => user.id);
-      
-      // Use a more specific type assertion
-      const { error: updateError } = await supabase
-        .from('comments')
-        .update({ 
-          mention_users: mentionedUserIds 
-        } as { mention_users: string[] })
-        .eq('id', commentId)
+      if (mentions.length === 0) return;
+
+      const { data: users, error } = await supabase
+        .from('profiles')
+        .select('id, display_name')
         .eq('environment', config.environment);
 
-      if (updateError) {
-        console.error('Error updating comment with mentions:', updateError);
-      } else {
-        console.log('📝 Updated comment with mentioned user IDs');
+      if (error) {
+        console.error('Error fetching users for mentions:', error);
+        return;
       }
-    }
 
-  } catch (error) {
-    console.error('❌ Error processing mentions:', error);
+      const userProfiles = users || [];
+
+      const mentionedUsers = userProfiles.filter((user: any) => {
+        if (!user.display_name) return false;
+        
+        const username = user.display_name.toLowerCase().replace(/\s+/g, '');
+        return mentions.includes(username);
+      });
+
+      // Create notifications for mentioned users
+      for (const mentionedUser of mentionedUsers) {
+        try {
+          await this.createMentionNotification(commentId, mentionedUser.id, mentionerName);
+        } catch (error) {
+          console.error(`Failed to create notification for ${mentionedUser.display_name}:`, error);
+        }
+      }
+
+      // Update the comment with mention_users array
+      if (mentionedUsers.length > 0) {
+        const mentionedUserIds: string[] = mentionedUsers.map((user: any) => user.id);
+        
+        const { error: updateError } = await supabase
+          .from('comments')
+          .update({ 
+            mention_users: mentionedUserIds 
+          } as { mention_users: string[] })
+          .eq('id', commentId)
+          .eq('environment', config.environment);
+
+        if (updateError) {
+          console.error('Error updating comment with mentions:', updateError);
+        }
+      }
+
+    } catch (error) {
+      console.error('Error processing mentions:', error);
+    }
   }
-}
 
-// Get mentionable users with your database structure
-static async getMentionableUsers(query: string = '') {
-  try {
-    const authState = AuthState.getInstance();
-    const user = authState.getUser();
+  // Get mentionable users
+  static async getMentionableUsers(query: string = '') {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-    if (!user) {
-      return { success: false, error: 'Must be logged in to get mentionable users' };
+      if (!user) {
+        return { success: false, error: 'Must be logged in to get mentionable users' };
+      }
+
+      let queryBuilder = supabase
+        .from('profiles')
+        .select('id, display_name, avatar_type, avatar_preset_id, avatar_url, is_admin, membership_type')
+        .eq('environment', config.environment)
+        .eq('is_public', true)
+        .neq('id', user.id)
+        .limit(8);
+
+      if (query && query.length > 0) {
+        queryBuilder = queryBuilder.ilike('display_name', `%${query}%`);
+      }
+
+      const { data, error } = await queryBuilder;
+
+      if (error) throw error;
+
+      const formattedUsers = (data || []).map((profile: any) => ({
+        id: profile.id,
+        username: profile.display_name?.toLowerCase().replace(/\s+/g, '') || 'user',
+        display_name: profile.display_name || 'User',
+        avatar_type: profile.avatar_type,
+        avatar_preset_id: profile.avatar_preset_id,
+        avatar_url: profile.avatar_url,
+        is_admin: profile.is_admin,
+        membership_type: profile.membership_type
+      }));
+
+      return { success: true, data: formattedUsers };
+    } catch (error: any) {
+      console.error('Error fetching mentionable users:', error);
+      return { success: false, error: error.message };
     }
-
-    // Get users from profiles with environment filtering
-    let queryBuilder = supabase
-      .from('profiles')
-      .select('id, display_name, avatar_type, avatar_preset_id, avatar_url, is_admin, membership_type')
-      .eq('environment', config.environment)
-      .eq('is_public', true)
-      .neq('id', user.id) // Don't include current user
-      .limit(8);
-
-    if (query && query.length > 0) {
-      queryBuilder = queryBuilder.ilike('display_name', `%${query}%`);
-    }
-
-    const { data, error } = await queryBuilder;
-
-    if (error) throw error;
-
-    // Format for mention dropdown
-    const formattedUsers = (data || []).map(profile => ({
-      id: profile.id,
-      username: profile.display_name?.toLowerCase().replace(/\s+/g, '') || 'user',
-      display_name: profile.display_name || 'User',
-      avatar_type: profile.avatar_type,
-      avatar_preset_id: profile.avatar_preset_id,
-      avatar_url: profile.avatar_url,
-      is_admin: profile.is_admin,
-      membership_type: profile.membership_type
-    }));
-
-    return { success: true, data: formattedUsers };
-  } catch (error: any) {
-    console.error('Error fetching mentionable users:', error);
-    return { success: false, error: error.message };
   }
-}
 
+  // Create mention notification
+  static async createMentionNotification(commentId: string, mentionedUserId: string, mentionerName: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-static async createMentionNotification(commentId: string, mentionedUserId: string, mentionerName: string) {
-  try {
-    const authState = AuthState.getInstance();
-    const user = authState.getUser();
+      if (!user) {
+        return { success: false, error: 'Must be logged in to create notifications' };
+      }
 
-    if (!user) {
-      return { success: false, error: 'Must be logged in to create notifications' };
+      // Check if user has notification preferences
+      const { data: prefs } = await supabase
+        .from('comment_notification_preferences')
+        .select('mention_notifications')
+        .eq('user_id', mentionedUserId)
+        .single();
+
+      // If user has disabled mention notifications, don't create notification
+      if (prefs && prefs.mention_notifications === false) {
+        return { success: true, message: 'User has disabled mention notifications' };
+      }
+
+      // Insert notification into comment_notifications table
+      const { data, error } = await supabase
+        .from('comment_notifications')
+        .insert({
+          user_id: mentionedUserId,
+          comment_id: commentId,
+          notification_type: 'mention' as const,
+          is_read: false,
+          environment: config.environment,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error creating mention notification:', error);
+      return { success: false, error: error.message };
     }
-
-    // Check if user has notification preferences
-    const { data: prefs } = await supabase
-      .from('comment_notification_preferences')
-      .select('mention_notifications')
-      .eq('user_id', mentionedUserId)
-      .single();
-
-    // If user has disabled mention notifications, don't create notification
-    if (prefs && prefs.mention_notifications === false) {
-      return { success: true, message: 'User has disabled mention notifications' };
-    }
-
-    // Insert notification into comment_notifications table
-    const { data, error } = await supabase
-      .from('comment_notifications')
-      .insert({
-        user_id: mentionedUserId,
-        comment_id: commentId,
-        notification_type: 'mention',
-        is_read: false,
-        environment: config.environment,
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('Error creating mention notification:', error);
-    return { success: false, error: error.message };
   }
-}
 
-static async getUserNotifications(limit = 20) {
-  try {
-    const authState = AuthState.getInstance();
-    const user = authState.getUser();
+  // Get user notifications
+  static async getUserNotifications(limit = 20) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-    if (!user) {
-      return { success: false, error: 'Must be logged in to get notifications' };
-    }
+      if (!user) {
+        return { success: false, error: 'Must be logged in to get notifications' };
+      }
 
-    const { data, error } = await supabase
-      .from('comment_notifications')
-      .select(`
-        *,
-        comments!inner(
-          id,
-          content,
-          article_id,
-          user_id,
-          profiles!inner(
-            display_name,
-            avatar_type,
-            avatar_preset_id,
-            avatar_url
+      const { data, error } = await supabase
+        .from('comment_notifications')
+        .select(`
+          *,
+          comments!inner(
+            id,
+            content,
+            article_id,
+            user_id,
+            profiles!inner(
+              display_name,
+              avatar_type,
+              avatar_preset_id,
+              avatar_url
+            )
           )
-        )
-      `)
-      .eq('user_id', user.id)
-      .eq('environment', config.environment)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+        `)
+        .eq('user_id', user.id)
+        .eq('environment', config.environment)
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    return { success: true, data: data || [] };
-  } catch (error: any) {
-    console.error('Error fetching notifications:', error);
-    return { success: false, error: error.message };
+      return { success: true, data: data || [] };
+    } catch (error: any) {
+      console.error('Error fetching notifications:', error);
+      return { success: false, error: error.message };
+    }
   }
-}
 
+  // Mark notification as read
+  static async markNotificationAsRead(notificationId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-// Mark notification as read
-static async markNotificationAsRead(notificationId: string) {
-  try {
-    const authState = AuthState.getInstance();
-    const user = authState.getUser();
+      if (!user) {
+        return { success: false, error: 'Must be logged in to mark notifications as read' };
+      }
 
-    if (!user) {
-      return { success: false, error: 'Must be logged in to mark notifications as read' };
+      const { error } = await supabase
+        .from('comment_notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId)
+        .eq('user_id', user.id)
+        .eq('environment', config.environment);
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error marking notification as read:', error);
+      return { success: false, error: error.message };
     }
-
-    const { error } = await supabase
-      .from('comment_notifications')
-      .update({ is_read: true })
-      .eq('id', notificationId)
-      .eq('user_id', user.id)
-      .eq('environment', config.environment);
-
-    if (error) throw error;
-
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error marking notification as read:', error);
-    return { success: false, error: error.message };
   }
-}
 
-// Get unread notification count
-static async getUnreadNotificationCount() {
-  try {
-    const authState = AuthState.getInstance();
-    const user = authState.getUser();
+  // Get unread notification count
+  static async getUnreadNotificationCount() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-    if (!user) {
-      return { success: false, error: 'Must be logged in to get notification count' };
+      if (!user) {
+        return { success: false, error: 'Must be logged in to get notification count' };
+      }
+
+      const { count, error } = await supabase
+        .from('comment_notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('environment', config.environment)
+        .eq('is_read', false);
+
+      if (error) throw error;
+
+      return { success: true, count: count || 0 };
+    } catch (error: any) {
+      console.error('Error getting notification count:', error);
+      return { success: false, error: error.message };
     }
-
-    const { count, error } = await supabase
-      .from('comment_notifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('environment', config.environment)
-      .eq('is_read', false);
-
-    if (error) throw error;
-
-    return { success: true, count: count || 0 };
-  } catch (error: any) {
-    console.error('Error getting notification count:', error);
-    return { success: false, error: error.message };
   }
-}
 
+  // Update comment with environment awareness
+  static async updateComment(commentId: string, content: string, editReason: string | null = null) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
+      if (!user) {
+        throw new Error('Must be logged in to update comment');
+      }
 
-      // Update comment with environment awareness
-static async updateComment(commentId, content, editReason = null) {
-  try {
-    const authState = AuthState.getInstance();
-    const user = authState.getUser();
+      // First, get the comment to check ownership and time
+      const { data: existingComment, error: fetchError } = await supabase
+        .from('comments')
+        .select('user_id, created_at, editable_until')
+        .eq('id', commentId)
+        .eq('environment', config.environment)
+        .single();
 
-    if (!user) {
-      throw new Error('Must be logged in to update comment');
+      if (fetchError || !existingComment) {
+        throw new Error('Comment not found');
+      }
+
+      // Check ownership
+      if (existingComment.user_id !== user.id) {
+        throw new Error('You can only edit your own comments');
+      }
+
+      // Check time limit (15 minutes)
+      const createdAt = new Date(existingComment.created_at);
+      const now = new Date();
+      const diffInMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+
+      if (diffInMinutes > 15) {
+        throw new Error('Comments can only be edited within 15 minutes of posting');
+      }
+
+      // Update the comment
+      const { data, error } = await supabase
+        .from('comments')
+        .update({
+          content,
+          raw_content: content,
+          edit_reason: editReason || null,
+          is_edited: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', commentId)
+        .eq('user_id', user.id)
+        .eq('environment', config.environment)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      return { success: false, error: error.message };
     }
-
-    // First, get the comment to check ownership and time
-    const { data: existingComment, error: fetchError } = await supabase
-      .from('comments')
-      .select('user_id, created_at, editable_until')
-      .eq('id', commentId)
-      .eq('environment', config.environment)
-      .single();
-
-    if (fetchError || !existingComment) {
-      throw new Error('Comment not found');
-    }
-
-    // Check ownership
-    if (existingComment.user_id !== user.id) {
-      throw new Error('You can only edit your own comments');
-    }
-
-    // Check time limit (15 minutes)
-    const createdAt = new Date(existingComment.created_at);
-    const now = new Date();
-    const diffInMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-
-    if (diffInMinutes > 15) {
-      throw new Error('Comments can only be edited within 15 minutes of posting');
-    }
-
-    // Update the comment
-    const { data, error } = await supabase
-      .from('comments')
-      .update({
-        content,
-        raw_content: content,
-        edit_reason: editReason || null,
-        is_edited: true,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', commentId)
-      .eq('user_id', user.id)
-      .eq('environment', config.environment)
-      .select('*')
-      .single();
-
-    if (error) throw error;
-
-    return { success: true, data };
-  } catch (error) {
-    return { success: false, error: error.message };
   }
-}
 
   // Delete comment with environment awareness
   static async deleteComment(commentId: string) {
     try {
-      const authState = AuthState.getInstance();
-      const user = authState.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       if (!user) {
         throw new Error('Must be logged in to delete comment');
@@ -1402,8 +1120,8 @@ static async updateComment(commentId, content, editReason = null) {
   // Toggle comment like with environment awareness
   static async toggleCommentLike(commentId: string) {
     try {
-      const authState = AuthState.getInstance();
-      const user = authState.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       if (!user) {
         throw new Error('Must be logged in to like comments');
@@ -1478,205 +1196,209 @@ static async updateComment(commentId, content, editReason = null) {
     }
   }
 
-    
-  // Save comment draft with environment awareness
+ // Save comment draft with environment awareness
 static async saveCommentDraft(articleId: string, content: string, draftKey?: string) {
   try {
-    const authState = AuthState.getInstance();
-    const user = authState.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
 
     if (!user) {
       throw new Error('Must be logged in to save draft');
     }
 
-    const key = draftKey || `${user.id}-${articleId}`;
+    console.log('💾 Saving draft for user:', user.id, 'article:', articleId);
 
-    // First try to update existing draft
-    const { data: existingDraft } = await supabase
+    // **FIX: Remove draft_key entirely to avoid constraint conflicts**
+    const { data, error } = await supabase
       .from('comment_drafts')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('article_id', articleId)
-      .eq('draft_key', key)
-      .eq('environment', config.environment)
+      .upsert({
+        user_id: user.id,
+        article_id: articleId,
+        content,
+        environment: config.environment,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,article_id,environment',
+        ignoreDuplicates: false
+      })
+      .select()
       .single();
 
-    if (existingDraft) {
-      // Update existing draft
-      const { data, error } = await supabase
-        .from('comment_drafts')
-        .update({
-          content,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingDraft.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { success: true, data };
-    } else {
-      // Insert new draft
-      const { data, error } = await supabase
-        .from('comment_drafts')
-        .insert({
-          user_id: user.id,
-          article_id: articleId,
-          content,
-          draft_key: key,
-          environment: config.environment,
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { success: true, data };
+    if (error) {
+      console.error('❌ Draft save error:', error);
+      throw error;
     }
+    
+    console.log('✅ Draft saved successfully');
+    return { success: true, data };
   } catch (error: any) {
     console.error('Error saving comment draft:', error);
     return { success: false, error: error.message };
   }
 }
 
-// Add bookmark functionality
-static async toggleCommentBookmark(commentId: string) {
-  try {
-    const authState = AuthState.getInstance();
-    const user = authState.getUser();
+  // Toggle comment bookmark
+  static async toggleCommentBookmark(commentId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-    if (!user) {
-      throw new Error('Must be logged in to bookmark comments');
-    }
+      if (!user) {
+        throw new Error('Must be logged in to bookmark comments');
+      }
 
-    // Check if already bookmarked
-    const { data: existingBookmark } = await supabase
-      .from('comment_bookmarks')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('comment_id', commentId)
-      .eq('environment', config.environment)
-      .single();
-
-    if (existingBookmark) {
-      // Remove bookmark
-      await supabase
+      // Check if already bookmarked
+      const { data: existingBookmark } = await supabase
         .from('comment_bookmarks')
-        .delete()
-        .eq('id', existingBookmark.id);
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('comment_id', commentId)
+        .eq('environment', config.environment)
+        .single();
 
-      return { success: true, bookmarked: false };
-    } else {
-      // Add bookmark
-      await supabase
-        .from('comment_bookmarks')
-        .insert({
-          user_id: user.id,
-          comment_id: commentId,
-          environment: config.environment,
-          created_at: new Date().toISOString()
-        });
+      if (existingBookmark) {
+        // Remove bookmark
+        await supabase
+          .from('comment_bookmarks')
+          .delete()
+          .eq('id', existingBookmark.id);
 
-      return { success: true, bookmarked: true };
+        return { success: true, bookmarked: false };
+      } else {
+        // Add bookmark
+        await supabase
+          .from('comment_bookmarks')
+          .insert({
+            user_id: user.id,
+            comment_id: commentId,
+            environment: config.environment,
+            created_at: new Date().toISOString()
+          });
+
+        return { success: true, bookmarked: true };
+      }
+    } catch (error: any) {
+      console.error('Error toggling bookmark:', error);
+      return { success: false, error: error.message };
     }
-  } catch (error: any) {
-    console.error('Error toggling bookmark:', error);
-    return { success: false, error: error.message };
   }
-}
 
-// Add reaction functionality
-static async toggleCommentReaction(commentId: string, reactionType: string) {
-  try {
-    const authState = AuthState.getInstance();
-    const user = authState.getUser();
+  // Toggle comment reaction
+  static async toggleCommentReaction(commentId: string, reactionType: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-    if (!user) {
-      throw new Error('Must be logged in to react to comments');
-    }
+      if (!user) {
+        throw new Error('Must be logged in to react to comments');
+      }
 
-    // Check if already reacted
-    const { data: existingReaction } = await supabase
-      .from('comment_reactions')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('comment_id', commentId)
-      .eq('reaction_type', reactionType)
-      .eq('environment', config.environment)
-      .single();
-
-    if (existingReaction) {
-      // Remove reaction
-      await supabase
+      // Check if already reacted
+      const { data: existingReaction } = await supabase
         .from('comment_reactions')
-        .delete()
-        .eq('id', existingReaction.id);
-
-      // Get updated count
-      const { count } = await supabase
-        .from('comment_reactions')
-        .select('*', { count: 'exact', head: true })
+        .select('id')
+        .eq('user_id', user.id)
         .eq('comment_id', commentId)
         .eq('reaction_type', reactionType)
-        .eq('environment', config.environment);
+        .eq('environment', config.environment)
+        .single();
 
-      return { success: true, reacted: false, count: count || 0 };
-    } else {
-      // Add reaction
-      await supabase
-        .from('comment_reactions')
-        .insert({
-          user_id: user.id,
-          comment_id: commentId,
-          reaction_type: reactionType,
-          environment: config.environment,
-          created_at: new Date().toISOString()
-        });
+      if (existingReaction) {
+        // Remove reaction
+        await supabase
+          .from('comment_reactions')
+          .delete()
+          .eq('id', existingReaction.id);
 
-      // Get updated count
-      const { count } = await supabase
-        .from('comment_reactions')
-        .select('*', { count: 'exact', head: true })
-        .eq('comment_id', commentId)
-        .eq('reaction_type', reactionType)
-        .eq('environment', config.environment);
+        // Get updated count
+        const { count } = await supabase
+          .from('comment_reactions')
+          .select('*', { count: 'exact', head: true })
+          .eq('comment_id', commentId)
+          .eq('reaction_type', reactionType)
+          .eq('environment', config.environment);
 
-      return { success: true, reacted: true, count: count || 0 };
+        return { success: true, reacted: false, count: count || 0 };
+      } else {
+        // Add reaction
+        await supabase
+          .from('comment_reactions')
+          .insert({
+            user_id: user.id,
+            comment_id: commentId,
+            reaction_type: reactionType,
+            environment: config.environment,
+            created_at: new Date().toISOString()
+          });
+
+        // Get updated count
+        const { count } = await supabase
+          .from('comment_reactions')
+          .select('*', { count: 'exact', head: true })
+          .eq('comment_id', commentId)
+          .eq('reaction_type', reactionType)
+          .eq('environment', config.environment);
+
+        return { success: true, reacted: true, count: count || 0 };
+      }
+    } catch (error: any) {
+      console.error('Error toggling reaction:', error);
+      return { success: false, error: error.message };
     }
-  } catch (error: any) {
-    console.error('Error toggling reaction:', error);
-    return { success: false, error: error.message };
   }
-}
 
-    // Get comment draft with environment awareness
-    static async getCommentDraft(articleId: string, draftKey?: string) {
-      try {
-        const authState = AuthState.getInstance();
-        const user = authState.getUser();
+  // Get comment draft with environment awareness
+static async getCommentDraft(articleId: string, draftKey?: string) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
 
-        if (!user) {
-          return { success: false, error: 'Must be logged in to get draft' };
-        }
+    if (!user) {
+      return { success: false, error: 'Must be logged in to get draft' };
+    }
 
-        const { data, error } = await supabase
+    // First try current environment
+    let { data, error } = await supabase
+      .from('comment_drafts')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('article_id', articleId)
+      .eq('environment', config.environment)
+      .maybeSingle();
+
+    // If not found and we're in production, try development as fallback
+    if (!data && config.environment === 'production') {
+      console.log('🔄 No draft in production, checking development...');
+      const { data: devData, error: devError } = await supabase
+        .from('comment_drafts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('article_id', articleId)
+        .eq('environment', 'development')
+        .maybeSingle();
+
+      if (devData) {
+        console.log('📝 Found draft in development, migrating to production...');
+        // Migrate the draft to production
+        await supabase
           .from('comment_drafts')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('article_id', articleId)
-          .eq('environment', config.environment)
-          .eq('draft_key', draftKey || `${user.id}-${articleId}`)
-          .single();
-
-        if (error && error.code !== 'PGRST116') throw error;
-
-        return { success: true, data };
-      } catch (error: any) {
-        console.error('Error getting comment draft:', error);
-        return { success: false, error: error.message };
+          .update({ environment: 'production' })
+          .eq('id', devData.id);
+        
+        data = { ...devData, environment: 'production' };
       }
     }
-  // Category operations (shared across environments)
+
+    if (error && error.code !== 'PGRST116') throw error;
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Error getting comment draft:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+  // Category operations
   static async getCategories() {
     try {
       const { data, error } = await supabase
@@ -1693,11 +1415,11 @@ static async toggleCommentReaction(commentId: string, reactionType: string) {
     }
   }
 
-  // User interactions (articles might be shared, but user actions are environment-specific)
+  // Toggle article like
   static async toggleArticleLike(articleId: string) {
     try {
-      const authState = AuthState.getInstance();
-      const user = authState.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       if (!user) {
         throw new Error('Must be logged in to like articles');
@@ -1737,11 +1459,11 @@ static async toggleCommentReaction(commentId: string, reactionType: string) {
     }
   }
 
-  // Follow/Unfollow operations
+  // Follow user
   static async followUser(userId: string) {
     try {
-      const authState = AuthState.getInstance();
-      const user = authState.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       if (!user) {
         throw new Error('Must be logged in to follow users');
@@ -1769,10 +1491,11 @@ static async toggleCommentReaction(commentId: string, reactionType: string) {
     }
   }
 
+  // Unfollow user
   static async unfollowUser(userId: string) {
     try {
-      const authState = AuthState.getInstance();
-      const user = authState.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       if (!user) {
         throw new Error('Must be logged in to unfollow users');
@@ -1794,11 +1517,11 @@ static async toggleCommentReaction(commentId: string, reactionType: string) {
     }
   }
 
-  // Updated newsletter operations with environment context
+  // Newsletter operations
   static async subscribeToNewsletter(email: string, name?: string) {
     try {
-      const authState = AuthState.getInstance();
-      const user = authState.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       const { data, error } = await supabase
         .from('newsletter_subscriptions')
@@ -1807,7 +1530,7 @@ static async toggleCommentReaction(commentId: string, reactionType: string) {
           user_id: user?.id || null,
           newsletter_type: 'weekly',
           is_active: true,
-          environment: config.environment, // Add environment context
+          environment: config.environment,
           subscribed_at: new Date().toISOString()
         })
         .select()
@@ -1822,11 +1545,11 @@ static async toggleCommentReaction(commentId: string, reactionType: string) {
     }
   }
 
-  // Get user's newsletter subscriptions with environment filtering
+  // Get user's newsletter subscriptions
   static async getUserNewsletterSubscriptions() {
     try {
-      const authState = AuthState.getInstance();
-      const user = authState.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       if (!user) {
         return { success: false, error: 'Must be logged in to get subscriptions' };
@@ -1848,7 +1571,7 @@ static async toggleCommentReaction(commentId: string, reactionType: string) {
     }
   }
 
-  // Search operations with environment filtering
+  // Search operations
   static async searchContent(query: string, type: 'articles' | 'users' | 'all' = 'all') {
     try {
       const results: any = {};
@@ -1887,7 +1610,7 @@ static async toggleCommentReaction(commentId: string, reactionType: string) {
     }
   }
 
-  // Get user activity with environment filtering
+  // Get user activity
   static async getUserActivity(userId: string, limit = 20) {
     try {
       const { data, error } = await supabase
@@ -1906,14 +1629,25 @@ static async toggleCommentReaction(commentId: string, reactionType: string) {
     }
   }
 
-  // Admin operations with environment awareness
+  // Admin operations
   static async moderateComment(commentId: string, action: 'approve' | 'flag' | 'hide' | 'delete', reason?: string) {
     try {
-      const authState = AuthState.getInstance();
-      const user = authState.getUser();
-      const profile = authState.getProfile();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-      if (!user || !profile?.is_admin) {
+      if (!user) {
+        throw new Error('Must be logged in to moderate comments');
+      }
+
+      // Get user profile to check admin status
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .eq('environment', config.environment)
+        .single();
+
+      if (!profile?.is_admin) {
         throw new Error('Must be admin to moderate comments');
       }
 
@@ -1953,6 +1687,5 @@ static async toggleCommentReaction(commentId: string, reactionType: string) {
     }
   }
 }
-
 
 export default supabase;

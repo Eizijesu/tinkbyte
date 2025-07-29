@@ -1,5 +1,5 @@
 ---
-// src/layouts/Layout.astro - Complete Optimized Version
+// src/layouts/Layout.astro - Production Ready Clean Version
 import { SITE, getAllCategories } from "../config/site";
 import Header from "../components/ui/Header.astro";
 import Footer from "../components/ui/Footer.astro";
@@ -9,10 +9,9 @@ import FeedbackWidget from "../components/ui/FeedbackWidget.astro";
 // Type-safe window property assignment
 declare global {
   interface Window {
-    TinkByteAuth?: any;
     supabase?: any;
-    TinkByteAuthInitialized?: boolean;
-    themeTransitionManager?: any;
+    TinkByteAPI?: any;
+    AuthState?: any;
     toggleTheme?: () => void;
     currentArticleId?: string;
   }
@@ -532,7 +531,7 @@ const structuredData = getStructuredData();
       hideOnPages={["/admin"]}
     />
 
-    <!-- Auth Manager Initialization - Production Ready -->
+    <!-- Clean Supabase Initialization -->
     <script
       is:inline
       define:vars={{
@@ -540,50 +539,38 @@ const structuredData = getStructuredData();
         isDev: import.meta.env.DEV,
       }}
     >
-      if (commentsEnabled && !window.TinkByteAuthInitialized) {
-        window.TinkByteAuthInitialized = true;
-
+      if (commentsEnabled) {
         document.addEventListener("DOMContentLoaded", async function () {
           try {
-            if (isDev)
-              console.log("⏳ Loading auth modules for custom comments...");
+            if (isDev) console.log("⏳ Loading Supabase...");
 
-            const [authModule, supabaseModule] = await Promise.all([
-              import("/src/lib/auth.js"),
-              import("/src/lib/supabase.js"),
-            ]);
+            // Import only what we need
+            const { supabase, AuthState, TinkByteAPI } = await import(
+              "/src/lib/supabase.js"
+            );
 
-            window.TinkByteAuth = authModule.authManager;
-            window.supabase = supabaseModule.supabase;
+            // Expose to window once
+            window.supabase = supabase;
+            window.TinkByteAPI = TinkByteAPI;
+            window.AuthState = AuthState;
 
-            if (isDev)
-              console.log("✅ Auth modules loaded and exposed to window");
+            if (isDev) console.log("✅ Supabase loaded and exposed");
 
-            if (window.TinkByteAuth && window.TinkByteAuth.initialize) {
-              await window.TinkByteAuth.initialize();
-              if (isDev) console.log("✅ Auth manager initialized");
-            }
-
+            // Dispatch ready event for comments
             window.dispatchEvent(
               new CustomEvent("authReady", {
-                detail: {
-                  authManager: window.TinkByteAuth,
-                  supabase: window.supabase,
-                },
+                detail: { supabase, TinkByteAPI, AuthState },
               })
             );
 
             if (isDev) console.log("✅ Auth ready event dispatched");
           } catch (error) {
-            if (isDev) console.error("❌ Failed to load auth modules:", error);
+            console.error("❌ Failed to load Supabase:", error);
 
             // Still dispatch event so comments don't hang
             window.dispatchEvent(
               new CustomEvent("authReady", {
-                detail: {
-                  authManager: null,
-                  supabase: window.supabase || null,
-                },
+                detail: { supabase: null, TinkByteAPI: null, AuthState: null },
               })
             );
           }
@@ -747,7 +734,7 @@ const structuredData = getStructuredData();
       });
     </script>
 
-    <!-- Add keyboard navigation styles -->
+    <!-- Keyboard navigation styles -->
     <style is:inline>
       .keyboard-navigation *:focus {
         outline: 2px solid var(--color-accent) !important;

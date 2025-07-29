@@ -10,7 +10,7 @@ import type { CommentWithProfile } from "../../lib/types/comments";
 
 const { articleId, postSlug, postTitle } = Astro.props;
 
-const ENVIRONMENT = config.environment; // This should be 'production'
+const ENVIRONMENT = "production";
 console.log("🔍 Using environment:", ENVIRONMENT);
 
 const currentUser = null;
@@ -93,11 +93,10 @@ try {
       .select("*")
       .eq("article_id", articleId)
       .eq("is_deleted", false)
-      .eq("environment", ENVIRONMENT)
+      .eq("environment", "production")
       .in("moderation_status", ["approved", "auto_approved"])
       .is("parent_id", null)
       .order("created_at", { ascending: false });
-    // REMOVED: .limit(COMMENTS_PER_PAGE);
 
     if (rootCommentsError) {
       console.error("❌ Error loading root comments:", rootCommentsError);

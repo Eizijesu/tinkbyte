@@ -1,0 +1,1117 @@
+---
+// src/layouts/BlogPost.astro - Optimized & Clean
+import Layout from "./Layout.astro";
+import { Image } from "astro:assets";
+import ShareButtons from "../components/ui/ShareButtons.astro";
+import RelatedPosts from "../components/blog/RelatedPosts.astro";
+import AudioPlayer from "../components/ui/AudioPlayer.astro";
+import AuthorBio from "../components/blog/AuthorBio.astro";
+import ReactionBar from "../components/blog/ReactionBar.astro";
+import { SITE } from "../config/site";
+import { getCollection } from "astro:content";
+import MDXProvider from "../components/MDXProvider.astro";
+import TinkByteCommentSection from "../components/comments/TinkByteCommentSection.astro";
+
+export interface Props {
+  title: string;
+  subtitle?: string;
+  description?: string;
+  excerpt?: string;
+  date: string | Date;
+  updatedDate?: Date;
+  readTime?: string;
+  tags?: string[]; // Made optional
+  category?: string;
+  authorInfo?: {
+    name: string;
+    bio?: string;
+    avatar?: string;
+    role?: string;
+  };
+  author?: string;
+  heroImage?: {
+    imageType: "upload" | "url";
+    uploadedImage?: string;
+    externalUrl?: string;
+    alt: string;
+    caption?: string;
+  };
+  image?: string;
+  imageAlt?: string;
+  audioUrl?: string;
+  audioDuration?: string;
+  slug?: string;
+  featured?: boolean;
+  trending?: boolean;
+  navigationContext?: {
+    currentIndex: number;
+    totalPosts: number;
+    isFirst: boolean;
+    isLast: boolean;
+  };
+  analyticsData?: {
+    contentType: string;
+    category: string;
+    author: string;
+    publishDate: Date;
+    wordCount: number;
+    hasAudio: boolean;
+    hasFeaturedImage: boolean;
+    tagCount: number;
+  };
+  seoTitle?: string;
+  seoDescription?: string;
+  canonicalUrl?: string;
+  headings?: any[];
+  renderError?: Error | null;
+}
+
+const {
+  title,
+  subtitle,
+  description,
+  excerpt,
+  date,
+  updatedDate, 
+  readTime,
+  tags = [],
+  category,
+  authorInfo,
+  author,
+  heroImage,
+  image,
+  imageAlt,
+  audioUrl,
+  audioDuration,
+  slug,
+  featured, 
+  trending, 
+  navigationContext, 
+  analyticsData, 
+  seoTitle, 
+  seoDescription, 
+  canonicalUrl, 
+  headings, 
+  renderError, 
+} = Astro.props;
+
+// Resolve article ID
+const articleId =
+  slug?.trim() ||
+  Astro.params.slug?.trim() ||
+  Astro.url.pathname.split("/").filter(Boolean).pop() ||
+  title
+    ?.toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-") ||
+  `article-${Date.now()}`;
+
+// Author data
+const authorData = authorInfo?.name
+  ? authorInfo
+  : author
+    ? { name: author, bio: null, avatar: null, role: null }
+    : { name: "TinkByte Team", bio: null, avatar: null, role: null };
+
+// Image handling
+const imageSrc =
+  heroImage?.imageType === "upload"
+    ? heroImage.uploadedImage
+    : heroImage?.imageType === "url"
+      ? heroImage.externalUrl
+      : image;
+const finalImageAlt = heroImage?.alt || imageAlt || title;
+
+// Meta data
+const postDescription = description || excerpt || "";
+const publishedTime = new Date(date).toISOString();
+const formattedDate = new Date(date).toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+// Category styling
+const getCategoryColor = (cat?: string): string => {
+  const colors: Record<string, string> = {
+    "build-thinking": "#1A73E8",
+    "product-strategy": "#F59E0B",
+    "ai-evolution": "#8B5CF6",
+    "developer-tools": "#06B6D4",
+    "startup-insight": "#EF4444",
+    "tech-culture": "#EC4899",
+  };
+  return colors[cat?.toLowerCase().replace(/\s+/g, "-") || ""] || "#6b7280";
+};
+
+const categoryColor = getCategoryColor(category);
+const formatCategory = (cat?: string): string =>
+  cat?.replace(/-/g, " ").toUpperCase() || "ARTICLE";
+---
+
+<Layout
+  title={title}
+  description={postDescription}
+  type="article"
+  publishedTime={publishedTime}
+  author={authorData.name}
+  tags={tags}
+  image={imageSrc}
+>
+  <!-- Reading Progress Bar -->
+  <div class="reading-progress">
+    <div class="reading-progress-bar"></div>
+  </div>
+
+  <MDXProvider>
+    <article class="blog-article" data-article-id={articleId}>
+      <!-- Header -->
+      <header class="article-header">
+        <div class="container">
+          <!-- Meta Row -->
+          <div class="article-meta">
+            <div class="meta-left">
+              <span
+                class="category-tag"
+                style={`background: ${categoryColor}15; color: ${categoryColor}; border-color: ${categoryColor}`}
+              >
+                <i class="fas fa-tag"></i>
+                {formatCategory(category)}
+              </span>
+              {
+                audioUrl && (
+                  <span class="audio-badge">
+                    <i class="fas fa-headphones" />
+                    AUDIO
+                  </span>
+                )
+              }
+            </div>
+            <time datetime={publishedTime} class="article-date">
+              {formattedDate}
+            </time>
+          </div>
+
+          <!-- Title Section -->
+          <div class="title-section">
+            <h1 class="article-title">{title}</h1>
+            {subtitle && <h2 class="article-subtitle">{subtitle}</h2>}
+            {
+              postDescription && (
+                <p class="article-description">{postDescription}</p>
+              )
+            }
+          </div>
+
+          <!-- Author Section -->
+          <div class="author-section">
+            <div class="author-info">
+              {
+                authorData.avatar && (
+                  <Image
+                    src={authorData.avatar}
+                    alt={authorData.name}
+                    width={48}
+                    height={48}
+                    class="author-avatar"
+                  />
+                )
+              }
+              <div class="author-details">
+                <span class="author-name">By {authorData.name}</span>
+                {
+                  authorData.role && (
+                    <span class="author-role">{authorData.role}</span>
+                  )
+                }
+              </div>
+            </div>
+            <div class="reading-meta">
+              {readTime && <span class="read-time">{readTime}</span>}
+              <div class="share-actions">
+                <ShareButtons
+                  title={title}
+                  url={`${SITE.url}/blog/${articleId}`}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Featured Image -->
+      {
+        imageSrc && (
+          <div class="image-section">
+            <div class="container">
+              <div class="image-wrapper">
+                <Image
+                  src={imageSrc}
+                  alt={finalImageAlt}
+                  width={1200}
+                  height={600}
+                  class="article-image"
+                  format="webp"
+                  loading="eager"
+                />
+                {heroImage?.caption && (
+                  <div class="image-caption">{heroImage.caption}</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      <!-- Audio Section -->
+      {
+        audioUrl ? (
+          <div class="audio-section">
+            <div class="container">
+              <div class="audio-container">
+                <div class="audio-header">
+                  <h3 class="audio-title">
+                    <i class="fas fa-headphones" />
+                    Listen to this article
+                  </h3>
+                  <p class="audio-subtitle">Perfect for multitasking</p>
+                </div>
+                <AudioPlayer
+                  audioUrl={audioUrl}
+                  title={title}
+                  duration={audioDuration}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div class="no-audio-section">
+            <div class="container">
+              <div class="no-audio-placeholder">
+                <i class="fas fa-microphone-slash" />
+                <span>Audio version coming soon</span>
+                <span class="reading-time">
+                  Reading time: {readTime || "5 min"}
+                </span>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      <!-- Content Grid -->
+      <div class="content-wrapper">
+        <div class="container">
+          <div class="content-grid">
+            <!-- Main Content -->
+            <div class="content-main">
+              <slot />
+            </div>
+
+            <!-- Sidebar -->
+            <aside class="content-sidebar">
+              <!-- TOC -->
+              <div
+                class="sidebar-section"
+                id="toc-section"
+                style="display: none;"
+              >
+                <h4 class="sidebar-title">
+                  <i class="fas fa-list"></i>
+                  Contents
+                </h4>
+                <div id="table-of-contents"></div>
+              </div>
+
+              <!-- Author Bio -->
+              {
+                authorData.name && (
+                  <div class="sidebar-section">
+                    <h4 class="sidebar-title">
+                      <i class="fas fa-user" />
+                      Author
+                    </h4>
+                    <AuthorBio author={authorData} />
+                  </div>
+                )
+              }
+
+              <!-- Tags -->
+              {
+                tags.length > 0 && (
+                  <div class="sidebar-section">
+                    <h4 class="sidebar-title">
+                      <i class="fas fa-tags" />
+                      Topics
+                    </h4>
+                    <div class="tag-list">
+                      {tags.map((tag) => (
+                        <a
+                          href={`/blog/tags/${tag.toLowerCase().replace(/\s+/g, "-")}`}
+                          class="tag-link"
+                        >
+                          #{tag}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )
+              }
+
+              <!-- Progress -->
+              <div class="sidebar-section">
+                <h4 class="sidebar-title">
+                  <i class="fas fa-book-reader"></i>
+                  Progress
+                </h4>
+                <div class="progress-indicator">
+                  <div class="progress-square">
+                    <div class="progress-fill"></div>
+                    <span class="progress-text">0%</span>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reaction Bar -->
+      <ReactionBar postSlug={articleId} postTitle={title} />
+
+      <!-- Comments -->
+      <div class="comments-wrapper">
+        <div class="container">
+          <TinkByteCommentSection
+            articleId={articleId}
+            postSlug={articleId}
+            postTitle={title}
+          />
+        </div>
+      </div>
+
+      <!-- Related Posts -->
+      <div class="related-section">
+        <div class="container">
+          <div class="section-header">
+            <h3 class="section-title">More from TinkByte</h3>
+            <p class="section-subtitle">Continue your learning journey</p>
+          </div>
+          <RelatedPosts currentSlug={articleId} />
+        </div>
+      </div>
+    </article>
+  </MDXProvider>
+</Layout>
+
+<style>
+  /* CSS Reset & Base */
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Container */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  /* Reading Progress */
+  .reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--color-bg-secondary);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .reading-progress.visible {
+    opacity: 1;
+  }
+
+  .reading-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2563eb, #0891b2);
+    width: 0%;
+    transition: width 0.1s ease;
+  }
+
+  /* Article Base */
+  .blog-article {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .article-header {
+    background: var(--color-bg-secondary);
+    border-bottom: 2px solid var(--color-border);
+    padding: 3rem 0;
+  }
+
+  .article-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .meta-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .category-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.75rem 1.5rem;
+    border: 2px solid;
+    background: var(--color-bg-primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .audio-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1.5rem;
+    background: #10b981;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .article-date {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+  }
+
+  /* Title Section */
+  .title-section {
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+
+  .article-title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--color-text-primary);
+    margin-bottom: 1.5rem;
+  }
+
+  .article-subtitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--color-text-secondary);
+    margin-bottom: 1.5rem;
+  }
+
+  .article-description {
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* Author Section */
+  .author-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 2rem;
+    border-top: 2px solid var(--color-border);
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .author-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border: 2px solid var(--color-border);
+  }
+
+  .author-name {
+    font-weight: 700;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+  }
+
+  .author-role {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    display: block;
+    font-weight: 500;
+  }
+
+  .reading-meta {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .read-time {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+  }
+
+  /* Image Section */
+  .image-section {
+    margin: 3rem 0;
+  }
+
+  .image-wrapper {
+    position: relative;
+    aspect-ratio: 2/1;
+    overflow: hidden;
+    border: 2px solid var(--color-border);
+  }
+
+  .article-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .image-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Audio Section */
+  .audio-section {
+    margin: 3rem 0;
+  }
+
+  .audio-container {
+    background: var(--color-bg-secondary);
+    border: 2px solid #0ea5e9;
+    padding: 2rem;
+  }
+
+  .audio-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .audio-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0c4a6e;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .audio-subtitle {
+    color: #0369a1;
+    font-size: 0.875rem;
+  }
+
+  .no-audio-section {
+    margin: 3rem 0;
+  }
+
+  .no-audio-placeholder {
+    background: var(--color-bg-secondary);
+    border: 2px dashed var(--color-border);
+    padding: 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text-muted);
+  }
+
+  .no-audio-placeholder i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .reading-time {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  /* Content Grid */
+  .content-wrapper {
+    padding: 4rem 0;
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  /* Main Content */
+  .content-main {
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: var(--color-text-primary);
+  }
+
+  .content-main :global(h1) {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin: 3rem 0 1.5rem;
+    line-height: 1.2;
+  }
+
+  .content-main :global(h2) {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 2.5rem 0 1.5rem;
+    line-height: 1.2;
+    padding-left: 1rem;
+    border-left: 4px solid var(--color-accent);
+  }
+
+  .content-main :global(h3) {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 2rem 0 1rem;
+    line-height: 1.3;
+  }
+
+  .content-main :global(p) {
+    margin-bottom: 1.5rem;
+    text-align: justify;
+  }
+
+  .content-main :global(a) {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .content-main :global(a:hover) {
+    border-bottom-color: var(--color-accent);
+    background: rgba(37, 99, 235, 0.1);
+    padding: 0 2px;
+  }
+
+  /* Sidebar */
+  .content-sidebar {
+    position: sticky;
+    top: 2rem;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-border);
+    padding: 2rem;
+    height: fit-content;
+  }
+
+  .sidebar-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .sidebar-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .sidebar-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Tags */
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .tag-link {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg-primary);
+    border: 2px solid var(--color-border);
+    text-decoration: none;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+  }
+
+  .tag-link:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: rgba(37, 99, 235, 0.1);
+  }
+
+  /* Progress Indicator */
+  .progress-indicator {
+    display: flex;
+    justify-content: center;
+  }
+
+  .progress-square {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border: 3px solid var(--color-border);
+    background: var(--color-bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .progress-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--color-accent);
+    transition: height 0.3s ease;
+    height: 0%;
+  }
+
+  .progress-text {
+    position: relative;
+    z-index: 1;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    mix-blend-mode: difference;
+  }
+
+  /* Comments */
+  .comments-wrapper {
+    background: var(--color-bg-secondary);
+    border-top: 2px solid var(--color-border);
+    padding: 4rem 0;
+  }
+
+  /* Related Section */
+  .related-section {
+    background: var(--color-bg-secondary);
+    border-top: 2px solid var(--color-border);
+    padding: 4rem 0;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .section-subtitle {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+  }
+
+  /* TOC Styles */
+  .toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .toc-list li {
+    margin-bottom: 0.5rem;
+  }
+
+  .toc-link {
+    display: block;
+    padding: 0.75rem;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .toc-link:hover,
+  .toc-link.active {
+    background: var(--color-bg-primary);
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .toc-h3 {
+    margin-left: 1rem;
+    font-size: 0.8rem;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 1024px) {
+    .content-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .content-sidebar {
+      position: static;
+      order: -1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 0 0.75rem;
+    }
+
+    .article-header {
+      padding: 2rem 0;
+    }
+
+    .article-meta {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .meta-left {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .title-section {
+      margin-bottom: 2rem;
+    }
+
+    .article-title {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+    }
+
+    .author-section {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1.5rem;
+    }
+
+    .author-info {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .reading-meta {
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .content-main {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .content-sidebar {
+      padding: 1.5rem;
+    }
+
+    .audio-container,
+    .no-audio-placeholder {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .container {
+      padding: 0 0.5rem;
+    }
+
+    .article-header {
+      padding: 1.5rem 0;
+    }
+
+    .category-tag,
+    .audio-badge,
+    .article-date,
+    .read-time {
+      padding: 0.5rem 1rem;
+      font-size: 0.6875rem;
+    }
+
+    .article-title {
+      font-size: clamp(1.5rem, 3.5vw, 2rem);
+    }
+
+    .article-subtitle {
+      font-size: 1.125rem;
+    }
+
+    .article-description {
+      font-size: 1rem;
+    }
+
+    .content-sidebar {
+      padding: 1rem;
+    }
+
+    .audio-container,
+    .no-audio-placeholder {
+      padding: 1rem;
+    }
+  }
+</style>
+
+<script define:vars={{ articleSlug: articleId }}>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Set global article ID
+    window.currentArticleId = articleSlug;
+
+    // Reading Progress
+    const progressBar = document.querySelector(".reading-progress-bar");
+    const progressContainer = document.querySelector(".reading-progress");
+    const progressFill = document.querySelector(".progress-fill");
+    const progressText = document.querySelector(".progress-text");
+
+    function updateProgress() {
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
+      const scrollHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+      const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+      const clampedProgress = Math.min(Math.max(progress, 0), 100);
+
+      // Top progress bar
+      if (progressBar && progressContainer) {
+        progressBar.style.width = `${clampedProgress}%`;
+        progressContainer.classList.toggle("visible", scrollTop > 50);
+      }
+
+      // Sidebar progress square
+      if (progressFill && progressText) {
+        progressFill.style.height = `${clampedProgress}%`;
+        progressText.textContent = Math.round(clampedProgress) + "%";
+      }
+    }
+
+    // Throttled scroll handler
+    let ticking = false;
+    function handleScroll() {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          updateProgress();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+
+    // Generate TOC
+    function generateTOC() {
+      const headings = document.querySelectorAll(
+        ".content-main h2, .content-main h3"
+      );
+      const tocSection = document.getElementById("toc-section");
+      const tocContainer = document.getElementById("table-of-contents");
+
+      if (headings.length >= 3 && tocSection && tocContainer) {
+        tocSection.style.display = "block";
+        const tocList = document.createElement("ul");
+        tocList.className = "toc-list";
+
+        headings.forEach((heading, i) => {
+          const id = `heading-${i}`;
+          heading.id = id;
+
+          const listItem = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = `#${id}`;
+          link.textContent =
+            heading.textContent?.slice(0, 50) +
+            (heading.textContent?.length > 50 ? "..." : "");
+          link.className = `toc-link ${heading.tagName === "H3" ? "toc-h3" : ""}`;
+
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            const target = document.getElementById(id);
+            if (target) {
+              target.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+
+            document
+              .querySelectorAll(".toc-link")
+              .forEach((l) => l.classList.remove("active"));
+            this.classList.add("active");
+          });
+
+          listItem.appendChild(link);
+          tocList.appendChild(listItem);
+        });
+
+        tocContainer.appendChild(tocList);
+      }
+    }
+
+    // Initialize
+    updateProgress();
+    setTimeout(generateTOC, 100);
+  });
+</script>
