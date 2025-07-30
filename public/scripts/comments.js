@@ -85,19 +85,11 @@ window.addEventListener('load', () => {
 });
 
 function showInitializationError() {
-  const errorDiv = document.createElement('div');
-  errorDiv.style.cssText = `
-    position: fixed; top: 20px; right: 20px; background: #ef4444; color: white;
-    padding: 12px 24px; border-radius: 8px; z-index: 10000; display: flex;
-    gap: 10px; align-items: center;
-  `;
-  errorDiv.innerHTML = `
-    Comment system failed to load. 
-    <button onclick="window.location.reload()" style="background: white; color: #ef4444; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
-      Retry
-    </button>
-  `;
-  document.body.appendChild(errorDiv);
+  // Just log to console instead of showing UI error
+  console.warn('⚠️ Comment system initialization had issues, but continuing...');
+  
+  // You could optionally show a less intrusive message
+  // console.log('💡 Comments may take a moment to load');
 }
 
 class TinkByteCommentSystem {
