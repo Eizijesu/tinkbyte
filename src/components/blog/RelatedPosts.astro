@@ -1,5 +1,5 @@
 ---
-// src/components/blog/RelatedPosts.astro - Fixed with proper author handling
+// src/components/blog/RelatedPosts.astro - FIXED with proper author handling
 import ArticleCard from "./ArticleCard.astro";
 import Button from "../ui/Button.astro";
 import { getCollection } from 'astro:content';
@@ -62,7 +62,7 @@ const relatedPosts = allPosts
   .sort((a, b) => b.relevanceScore - a.relevanceScore)
   .slice(0, maxPosts);
 
-// Format posts for ArticleCard component (matching your blog index format)
+// FIXED: Format posts for ArticleCard component with proper tag handling
 const formatPost = (post: any) => {
   let authorData: {
     name: string;
@@ -71,7 +71,7 @@ const formatPost = (post: any) => {
     role?: string;
   };
 
-  // Handle author data consistently with your blog index
+  // Handle author data consistently
   if (post.data.authorInfo && typeof post.data.authorInfo === "object") {
     authorData = {
       name: post.data.authorInfo.name || "TinkByte Team",
@@ -102,6 +102,14 @@ const formatPost = (post: any) => {
     };
   }
 
+  // FIXED: Ensure tags is always an array
+  const ensureTagsArray = (tags: any): string[] => {
+    if (Array.isArray(tags)) {
+      return tags.filter(tag => tag && typeof tag === 'string' && tag.trim());
+    }
+    return [];
+  };
+
   return {
     title: post.data.title,
     excerpt: post.data.excerpt,
@@ -113,7 +121,7 @@ const formatPost = (post: any) => {
     readTime: post.data.readTime || "5 min read",
     slug: post.slug,
     image: post.data.image || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop",
-    tags: post.data.tags || [],
+    tags: ensureTagsArray(post.data.tags), // FIXED: Always returns string[]
     category: post.data.category,
     author: authorData,
     audioUrl: post.data.audioUrl,
@@ -193,6 +201,16 @@ const formatPost = (post: any) => {
 )}
 
 <style>
+  /* CSS Custom Properties for Consistent Design */
+  :root {
+    --tinkbyte-radius: 0px;
+    --tinkbyte-radius-sm: 0px;
+    --tinkbyte-radius-md: 0px;
+    --tinkbyte-radius-lg: 0px;
+    --tinkbyte-radius-card: 0px;
+    --tinkbyte-radius-button: 0px;
+  }
+
   /* Related Posts Section */
   .related-posts-section {
     font-family: "Space Grotesk", sans-serif;
@@ -225,7 +243,7 @@ const formatPost = (post: any) => {
   .section-subtitle {
     font-size: 1rem;
     color: var(--color-text-secondary);
-    max-w: 2xl;
+    max-width: 2xl;
     margin: 0 auto;
     line-height: 1.6;
   }
@@ -312,6 +330,7 @@ const formatPost = (post: any) => {
   .empty-content {
     background: var(--color-bg-primary);
     border: 2px solid var(--color-border);
+    border-radius: var(--tinkbyte-radius-card);
     padding: 3rem 2rem;
     position: relative;
     overflow: hidden;
@@ -428,14 +447,14 @@ const formatPost = (post: any) => {
     // Analytics tracking for related posts
     const relatedLinks = document.querySelectorAll('.related-article-wrapper a[href^="/blog/"]');
     relatedLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      if (typeof window !== 'undefined' && 'gtag' in window) {
-        (window as any).gtag('event', 'related_post_click', {
-          event_category: 'engagement',
-          event_label: (link as HTMLAnchorElement).href,
-        });
-      }
-    });
+      link.addEventListener('click', () => {
+        if (typeof window !== 'undefined' && 'gtag' in window) {
+          (window as any).gtag('event', 'related_post_click', {
+            event_category: 'engagement',
+            event_label: (link as HTMLAnchorElement).href,
+          });
+        }
+      });
     });
   });
 </script>

@@ -1,5 +1,5 @@
 ---
-// src/components/auth/SignUpForm.astro
+// src/components/auth/SignUpForm.astro - COMPLETE CLEAN VERSION
 ---
 
 <div class="auth-form">
@@ -158,7 +158,7 @@
     </div>
   </form>
 
-  <!-- Messages -->
+  <!-- Toast Messages -->
   <div class="toast-message" id="toast-message" style="display: none;">
     <div class="toast-content">
       <div class="toast-icon" id="toast-icon"></div>
@@ -196,6 +196,7 @@
     justify-content: center;
     gap: 0.5rem;
     font-family: inherit;
+    border-radius: 0;
   }
 
   .auth-btn:hover {
@@ -239,9 +240,10 @@
     background: white;
     color: #374151;
     font-size: 0.875rem;
-    transition: border-color 0.2s ease;
+    transition: all 0.2s ease;
     font-family: inherit;
     box-sizing: border-box;
+    border-radius: 0;
   }
 
   .form-input:focus {
@@ -251,6 +253,11 @@
 
   .form-input::placeholder {
     color: #9ca3af;
+  }
+
+  .form-input.error {
+    border-color: #ef4444;
+    animation: shake 0.5s ease-in-out;
   }
 
   .otp-input {
@@ -304,6 +311,7 @@
     margin-top: 2px;
     transition: all 0.2s ease;
     position: relative;
+    border-radius: 0;
   }
 
   .checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
@@ -320,6 +328,11 @@
     color: white;
     font-size: 10px;
     font-weight: bold;
+  }
+
+  .checkbox-label.error .checkbox-custom {
+    border-color: #ef4444;
+    animation: shake 0.5s ease-in-out;
   }
 
   .checkbox-text {
@@ -348,6 +361,7 @@
     gap: 0.5rem;
     font-family: inherit;
     transition: all 0.2s ease;
+    border-radius: 0;
   }
 
   .back-btn:hover {
@@ -398,6 +412,11 @@
     opacity: 0.8;
   }
 
+  .option-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   .btn-spinner {
     display: none;
     align-items: center;
@@ -407,12 +426,14 @@
   .square-spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid white;
-    animation: spin 1s linear infinite;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-left: 2px solid white;
+    background: transparent;
+    animation: square-spin 1.2s linear infinite;
+    border-radius: 0;
   }
 
-  @keyframes spin {
+  @keyframes square-spin {
     0% {
       transform: rotate(0deg);
     }
@@ -421,29 +442,52 @@
     }
   }
 
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-5px);
+    }
+    75% {
+      transform: translateX(5px);
+    }
+  }
+
   .toast-message {
     position: fixed;
     top: 2rem;
     left: 50%;
     transform: translateX(-50%) translateY(-20px);
-    z-index: 9999;
+    z-index: 10000;
     opacity: 0;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     max-width: 400px;
     width: 90%;
+    pointer-events: none;
+  }
+
+  .toast-message.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .toast-content {
     backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     background: rgba(34, 197, 94, 0.1);
     border: 2px solid rgba(34, 197, 94, 0.3);
-    padding: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 0;
     display: flex;
     align-items: center;
     gap: 0.75rem;
     color: #16a34a;
     font-size: 0.875rem;
     font-weight: 500;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   }
 
   .toast-content.error {
@@ -452,116 +496,19 @@
     color: #dc2626;
   }
 
+  .toast-content.warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #d97706;
+  }
+
   .toast-icon {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
-  }
-
-  /* Dark mode support2 */
-  :global(.dark) .auth-btn {
-    background: rgb(17, 24, 39);
-    border-color: rgb(51, 65, 85);
-    color: rgb(248, 250, 252);
-  }
-
-  :global(.dark) .auth-btn:hover {
-    border-color: rgb(75, 85, 99);
-    background: rgb(30, 41, 59);
-  }
-
-  :global(.dark) .auth-btn.primary {
-    background: #b4bce1;
-    color: rgb(15, 23, 42);
-    border-color: #b4bce1;
-  }
-
-  :global(.dark) .auth-btn.primary:hover:not(:disabled) {
-    background: #9ca8d4;
-    border-color: #9ca8d4;
-  }
-
-  :global(.dark) .form-input {
-    background: rgb(17, 24, 39);
-    border-color: rgb(51, 65, 85);
-    color: rgb(248, 250, 252);
-  }
-
-  :global(.dark) .form-input:focus {
-    border-color: #b4bce1;
-  }
-
-  :global(.dark) .checkbox-custom {
-    background: rgb(17, 24, 39);
-    border-color: rgb(51, 65, 85);
-  }
-
-  :global(.dark)
-    .checkbox-label
-    input[type="checkbox"]:checked
-    + .checkbox-custom {
-    background: #b4bce1;
-    border-color: #b4bce1;
-  }
-
-  :global(.dark)
-    .checkbox-label
-    input[type="checkbox"]:checked
-    + .checkbox-custom::after {
-    color: rgb(15, 23, 42);
-  }
-
-  :global(.dark) .checkbox-text {
-    color: rgb(148, 163, 184);
-  }
-
-  :global(.dark) .terms-link {
-    color: #b4bce1;
-  }
-
-  :global(.dark) .back-btn {
-    border-color: rgb(51, 65, 85);
-    color: rgb(148, 163, 184);
-  }
-
-  :global(.dark) .back-btn:hover {
-    border-color: rgb(75, 85, 99);
-    background: rgb(30, 41, 59);
-  }
-
-  :global(.dark) .auth-links {
-    border-top-color: rgb(51, 65, 85);
-  }
-
-  :global(.dark) .auth-links p {
-    color: rgb(148, 163, 184);
-  }
-
-  :global(.dark) .auth-link {
-    color: #b4bce1;
-  }
-
-  :global(.dark) .error-content {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.3);
-  }
-
-  :global(.dark) .success-content {
-    background: rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.3);
-  }
-
-  :global(.dark) .error-message p {
-    color: #fca5a5;
-  }
-
-  :global(.dark) .success-message p {
-    color: #86efac;
-  }
-
-  :global(.dark) .square-spinner {
-    border-color: rgba(180, 188, 225, 0.3);
-    border-top-color: #b4bce1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Dark mode support */
@@ -597,6 +544,10 @@
     border-color: #b4bce1;
   }
 
+  :global(.dark) .form-input.error {
+    border-color: #ef4444;
+  }
+
   :global(.dark) .checkbox-custom {
     background: rgb(17, 24, 39);
     border-color: rgb(51, 65, 85);
@@ -617,127 +568,45 @@
     color: rgb(15, 23, 42);
   }
 
+  :global(.dark) .checkbox-label.error .checkbox-custom {
+    border-color: #ef4444;
+  }
+
+  :global(.dark) .checkbox-text {
+    color: rgb(148, 163, 184);
+  }
+
+  :global(.dark) .terms-link {
+    color: #b4bce1;
+  }
+
+  :global(.dark) .back-btn {
+    border-color: rgb(51, 65, 85);
+    color: rgb(148, 163, 184);
+  }
+
+  :global(.dark) .back-btn:hover {
+    border-color: rgb(75, 85, 99);
+    background: rgb(30, 41, 59);
+  }
+
+  :global(.dark) .auth-links {
+    border-top-color: rgb(51, 65, 85);
+  }
+
+  :global(.dark) .auth-links p {
+    color: rgb(148, 163, 184);
+  }
+
+  :global(.dark) .auth-link {
+    color: #b4bce1;
+  }
+
   :global(.dark) .square-spinner {
-    border-color: rgba(180, 188, 225, 0.3);
-    border-top-color: #b4bce1;
+    border-color: rgba(180, 188, 225, 0.1);
+    border-left-color: #b4bce1;
   }
 
-  @media (max-width: 480px) {
-    .otp-options {
-      flex-direction: column;
-      gap: 0.5rem;
-      text-align: center;
-    }
-  }
-
-  .square-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid white;
-    background: transparent;
-    animation: square-spin 1s linear infinite;
-  }
-
-  @keyframes square-spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    25% {
-      transform: rotate(90deg);
-    }
-    50% {
-      transform: rotate(180deg);
-    }
-    75% {
-      transform: rotate(270deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-  .toast-message {
-    position: fixed;
-    top: 2rem;
-    left: 50%;
-    transform: translateX(-50%) translateY(-20px);
-    z-index: 10000; /* Increased z-index */
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    max-width: 400px;
-    width: 90%;
-    pointer-events: none; /* Prevent interference with other elements */
-  }
-
-  .toast-message.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .toast-content {
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    background: rgba(34, 197, 94, 0.1);
-    border: 2px solid rgba(34, 197, 94, 0.3);
-    padding: 1rem 1.25rem;
-    border-radius: 0px;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: #16a34a;
-    font-size: 0.875rem;
-    font-weight: 500;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    position: relative;
-  }
-
-  .toast-content.error {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.3);
-    color: #dc2626;
-  }
-
-  .toast-content.warning {
-    background: rgba(245, 158, 11, 0.1);
-    border-color: rgba(245, 158, 11, 0.3);
-    color: #d97706;
-  }
-
-  .toast-icon {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Enhanced checkbox validation styles */
-  .checkbox-label.error .checkbox-custom {
-    border-color: #ef4444;
-    animation: shake 0.5s ease-in-out;
-  }
-
-  .form-input.error {
-    border-color: #ef4444;
-    animation: shake 0.5s ease-in-out;
-  }
-
-  @keyframes shake {
-    0%,
-    100% {
-      transform: translateX(0);
-    }
-    25% {
-      transform: translateX(-5px);
-    }
-    75% {
-      transform: translateX(5px);
-    }
-  }
-
-  /* Dark mode toast enhancements */
   :global(.dark) .toast-content {
     background: rgba(34, 197, 94, 0.15);
     border-color: rgba(34, 197, 94, 0.4);
@@ -757,16 +626,14 @@
     color: #f59e0b;
   }
 
-  :global(.dark) .checkbox-label.error .checkbox-custom {
-    border-color: #ef4444;
-  }
-
-  :global(.dark) .form-input.error {
-    border-color: #ef4444;
-  }
-
-  /* Mobile responsive toast */
+  /* Mobile responsive */
   @media (max-width: 480px) {
+    .otp-options {
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: center;
+    }
+
     .toast-message {
       top: 1rem;
       width: 95%;
@@ -800,7 +667,6 @@
     private toastIcon: HTMLElement | null = null;
     private currentEmail: string = "";
     private currentDisplayName: string = "";
-    private resendTimer: number | null = null;
     private activeToastTimeout: number | null = null;
 
     constructor() {
@@ -813,12 +679,11 @@
       try {
         console.log("📝 SignUpForm: Initializing...");
 
-        // Initialize auth manager
         await authManager.initialize();
 
         this.setupDOM();
         this.setupEventListeners();
-        this.setupFormValidation(); // Add this
+        this.setupFormValidation();
 
         this.initialized = true;
         console.log("📝 SignUpForm: Initialized successfully");
@@ -829,7 +694,7 @@
     }
 
     private setupDOM() {
-      this.authOptions = document.getElementById("auth-options") as HTMLElement;
+      this.authOptions = document.getElementById("auth-options");
       this.emailForm = document.getElementById("email-form") as HTMLFormElement;
       this.otpForm = document.getElementById("otp-form") as HTMLFormElement;
       this.emailSignupBtn = document.getElementById(
@@ -851,14 +716,10 @@
       this.resendBtn = document.getElementById(
         "resend-code"
       ) as HTMLButtonElement;
-      this.emailDisplay = document.getElementById(
-        "email-display"
-      ) as HTMLElement;
-      this.toastMessage = document.getElementById(
-        "toast-message"
-      ) as HTMLElement;
-      this.toastText = document.getElementById("toast-text") as HTMLElement;
-      this.toastIcon = document.getElementById("toast-icon") as HTMLElement;
+      this.emailDisplay = document.getElementById("email-display");
+      this.toastMessage = document.getElementById("toast-message");
+      this.toastText = document.getElementById("toast-text");
+      this.toastIcon = document.getElementById("toast-icon");
     }
 
     private setupEventListeners() {
@@ -870,33 +731,27 @@
         this.showEmailForm()
       );
 
-      // Google signup
       this.googleBtn?.addEventListener("click", async () => {
         await this.handleGoogleSignUp();
       });
 
-      // Email form submission
       this.emailForm?.addEventListener("submit", async (e) => {
         e.preventDefault();
         await this.handleEmailSignUp();
       });
 
-      // OTP form submission
       this.otpForm?.addEventListener("submit", async (e) => {
         e.preventDefault();
         await this.handleOTPVerification();
       });
 
-      // Resend code
       this.resendBtn?.addEventListener("click", async () => {
         await this.handleResendCode();
       });
 
-      // Real-time validation
       this.setupRealTimeValidation();
     }
 
-    // NEW: Setup form validation with button state management
     private setupFormValidation() {
       const termsCheckbox = document.getElementById(
         "terms-checkbox"
@@ -906,7 +761,6 @@
       ) as HTMLInputElement;
       const emailInput = document.getElementById("email") as HTMLInputElement;
 
-      // Function to check if form is valid
       const checkFormValidity = () => {
         const displayName = displayNameInput?.value?.trim() || "";
         const email = emailInput?.value?.trim() || "";
@@ -915,19 +769,16 @@
         const isValid =
           displayName.length >= 2 && this.isValidEmail(email) && termsAccepted;
 
-        // Enable/disable submit button
         if (this.signupBtn) {
           this.signupBtn.disabled = !isValid;
           this.signupBtn.style.opacity = isValid ? "1" : "0.6";
         }
       };
 
-      // Add listeners to all form inputs
       displayNameInput?.addEventListener("input", checkFormValidity);
       emailInput?.addEventListener("input", checkFormValidity);
       termsCheckbox?.addEventListener("change", checkFormValidity);
 
-      // Initial check
       checkFormValidity();
     }
 
@@ -939,14 +790,12 @@
         ".checkbox-label"
       ) as HTMLElement;
 
-      // Clear error state when checkbox is checked
       termsCheckbox?.addEventListener("change", () => {
         if (termsCheckbox.checked) {
           checkboxLabel?.classList.remove("error");
         }
       });
 
-      // Clear error state when form inputs are focused
       const formInputs = this.emailForm?.querySelectorAll(".form-input");
       formInputs?.forEach((input) => {
         input.addEventListener("focus", () => {
@@ -979,7 +828,6 @@
     private async handleEmailSignUp() {
       if (!this.emailForm || !this.signupBtn) return;
 
-      // Clear previous error states
       this.clearValidationErrors();
 
       const formData = new FormData(this.emailForm);
@@ -990,7 +838,6 @@
       ) as HTMLInputElement;
       const termsAccepted = termsCheckbox?.checked;
 
-      // Enhanced validation with immediate feedback
       let hasErrors = false;
       let firstErrorElement: HTMLElement | null = null;
 
@@ -1021,7 +868,6 @@
         ) as HTMLElement;
         checkboxLabel?.classList.add("error");
         if (!firstErrorElement) firstErrorElement = checkboxLabel;
-
         this.showToast(
           "Please accept the Terms of Service and Privacy Policy to continue",
           "warning"
@@ -1030,14 +876,11 @@
       }
 
       if (hasErrors) {
-        // Focus the first error element
         if (firstErrorElement) {
           firstErrorElement.scrollIntoView({
             behavior: "smooth",
             block: "center",
           });
-
-          // If it's an input, focus it
           if (firstErrorElement.tagName === "INPUT") {
             (firstErrorElement as HTMLInputElement).focus();
           }
@@ -1050,7 +893,6 @@
       try {
         console.log("📝 SignUpForm: Email signup for:", email);
 
-        // Store for later use
         this.currentDisplayName = displayName.trim();
 
         const result = await authManager.signUpWithEmail(
@@ -1059,20 +901,16 @@
         );
 
         if (!result.success) {
-          // Handle specific error cases
           if (result.error?.includes("already exists")) {
             this.showToast(
               "An account with this email already exists. Try signing in instead.",
               "warning"
             );
-
-            // Optionally redirect to signin after a delay
             setTimeout(() => {
               window.location.href = `/auth/signin?email=${encodeURIComponent(email)}`;
             }, 3000);
             return;
           }
-
           throw new Error(result.error);
         }
 
@@ -1184,14 +1022,12 @@
       }
     }
 
-    // Helper methods
     private isValidEmail(email: string): boolean {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(email);
     }
 
     private clearValidationErrors() {
-      // Clear error classes from all inputs
       const errorElements = document.querySelectorAll(".error");
       errorElements.forEach((element) => {
         element.classList.remove("error");
@@ -1203,7 +1039,6 @@
       if (this.emailForm) this.emailForm.style.display = "flex";
       if (this.otpForm) this.otpForm.style.display = "none";
 
-      // Focus first input
       const firstInput = this.emailForm?.querySelector(
         "input"
       ) as HTMLInputElement;
@@ -1217,11 +1052,10 @@
       if (this.emailForm) this.emailForm.style.display = "none";
       if (this.otpForm) this.otpForm.style.display = "flex";
 
-      // Focus OTP input
       const otpInput = document.getElementById("otp-code") as HTMLInputElement;
       if (otpInput) {
         otpInput.focus();
-        otpInput.value = ""; // Clear any previous value
+        otpInput.value = "";
       }
     }
 
@@ -1274,15 +1108,12 @@
     ) {
       if (!this.toastText || !this.toastMessage || !this.toastIcon) return;
 
-      // Clear any existing timeout
       if (this.activeToastTimeout) {
         clearTimeout(this.activeToastTimeout);
       }
 
-      // Set content
       this.toastText.textContent = message;
 
-      // Set icon based on type
       const icons = {
         success:
           '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>',
@@ -1294,7 +1125,6 @@
 
       this.toastIcon.innerHTML = icons[type];
 
-      // Set toast content class
       const toastContent = this.toastMessage.querySelector(
         ".toast-content"
       ) as HTMLElement;
@@ -1302,11 +1132,9 @@
         toastContent.className = `toast-content ${type}`;
       }
 
-      // Show toast
       this.toastMessage.style.display = "block";
       this.toastMessage.classList.add("show");
 
-      // Auto-hide after delay
       const hideDelay =
         type === "error" ? 6000 : type === "warning" ? 5000 : 4000;
 
@@ -1327,7 +1155,6 @@
     }
   }
 
-  // Initialize when DOM is ready
   document.addEventListener("DOMContentLoaded", () => {
     new SignUpFormManager();
   });

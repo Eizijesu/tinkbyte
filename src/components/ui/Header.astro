@@ -360,6 +360,29 @@ const featuredTopics = allTopics.slice(0, 6);
 </header>
 
 <style>
+  /* CSS Custom Properties for Consistent Design */
+  :root {
+    --tinkbyte-radius: 0px;
+    --tinkbyte-radius-sm: 0px;
+    --tinkbyte-radius-md: 0px;
+    --tinkbyte-radius-lg: 0px;
+    --tinkbyte-radius-card: 0px;
+    --tinkbyte-radius-button: 0px;
+
+    /* Dropdown shared properties */
+    --dropdown-bg: white;
+    --dropdown-border: #243788;
+    --dropdown-shadow: 0 20px 40px rgba(36, 55, 136, 0.15);
+    --dropdown-padding: 0;
+    --dropdown-z-index: 100;
+  }
+
+  :global(.dark) {
+    --dropdown-bg: #0f172a;
+    --dropdown-border: #475569;
+    --dropdown-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  }
+
   /* Base Header Styles */
   .tinkbyte-header {
     position: sticky;
@@ -422,7 +445,7 @@ const featuredTopics = allTopics.slice(0, 6);
     gap: 0.5rem;
   }
 
-  /* FIXED: Proper responsive visibility */
+  /* Perfect responsive visibility */
   @media (max-width: 768px) {
     .desktop-navigation {
       display: none !important;
@@ -484,7 +507,6 @@ const featuredTopics = allTopics.slice(0, 6);
     transform: translateY(-1px);
   }
 
-  /* FIXED: Only highlight navigation based on actual current path */
   .nav-link.active::after {
     width: 100%;
   }
@@ -509,7 +531,22 @@ const featuredTopics = allTopics.slice(0, 6);
     color: #b4bce1;
   }
 
-  /* Dropdown Styles - Desktop Only */
+  /* CONSOLIDATED DROPDOWN SYSTEM */
+
+  /* Base dropdown styles - shared by all dropdowns */
+  .dropdown-base {
+    position: absolute;
+    background: var(--dropdown-bg);
+    border: 2px solid var(--dropdown-border);
+    border-radius: var(--tinkbyte-radius-card);
+    box-shadow: var(--dropdown-shadow);
+    padding: var(--dropdown-padding);
+    display: none;
+    transition: all 0.3s ease;
+    z-index: var(--dropdown-z-index);
+  }
+
+  /* Topics Dropdown - Desktop Only */
   .nav-dropdown {
     position: relative;
   }
@@ -530,25 +567,21 @@ const featuredTopics = allTopics.slice(0, 6);
   }
 
   .dropdown-menu-compact {
+    /* Extends dropdown-base */
     position: absolute;
     top: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: white;
-    border: 2px solid #243788;
-    box-shadow: 0 20px 40px rgba(36, 55, 136, 0.15);
-    padding: 0;
+    background: var(--dropdown-bg);
+    border: 2px solid var(--dropdown-border);
+    border-radius: var(--tinkbyte-radius-card);
+    box-shadow: var(--dropdown-shadow);
+    padding: var(--dropdown-padding);
     width: 480px;
     max-width: 90vw;
     display: none;
     transition: all 0.3s ease;
-    z-index: 100;
-  }
-
-  :global(.dark) .dropdown-menu-compact {
-    background: #0f172a;
-    border-color: #475569;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    z-index: var(--dropdown-z-index);
   }
 
   .nav-dropdown:hover .dropdown-menu-compact {
@@ -602,6 +635,7 @@ const featuredTopics = allTopics.slice(0, 6);
     display: block;
     padding: 0.875rem;
     border: 2px solid transparent;
+    border-radius: var(--tinkbyte-radius-button);
     text-decoration: none;
     transition: all 0.3s ease;
     background: #f8fafc;
@@ -667,6 +701,7 @@ const featuredTopics = allTopics.slice(0, 6);
     text-decoration: none;
     padding: 0.75rem 1rem;
     border: 2px solid transparent;
+    border-radius: var(--tinkbyte-radius-button);
     transition: all 0.3s ease;
     flex: 1;
     font-size: 0.8125rem;
@@ -701,6 +736,7 @@ const featuredTopics = allTopics.slice(0, 6);
   .search-toggle {
     background: none;
     border: 2px solid transparent;
+    border-radius: var(--tinkbyte-radius-button);
     color: #64748b;
     cursor: pointer;
     padding: 0.5rem;
@@ -735,6 +771,10 @@ const featuredTopics = allTopics.slice(0, 6);
     width: 40px;
     height: 40px;
     transition: all 0.3s ease;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
   }
 
   .user-avatar-image {
@@ -742,19 +782,29 @@ const featuredTopics = allTopics.slice(0, 6);
     height: 100%;
     object-fit: cover;
     border: 2px solid #e2e8f0;
+    border-radius: var(--tinkbyte-radius-card);
     transition: all 0.3s ease;
+  }
+
+  .avatar-wrapper:hover {
+    transform: translateY(-1px);
+  }
+
+  .avatar-wrapper:hover .user-avatar-image {
+    border-color: #243788;
+    box-shadow: 0 4px 12px rgba(36, 55, 136, 0.25);
   }
 
   :global(.dark) .user-avatar-image {
     border-color: #334155;
   }
 
-  :global(.dark) .user-avatar-container:hover .user-avatar-image {
+  :global(.dark) .avatar-wrapper:hover .user-avatar-image {
     border-color: #b4bce1;
     box-shadow: 0 4px 12px rgba(180, 188, 225, 0.25);
   }
 
-  /* FIXED: Mobile Avatar Button */
+  /* Mobile Avatar Button */
   .mobile-avatar-button {
     background: none;
     border: none;
@@ -771,63 +821,6 @@ const featuredTopics = allTopics.slice(0, 6);
 
   .mobile-avatar-button:hover {
     transform: translateY(-1px);
-  }
-
-  .mobile-avatar-button[aria-expanded="true"] .user-avatar-image {
-    border-color: #243788;
-    box-shadow: 0 4px 12px rgba(36, 55, 136, 0.25);
-  }
-
-  :global(.dark)
-    .mobile-avatar-button[aria-expanded="true"]
-    .user-avatar-image {
-    border-color: #b4bce1;
-    box-shadow: 0 4px 12px rgba(180, 188, 225, 0.25);
-  }
-  /* FIXED: Mobile Avatar Dropdown - ensure it shows properly */
-  .mobile-avatar-dropdown-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    background: white;
-    border: 2px solid #243788;
-    box-shadow: 0 20px 40px rgba(36, 55, 136, 0.15);
-    padding: 0;
-    width: 280px;
-    max-width: calc(100vw - 2rem);
-
-    /* FIXED: Start hidden */
-    display: none !important;
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-
-    z-index: 1000;
-    max-height: 400px;
-    overflow-y: auto;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  :global(.dark) .mobile-avatar-dropdown-menu {
-    background: #0f172a;
-    border-color: #475569;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-  }
-
-  /* FIXED: Show state - when .show class is added */
-  .mobile-avatar-dropdown-menu.show {
-    display: block !important;
-    opacity: 1 !important;
-    transform: translateY(0) scale(1) !important;
-  }
-
-  /* FIXED: Desktop dropdown - remove hover behavior, use click only */
-  .user-avatar-container .avatar-dropdown-menu {
-    display: none !important; /* Always start hidden */
-  }
-
-  .user-avatar-container.dropdown-open .avatar-dropdown-menu {
-    display: block !important;
-    animation: fadeInUp 0.3s ease;
   }
 
   /* Notification Dot - Unified for Desktop & Mobile */
@@ -893,67 +886,9 @@ const featuredTopics = allTopics.slice(0, 6);
     height: 12px;
   }
 
-  /* Desktop Avatar Dropdown Menu */
-  .avatar-dropdown-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    background: white;
-    border: 2px solid #243788;
-    box-shadow: 0 20px 40px rgba(36, 55, 136, 0.15);
-    padding: 0;
-    width: 320px;
-    max-width: 90vw;
-    display: none;
-    transition: all 0.3s ease;
-    z-index: 100;
-    max-height: 500px;
-    overflow-y: auto;
-  }
+  /* CONSOLIDATED AVATAR DROPDOWN STYLES */
 
-  :global(.dark) .avatar-dropdown-menu {
-    background: #0f172a;
-    border-color: #475569;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-  }
-
-  /* FIXED: Mobile Avatar Dropdown */
-  .mobile-avatar-dropdown-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    background: white;
-    border: 2px solid #243788;
-    box-shadow: 0 20px 40px rgba(36, 55, 136, 0.15);
-    padding: 0;
-    width: 280px;
-    max-width: calc(100vw - 2rem);
-    display: none;
-    z-index: 1000;
-    max-height: 400px;
-    overflow-y: auto;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  :global(.dark) .mobile-avatar-dropdown-menu {
-    background: #0f172a;
-    border-color: #475569;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-  }
-
-  /* FIXED: Show state - when .show class is added */
-  .mobile-avatar-dropdown-menu.show {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    transform: translateY(0) scale(1) !important;
-  }
-
-  /* FIXED: Ensure mobile avatar container has proper positioning */
-  .mobile-avatar {
-    position: relative;
-  }
-
+  /* Shared avatar dropdown content styles */
   .avatar-menu-content,
   .mobile-avatar-menu-content {
     padding: 1.5rem;
@@ -1016,6 +951,67 @@ const featuredTopics = allTopics.slice(0, 6);
     color: #e2e8f0;
   }
 
+  /* Desktop Avatar Dropdown - uses shared dropdown system */
+  .avatar-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--dropdown-bg);
+    border: 2px solid var(--dropdown-border);
+    border-radius: var(--tinkbyte-radius-card);
+    box-shadow: var(--dropdown-shadow);
+    padding: var(--dropdown-padding);
+    width: 320px;
+    max-width: 90vw;
+    display: none;
+    transition: all 0.3s ease;
+    z-index: var(--dropdown-z-index);
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  /* Mobile Avatar Dropdown - uses shared dropdown system */
+  .mobile-avatar-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--dropdown-bg);
+    border: 2px solid var(--dropdown-border);
+    border-radius: var(--tinkbyte-radius-card);
+    box-shadow: var(--dropdown-shadow);
+    padding: var(--dropdown-padding);
+    width: 280px;
+    max-width: calc(100vw - 2rem);
+    display: none;
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+    z-index: 1000;
+    max-height: 400px;
+    overflow-y: auto;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Show state - when .show class is added */
+  .mobile-avatar-dropdown-menu.show {
+    display: block !important;
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+  }
+
+  /* Desktop dropdown - click behavior */
+  .user-avatar-container .avatar-dropdown-menu {
+    display: none !important;
+  }
+
+  .user-avatar-container.dropdown-open .avatar-dropdown-menu {
+    display: block !important;
+    animation: fadeInUp 0.3s ease;
+  }
+
+  .mobile-avatar {
+    position: relative;
+  }
+
   /* Notifications Section in Avatar Dropdown */
   .notifications-section,
   .mobile-notifications-section {
@@ -1046,6 +1042,7 @@ const featuredTopics = allTopics.slice(0, 6);
   .mark-all-read-btn {
     background: none;
     border: 1px solid #64748b;
+    border-radius: var(--tinkbyte-radius-button);
     color: #64748b;
     font-size: 0.6875rem;
     cursor: pointer;
@@ -1074,12 +1071,13 @@ const featuredTopics = allTopics.slice(0, 6);
     border-color: #b4bce1;
   }
 
-  /* FIXED: Loading Animation Styles */
+  /* Loading Animation Styles */
   .notifications-list {
     max-height: 200px;
     overflow-y: auto;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
+    border-radius: var(--tinkbyte-radius-sm);
     padding: 0.5rem;
     position: relative;
   }
@@ -1104,7 +1102,7 @@ const featuredTopics = allTopics.slice(0, 6);
     height: 24px;
     border: 2px solid #e2e8f0;
     border-top: 2px solid #243788;
-    border-radius: 0;
+    border-radius: var(--tinkbyte-radius-sm);
     animation: spin 1s linear infinite;
     margin: 0 auto;
   }
@@ -1156,6 +1154,7 @@ const featuredTopics = allTopics.slice(0, 6);
     color: #ef4444;
     background: #fef2f2;
     border: 2px solid #ef4444;
+    border-radius: var(--tinkbyte-radius-button);
     font-size: 0.875rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -1197,6 +1196,7 @@ const featuredTopics = allTopics.slice(0, 6);
     text-decoration: none;
     padding: 0.75rem 1.25rem;
     border: 2px solid #243788;
+    border-radius: var(--tinkbyte-radius-button);
     font-size: 0.875rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -1228,6 +1228,7 @@ const featuredTopics = allTopics.slice(0, 6);
     text-decoration: none;
     padding: 0.75rem 1.5rem;
     border: 2px solid #243788;
+    border-radius: var(--tinkbyte-radius-button);
     font-size: 0.875rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -1262,6 +1263,7 @@ const featuredTopics = allTopics.slice(0, 6);
     text-decoration: none;
     padding: 0.625rem 1rem;
     border: 2px solid #243788;
+    border-radius: var(--tinkbyte-radius-button);
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -1294,6 +1296,7 @@ const featuredTopics = allTopics.slice(0, 6);
   .mobile-menu-button {
     background: none;
     border: 2px solid transparent;
+    border-radius: var(--tinkbyte-radius-button);
     color: #64748b;
     cursor: pointer;
     padding: 0.5rem;
@@ -1361,6 +1364,7 @@ const featuredTopics = allTopics.slice(0, 6);
     text-transform: uppercase;
     letter-spacing: 0.025em;
     border: 2px solid transparent;
+    border-radius: var(--tinkbyte-radius-button);
     transition: all 0.3s ease;
     text-align: center;
   }
@@ -1424,6 +1428,7 @@ const featuredTopics = allTopics.slice(0, 6);
     text-transform: uppercase;
     letter-spacing: 0.025em;
     border: 2px solid transparent;
+    border-radius: var(--tinkbyte-radius-button);
     transition: all 0.3s ease;
     background: #f8fafc;
     text-align: center;
@@ -1467,6 +1472,7 @@ const featuredTopics = allTopics.slice(0, 6);
     text-transform: uppercase;
     letter-spacing: 0.025em;
     border: 2px solid;
+    border-radius: var(--tinkbyte-radius-button);
     transition: all 0.3s ease;
     text-align: center;
     font-size: 0.8125rem;
@@ -1513,6 +1519,7 @@ const featuredTopics = allTopics.slice(0, 6);
     text-decoration: none;
     padding: 1rem 1.5rem;
     border: 2px solid #243788;
+    border-radius: var(--tinkbyte-radius-button);
     font-size: 0.875rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -1539,6 +1546,121 @@ const featuredTopics = allTopics.slice(0, 6);
 
   .hidden {
     display: none;
+  }
+
+  /* Notification Item Styles */
+  .notification-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  :global(.dark) .notification-item {
+    border-bottom-color: #334155;
+  }
+
+  .notification-item:last-child {
+    border-bottom: none;
+  }
+
+  .notification-item:hover {
+    background-color: #f1f5f9;
+  }
+
+  :global(.dark) .notification-item:hover {
+    background-color: #1e293b;
+  }
+
+  .notification-item.unread {
+    background-color: #eff6ff;
+    position: relative;
+  }
+
+  :global(.dark) .notification-item.unread {
+    background-color: #1e293b;
+  }
+
+  .notification-item.unread::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background-color: #3b82f6;
+  }
+
+  .notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .notification-avatar {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--tinkbyte-radius-card);
+  }
+
+  .notification-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .notification-message {
+    font-size: 0.75rem;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
+  }
+
+  :global(.dark) .notification-message {
+    color: #f1f5f9;
+  }
+
+  .notification-time {
+    font-size: 0.6875rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  :global(.dark) .notification-time {
+    color: #94a3b8;
+  }
+
+  /* Empty State Styles */
+  .notification-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #64748b;
+  }
+
+  :global(.dark) .notification-empty {
+    color: #94a3b8;
+  }
+
+  .notification-empty p {
+    font-size: 0.75rem;
+    margin: 0;
+  }
+
+  /* Error State Styles */
+  .notification-error {
+    padding: 1rem;
+    text-align: center;
+    color: #ef4444;
+  }
+
+  :global(.dark) .notification-error {
+    color: #f87171;
+  }
+
+  .notification-error p {
+    font-size: 0.75rem;
+    margin: 0;
   }
 
   /* Mobile Responsive Fine-tuning */
@@ -1615,133 +1737,6 @@ const featuredTopics = allTopics.slice(0, 6);
   :global(.dark) .mobile-avatar-button:focus {
     outline-color: #b4bce1;
   }
-
-  /* Keep your existing click-based rules */
-  .user-avatar-container .avatar-dropdown-menu {
-    display: none !important;
-  }
-
-  .user-avatar-container.dropdown-open .avatar-dropdown-menu {
-    display: block !important;
-    animation: fadeInUp 0.3s ease;
-  }
-
-  /* Only show on explicit open */
-  .user-avatar-container.dropdown-open:hover .avatar-dropdown-menu {
-    display: block !important; /* Keep showing when hovering if already open */
-  }
-
-  /* ADD notification item styles */
-  .notification-item {
-    padding: 0.75rem;
-    border-bottom: 1px solid #e2e8f0;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-
-  :global(.dark) .notification-item {
-    border-bottom-color: #334155;
-  }
-
-  .notification-item:last-child {
-    border-bottom: none;
-  }
-
-  .notification-item:hover {
-    background-color: #f1f5f9;
-  }
-
-  :global(.dark) .notification-item:hover {
-    background-color: #1e293b;
-  }
-
-  .notification-item.unread {
-    background-color: #eff6ff;
-    position: relative;
-  }
-
-  :global(.dark) .notification-item.unread {
-    background-color: #1e293b;
-  }
-
-  .notification-item.unread::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background-color: #3b82f6;
-  }
-
-  .notification-content {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .notification-avatar {
-    flex-shrink: 0;
-  }
-
-  .notification-text {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .notification-message {
-    font-size: 0.75rem;
-    color: #1e293b;
-    margin-bottom: 0.25rem;
-    line-height: 1.4;
-  }
-
-  :global(.dark) .notification-message {
-    color: #f1f5f9;
-  }
-
-  .notification-time {
-    font-size: 0.6875rem;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-  }
-
-  :global(.dark) .notification-time {
-    color: #94a3b8;
-  }
-
-  /* ADD empty state styles */
-  .notification-empty {
-    padding: 2rem 1rem;
-    text-align: center;
-    color: #64748b;
-  }
-
-  :global(.dark) .notification-empty {
-    color: #94a3b8;
-  }
-
-  .notification-empty p {
-    font-size: 0.75rem;
-    margin: 0;
-  }
-
-  /* ADD error state styles */
-  .notification-error {
-    padding: 1rem;
-    text-align: center;
-    color: #ef4444;
-  }
-
-  :global(.dark) .notification-error {
-    color: #f87171;
-  }
-
-  .notification-error p {
-    font-size: 0.75rem;
-    margin: 0;
-  }
 </style>
 
 <script>
@@ -1750,7 +1745,6 @@ const featuredTopics = allTopics.slice(0, 6);
   import { getTimeAgo, getAvatarUrl } from "../../lib/utils/headerHelpers.js";
 
   export interface HeaderState {
-    // Add 'export' here
     user: any;
     profile: any;
     notifications: any[];
@@ -1771,11 +1765,29 @@ const featuredTopics = allTopics.slice(0, 6);
     }
 
     async initialize() {
-      // Initialize auth
-      await authManager.initialize();
+      // **FIX 1: Load cached auth state IMMEDIATELY**
+      const cachedAuth = authManager.getAuthStateSync();
+      if (cachedAuth.user) {
+        console.log("⚡ Header: Loading from cache immediately");
+        headerStore.setUser(cachedAuth.user, cachedAuth.profile);
+      }
+
+      // **FIX 2: Initialize auth in background (non-blocking)**
+      authManager
+        .initialize()
+        .then(() => {
+          console.log("✅ Header: Auth fully initialized");
+        })
+        .catch((error) => {
+          console.error("❌ Header: Auth initialization failed:", error);
+        });
 
       // Subscribe to auth changes
       const authUnsub = authManager.onAuthChange((user, profile) => {
+        console.log("🔄 Header: Auth state changed", {
+          user: !!user,
+          profile: !!profile,
+        });
         headerStore.setUser(user, profile);
       });
       this.unsubscribes.push(authUnsub);
@@ -1865,6 +1877,13 @@ const featuredTopics = allTopics.slice(0, 6);
     }
 
     private updateUI(state: HeaderState) {
+      // **FIX 3: Add loading state handling**
+      if (state.loading && !state.user) {
+        // Show neutral state during loading
+        this.showLoadingUI();
+        return;
+      }
+
       // Update auth UI
       if (state.user) {
         this.showUserUI(state);
@@ -1886,6 +1905,23 @@ const featuredTopics = allTopics.slice(0, 6);
       ) {
         this.renderNotifications(state);
       }
+    }
+
+    // **FIX 4: Add loading state UI**
+    private showLoadingUI() {
+      // Hide both signin and user UI during loading
+      this.header
+        .querySelector("[data-signin-button]")
+        ?.setAttribute("style", "display: none");
+      this.header
+        .querySelector("[data-desktop-avatar]")
+        ?.setAttribute("style", "display: none");
+      this.header
+        .querySelector("[data-mobile-avatar]")
+        ?.setAttribute("style", "display: none");
+      this.header
+        .querySelector("[data-mobile-signin-section]")
+        ?.setAttribute("style", "display: none");
     }
 
     private showUserUI(state: HeaderState) {
@@ -2063,8 +2099,13 @@ const featuredTopics = allTopics.slice(0, 6);
     }
   }
 
-  // Initialize when DOM is ready
-  document.addEventListener("DOMContentLoaded", () => {
+  // **FIX 5: Initialize immediately, don't wait for DOMContentLoaded**
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      new HeaderController();
+    });
+  } else {
+    // DOM already loaded
     new HeaderController();
-  });
+  }
 </script>

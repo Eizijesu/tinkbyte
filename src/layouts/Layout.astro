@@ -532,50 +532,22 @@ const structuredData = getStructuredData();
     />
 
     <!-- Clean Supabase Initialization -->
-    <script
-      is:inline
-      define:vars={{
-        commentsEnabled: SITE.comments.enabled,
-        isDev: import.meta.env.DEV,
-      }}
-    >
-      if (commentsEnabled) {
-        document.addEventListener("DOMContentLoaded", async function () {
-          try {
-            if (isDev) console.log("⏳ Loading Supabase...");
+    <script>
+      import { supabase, AuthState, TinkByteAPI } from "../lib/supabase.js";
 
-            // Import only what we need
-            const { supabase, AuthState, TinkByteAPI } = await import(
-              "/src/lib/supabase.js"
-            );
+      // Expose to window immediately
+      window.supabase = supabase;
+      window.TinkByteAPI = TinkByteAPI;
+      window.AuthState = AuthState;
 
-            // Expose to window once
-            window.supabase = supabase;
-            window.TinkByteAPI = TinkByteAPI;
-            window.AuthState = AuthState;
-
-            if (isDev) console.log("✅ Supabase loaded and exposed");
-
-            // Dispatch ready event for comments
-            window.dispatchEvent(
-              new CustomEvent("authReady", {
-                detail: { supabase, TinkByteAPI, AuthState },
-              })
-            );
-
-            if (isDev) console.log("✅ Auth ready event dispatched");
-          } catch (error) {
-            console.error("❌ Failed to load Supabase:", error);
-
-            // Still dispatch event so comments don't hang
-            window.dispatchEvent(
-              new CustomEvent("authReady", {
-                detail: { supabase: null, TinkByteAPI: null, AuthState: null },
-              })
-            );
-          }
-        });
-      }
+      // Dispatch ready event immediately
+      document.addEventListener("DOMContentLoaded", function () {
+        window.dispatchEvent(
+          new CustomEvent("authReady", {
+            detail: { supabase, TinkByteAPI, AuthState },
+          })
+        );
+      });
     </script>
 
     <!-- Enhanced Theme and Functionality Script -->

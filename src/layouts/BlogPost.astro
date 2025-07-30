@@ -320,8 +320,6 @@ if (typeof globalThis !== "undefined") {
           class="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-5"
         >
         </div>
-        <div class="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-0">
-        </div>
 
         <div class="max-w-7xl mx-auto px-4 py-8 relative z-10">
           <!-- Category and Meta -->
@@ -731,6 +729,16 @@ if (typeof globalThis !== "undefined") {
 </Layout>
 
 <style>
+  /* CSS Custom Properties for Consistent Design */
+  :root {
+    --tinkbyte-radius: 0px;
+    --tinkbyte-radius-sm: 0px;
+    --tinkbyte-radius-md: 0px;
+    --tinkbyte-radius-lg: 0px;
+    --tinkbyte-radius-card: 0px;
+    --tinkbyte-radius-button: 0px;
+  }
+
   /* Reading Progress Bar Styles */
   .reading-progress {
     position: fixed;
@@ -830,7 +838,7 @@ if (typeof globalThis !== "undefined") {
     letter-spacing: 0.1em;
     padding: 0.75rem 1.5rem;
     border: 2px solid;
-    border-radius: var(--tinkbyte-radius-card, 0px);
+    border-radius: var(--tinkbyte-radius-button);
     text-decoration: none;
     background: white;
     display: flex;
@@ -850,7 +858,7 @@ if (typeof globalThis !== "undefined") {
     padding: 0.5rem 1rem;
     background: linear-gradient(135deg, #10b981, #059669);
     color: white;
-    border-radius: var(--tinkbyte-radius, 2px);
+    border-radius: var(--tinkbyte-radius-button);
     display: flex;
     align-items: center;
     box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
@@ -948,7 +956,7 @@ if (typeof globalThis !== "undefined") {
   .author-avatar-enhanced {
     width: 56px;
     height: 56px;
-    border-radius: var(--tinkbyte-radius-card, 1px);
+    border-radius: var(--tinkbyte-radius-card);
     object-fit: cover;
     border: 3px solid #e2e8f0;
   }
@@ -1016,7 +1024,7 @@ if (typeof globalThis !== "undefined") {
     border: none;
     cursor: pointer;
     padding: 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--tinkbyte-radius-sm);
     transition: all 0.2s ease;
   }
 
@@ -1037,7 +1045,7 @@ if (typeof globalThis !== "undefined") {
 
   .image-wrapper-optimized {
     position: relative;
-    border-radius: var(--tinkbyte-radius-card, 4px);
+    border-radius: var(--tinkbyte-radius-card);
     overflow: hidden;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     aspect-ratio: 2/1;
@@ -1074,7 +1082,7 @@ if (typeof globalThis !== "undefined") {
   .audio-container {
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     border: 2px solid #0ea5e9;
-    border-radius: var(--tinkbyte-radius-card, 4px);
+    border-radius: var(--tinkbyte-radius-card);
     padding: 2rem;
   }
 
@@ -1121,7 +1129,7 @@ if (typeof globalThis !== "undefined") {
   .no-audio-placeholder-enhanced {
     background: #f8fafc;
     border: 2px dashed #cbd5e1;
-    border-radius: var(--tinkbyte-radius-card, 4px);
+    border-radius: var(--tinkbyte-radius-card);
     padding: 2rem;
   }
 
@@ -1219,7 +1227,7 @@ if (typeof globalThis !== "undefined") {
     bottom: 0;
     width: 4px;
     background: linear-gradient(135deg, rgb(59, 130, 246), rgb(147, 51, 234));
-    border-radius: 0px;
+    border-radius: var(--tinkbyte-radius-sm);
   }
 
   .content-main-enhanced :global(h3) {
@@ -1248,7 +1256,7 @@ if (typeof globalThis !== "undefined") {
     border-bottom-color: rgb(37, 99, 235);
     background: rgba(59, 130, 246, 0.1);
     padding: 0 2px;
-    border-radius: 2px;
+    border-radius: var(--tinkbyte-radius-sm);
   }
 
   /* Sidebar */
@@ -1258,7 +1266,7 @@ if (typeof globalThis !== "undefined") {
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     border: 2px solid #e2e8f0;
     padding: 2.5rem;
-    border-radius: var(--tinkbyte-radius-card, 4px);
+    border-radius: var(--tinkbyte-radius-card);
     height: fit-content;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   }
@@ -1316,7 +1324,7 @@ if (typeof globalThis !== "undefined") {
     padding: 0.5rem 0.75rem;
     background: white;
     border: 2px solid #e2e8f0;
-    border-radius: var(--tinkbyte-radius, 2px);
+    border-radius: var(--tinkbyte-radius-button);
     text-decoration: none;
     color: #64748b;
     font-weight: 600;
@@ -1424,7 +1432,7 @@ if (typeof globalThis !== "undefined") {
     padding: 2.5rem;
     background: white;
     border: 2px solid #e2e8f0;
-    border-radius: var(--tinkbyte-radius-card, 4px);
+    border-radius: var(--tinkbyte-radius-card);
     text-decoration: none;
     position: relative;
     overflow: hidden;
@@ -1493,7 +1501,7 @@ if (typeof globalThis !== "undefined") {
     padding: 2.5rem;
     background: #f8fafc;
     border: 2px dashed #cbd5e1;
-    border-radius: var(--tinkbyte-radius-card, 4px);
+    border-radius: var(--tinkbyte-radius-card);
   }
 
   :global(.dark) .nav-placeholder-enhanced {
@@ -1517,7 +1525,7 @@ if (typeof globalThis !== "undefined") {
     background: rgb(59, 130, 246);
     color: white;
     text-decoration: none;
-    border-radius: var(--tinkbyte-radius, 2px);
+    border-radius: var(--tinkbyte-radius-button);
     font-size: 0.875rem;
     font-weight: 600;
   }
@@ -1545,7 +1553,7 @@ if (typeof globalThis !== "undefined") {
 
   .comments-container-enhanced {
     background: white;
-    border-radius: var(--tinkbyte-radius-card, 8px);
+    border-radius: var(--tinkbyte-radius-card);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     border: 2px solid #e2e8f0;
@@ -1615,7 +1623,7 @@ if (typeof globalThis !== "undefined") {
     padding: 0.5rem 0.75rem;
     color: #64748b;
     text-decoration: none;
-    border-radius: 4px;
+    border-radius: var(--tinkbyte-radius-sm);
     font-size: 0.875rem;
     line-height: 1.4;
     transition: all 0.2s ease;
@@ -1683,7 +1691,76 @@ if (typeof globalThis !== "undefined") {
     }
   }
 
+  /* Mobile Overflow Prevention and Responsiveness Fixes */
   @media (max-width: 768px) {
+    /* Prevent horizontal overflow */
+    .magazine-article {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    .article-header {
+      overflow-x: hidden;
+      width: 100%;
+    }
+
+    .max-w-7xl {
+      max-width: 100%;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    /* Fix article header content width */
+    .article-header-content {
+      width: 100%;
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      hyphens: auto;
+    }
+
+    .article-title-enhanced {
+      width: 100%;
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      hyphens: auto;
+      line-height: 1.1;
+      margin-left: 0;
+      margin-right: 0;
+      padding-left: 0;
+      padding-right: 0;
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      text-align: center;
+    }
+
+    .article-subtitle-enhanced {
+      width: 100%;
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      hyphens: auto;
+      font-size: 1.125rem;
+      line-height: 1.3;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .article-description-enhanced {
+      width: 100%;
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      hyphens: auto;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      font-size: 1rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    /* Hide sidebar on mobile */
     .content-sidebar-enhanced {
       display: none !important;
     }
@@ -1691,69 +1768,106 @@ if (typeof globalThis !== "undefined") {
     .content-main-enhanced {
       font-size: 1rem;
       line-height: 1.6;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
-    .article-meta-top {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
+    .content-main-enhanced :global(*) {
+      max-width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
 
-    .article-title-enhanced {
-      font-size: clamp(1.75rem, 4vw, 2.5rem);
-      line-height: 1.1;
+    /* Fix image containers */
+    .article-image-container-optimized {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+      margin-left: 0;
+      margin-right: 0;
+      padding-left: 1rem;
+      padding-right: 1rem;
     }
 
-    .article-byline-enhanced {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1.5rem;
+    .image-wrapper-optimized {
+      width: 100%;
+      max-width: 100%;
     }
 
-    .reading-meta {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
+    .article-image-optimized {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      object-fit: cover;
     }
 
-    .nav-link-enhanced {
-      padding: 1.5rem;
-    }
-
-    .audio-container,
-    .no-audio-placeholder-enhanced {
-      padding: 1.5rem;
-    }
-
-    .article-header {
-      padding: 1.5rem 0;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .article-header {
-      padding: 1rem 0;
-    }
-
-    .article-title-enhanced {
-      font-size: clamp(1.5rem, 3.5vw, 2rem);
-    }
-
-    .nav-link-enhanced {
-      padding: 1rem;
+    /* Fix audio and no-audio sections */
+    .audio-section-enhanced,
+    .no-audio-section-enhanced {
+      width: 100%;
+      max-width: 100%;
+      padding-left: 1rem;
+      padding-right: 1rem;
     }
 
     .audio-container,
     .no-audio-placeholder-enhanced {
-      padding: 1rem;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 1.5rem;
     }
-  }
 
-  /* Mobile Tag Improvements - Add to your existing <style> section */
-  @media (max-width: 768px) {
+    /* Fix navigation sections */
+    .post-navigation-enhanced,
+    .related-section-enhanced,
+    .comments-section-wrapper {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    /* Ensure all containers respect viewport */
+    .article-content-wrapper-enhanced {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .content-grid-enhanced {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    /* Fix any potential wide elements */
+    .nav-grid-enhanced {
+      width: 100%;
+      max-width: 100%;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .nav-link-enhanced {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 1.5rem;
+    }
+
+    .comments-container-enhanced {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      margin-left: 0;
+      margin-right: 0;
+    }
+
     .article-meta-top {
       flex-direction: column;
-      align-items: center; /* Center align on mobile */
+      align-items: center;
       text-align: center;
       gap: 1rem;
       margin-bottom: 1.5rem;
@@ -1767,7 +1881,6 @@ if (typeof globalThis !== "undefined") {
       width: 100%;
     }
 
-    /* Enhanced Category Tag for Mobile */
     .category-tag-enhanced {
       font-size: 0.6875rem;
       font-weight: 800;
@@ -1775,7 +1888,7 @@ if (typeof globalThis !== "undefined") {
       letter-spacing: 0.15em;
       padding: 0.75rem 1.25rem;
       border: 2px solid;
-      border-radius: 6px;
+      border-radius: var(--tinkbyte-radius-button);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1791,27 +1904,16 @@ if (typeof globalThis !== "undefined") {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    .category-tag-enhanced i {
-      font-size: 0.75rem;
-      margin-right: 0.5rem;
-    }
-
-    /* Audio Badge Mobile */
     .audio-badge {
       font-size: 0.6875rem;
       font-weight: 700;
       padding: 0.5rem 1rem;
-      border-radius: 6px;
+      border-radius: var(--tinkbyte-radius-button);
       min-width: 160px;
       text-align: center;
       justify-content: center;
     }
 
-    .audio-badge i {
-      margin-right: 0.5rem;
-    }
-
-    /* Article Date Mobile */
     .article-date-enhanced {
       font-size: 0.8125rem;
       font-weight: 600;
@@ -1821,7 +1923,7 @@ if (typeof globalThis !== "undefined") {
       padding: 0.5rem 1rem;
       background: rgba(248, 250, 252, 0.8);
       border: 1px solid rgba(226, 232, 240, 0.8);
-      border-radius: 6px;
+      border-radius: var(--tinkbyte-radius-button);
       backdrop-filter: blur(5px);
       text-align: center;
       min-width: 140px;
@@ -1833,34 +1935,11 @@ if (typeof globalThis !== "undefined") {
       color: rgb(148, 163, 184);
     }
 
-    /* Title Section Mobile */
     .article-header-content {
       text-align: center;
       margin-bottom: 2rem;
     }
 
-    .article-title-enhanced {
-      font-size: clamp(1.75rem, 4vw, 2.5rem);
-      line-height: 1.1;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-
-    .article-subtitle-enhanced {
-      font-size: 1.125rem;
-      line-height: 1.3;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-
-    .article-description-enhanced {
-      font-size: 1rem;
-      line-height: 1.5;
-      text-align: center;
-      padding: 0 0.5rem;
-    }
-
-    /* Author Section Mobile */
     .article-byline-enhanced {
       flex-direction: column;
       align-items: center;
@@ -1895,10 +1974,50 @@ if (typeof globalThis !== "undefined") {
     .share-icons-preview {
       justify-content: center;
     }
+
+    .article-header {
+      padding: 1.5rem 0;
+    }
+
+    .nav-next-enhanced,
+    .nav-previous-enhanced {
+      text-align: left;
+    }
+
+    .nav-next-enhanced .nav-direction-enhanced {
+      justify-content: flex-start;
+    }
   }
 
-  /* Extra small screens */
   @media (max-width: 480px) {
+    /* Extra small screens - more aggressive constraints */
+    .max-w-7xl {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
+    .article-description-enhanced {
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
+      font-size: 0.875rem;
+    }
+
+    .article-image-container-optimized {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
+    .audio-section-enhanced,
+    .no-audio-section-enhanced {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
+    .article-content-wrapper-enhanced {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
     .category-tag-enhanced {
       font-size: 0.625rem;
       padding: 0.625rem 1rem;
@@ -1926,9 +2045,50 @@ if (typeof globalThis !== "undefined") {
       font-size: 1rem;
     }
 
-    .article-description-enhanced {
-      font-size: 0.875rem;
-      padding: 0 0.25rem;
+    .article-header {
+      padding: 1rem 0;
+    }
+
+    .nav-link-enhanced {
+      padding: 1rem;
+    }
+
+    .audio-container,
+    .no-audio-placeholder-enhanced {
+      padding: 1rem;
+    }
+  }
+
+  /* Additional safety measures */
+  @media (max-width: 768px) {
+    /* Prevent any element from causing horizontal scroll */
+    * {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Ensure text doesn't overflow */
+    p,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    span,
+    div {
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      hyphens: auto;
+    }
+
+    /* Fix pre and code elements that might cause overflow */
+    pre,
+    code {
+      max-width: 100%;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
     }
   }
 </style>
@@ -1947,7 +2107,6 @@ if (typeof globalThis !== "undefined") {
       const progressBar = document.querySelector(".reading-progress-bar");
 
       if (!progressContainer || !progressBar) {
-        //console.warn("Reading progress elements not found");
         return;
       }
 
@@ -1961,18 +2120,14 @@ if (typeof globalThis !== "undefined") {
         const progress =
           scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
 
-        // Show progress bar when user starts scrolling
         if (scrollTop > 50) {
           progressContainer.classList.add("visible");
         } else {
           progressContainer.classList.remove("visible");
         }
 
-        // Update progress bar width
         const clampedProgress = Math.min(Math.max(progress, 0), 100);
         progressBar.style.width = `${clampedProgress}%`;
-
-        //console.log(`Top Progress: ${clampedProgress}%`); // Debug log
 
         ticking = false;
       }
@@ -1984,14 +2139,9 @@ if (typeof globalThis !== "undefined") {
         }
       }
 
-      // Event listeners
       window.addEventListener("scroll", requestTick, { passive: true });
       window.addEventListener("resize", requestTick, { passive: true });
-
-      // Initial calculation
       updateTopProgress();
-
-      //console.log("✅ Top reading progress initialized");
     }
 
     // Initialize Sidebar Reading Progress (Circular)
@@ -2000,7 +2150,6 @@ if (typeof globalThis !== "undefined") {
       const progressText = document.querySelector(".progress-text");
 
       if (!progressRing || !progressText) {
-        //console.warn("Sidebar progress elements not found");
         return;
       }
 
@@ -2024,8 +2173,6 @@ if (typeof globalThis !== "undefined") {
         progressRing.style.stroke =
           clampedProgress > 0 ? "rgb(59, 130, 246)" : "#e2e8f0";
         progressText.textContent = Math.round(clampedProgress) + "%";
-
-        //console.log(`Sidebar Progress: ${clampedProgress}%`); // Debug log
       }
 
       let ticking = false;
@@ -2042,11 +2189,8 @@ if (typeof globalThis !== "undefined") {
       window.addEventListener("scroll", handleScroll, { passive: true });
       window.addEventListener("resize", handleScroll, { passive: true });
       updateSidebarProgress();
-
-      //console.log("✅ Sidebar reading progress initialized");
     }
 
-    // Initialize both progress indicators
     initTopReadingProgress();
     initSidebarReadingProgress();
 
@@ -2140,24 +2284,7 @@ if (typeof globalThis !== "undefined") {
       });
     });
 
-    // Initialize TOC
     setTimeout(generateTOC, 100);
-
-    // Test scroll calculation
-    setTimeout(() => {
-      const scrollHeight = document.documentElement.scrollHeight;
-      const clientHeight = window.innerHeight;
-      const scrollableHeight = scrollHeight - clientHeight;
-
-      //console.log("📊 Scroll Debug Info:");
-      //console.log(`Document height: ${scrollHeight}px`);
-      //console.log(`Window height: ${clientHeight}px`);
-      //console.log(`Scrollable height: ${scrollableHeight}px`);
-
-      if (scrollableHeight <= 0) {
-        //console.warn("⚠️ Page is not scrollable - progress will not work");
-      }
-    }, 500);
   });
 
   // Handle Astro page navigation

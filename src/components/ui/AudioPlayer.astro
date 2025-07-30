@@ -10,7 +10,6 @@ export interface Props {
 
 const { audioUrl, title, duration, transcript, downloadUrl } = Astro.props;
 
-// Use title in the component
 const displayTitle = title || "🎧 Listen to this article";
 ---
 
@@ -18,7 +17,26 @@ const displayTitle = title || "🎧 Listen to this article";
   <div class="audio-controls">
     <!-- Play/Pause Button -->
     <button class="play-button" data-action="play" title={`Play: ${title}`}>
-      <!-- Your existing SVG icons -->
+      <!-- Play Icon -->
+      <svg
+        class="play-icon"
+        fill="currentColor"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+      >
+        <path d="M8 5v14l11-7z"></path>
+      </svg>
+      <!-- Pause Icon -->
+      <svg
+        class="pause-icon hidden"
+        fill="currentColor"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+      >
+        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+      </svg>
     </button>
 
     <!-- Audio Info -->
@@ -200,6 +218,16 @@ const displayTitle = title || "🎧 Listen to this article";
 </div>
 
 <style>
+  /* CSS Custom Properties for Consistent Design */
+  :root {
+    --tinkbyte-radius: 0px;
+    --tinkbyte-radius-sm: 0px;
+    --tinkbyte-radius-md: 0px;
+    --tinkbyte-radius-lg: 0px;
+    --tinkbyte-radius-card: 0px;
+    --tinkbyte-radius-button: 0px;
+  }
+
   .audio-player {
     background: white;
     border: 1px solid #e9ecef;
@@ -225,7 +253,7 @@ const displayTitle = title || "🎧 Listen to this article";
     width: 3rem;
     height: 3rem;
     border: none;
-    border-radius: var(--tinkbyte-radius-card);
+    border-radius: var(--tinkbyte-radius-button);
     background: rgb(36, 55, 136);
     color: white;
     display: flex;
@@ -233,6 +261,7 @@ const displayTitle = title || "🎧 Listen to this article";
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
+    position: relative;
   }
 
   .play-button:hover {
@@ -246,9 +275,28 @@ const displayTitle = title || "🎧 Listen to this article";
     transform: none;
   }
 
+  /* Ensure play/pause icons are visible */
   .play-button svg {
     width: 1.25rem;
     height: 1.25rem;
+    fill: currentColor;
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .play-icon,
+  .pause-icon {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .play-icon.hidden,
+  .pause-icon.hidden {
+    opacity: 0;
+    visibility: hidden;
   }
 
   .audio-info {
@@ -286,7 +334,7 @@ const displayTitle = title || "🎧 Listen to this article";
     opacity: 0.8;
   }
 
-  /* Volume Control - Custom Implementation */
+  /* Volume Control - Enhanced Visibility */
   .volume-control {
     display: flex;
     align-items: center;
@@ -300,8 +348,11 @@ const displayTitle = title || "🎧 Listen to this article";
     color: #6b7280;
     cursor: pointer;
     padding: 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--tinkbyte-radius-sm);
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .volume-button:hover {
@@ -316,6 +367,28 @@ const displayTitle = title || "🎧 Listen to this article";
   :global(.dark) .volume-button:hover {
     color: rgb(147, 197, 253);
     background: rgba(147, 197, 253, 0.1);
+  }
+
+  /* Enhanced Volume Icon Visibility */
+  .volume-icon {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    opacity: 1;
+    visibility: visible;
+    transition: all 0.2s ease;
+  }
+
+  .volume-icon.hidden {
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+  }
+
+  .volume-icon:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+    position: relative;
   }
 
   .volume-slider-container {
@@ -346,7 +419,7 @@ const displayTitle = title || "🎧 Listen to this article";
     width: 100%;
     height: 4px;
     background: #e5e7eb;
-    border-radius: 2px;
+    border-radius: var(--tinkbyte-radius-sm);
   }
 
   :global(.dark) .volume-track {
@@ -357,7 +430,7 @@ const displayTitle = title || "🎧 Listen to this article";
     height: 100%;
     width: 75%;
     background: rgb(36, 55, 136);
-    border-radius: 2px;
+    border-radius: var(--tinkbyte-radius-sm);
     transition: width 0.1s ease;
   }
 
@@ -392,7 +465,7 @@ const displayTitle = title || "🎧 Listen to this article";
     display: none;
   }
 
-  /* Settings Control - IMPROVED Mobile Responsiveness */
+  /* Settings Control - Enhanced Visibility */
   .settings-control {
     position: relative;
   }
@@ -403,8 +476,11 @@ const displayTitle = title || "🎧 Listen to this article";
     color: #6b7280;
     cursor: pointer;
     padding: 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--tinkbyte-radius-sm);
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .settings-button:hover {
@@ -421,13 +497,22 @@ const displayTitle = title || "🎧 Listen to this article";
     background: rgba(147, 197, 253, 0.1);
   }
 
+  /* Enhanced SVG Icon Visibility */
+  .settings-button svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+    opacity: 1;
+    visibility: visible;
+  }
+
   .settings-dropdown {
     position: absolute;
     top: 100%;
     right: 0;
     background: white;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: var(--tinkbyte-radius-md);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     padding: 1rem;
     min-width: 200px;
@@ -465,7 +550,7 @@ const displayTitle = title || "🎧 Listen to this article";
     width: 100%;
     padding: 0.5rem;
     border: 1px solid #d1d5db;
-    border-radius: 4px;
+    border-radius: var(--tinkbyte-radius-sm);
     background: white;
     color: #374151;
     cursor: pointer;
@@ -486,7 +571,7 @@ const displayTitle = title || "🎧 Listen to this article";
     flex: 1;
     padding: 0.5rem;
     border: 1px solid #d1d5db;
-    border-radius: 4px;
+    border-radius: var(--tinkbyte-radius-sm);
     background: white;
     color: #374151;
     cursor: pointer;
@@ -516,12 +601,21 @@ const displayTitle = title || "🎧 Listen to this article";
     border-color: rgb(147, 197, 253);
   }
 
+  /* Enhanced Button Icon Visibility */
+  .skip-button svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    opacity: 1;
+    visibility: visible;
+  }
+
   .transcript-toggle,
   .download-button {
     width: 100%;
     padding: 0.5rem;
     border: 1px solid #d1d5db;
-    border-radius: 4px;
+    border-radius: var(--tinkbyte-radius-sm);
     background: white;
     color: #374151;
     cursor: pointer;
@@ -563,7 +657,7 @@ const displayTitle = title || "🎧 Listen to this article";
     width: 100%;
     height: 6px;
     background: #e9ecef;
-    border-radius: 3px;
+    border-radius: var(--tinkbyte-radius-sm);
     margin-bottom: 0.5rem;
     cursor: pointer;
     overflow: visible;
@@ -583,7 +677,7 @@ const displayTitle = title || "🎧 Listen to this article";
     height: 100%;
     background: rgb(36, 55, 136);
     transition: width 0.1s ease;
-    border-radius: 3px;
+    border-radius: var(--tinkbyte-radius-sm);
     position: relative;
   }
 
@@ -649,7 +743,7 @@ const displayTitle = title || "🎧 Listen to this article";
     color: #6b7280;
     background: #f9fafb;
     padding: 1rem;
-    border-radius: 6px;
+    border-radius: var(--tinkbyte-radius-md);
     max-height: 200px;
     overflow-y: auto;
   }
@@ -729,8 +823,41 @@ const displayTitle = title || "🎧 Listen to this article";
 
     /* Settings dropdown for mobile */
     .settings-dropdown {
-      min-width: 250px;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      right: auto;
+      bottom: auto;
+      transform: translate(-50%, -50%);
+      min-width: 300px;
       max-width: calc(100vw - 2rem);
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
+      margin: 0;
+      border-radius: var(--tinkbyte-radius-lg);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+      z-index: 9999;
+    }
+
+    :global(.dark) .settings-dropdown {
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Add backdrop blur effect for mobile */
+    .settings-dropdown::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: -1;
+    }
+
+    :global(.dark) .settings-dropdown::before {
+      background: rgba(0, 0, 0, 0.7);
     }
 
     /* Better mobile spacing */
@@ -760,7 +887,7 @@ const displayTitle = title || "🎧 Listen to this article";
 
     .settings-dropdown {
       min-width: calc(100vw - 2rem);
-      padding: 1.25rem;
+      padding: 1.5rem;
     }
 
     .audio-title {
@@ -771,54 +898,6 @@ const displayTitle = title || "🎧 Listen to this article";
       font-size: 0.8125rem;
     }
 
-    /* Mobile-specific settings dropdown */
-    @media (max-width: 768px) {
-      .settings-dropdown {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        right: auto;
-        bottom: auto;
-        transform: translate(-50%, -50%);
-        min-width: 300px;
-        max-width: calc(100vw - 2rem);
-        max-height: calc(100vh - 4rem);
-        overflow-y: auto;
-        margin: 0;
-        border-radius: 12px;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-        z-index: 9999;
-      }
-
-      :global(.dark) .settings-dropdown {
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-      }
-
-      /* Add backdrop blur effect for mobile */
-      .settings-dropdown::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
-        z-index: -1;
-      }
-
-      :global(.dark) .settings-dropdown::before {
-        background: rgba(0, 0, 0, 0.7);
-      }
-    }
-
-    /* Extra small screens */
-    @media (max-width: 480px) {
-      .settings-dropdown {
-        min-width: calc(100vw - 2rem);
-        padding: 1.5rem;
-      }
-    }
     /* Mobile dropdown state */
     .settings-dropdown.mobile-dropdown {
       position: fixed !important;
@@ -1210,7 +1289,7 @@ const displayTitle = title || "🎧 Listen to this article";
         });
       }
 
-      // IMPROVED Settings dropdown functionality
+      // Enhanced Settings dropdown functionality
       if (settingsButton && settingsDropdown) {
         settingsButton.addEventListener("click", (e) => {
           e.stopPropagation();

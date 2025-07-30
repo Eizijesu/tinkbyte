@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/[slug].astro - CLEAN VERSION
+// src/pages/blog/[slug].astro - FIXED TypeScript errors
 import { type CollectionEntry, getCollection } from "astro:content";
 import BlogPost from "../../layouts/BlogPost.astro";
 
@@ -21,6 +21,8 @@ interface NavigationContext {
   totalPosts: number;
   isFirst: boolean;
   isLast: boolean;
+  previousPost?: CollectionEntry<"blog">;
+  nextPost?: CollectionEntry<"blog">;
 }
 
 interface AnalyticsData {
@@ -32,6 +34,7 @@ interface AnalyticsData {
   hasAudio: boolean;
   hasFeaturedImage: boolean;
   tagCount: number;
+  readingTime: number;
 }
 
 interface BlogPostProps {
@@ -42,11 +45,19 @@ interface BlogPostProps {
   date: Date;
   updatedDate?: Date;
   readTime?: string;
-  tags?: string[];
+  tags: string[];
   category?: string;
   authorInfo?: {
     name: string;
     role?: string;
+    bio?: string;
+    avatar?: string;
+    social?: {
+      twitter?: string;
+      linkedin?: string;
+      github?: string;
+      website?: string;
+    };
   };
   heroImage?: any;
   image?: string;
@@ -63,42 +74,73 @@ interface BlogPostProps {
   canonicalUrl?: string;
   headings?: any[];
   renderError?: Error | null;
+  showReadingProgress?: boolean;
 }
 
-// Static path generation
+// Enhanced static path generation with better error handling
 export async function getStaticPaths() {
-  const posts = await getCollection("blog", ({ data }) => {
-    const now = new Date();
-    const postDate = new Date(data.pubDate);
+  try {
+    const posts = await getCollection("blog", ({ data }) => {
+      const now = new Date();
+      const postDate = new Date(data.pubDate);
 
-    return data.draft !== true && postDate <= now && data.title && data.excerpt;
-  });
+      // Enhanced validation
+      const isValid =
+        data.draft !== true &&
+        postDate <= now &&
+        data.title &&
+        data.title.trim().length > 0 &&
+        (data.excerpt || data.description);
 
-  const sortedPosts = posts.sort(
-    (a: CollectionEntry<"blog">, b: CollectionEntry<"blog">) =>
-      new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
-  );
+      if (!isValid) {
+        console.warn(`Skipping invalid post: ${data.title || "Untitled"}`);
+      }
 
-  return sortedPosts.map((post: CollectionEntry<"blog">) => ({
-    params: { slug: post.slug },
-    props: {
-      post,
-      allPosts: sortedPosts.length,
-      postIndex: sortedPosts.findIndex(
-        (p: CollectionEntry<"blog">) => p.slug === post.slug
-      ),
-    },
-  }));
+      return isValid;
+    });
+
+    const sortedPosts = posts.sort(
+      (a: CollectionEntry<"blog">, b: CollectionEntry<"blog">) =>
+        new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
+    );
+
+    console.log(`✅ Generated ${sortedPosts.length} blog post paths`);
+
+    return sortedPosts.map((post: CollectionEntry<"blog">, index: number) => {
+      const previousPost =
+        index < sortedPosts.length - 1 ? sortedPosts[index + 1] : null;
+      const nextPost = index > 0 ? sortedPosts[index - 1] : null;
+
+      return {
+        params: { slug: post.slug },
+        props: {
+          post,
+          allPosts: sortedPosts,
+          totalPosts: sortedPosts.length,
+          postIndex: index,
+          previousPost,
+          nextPost,
+        },
+      };
+    });
+  } catch (error) {
+    console.error("Error generating static paths:", error);
+    return [];
+  }
 }
 
-// Get props
-const { post, allPosts, postIndex } = Astro.props as {
-  post: CollectionEntry<"blog">;
-  allPosts: number;
-  postIndex: number;
-};
+// Get props with enhanced type safety
+const { post, allPosts, totalPosts, postIndex, previousPost, nextPost } =
+  Astro.props as {
+    post: CollectionEntry<"blog">;
+    allPosts: CollectionEntry<"blog">[];
+    totalPosts: number;
+    postIndex: number;
+    previousPost?: CollectionEntry<"blog">;
+    nextPost?: CollectionEntry<"blog">;
+  };
 
-// Content rendering with error handling
+// Content rendering with enhanced error handling
 let Content: any;
 let headings: any[] = [];
 let renderError: Error | null = null;
@@ -107,99 +149,170 @@ try {
   const rendered = await post.render();
   Content = rendered.Content;
   headings = rendered.headings || [];
+
+  console.log(`✅ Successfully rendered post: ${post.data.title}`);
 } catch (error) {
-  console.error(`Error rendering post ${post.slug}:`, error);
+  console.error(`❌ Error rendering post ${post.slug}:`, error);
   renderError = error as Error;
+
+  // Fallback content component
   Content = () => `
-    <div class="error-fallback">
+    <div class="error-fallback-content">
+      <div class="error-icon">⚠️</div>
       <h2>Content Rendering Error</h2>
-      <p>There was an issue rendering this article. Please check the content format.</p>
+      <p>There was an issue rendering this article. The content may contain invalid MDX syntax or missing components.</p>
+      <details class="error-details">
+        <summary>Technical Details</summary>
+        <pre>${error}</pre>
+      </details>
     </div>
   `;
 }
 
-// Component mapping for TinaCMS
+// Enhanced component mapping for TinaCMS
 const components = {
   ImageBlock,
   VideoBlock,
   Callout: CalloutBox,
+  CalloutBox,
   ButtonBlock,
-  CodeBlock: CodeBlock,
-  Quote: Quote,
+  CodeBlock,
+  Quote,
   TableBlock,
   ImageGallery,
-  Newsletter: Newsletter,
+  Newsletter,
   TwoColumnLayout,
+  // Add common HTML elements for better MDX support
+  img: ImageBlock,
+  blockquote: Quote,
+  table: TableBlock,
 };
 
-// Process content data
+// Enhanced content processing
+const calculateReadingTime = (
+  content: string
+): { readTime: string; wordCount: number } => {
+  if (!content || content.trim().length === 0) {
+    return { readTime: "1 min read", wordCount: 0 };
+  }
+
+  // More accurate word counting
+  const words = content
+    .replace(/```[\s\S]*?```/g, "") // Remove code blocks
+    .replace(/`[^`]*`/g, "") // Remove inline code
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // Replace links with text
+    .replace(/[#*_~`]/g, "") // Remove markdown formatting
+    .split(/\s+/)
+    .filter((word) => word.length > 0);
+
+  const wordCount = words.length;
+  const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 200)); // Average 200 words per minute
+
+  return {
+    readTime: `${readingTimeMinutes} min read`,
+    wordCount,
+  };
+};
+
+const { readTime: calculatedReadTime, wordCount } = calculateReadingTime(
+  post.body || ""
+);
+
+// FIXED: Ensure tags is always an array
+const ensureTagsArray = (tags: any): string[] => {
+  if (Array.isArray(tags)) {
+    return tags.filter((tag) => tag && typeof tag === "string" && tag.trim());
+  }
+  return [];
+};
+
+// Process content data with enhanced validation
 const processedData: BlogPostProps = {
-  title: post.data.title || "Untitled Article",
-  subtitle: post.data.subtitle,
-  description: post.data.excerpt || post.data.description,
-  excerpt: post.data.excerpt || "No excerpt available",
+  title: post.data.title?.trim() || "Untitled Article",
+  subtitle: post.data.subtitle?.trim(),
+  description: post.data.excerpt?.trim() || post.data.description?.trim(),
+  excerpt: post.data.excerpt?.trim() || "No excerpt available",
   date: post.data.pubDate,
   updatedDate: post.data.updatedDate,
-  readTime: post.data.readTime || "Unknown",
-  tags: Array.isArray(post.data.tags) ? post.data.tags : [],
-  category: post.data.category || "uncategorized",
-  authorInfo: post.data.authorInfo || {
-    name: "TinkByte Team",
-    role: "Editorial Team",
+  readTime: post.data.readTime || calculatedReadTime,
+  tags: ensureTagsArray(post.data.tags), // FIXED: Always returns string[]
+  category: post.data.category?.trim() || "uncategorized",
+  authorInfo: {
+    name:
+      post.data.authorInfo?.name?.trim() ||
+      post.data.author?.trim() ||
+      "TinkByte Team",
+    role: post.data.authorInfo?.role?.trim() || "Editorial Team",
+    bio: post.data.authorInfo?.bio?.trim(),
+    avatar: post.data.authorInfo?.avatar?.trim(),
+    social: post.data.authorInfo?.social || {},
   },
   heroImage: post.data.heroImage,
-  image: post.data.image,
-  imageAlt: post.data.imageAlt,
-  audioUrl: post.data.audioUrl,
-  audioDuration: post.data.audioDuration,
+  image: post.data.image?.trim(),
+  imageAlt: post.data.imageAlt?.trim(),
+  audioUrl: post.data.audioUrl?.trim(),
+  audioDuration: post.data.audioDuration?.trim(),
   slug: post.slug,
-  featured: post.data.featured || false,
-  trending: post.data.trending || false,
+  featured: Boolean(post.data.featured),
+  trending: Boolean(post.data.trending),
+  showReadingProgress: post.data.showReadingProgress !== false, // Default to true
+  headings,
+  renderError,
   navigationContext: undefined,
   analyticsData: undefined,
   seoTitle: undefined,
   seoDescription: undefined,
   canonicalUrl: undefined,
-  headings: headings,
-  renderError: renderError,
 };
 
-// Auto-generate reading time if missing
-if (!processedData.readTime || processedData.readTime === "Unknown") {
-  const content = post.body || "";
-  const wordCount = content.split(/\s+/).length;
-  processedData.readTime = `${Math.ceil(wordCount / 200)} min read`;
-}
+// Enhanced SEO data processing
+processedData.seoTitle =
+  post.data.seo?.title?.trim() ||
+  post.data.seoTitle?.trim() ||
+  processedData.title;
 
-// SEO data
-processedData.seoTitle = post.data.seo?.title || processedData.title;
 processedData.seoDescription =
-  post.data.seo?.description || processedData.excerpt;
-processedData.canonicalUrl = post.data.seo?.canonical;
+  post.data.seo?.description?.trim() ||
+  post.data.seoDescription?.trim() ||
+  processedData.excerpt?.slice(0, 160);
 
-// Navigation context
+processedData.canonicalUrl =
+  post.data.seo?.canonical?.trim() || post.data.canonicalUrl?.trim();
+
+// Enhanced navigation context
 processedData.navigationContext = {
   currentIndex: postIndex,
-  totalPosts: allPosts,
+  totalPosts,
   isFirst: postIndex === 0,
-  isLast: postIndex === allPosts - 1,
+  isLast: postIndex === totalPosts - 1,
+  previousPost,
+  nextPost,
 };
 
-// Analytics data
+// Enhanced analytics data
 processedData.analyticsData = {
   contentType: "blog-post",
   category: processedData.category || "uncategorized",
   author: processedData.authorInfo?.name || "Unknown",
   publishDate: processedData.date,
-  wordCount: post.body?.split(/\s+/).length || 0,
-  hasAudio: !!processedData.audioUrl,
-  hasFeaturedImage: !!(
+  wordCount,
+  readingTime: parseInt(calculatedReadTime.split(" ")[0]) || 1,
+  hasAudio: Boolean(processedData.audioUrl),
+  hasFeaturedImage: Boolean(
     processedData.heroImage?.externalUrl ||
-    processedData.heroImage?.uploadedImage ||
-    processedData.image
+      processedData.heroImage?.uploadedImage ||
+      processedData.image
   ),
-  tagCount: processedData.tags?.length || 0,
+  tagCount: processedData.tags.length, // FIXED: Now guaranteed to be number
 };
+
+// Validation logging
+console.log(`📊 Post processed: ${processedData.title}`);
+console.log(`   - Word count: ${wordCount}`);
+console.log(`   - Reading time: ${processedData.readTime}`);
+console.log(`   - Has audio: ${processedData.analyticsData.hasAudio}`);
+console.log(`   - Has image: ${processedData.analyticsData.hasFeaturedImage}`);
+console.log(`   - Tags: ${processedData.tags.length}`);
 ---
 
 <BlogPost
@@ -221,6 +334,7 @@ processedData.analyticsData = {
   slug={processedData.slug}
   featured={processedData.featured}
   trending={processedData.trending}
+  showReadingProgress={processedData.showReadingProgress}
   navigationContext={processedData.navigationContext}
   analyticsData={processedData.analyticsData}
   seoTitle={processedData.seoTitle}
@@ -233,14 +347,10 @@ processedData.analyticsData = {
     renderError ? (
       <div class="content-error-boundary">
         <div class="max-w-4xl mx-auto px-4 py-12">
-          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
-            <div class="flex items-start gap-3">
-              <div class="flex-shrink-0">
-                <svg
-                  class="w-5 h-5 text-red-500"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
+          <div class="error-container">
+            <div class="error-header">
+              <div class="error-icon-wrapper">
+                <svg class="error-icon" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fill-rule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -248,15 +358,35 @@ processedData.analyticsData = {
                   />
                 </svg>
               </div>
-              <div>
-                <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
-                  Content Rendering Error
-                </h3>
-                <p class="mt-1 text-sm text-red-700 dark:text-red-300">
+              <div class="error-content">
+                <h3 class="error-title">Content Rendering Error</h3>
+                <p class="error-description">
                   There was an issue rendering this article. The content may
                   contain invalid MDX syntax or missing components.
                 </p>
+                <details class="error-details">
+                  <summary class="error-summary">
+                    Show Technical Details
+                  </summary>
+                  <div class="error-stack">
+                    <pre>
+                      <code>{renderError.message}</code>
+                    </pre>
+                  </div>
+                </details>
               </div>
+            </div>
+
+            <div class="error-actions">
+              <a href="/blog" class="error-button primary">
+                ← Back to Blog
+              </a>
+              <button
+                onclick="window.location.reload()"
+                class="error-button secondary"
+              >
+                Try Again
+              </button>
             </div>
           </div>
         </div>
@@ -267,24 +397,133 @@ processedData.analyticsData = {
   }
 </BlogPost>
 
+<!-- Enhanced Analytics Script -->
 <script
   is:inline
   define:vars={{
     analyticsData: processedData.analyticsData,
     navigationContext: processedData.navigationContext,
+    postSlug: processedData.slug,
+    postTitle: processedData.title,
   }}
 >
   if (typeof window !== "undefined") {
+    // Performance monitoring
     window.addEventListener("load", () => {
       const loadTime = performance.now();
 
+      // Google Analytics 4
       if (window.gtag) {
-        window.gtag("event", "page_load_time", {
-          value: Math.round(loadTime),
+        window.gtag("event", "page_view", {
+          page_title: postTitle,
+          page_location: window.location.href,
           content_type: analyticsData.contentType,
           content_category: analyticsData.category,
+          content_author: analyticsData.author,
           has_audio: analyticsData.hasAudio,
+          has_featured_image: analyticsData.hasFeaturedImage,
           word_count: analyticsData.wordCount,
+          reading_time: analyticsData.readingTime,
+          tag_count: analyticsData.tagCount,
+        });
+
+        window.gtag("event", "timing_complete", {
+          name: "page_load_time",
+          value: Math.round(loadTime),
+          event_category: "Performance",
+          event_label: postSlug,
+        });
+      }
+
+      // Reading progress tracking
+      let readingStartTime = Date.now();
+      let maxScrollDepth = 0;
+      let hasStartedReading = false;
+
+      function trackScrollDepth() {
+        const scrollTop =
+          window.pageYOffset || document.documentElement.scrollTop;
+        const scrollHeight =
+          document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPercent =
+          scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+
+        maxScrollDepth = Math.max(maxScrollDepth, scrollPercent);
+
+        // Mark as started reading when user scrolls past 10%
+        if (!hasStartedReading && scrollPercent > 10) {
+          hasStartedReading = true;
+          readingStartTime = Date.now();
+
+          if (window.gtag) {
+            window.gtag("event", "reading_start", {
+              content_type: analyticsData.contentType,
+              content_category: analyticsData.category,
+            });
+          }
+        }
+
+        // Track reading milestones
+        const milestones = [25, 50, 75, 90];
+        milestones.forEach((milestone) => {
+          if (
+            scrollPercent >= milestone &&
+            !window[`milestone_${milestone}_tracked`]
+          ) {
+            window[`milestone_${milestone}_tracked`] = true;
+
+            if (window.gtag) {
+              window.gtag("event", "reading_progress", {
+                event_category: "Engagement",
+                event_label: `${milestone}%`,
+                value: milestone,
+                content_type: analyticsData.contentType,
+              });
+            }
+          }
+        });
+      }
+
+      // Track reading completion on page unload
+      window.addEventListener("beforeunload", () => {
+        if (hasStartedReading) {
+          const readingTime = Math.round(
+            (Date.now() - readingStartTime) / 1000
+          );
+
+          if (window.gtag) {
+            window.gtag("event", "reading_complete", {
+              event_category: "Engagement",
+              reading_time: readingTime,
+              scroll_depth: Math.round(maxScrollDepth),
+              content_type: analyticsData.contentType,
+              estimated_reading_time: analyticsData.readingTime * 60,
+            });
+          }
+        }
+      });
+
+      // Throttled scroll tracking
+      let scrollTimeout;
+      window.addEventListener(
+        "scroll",
+        () => {
+          if (scrollTimeout) clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(trackScrollDepth, 100);
+        },
+        { passive: true }
+      );
+
+      console.log("📊 Analytics initialized for:", postTitle);
+    });
+
+    // Error tracking
+    window.addEventListener("error", (e) => {
+      if (window.gtag) {
+        window.gtag("event", "exception", {
+          description: e.message,
+          fatal: false,
+          page_title: postTitle,
         });
       }
     });
@@ -292,9 +531,266 @@ processedData.analyticsData = {
 </script>
 
 <style>
+  /* CSS Custom Properties for Consistent Design */
+  :root {
+    --tinkbyte-radius: 0px;
+    --tinkbyte-radius-sm: 0px;
+    --tinkbyte-radius-md: 0px;
+    --tinkbyte-radius-lg: 0px;
+    --tinkbyte-radius-card: 0px;
+    --tinkbyte-radius-button: 0px;
+  }
+
+  /* Enhanced Error Boundary Styles */
   .content-error-boundary {
-    min-height: 50vh;
+    min-height: 60vh;
     display: flex;
     align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+  }
+
+  .error-container {
+    background: #fef2f2;
+    border: 2px solid #fecaca;
+    border-radius: var(--tinkbyte-radius-card);
+    padding: 2rem;
+    max-width: 600px;
+    width: 100%;
+  }
+
+  :global(.dark) .error-container {
+    background: rgba(127, 29, 29, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  .error-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .error-icon-wrapper {
+    flex-shrink: 0;
+    padding: 0.5rem;
+    background: #fee2e2;
+    border-radius: var(--tinkbyte-radius-button);
+  }
+
+  :global(.dark) .error-icon-wrapper {
+    background: rgba(239, 68, 68, 0.2);
+  }
+
+  .error-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #dc2626;
+  }
+
+  :global(.dark) .error-icon {
+    color: #f87171;
+  }
+
+  .error-content {
+    flex: 1;
+  }
+
+  .error-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #991b1b;
+    margin-bottom: 0.5rem;
+  }
+
+  :global(.dark) .error-title {
+    color: #fca5a5;
+  }
+
+  .error-description {
+    color: #7f1d1d;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+
+  :global(.dark) .error-description {
+    color: #fecaca;
+  }
+
+  .error-details {
+    margin-top: 1rem;
+  }
+
+  .error-summary {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #991b1b;
+    cursor: pointer;
+    padding: 0.5rem;
+    background: #fee2e2;
+    border-radius: var(--tinkbyte-radius-sm);
+    border: none;
+  }
+
+  :global(.dark) .error-summary {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .error-summary:hover {
+    background: #fecaca;
+  }
+
+  :global(.dark) .error-summary:hover {
+    background: rgba(239, 68, 68, 0.2);
+  }
+
+  .error-stack {
+    margin-top: 0.5rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--tinkbyte-radius-sm);
+    overflow-x: auto;
+  }
+
+  :global(.dark) .error-stack {
+    background: rgba(17, 24, 39, 0.5);
+    border-color: rgba(75, 85, 99, 0.5);
+  }
+
+  .error-stack pre {
+    margin: 0;
+    font-size: 0.75rem;
+    font-family: "Fira Code", "Monaco", "Cascadia Code", monospace;
+    color: #374151;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  :global(.dark) .error-stack pre {
+    color: #d1d5db;
+  }
+
+  .error-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .error-button {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--tinkbyte-radius-button);
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+  }
+
+  .error-button.primary {
+    background: #dc2626;
+    color: white;
+  }
+
+  .error-button.primary:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+  }
+
+  .error-button.secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+  }
+
+  .error-button.secondary:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+  }
+
+  :global(.dark) .error-button.primary {
+    background: #ef4444;
+  }
+
+  :global(.dark) .error-button.primary:hover {
+    background: #dc2626;
+  }
+
+  :global(.dark) .error-button.secondary {
+    background: rgba(55, 65, 81, 0.8);
+    color: #d1d5db;
+    border-color: rgba(107, 114, 128, 0.8);
+  }
+
+  :global(.dark) .error-button.secondary:hover {
+    background: rgba(75, 85, 99, 0.8);
+  }
+
+  /* Fallback content styles */
+  .error-fallback-content {
+    text-align: center;
+    padding: 3rem 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .error-fallback-content .error-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .error-fallback-content h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #dc2626;
+    margin-bottom: 1rem;
+  }
+
+  :global(.dark) .error-fallback-content h2 {
+    color: #f87171;
+  }
+
+  .error-fallback-content p {
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  :global(.dark) .error-fallback-content p {
+    color: #9ca3af;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .error-container {
+      padding: 1.5rem;
+      margin: 1rem;
+    }
+
+    .error-header {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .error-actions {
+      justify-content: center;
+    }
+
+    .error-button {
+      flex: 1;
+      min-width: 120px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .error-actions {
+      flex-direction: column;
+    }
+
+    .error-button {
+      width: 100%;
+    }
   }
 </style>

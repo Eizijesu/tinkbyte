@@ -1,5 +1,5 @@
 ---
-// src/pages/legal/[slug].astro - Fixed TypeScript errors
+// src/pages/legal/[slug].astro - Fixed with simple sidebar navigation
 import Layout from "../../layouts/Layout.astro";
 import { getCollection, type CollectionEntry } from "astro:content";
 
@@ -11,7 +11,6 @@ export async function getStaticPaths() {
   }));
 }
 
-// Fix: Properly type the page prop
 type Props = {
   page: CollectionEntry<"legal">;
 };
@@ -33,6 +32,28 @@ const lastUpdated = page.data.updatedDate
 
 const pageTitle = page.data.seo?.title || `${page.data.title} | TinkByte`;
 const pageDescription = page.data.seo?.description || page.data.description;
+
+// Get all legal pages for navigation
+const allLegalPages = await getCollection("legal");
+
+// Simple legal navigation items
+const legalNavItems = [
+  {
+    title: "Terms",
+    slug: "terms-of-service",
+    lastRevised: "05-06-2024",
+  },
+  {
+    title: "Privacy Policy",
+    slug: "privacy-policy",
+    lastRevised: "05-06-2024",
+  },
+  {
+    title: "Cookie Policy",
+    slug: "cookie-policy",
+    lastRevised: "21-01-2025",
+  },
+];
 
 // Icon mapping
 const getIcon = (pageType: string) => {
@@ -68,72 +89,101 @@ const getGradient = (pageType: string) => {
 
 <Layout title={pageTitle} description={pageDescription}>
   <div class="legal-page-container">
-    <div class="max-w-4xl mx-auto py-12 lg:py-16 px-4 sm:px-6">
-      <!-- Breadcrumb -->
-      <nav class="breadcrumb mb-8">
-        <a href="/" class="breadcrumb-link">Home</a>
-        <span class="breadcrumb-separator">/</span>
-        <a href="/legal" class="breadcrumb-link">Legal</a>
-        <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">{page.data.title}</span>
-      </nav>
-
-      <!-- Header -->
-      <header class="legal-page-header">
-        <div class="header-decoration">
-          <div
-            class="decoration-circle"
-            style={`background: ${getGradient(page.data.pageType)}`}
-          >
-            <i class={getIcon(page.data.pageType) + " text-white text-2xl"}></i>
+    <div class="legal-page-layout">
+      <!-- Main Content -->
+      <main class="legal-content-main">
+        <!-- Header -->
+        <header class="legal-page-header">
+          <div class="header-decoration">
+            <div
+              class="decoration-circle"
+              style={`background: ${getGradient(page.data.pageType)}`}
+            >
+              <i class={getIcon(page.data.pageType) + " text-white text-2xl"}
+              ></i>
+            </div>
+            <div class="decoration-line"></div>
           </div>
-          <div class="decoration-line"></div>
+
+          <h1 class="legal-page-title">
+            <span class="title-icon">
+              <i class={getIcon(page.data.pageType)}></i>
+            </span>
+            {page.data.title}
+          </h1>
+
+          <div class="last-updated-badge">
+            <i class="fas fa-calendar-alt mr-2"></i>
+            Last updated: {lastUpdated}
+          </div>
+
+          <p class="legal-page-subtitle">
+            {page.data.description}
+          </p>
+        </header>
+
+        <!-- Content -->
+        <div class="legal-content">
+          <div class="prose-content">
+            <Content />
+          </div>
         </div>
 
-        <h1 class="legal-page-title">
-          <span class="title-icon">
-            <i class={getIcon(page.data.pageType)}></i>
-          </span>
-          {page.data.title}
-        </h1>
+        <!-- Navigation -->
+        <nav class="legal-navigation">
+          <a href="/legal" class="nav-button secondary">
+            <i class="fas fa-arrow-left"></i>
+            Back to Legal
+          </a>
+          <button
+            onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+            class="nav-button primary"
+          >
+            <i class="fas fa-arrow-up"></i>
+            Back to Top
+          </button>
+        </nav>
+      </main>
 
-        <div class="last-updated-badge">
-          <i class="fas fa-calendar-alt mr-2"></i>
-          Last updated: {lastUpdated}
+      <!-- Simple Sidebar Navigation -->
+      <aside class="legal-nav-sidebar">
+        <div class="nav-header">
+          <h3 class="nav-title">ON THIS PAGE</h3>
         </div>
 
-        <p class="legal-page-subtitle">
-          {page.data.description}
-        </p>
-      </header>
-
-      <!-- Content -->
-      <div class="legal-content">
-        <div class="prose-content">
-          <Content />
+        <div class="nav-items">
+          {
+            legalNavItems.map((item) => {
+              const isActive = page.slug === item.slug;
+              return (
+                <a
+                  href={`/legal/${item.slug}`}
+                  class={`nav-item ${isActive ? "active" : ""}`}
+                >
+                  <span class="nav-text">{item.title}</span>
+                  <span class="nav-date">Last revised: {item.lastRevised}</span>
+                </a>
+              );
+            })
+          }
         </div>
-      </div>
-
-      <!-- Navigation -->
-      <nav class="legal-navigation">
-        <a href="/legal" class="nav-button secondary">
-          <i class="fas fa-arrow-left"></i>
-          Back to Legal
-        </a>
-        <button
-          onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
-          class="nav-button primary"
-        >
-          <i class="fas fa-arrow-up"></i>
-          Back to Top
-        </button>
-      </nav>
+      </aside>
     </div>
   </div>
 </Layout>
 
 <style>
-  /* Legal Page Styles - Fixed with squared design */
+  /* CSS Custom Properties for Consistent Square Design */
+  :root {
+    --tinkbyte-radius: 0px;
+    --tinkbyte-radius-sm: 0px;
+    --tinkbyte-radius-md: 0px;
+    --tinkbyte-radius-lg: 0px;
+    --tinkbyte-radius-card: 0px;
+    --tinkbyte-radius-button: 0px;
+  }
+
+  /* Layout Container */
   .legal-page-container {
     font-family: "Space Grotesk", sans-serif;
     background: var(--color-bg-primary);
@@ -142,35 +192,138 @@ const getGradient = (pageType: string) => {
     transition: all 0.3s ease;
   }
 
-  /* Breadcrumb */
-  .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  .legal-page-layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 250px;
+    gap: 3rem;
+    padding: 3rem 2rem;
+  }
+
+  /* Main Content */
+  .legal-content-main {
+    min-width: 0; /* Prevents overflow */
+  }
+
+  /* FIXED: Simple Sidebar Navigation with proper dark mode */
+  .legal-nav-sidebar {
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--tinkbyte-radius-card);
+    padding: 1.5rem;
     font-size: 0.875rem;
-    color: var(--color-text-secondary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  .breadcrumb-link {
-    color: #243788;
+  :global(.dark) .legal-nav-sidebar {
+    background: rgb(30, 41, 59); /* Darker background for dark mode */
+    border-color: rgb(51, 65, 85);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .nav-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  :global(.dark) .nav-header {
+    border-bottom-color: rgb(51, 65, 85);
+  }
+
+  .nav-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0;
+  }
+
+  :global(.dark) .nav-title {
+    color: rgb(148, 163, 184); /* Lighter text for dark mode */
+  }
+
+  .nav-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .nav-item {
+    display: block;
+    padding: 0.75rem 0;
+    color: var(--color-text-secondary);
     text-decoration: none;
-    transition: color 0.3s ease;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    padding-left: 0.75rem;
+    border-radius: var(--tinkbyte-radius-sm);
   }
 
-  .breadcrumb-link:hover {
-    color: #1d4ed8;
-  }
-
-  .breadcrumb-separator {
-    color: var(--color-text-secondary);
-  }
-
-  .breadcrumb-current {
-    font-weight: 600;
+  .nav-item:hover {
     color: var(--color-text-primary);
+    border-left-color: #243788;
+    background: rgba(36, 55, 136, 0.05);
+    margin-left: -0.75rem;
+    padding-left: 1.5rem;
   }
 
-  /* Enhanced Header */
+  :global(.dark) .nav-item {
+    color: rgb(156, 163, 175); /* Better contrast in dark mode */
+  }
+
+  :global(.dark) .nav-item:hover {
+    color: rgb(243, 244, 246); /* Brighter text on hover */
+    border-left-color: rgb(59, 130, 246); /* Blue accent for dark mode */
+    background: rgba(59, 130, 246, 0.1);
+  }
+
+  .nav-item.active {
+    color: #243788;
+    font-weight: 600;
+    border-left-color: #243788;
+    background: rgba(36, 55, 136, 0.1);
+    margin-left: -0.75rem;
+    padding-left: 1.5rem;
+  }
+
+  :global(.dark) .nav-item.active {
+    color: rgb(147, 197, 253); /* Light blue for active state */
+    border-left-color: rgb(59, 130, 246);
+    background: rgba(59, 130, 246, 0.15);
+  }
+
+  .nav-text {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+
+  :global(.dark) .nav-item.active .nav-text {
+    font-weight: 700;
+  }
+
+  .nav-date {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-weight: 400;
+  }
+
+  :global(.dark) .nav-date {
+    color: rgb(107, 114, 128); /* Muted text for dates in dark mode */
+  }
+
+  :global(.dark) .nav-item.active .nav-date {
+    color: rgb(156, 163, 175); /* Slightly brighter for active item */
+  }
+
+  /* Header */
   .legal-page-header {
     text-align: center;
     margin-bottom: 4rem;
@@ -185,6 +338,7 @@ const getGradient = (pageType: string) => {
   .decoration-circle {
     width: 80px;
     height: 80px;
+    border-radius: var(--tinkbyte-radius-card);
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -197,6 +351,16 @@ const getGradient = (pageType: string) => {
     height: 2px;
     background: linear-gradient(90deg, transparent, #243788, transparent);
     margin: 1rem auto 0;
+    border-radius: var(--tinkbyte-radius-sm);
+  }
+
+  :global(.dark) .decoration-line {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(59, 130, 246),
+      transparent
+    );
   }
 
   .legal-page-title {
@@ -217,12 +381,17 @@ const getGradient = (pageType: string) => {
     color: #243788;
   }
 
+  :global(.dark) .title-icon {
+    color: rgb(59, 130, 246);
+  }
+
   .last-updated-badge {
     display: inline-flex;
     align-items: center;
     padding: 0.75rem 1.5rem;
     background: var(--color-bg-primary);
     border: 2px solid var(--color-border);
+    border-radius: var(--tinkbyte-radius-button);
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--color-text-secondary);
@@ -246,10 +415,11 @@ const getGradient = (pageType: string) => {
     transition: color 0.3s ease;
   }
 
-  /* Enhanced Content Styling */
+  /* Content */
   .legal-content {
     background: var(--color-bg-primary);
     border: 2px solid var(--color-border);
+    border-radius: var(--tinkbyte-radius-card);
     padding: 3rem;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
@@ -266,7 +436,7 @@ const getGradient = (pageType: string) => {
     transition: color 0.3s ease;
   }
 
-  /* TinaCMS Content Styling - FIXED BULLETS */
+  /* Prose Content Styling */
   .prose-content :global(h1),
   .prose-content :global(h2),
   .prose-content :global(h3),
@@ -289,6 +459,27 @@ const getGradient = (pageType: string) => {
   .prose-content :global(h2) {
     font-size: 1.75rem;
     color: #243788;
+    position: relative;
+    padding-left: 1rem;
+  }
+
+  :global(.dark) .prose-content :global(h2) {
+    color: rgb(59, 130, 246);
+  }
+
+  .prose-content :global(h2::before) {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(135deg, #243788, #3b82f6);
+    border-radius: var(--tinkbyte-radius-sm);
+  }
+
+  :global(.dark) .prose-content :global(h2::before) {
+    background: linear-gradient(135deg, rgb(59, 130, 246), rgb(147, 197, 253));
   }
 
   .prose-content :global(h3) {
@@ -298,37 +489,74 @@ const getGradient = (pageType: string) => {
   .prose-content :global(p) {
     margin-bottom: 1.5rem;
     line-height: 1.7;
+    text-align: justify;
   }
 
-  /* FIXED: Proper bullet point styling */
+  /* Perfect bullet point styling */
   .prose-content :global(ul) {
-    list-style-type: disc !important;
+    list-style-type: none !important;
     margin: 1.5rem 0 !important;
-    padding-left: 2rem !important;
+    padding-left: 0 !important;
   }
 
   .prose-content :global(ol) {
-    list-style-type: decimal !important;
+    list-style-type: none !important;
     margin: 1.5rem 0 !important;
-    padding-left: 2rem !important;
+    padding-left: 0 !important;
+    counter-reset: list-counter;
   }
 
-  .prose-content :global(li) {
+  .prose-content :global(ul li) {
     margin-bottom: 0.75rem !important;
     line-height: 1.6 !important;
-    display: list-item !important;
-    padding-left: 0.5rem !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    padding-left: 0 !important;
   }
 
-  /* Make sure bullets are visible */
-  .prose-content :global(ul li::marker) {
-    color: #243788 !important;
-    font-weight: bold !important;
+  .prose-content :global(ol li) {
+    margin-bottom: 0.75rem !important;
+    line-height: 1.6 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+    padding-left: 0 !important;
+    counter-increment: list-counter;
   }
 
-  .prose-content :global(ol li::marker) {
-    color: #243788 !important;
-    font-weight: bold !important;
+  .prose-content :global(ul li::before) {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #243788;
+    border-radius: var(--tinkbyte-radius-sm);
+    flex-shrink: 0;
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .prose-content :global(ul li::before) {
+    background: rgb(59, 130, 246);
+  }
+
+  .prose-content :global(ol li::before) {
+    content: counter(list-counter);
+    background: #243788;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--tinkbyte-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+  }
+
+  :global(.dark) .prose-content :global(ol li::before) {
+    background: rgb(59, 130, 246);
   }
 
   .prose-content :global(strong) {
@@ -340,20 +568,53 @@ const getGradient = (pageType: string) => {
     color: #243788;
     text-decoration: underline;
     transition: color 0.3s ease;
+    font-weight: 600;
+  }
+
+  :global(.dark) .prose-content :global(a) {
+    color: rgb(59, 130, 246);
   }
 
   .prose-content :global(a:hover) {
     color: #1e40af;
+    background: rgba(36, 55, 136, 0.1);
+    padding: 0 2px;
+    border-radius: var(--tinkbyte-radius-sm);
+  }
+
+  :global(.dark) .prose-content :global(a:hover) {
+    color: rgb(147, 197, 253);
+    background: rgba(59, 130, 246, 0.1);
   }
 
   .prose-content :global(blockquote) {
     border-left: 4px solid #243788;
-    padding-left: 1.5rem;
+    padding: 1.5rem;
     margin: 2rem 0;
     font-style: italic;
     color: var(--color-text-secondary);
     background: var(--color-bg-secondary);
-    padding: 1.5rem;
+    border-radius: var(--tinkbyte-radius-card);
+    position: relative;
+  }
+
+  :global(.dark) .prose-content :global(blockquote) {
+    border-left-color: rgb(59, 130, 246);
+  }
+
+  .prose-content :global(blockquote::before) {
+    content: "\201C";
+    font-size: 4rem;
+    color: #243788;
+    position: absolute;
+    top: -1rem;
+    left: 1rem;
+    font-family: Georgia, serif;
+    opacity: 0.3;
+  }
+
+  :global(.dark) .prose-content :global(blockquote::before) {
+    color: rgb(59, 130, 246);
   }
 
   .prose-content :global(code) {
@@ -362,6 +623,13 @@ const getGradient = (pageType: string) => {
     font-family: "Courier New", monospace;
     font-size: 0.875rem;
     border: 1px solid var(--color-border);
+    border-radius: var(--tinkbyte-radius-sm);
+    color: #243788;
+    font-weight: 600;
+  }
+
+  :global(.dark) .prose-content :global(code) {
+    color: rgb(59, 130, 246);
   }
 
   /* Navigation */
@@ -371,7 +639,7 @@ const getGradient = (pageType: string) => {
     align-items: center;
     margin-top: 3rem;
     padding-top: 2rem;
-    border-top: 1px solid var(--color-border);
+    border-top: 2px solid var(--color-border);
   }
 
   .nav-button {
@@ -382,6 +650,7 @@ const getGradient = (pageType: string) => {
     font-weight: 600;
     text-decoration: none;
     border: 2px solid;
+    border-radius: var(--tinkbyte-radius-button);
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -398,6 +667,18 @@ const getGradient = (pageType: string) => {
   .nav-button.primary:hover {
     background: #243788;
     color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(36, 55, 136, 0.25);
+  }
+
+  :global(.dark) .nav-button.primary {
+    color: rgb(59, 130, 246);
+    border-color: rgb(59, 130, 246);
+  }
+
+  :global(.dark) .nav-button.primary:hover {
+    background: rgb(59, 130, 246);
+    color: rgb(17, 24, 39);
   }
 
   .nav-button.secondary {
@@ -408,10 +689,33 @@ const getGradient = (pageType: string) => {
   .nav-button.secondary:hover {
     background: var(--color-bg-secondary);
     color: var(--color-text-primary);
+    border-color: #243788;
+    transform: translateY(-2px);
   }
 
-  /* Mobile Responsiveness */
+  :global(.dark) .nav-button.secondary:hover {
+    border-color: rgb(59, 130, 246);
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 1024px) {
+    .legal-page-layout {
+      grid-template-columns: 1fr 220px;
+      gap: 2rem;
+    }
+  }
+
   @media (max-width: 768px) {
+    .legal-page-layout {
+      grid-template-columns: 1fr;
+      gap: 0;
+      padding: 2rem 1rem;
+    }
+
+    .legal-nav-sidebar {
+      display: none; /* Hidden on mobile */
+    }
+
     .legal-content {
       padding: 2rem;
     }
@@ -421,6 +725,11 @@ const getGradient = (pageType: string) => {
       gap: 1rem;
     }
 
+    .nav-button {
+      width: 100%;
+      justify-content: center;
+    }
+
     .legal-page-title {
       flex-direction: column;
       gap: 0.5rem;
@@ -428,12 +737,21 @@ const getGradient = (pageType: string) => {
   }
 
   @media (max-width: 480px) {
+    .legal-page-layout {
+      padding: 1.5rem 0.75rem;
+    }
+
     .legal-content {
       padding: 1.5rem;
     }
 
     .prose-content {
       font-size: 1rem;
+    }
+
+    .decoration-circle {
+      width: 60px;
+      height: 60px;
     }
   }
 </style>

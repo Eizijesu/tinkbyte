@@ -1,9 +1,11 @@
 ---
-// src/pages/auth/admin-signout.astro - SIMPLE VERSION
+// src/pages/auth/admin-signout.astro - FIXED VERSION
+import { adminAuthManager } from "../../lib/admin/auth.js";
 ---
 
 <script>
-  // Simple admin sign out
+  import { adminAuthManager } from "../../lib/admin/auth.js";
+
   async function performAdminSignOut() {
     try {
       console.log("🔄 Signing out...");
@@ -21,13 +23,12 @@
 
       console.log("✅ Storage cleared");
 
-      // Try to sign out from Supabase (but don't wait too long)
+      // Try to sign out from admin auth manager
       try {
-        const authModule = await import("../../lib/admin/auth.js");
-        await authModule.adminAuthManager.signOut();
-        console.log("✅ Supabase sign out completed");
+        await adminAuthManager.signOut();
+        console.log("✅ Admin auth manager sign out completed");
       } catch (error) {
-        console.log("⚠️ Supabase sign out failed, continuing anyway");
+        console.log("⚠️ Admin auth manager sign out failed, continuing anyway");
       }
 
       // Redirect

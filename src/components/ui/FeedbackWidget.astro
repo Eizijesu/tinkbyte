@@ -147,7 +147,6 @@ const {
   </div>
 </div>
 
-<!-- Keep all your existing styles exactly the same -->
 <style>
   /* All your existing CSS stays exactly the same */
   .feedback-widget {
@@ -632,6 +631,8 @@ const {
 </style>
 
 <script>
+// Add this import at the top
+import { authManager } from "../../lib/auth.js";
   declare global {
     interface Window {
       gtag?: (...args: any[]) => void;
@@ -670,7 +671,6 @@ const {
     private async initializeAuth() {
       try {
         // Use your existing auth manager singleton
-        const { authManager } = await import("../../lib/auth.js");
         this.authManager = authManager;
 
         // Initialize if not already done

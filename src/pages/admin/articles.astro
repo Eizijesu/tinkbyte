@@ -2,6 +2,8 @@
 // src/pages/admin/articles.astro - ARTICLES MANAGEMENT
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import ArticleEngagementModal from "../../components/admin/ArticleEngagementModal.astro";
+import { supabase } from "../../lib/supabase.js";
+import { config } from "../../lib/config.js";
 ---
 
 <AdminLayout title="Articles Management - TinkByte Admin">
@@ -389,10 +391,13 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
 </AdminLayout>
 
 <script>
+  // Re-import everything needed in the script
+  import { supabase } from "../../lib/supabase.js";
+  import { config } from "../../lib/config.js";
   import { adminAPIManager } from "../../lib/admin-api.js";
   import { adminAuthManager } from "../../lib/admin/auth.js";
 
-  // TypeScript interfaces remain the same...
+  // TypeScript interfaces
   interface Article {
     id: string;
     slug: string;
@@ -461,7 +466,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
     try {
       console.log("🚀 Articles management initializing...");
 
-      // Verify authentication first
       await adminAuthManager.initialize();
       const user = await adminAuthManager.getCurrentUser();
 
@@ -480,7 +484,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
         "Failed to initialize articles management. Please refresh and try again."
       );
 
-      // Redirect to sign in if authentication failed
       if (error.message.includes("Authentication")) {
         setTimeout(() => {
           window.location.href = `/auth/admin-signin?error=${encodeURIComponent(error.message)}`;
@@ -542,7 +545,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
         sortOrder,
       };
 
-      // Use singleton manager
       const result = await adminAPIManager.getArticles(options);
 
       if (result.success) {
@@ -598,7 +600,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
     try {
       console.log("📈 Updating stats...");
 
-      // Get counts for different article types using singleton manager
       const [totalResult, publishedResult, draftResult, featuredResult] =
         await Promise.all([
           adminAPIManager.getArticles({ limit: 1 }),
@@ -612,7 +613,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
       const draftCount = draftResult.pagination?.total || 0;
       const featuredCount = featuredResult.pagination?.total || 0;
 
-      // Update stat elements
       const elements = {
         totalArticles: document.getElementById("total-articles"),
         publishedArticles: document.getElementById("published-articles"),
@@ -701,7 +701,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
   }
 
   function populateFilterOptions() {
-    // Populate category filter
     const categoryFilter = document.getElementById(
       "category-filter"
     ) as HTMLSelectElement;
@@ -720,7 +719,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
         '<option value="">Select Category</option>' + categoryOptions;
     }
 
-    // Populate author filter
     const authorFilter = document.getElementById(
       "author-filter"
     ) as HTMLSelectElement;
@@ -748,16 +746,16 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
 
     if (articles.length === 0) {
       articlesGrid.innerHTML = `
-      <div class="empty-state">
-        <i class="fas fa-file-alt"></i>
-        <h3>No articles found</h3>
-        <p>Start creating content for your community</p>
-        <button class="create-first-article-btn" id="create-first-article">
-          <i class="fas fa-plus"></i>
-          Create First Article
-        </button>
-      </div>
-    `;
+        <div class="empty-state">
+          <i class="fas fa-file-alt"></i>
+          <h3>No articles found</h3>
+          <p>Start creating content for your community</p>
+          <button class="create-first-article-btn" id="create-first-article">
+            <i class="fas fa-plus"></i>
+            Create First Article
+          </button>
+        </div>
+      `;
 
       const createFirstBtn = document.getElementById(
         "create-first-article"
@@ -769,164 +767,160 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
     articlesGrid.innerHTML = articles
       .map(
         (article) => `
-    <div class="article-card enhanced" data-article-id="${article.id}">
-      <div class="article-select">
-        <input type="checkbox" class="article-checkbox" value="${article.id}" />
-      </div>
-      
-      ${
-        article.featured_image_url
-          ? `
-        <div class="article-image">
-          <img src="${article.featured_image_url}" alt="${article.title}" loading="lazy" />
-          ${article.is_featured ? '<div class="featured-badge"><i class="fas fa-star"></i></div>' : ""}
-          ${article.is_premium ? '<div class="premium-badge"><i class="fas fa-crown"></i></div>' : ""}
-        </div>
-      `
-          : `
-        <div class="article-image-placeholder">
-          <i class="fas fa-file-alt"></i>
-          ${article.is_featured ? '<div class="featured-badge"><i class="fas fa-star"></i></div>' : ""}
-          ${article.is_premium ? '<div class="premium-badge"><i class="fas fa-crown"></i></div>' : ""}
-        </div>
-      `
-      }
-
-      <div class="article-content">
-        <div class="article-meta">
-          ${
-            article.categories
-              ? `
-            <span class="category-badge" style="background: ${article.categories.color || "#4285f4"}20; color: ${article.categories.color || "#4285f4"};">
-              ${article.categories.name}
-            </span>
-          `
-              : ""
-          }
-          
-          <span class="status-badge ${article.is_published ? "published" : "draft"}">
-            ${article.is_published ? "Published" : "Draft"}
-          </span>
-        </div>
-
-        <h3 class="article-title">${article.title}</h3>
-        
-        ${article.subtitle ? `<p class="article-subtitle">${article.subtitle}</p>` : ""}
-        
-        ${article.excerpt ? `<p class="article-excerpt">${article.excerpt}</p>` : ""}
-
-        <div class="article-details">
-          ${
-            article.authors
-              ? `
-            <span class="author-info">
-              <i class="fas fa-user"></i>
-              ${article.authors.name}
-            </span>
-          `
-              : ""
-          }
+        <div class="article-card enhanced" data-article-id="${article.id}">
+          <div class="article-select">
+            <input type="checkbox" class="article-checkbox" value="${article.id}" />
+          </div>
           
           ${
-            article.read_time_minutes
+            article.featured_image_url
               ? `
-            <span class="read-time">
-              <i class="fas fa-clock"></i>
-              ${article.read_time_minutes} min read
-            </span>
+            <div class="article-image">
+              <img src="${article.featured_image_url}" alt="${article.title}" loading="lazy" />
+              ${article.is_featured ? '<div class="featured-badge"><i class="fas fa-star"></i></div>' : ""}
+              ${article.is_premium ? '<div class="premium-badge"><i class="fas fa-crown"></i></div>' : ""}
+            </div>
           `
-              : ""
+              : `
+            <div class="article-image-placeholder">
+              <i class="fas fa-file-alt"></i>
+              ${article.is_featured ? '<div class="featured-badge"><i class="fas fa-star"></i></div>' : ""}
+              ${article.is_premium ? '<div class="premium-badge"><i class="fas fa-crown"></i></div>' : ""}
+            </div>
+          `
           }
-          
-          <span class="publish-date">
-            <i class="fas fa-calendar"></i>
-            ${article.published_at ? new Date(article.published_at).toLocaleDateString() : new Date(article.created_at).toLocaleDateString()}
-          </span>
-        </div>
 
-        <!-- Enhanced Stats Section -->
-        <div class="article-stats-enhanced">
-          <div class="stats-row primary">
-            <div class="stat-item views">
+          <div class="article-content">
+            <div class="article-meta">
+              ${
+                article.categories
+                  ? `
+                <span class="category-badge" style="background: ${article.categories.color || "#4285f4"}20; color: ${article.categories.color || "#4285f4"};">
+                  ${article.categories.name}
+                </span>
+              `
+                  : ""
+              }
+              
+              <span class="status-badge ${article.is_published ? "published" : "draft"}">
+                ${article.is_published ? "Published" : "Draft"}
+              </span>
+            </div>
+
+            <h3 class="article-title">${article.title}</h3>
+            
+            ${article.subtitle ? `<p class="article-subtitle">${article.subtitle}</p>` : ""}
+            
+            ${article.excerpt ? `<p class="article-excerpt">${article.excerpt}</p>` : ""}
+
+            <div class="article-details">
+              ${
+                article.authors
+                  ? `
+                <span class="author-info">
+                  <i class="fas fa-user"></i>
+                  ${article.authors.name}
+                </span>
+              `
+                  : ""
+              }
+              
+              ${
+                article.read_time_minutes
+                  ? `
+                <span class="read-time">
+                  <i class="fas fa-clock"></i>
+                  ${article.read_time_minutes} min read
+                </span>
+              `
+                  : ""
+              }
+              
+              <span class="publish-date">
+                <i class="fas fa-calendar"></i>
+                ${article.published_at ? new Date(article.published_at).toLocaleDateString() : new Date(article.created_at).toLocaleDateString()}
+              </span>
+            </div>
+
+            <div class="article-stats-enhanced">
+              <div class="stats-row primary">
+                <div class="stat-item views">
+                  <i class="fas fa-eye"></i>
+                  <span class="stat-number">${article.view_count || 0}</span>
+                  <span class="stat-label">views</span>
+                </div>
+                <div class="stat-item likes">
+                  <i class="fas fa-heart"></i>
+                  <span class="stat-number">${article.like_count || 0}</span>
+                  <span class="stat-label">likes</span>
+                </div>
+                <div class="stat-item comments">
+                  <i class="fas fa-comment"></i>
+                  <span class="stat-number">${article.comment_count || 0}</span>
+                  <span class="stat-label">comments</span>
+                </div>
+              </div>
+              
+              <div class="engagement-details" id="engagement-${article.slug}" style="display: none;">
+                <div class="loading-engagement">
+                  <div class="spinner-small"></div>
+                  <span>Loading engagement data...</span>
+                </div>
+              </div>
+              
+              <button class="engagement-toggle" onclick="toggleEngagement('${article.slug}')" data-article-slug="${article.slug}">
+                <i class="fas fa-chart-line"></i>
+                <span>View Detailed Engagement</span>
+                <i class="fas fa-chevron-down toggle-icon"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="article-actions">
+            <button class="action-btn edit" data-action="edit" data-article-id="${article.id}" title="Edit Article">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn preview" data-action="preview" data-article-slug="${article.slug}" title="Preview Article">
               <i class="fas fa-eye"></i>
-              <span class="stat-number">${article.view_count || 0}</span>
-              <span class="stat-label">views</span>
-            </div>
-            <div class="stat-item likes">
-              <i class="fas fa-heart"></i>
-              <span class="stat-number">${article.like_count || 0}</span>
-              <span class="stat-label">likes</span>
-            </div>
-            <div class="stat-item comments">
-              <i class="fas fa-comment"></i>
-              <span class="stat-number">${article.comment_count || 0}</span>
-              <span class="stat-label">comments</span>
-            </div>
+            </button>
+            <button class="action-btn refresh-stats" onclick="refreshArticleStats('${article.id}')" title="Refresh Stats">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+            ${
+              article.is_published
+                ? `
+              <button class="action-btn unpublish" data-action="unpublish" data-article-id="${article.id}" title="Unpublish">
+                <i class="fas fa-eye-slash"></i>
+              </button>
+            `
+                : `
+              <button class="action-btn publish" data-action="publish" data-article-id="${article.id}" title="Publish">
+                <i class="fas fa-globe"></i>
+              </button>
+            `
+            }
+            ${
+              article.is_featured
+                ? `
+              <button class="action-btn unfeature" data-action="unfeature" data-article-id="${article.id}" title="Remove from Featured">
+                <i class="fas fa-star-half-alt"></i>
+              </button>
+            `
+                : `
+              <button class="action-btn feature" data-action="feature" data-article-id="${article.id}" title="Feature Article">
+                <i class="fas fa-star"></i>
+              </button>
+            `
+            }
+            <button class="action-btn delete" data-action="delete" data-article-id="${article.id}" title="Delete Article">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
-          
-          <!-- Engagement Details (Initially Hidden) -->
-          <div class="engagement-details" id="engagement-${article.slug}" style="display: none;">
-            <div class="loading-engagement">
-              <div class="spinner-small"></div>
-              <span>Loading engagement data...</span>
-            </div>
-          </div>
-          
-          <!-- Toggle Button -->
-          <button class="engagement-toggle" onclick="toggleEngagement('${article.slug}')" data-article-slug="${article.slug}">
-            <i class="fas fa-chart-line"></i>
-            <span>View Detailed Engagement</span>
-            <i class="fas fa-chevron-down toggle-icon"></i>
-          </button>
         </div>
-      </div>
-
-      <div class="article-actions">
-        <button class="action-btn edit" data-action="edit" data-article-id="${article.id}" title="Edit Article">
-          <i class="fas fa-edit"></i>
-        </button>
-        <button class="action-btn preview" data-action="preview" data-article-slug="${article.slug}" title="Preview Article">
-          <i class="fas fa-eye"></i>
-        </button>
-        <button class="action-btn refresh-stats" onclick="refreshArticleStats('${article.id}')" title="Refresh Stats">
-          <i class="fas fa-sync-alt"></i>
-        </button>
-        ${
-          article.is_published
-            ? `
-          <button class="action-btn unpublish" data-action="unpublish" data-article-id="${article.id}" title="Unpublish">
-            <i class="fas fa-eye-slash"></i>
-          </button>
-        `
-            : `
-          <button class="action-btn publish" data-action="publish" data-article-id="${article.id}" title="Publish">
-            <i class="fas fa-globe"></i>
-          </button>
-        `
-        }
-        ${
-          article.is_featured
-            ? `
-          <button class="action-btn unfeature" data-action="unfeature" data-article-id="${article.id}" title="Remove from Featured">
-            <i class="fas fa-star-half-alt"></i>
-          </button>
-        `
-            : `
-          <button class="action-btn feature" data-action="feature" data-article-id="${article.id}" title="Feature Article">
-            <i class="fas fa-star"></i>
-          </button>
-        `
-        }
-        <button class="action-btn delete" data-action="delete" data-article-id="${article.id}" title="Delete Article">
-          <i class="fas fa-trash"></i>
-        </button>
-      </div>
-    </div>
-  `
+      `
       )
       .join("");
 
-    // Attach event listeners
     attachActionListeners();
   }
 
@@ -944,12 +938,10 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
 
     container.style.display = "flex";
 
-    // Update info
     const start = (pagination.page - 1) * pagination.limit + 1;
     const end = Math.min(pagination.page * pagination.limit, pagination.total);
     infoElement.textContent = `Showing ${start}-${end} of ${pagination.total} articles`;
 
-    // Generate pagination buttons
     let buttonsHtml = "";
 
     if (pagination.hasPrev) {
@@ -1019,7 +1011,7 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
           if (articleId) await deleteArticle(articleId);
           break;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Article ${action} error:`, error);
       showNotification(
         `Failed to ${action} article: ${error.message}`,
@@ -1040,6 +1032,7 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
     interface Window {
       toggleEngagement: (articleSlug: string) => Promise<void>;
       refreshArticleStats: (articleId: string) => Promise<void>;
+      goToPage: (page: number) => Promise<void>;
     }
   }
 
@@ -1054,19 +1047,16 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
     const isExpanded = detailsElement.style.display !== "none";
 
     if (isExpanded) {
-      // Collapse
       detailsElement.style.display = "none";
       toggleButton.classList.remove("expanded");
       toggleButton.querySelector("span")!.textContent =
         "View Detailed Engagement";
     } else {
-      // Expand and load data
       detailsElement.style.display = "block";
       toggleButton.classList.add("expanded");
       toggleButton.querySelector("span")!.textContent =
         "Hide Engagement Details";
 
-      // Load engagement data if not already loaded
       if (!detailsElement.dataset.loaded) {
         await loadInlineEngagement(articleSlug);
         detailsElement.dataset.loaded = "true";
@@ -1081,11 +1071,9 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
     try {
       console.log(`📊 Loading engagement for article: ${articleSlug}`);
 
-      // Use singleton manager
       const result = await adminAPIManager.getArticleEngagementStats();
 
       if (result.success && result.data) {
-        // Find the specific article data
         const articleData = result.data.find(
           (article: any) => article.slug === articleSlug
         );
@@ -1096,26 +1084,24 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
         }
       }
 
-      // Fallback to basic stats
       console.log("📊 Falling back to basic engagement stats...");
       await loadBasicEngagementStats(detailsElement, articleSlug);
     } catch (error: any) {
       console.error("Engagement loading error:", error);
 
-      // Try basic stats as final fallback
       try {
         await loadBasicEngagementStats(detailsElement, articleSlug);
       } catch (fallbackError) {
         console.error("Fallback engagement loading failed:", fallbackError);
         detailsElement.innerHTML = `
-        <div class="engagement-error">
-          <i class="fas fa-exclamation-triangle"></i>
-          <span>Failed to load engagement data</span>
-          <button onclick="loadInlineEngagement('${articleSlug}')" class="retry-btn-small">
-            <i class="fas fa-redo"></i> Retry
-          </button>
-        </div>
-      `;
+          <div class="engagement-error">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Failed to load engagement data</span>
+            <button onclick="loadInlineEngagement('${articleSlug}')" class="retry-btn-small">
+              <i class="fas fa-redo"></i> Retry
+            </button>
+          </div>
+        `;
       }
     }
   }
@@ -1127,31 +1113,22 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
     try {
       console.log(`📊 Loading basic engagement stats for: ${articleSlug}`);
 
-      // Import supabase and config directly
-      const { supabase } = await import("../../lib/supabase.js");
-      const { config } = await import("../../lib/config.js");
-
-      // Get basic counts directly using supabase
       const queries = await Promise.allSettled([
-        // Article reads
         supabase
           .from("article_reads")
           .select("*", { count: "exact", head: true })
           .eq("article_id", articleSlug),
 
-        // Article likes
         supabase
           .from("article_likes")
           .select("*", { count: "exact", head: true })
           .eq("article_id", articleSlug),
 
-        // Article saves
         supabase
           .from("article_saves")
           .select("*", { count: "exact", head: true })
           .eq("article_id", articleSlug),
 
-        // Article comments
         supabase
           .from("comments")
           .select("*", { count: "exact", head: true })
@@ -1180,93 +1157,93 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
     } catch (error) {
       console.error("Basic engagement loading error:", error);
       detailsElement.innerHTML = `
-      <div class="engagement-error">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>Unable to load engagement data</span>
-        <button onclick="loadInlineEngagement('${articleSlug}')" class="retry-btn-small">
-          <i class="fas fa-redo"></i> Retry
-        </button>
-      </div>
-    `;
+        <div class="engagement-error">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>Unable to load engagement data</span>
+          <button onclick="loadInlineEngagement('${articleSlug}')" class="retry-btn-small">
+            <i class="fas fa-redo"></i> Retry
+          </button>
+        </div>
+      `;
     }
   }
 
   function renderInlineEngagement(container: HTMLElement, articleData: any) {
     container.innerHTML = `
-    <div class="engagement-grid">
-      <div class="engagement-metric">
-        <div class="engagement-metric-number">${articleData.actual_views || 0}</div>
-        <div class="engagement-metric-label">Total Reads</div>
-      </div>
-      <div class="engagement-metric">
-        <div class="engagement-metric-number">${articleData.actual_likes || 0}</div>
-        <div class="engagement-metric-label">Likes</div>
-      </div>
-      <div class="engagement-metric">
-        <div class="engagement-metric-number">${articleData.actual_comments || 0}</div>
-        <div class="engagement-metric-label">Comments</div>
-      </div>
-      <div class="engagement-metric">
-        <div class="engagement-metric-number">${articleData.engagement_score || 0}</div>
-        <div class="engagement-metric-label">Engagement Score</div>
-      </div>
-    </div>
-    
-    <div class="recent-activity">
-      <h5><i class="fas fa-clock"></i> Recent Activity</h5>
-      <div class="activity-list">
-        <div class="activity-item">
-          <div class="activity-avatar">📊</div>
-          <div class="activity-text">Last updated: ${new Date().toLocaleDateString()}</div>
+      <div class="engagement-grid">
+        <div class="engagement-metric">
+          <div class="engagement-metric-number">${articleData.actual_views || 0}</div>
+          <div class="engagement-metric-label">Total Reads</div>
         </div>
-        <div class="activity-item">
-          <div class="activity-avatar">👁️</div>
-          <div class="activity-text">${articleData.actual_views || 0} total views</div>
+        <div class="engagement-metric">
+          <div class="engagement-metric-number">${articleData.actual_likes || 0}</div>
+          <div class="engagement-metric-label">Likes</div>
         </div>
-        <div class="activity-item">
-          <div class="activity-avatar">❤️</div>
-          <div class="activity-text">${articleData.actual_likes || 0} likes received</div>
+        <div class="engagement-metric">
+          <div class="engagement-metric-number">${articleData.actual_comments || 0}</div>
+          <div class="engagement-metric-label">Comments</div>
+        </div>
+        <div class="engagement-metric">
+          <div class="engagement-metric-number">${articleData.engagement_score || 0}</div>
+          <div class="engagement-metric-label">Engagement Score</div>
         </div>
       </div>
-    </div>
-  `;
+      
+      <div class="recent-activity">
+        <h5><i class="fas fa-clock"></i> Recent Activity</h5>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="activity-avatar">📊</div>
+            <div class="activity-text">Last updated: ${new Date().toLocaleDateString()}</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-avatar">👁️</div>
+            <div class="activity-text">${articleData.actual_views || 0} total views</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-avatar">❤️</div>
+            <div class="activity-text">${articleData.actual_likes || 0} likes received</div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   function renderBasicEngagement(container: HTMLElement, stats: any) {
     container.innerHTML = `
-    <div class="engagement-grid">
-      <div class="engagement-metric">
-        <div class="engagement-metric-number">${stats.reads}</div>
-        <div class="engagement-metric-label">Reads</div>
-      </div>
-      <div class="engagement-metric">
-        <div class="engagement-metric-number">${stats.likes}</div>
-        <div class="engagement-metric-label">Likes</div>
-      </div>
-      <div class="engagement-metric">
-        <div class="engagement-metric-number">${stats.saves}</div>
-        <div class="engagement-metric-label">Saves</div>
-      </div>
-      <div class="engagement-metric">
-        <div class="engagement-metric-number">${stats.comments}</div>
-        <div class="engagement-metric-label">Comments</div>
-      </div>
-    </div>
-    
-    <div class="recent-activity">
-      <h5><i class="fas fa-chart-bar"></i> Quick Stats</h5>
-      <div class="activity-list">
-        <div class="activity-item">
-          <div class="activity-avatar">📈</div>
-          <div class="activity-text">Total engagement: ${stats.reads + stats.likes + stats.saves + stats.comments}</div>
+      <div class="engagement-grid">
+        <div class="engagement-metric">
+          <div class="engagement-metric-number">${stats.reads}</div>
+          <div class="engagement-metric-label">Reads</div>
         </div>
-        <div class="activity-item">
-          <div class="activity-avatar">🎯</div>
-          <div class="activity-text">Engagement rate: ${stats.reads > 0 ? Math.round(((stats.likes + stats.saves + stats.comments) / stats.reads) * 100) : 0}%</div>
+        <div class="engagement-metric">
+          <div class="engagement-metric-number">${stats.likes}</div>
+          <div class="engagement-metric-label">Likes</div>
+        </div>
+        <div class="engagement-metric">
+          <div class="engagement-metric-number">${stats.saves}</div>
+          <div class="engagement-metric-label">Saves</div>
+        </div>
+        <div class="engagement-metric">
+          <div class="engagement-metric-number">${stats.comments}</div>
+          <div class="engagement-metric-label">Comments</div>
         </div>
       </div>
-    </div>
-  `;
+      
+      <div class="recent-activity">
+        <h5><i class="fas fa-chart-bar"></i> Quick Stats</h5>
+        <div class="activity-list">
+          <div class="activity-item">
+            <div class="activity-avatar">📈</div>
+            <div class="activity-text">Total engagement: ${stats.reads + stats.likes + stats.saves + stats.comments}</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-avatar">🎯</div>
+            <div class="activity-text">Engagement rate: ${stats.reads > 0 ? Math.round(((stats.likes + stats.saves + stats.comments) / stats.reads) * 100) : 0}%</div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   async function refreshArticleStats(articleId: string) {
@@ -1280,7 +1257,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
     button.classList.add("loading");
 
     try {
-      // Find the article to get its slug
       const article = articles.find((a) => a.id === articleId);
       if (!article) throw new Error("Article not found");
 
@@ -1291,10 +1267,8 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
         console.log(`✅ Updated stats for ${article.slug}`);
         showNotification("Article stats refreshed successfully", "success");
 
-        // Reload the articles list to show updated stats
         await loadArticles(currentPage);
 
-        // If engagement details are expanded, reload them too
         const detailsElement = document.getElementById(
           `engagement-${article.slug}`
         );
@@ -1335,7 +1309,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
       currentEditingArticleId = article.id;
       modalTitle.textContent = "Edit Article";
 
-      // Populate form with article data
       (document.getElementById("article-title") as HTMLInputElement).value =
         article.title;
       (document.getElementById("article-slug") as HTMLInputElement).value =
@@ -1400,13 +1373,11 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
   function setupEventListeners() {
     console.log("🔧 Setting up event listeners...");
 
-    // Create article button
     const createArticleBtn = document.getElementById(
       "create-article-btn"
     ) as HTMLButtonElement;
     createArticleBtn?.addEventListener("click", () => openArticleModal());
 
-    // Modal controls
     const modalClose = document.getElementById(
       "article-modal-close"
     ) as HTMLButtonElement;
@@ -1421,13 +1392,11 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
       if (e.target === modal) closeArticleModal();
     });
 
-    // Form submission
     const articleForm = document.getElementById(
       "article-form"
     ) as HTMLFormElement;
     articleForm?.addEventListener("submit", handleArticleFormSubmit);
 
-    // Auto-generate slug from title
     const titleInput = document.getElementById(
       "article-title"
     ) as HTMLInputElement;
@@ -1448,7 +1417,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
       }
     });
 
-    // Search and filters
     const searchInput = document.getElementById(
       "article-search"
     ) as HTMLInputElement;
@@ -1459,7 +1427,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
     ) as HTMLButtonElement;
     applyFiltersBtn?.addEventListener("click", handleFilters);
 
-    // Retry button
     const retryBtn = document.getElementById("retry-btn") as HTMLButtonElement;
     retryBtn?.addEventListener("click", () => {
       hideError();
@@ -1554,13 +1521,6 @@ import ArticleEngagementModal from "../../components/admin/ArticleEngagementModa
 
     currentPage = 1;
     await loadArticles(currentPage);
-  }
-
-  // Global function for pagination
-  declare global {
-    interface Window {
-      goToPage: (page: number) => Promise<void>;
-    }
   }
 
   function showLoading(show: boolean) {

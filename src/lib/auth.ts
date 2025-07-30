@@ -47,12 +47,55 @@ class TinkByteAuthManager {
   private currentUser: User | null = null;
   private currentProfile: Profile | null = null;
   
+  // **ADD: Cache keys for faster loading**
+  private readonly AUTH_CACHE_KEY = 'tinkbyte_auth_cache';
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  
   // Production logging control
   private readonly DEBUG = typeof window !== 'undefined' && 
     (window.location.hostname === 'localhost' || window.location.hostname.includes('dev'));
 
   private debugLog(...args: any[]) {
     if (this.DEBUG) console.log(...args);
+  }
+
+  // **ADD: Quick auth state check from cache**
+  private getAuthCache(): { user: User | null; profile: Profile | null; timestamp: number } | null {
+    if (typeof window === 'undefined') return null;
+    
+    try {
+      const cached = localStorage.getItem(this.AUTH_CACHE_KEY);
+      if (!cached) return null;
+      
+      const data = JSON.parse(cached);
+      
+      // Check if cache is still valid
+      if (Date.now() - data.timestamp > this.CACHE_DURATION) {
+        localStorage.removeItem(this.AUTH_CACHE_KEY);
+        return null;
+      }
+      
+      return data;
+    } catch {
+      localStorage.removeItem(this.AUTH_CACHE_KEY);
+      return null;
+    }
+  }
+
+  // **ADD: Save auth state to cache**
+  private setAuthCache(user: User | null, profile: Profile | null): void {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const cacheData = {
+        user,
+        profile,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(this.AUTH_CACHE_KEY, JSON.stringify(cacheData));
+    } catch (error) {
+      // Ignore cache errors
+    }
   }
 
   private errorLog(...args: any[]) {
@@ -83,21 +126,41 @@ class TinkByteAuthManager {
     return this.initPromise;
   }
 
-   private async _initialize(): Promise<void> {
+     private async _initialize(): Promise<void> {
     try {
       this.debugLog('🔐 TinkByteAuth: Initializing...');
       
-      // Get initial session
+      // **STEP 1: Try to load from cache first (instant)**
+      const cached = this.getAuthCache();
+      if (cached && cached.user) {
+        this.debugLog('⚡ Auth: Loading from cache');
+        this.currentUser = cached.user;
+        this.currentProfile = cached.profile;
+        this.notifyListeners(this.currentUser, this.currentProfile);
+      }
+      
+      // **STEP 2: Verify with Supabase (background)**
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
         this.errorLog('❌ Auth initialization error:', error);
+        this.clearAuthCache();
         this.initialized = true;
         return;
       }
 
       if (session?.user) {
-        await this.setUserData(session.user, session);
+        // Only update if different from cache
+        if (!cached || cached.user?.id !== session.user.id) {
+          await this.setUserData(session.user, session);
+        } else {
+          // Just update the current user object
+          this.currentUser = session.user;
+        }
+      } else if (cached) {
+        // Session expired, clear cache
+        this.clearAuthCache();
+        this.clearUserData();
       }
 
       // Set up auth state change listener
@@ -108,18 +171,20 @@ class TinkByteAuthManager {
           await this.setUserData(session.user, session);
         } else if (event === 'SIGNED_OUT') {
           this.clearUserData();
+          this.clearAuthCache();
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           this.currentUser = session.user;
+          this.setAuthCache(this.currentUser, this.currentProfile);
         }
         
         this.notifyListeners(this.currentUser, this.currentProfile);
       });
 
       this.initialized = true;
-      this.notifyListeners(this.currentUser, this.currentProfile);
       
     } catch (error) {
       this.errorLog('🔐 TinkByteAuth: Initialization failed:', error);
+      this.clearAuthCache();
       this.initialized = true;
       this.notifyListeners(null, null);
     }
@@ -149,10 +214,30 @@ class TinkByteAuthManager {
         this.debugLog('🆕 Auth: Creating new profile');
         await this.createProfile(user);
       }
+
+      // **ADD: Cache the auth state**
+      this.setAuthCache(this.currentUser, this.currentProfile);
+      
     } catch (error) {
       this.errorLog('❌ Error in setUserData:', error);
-      // Don't throw, just continue without profile
     }
+  }
+
+  private clearAuthCache(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(this.AUTH_CACHE_KEY);
+    }
+  }
+
+  // **ADD: Quick sync method for immediate UI updates**
+  getAuthStateSync(): { user: User | null; profile: Profile | null; isLoading: boolean } {
+    const cached = this.getAuthCache();
+    
+    return {
+      user: this.currentUser || cached?.user || null,
+      profile: this.currentProfile || cached?.profile || null,
+      isLoading: !this.initialized
+    };
   }
 
   private async createProfile(user: User): Promise<void> {
@@ -594,46 +679,87 @@ class TinkByteAuthManager {
 
 
   // Handle auth callback (for Google signin)
-  async handleAuthCallback(): Promise<{
-    success: boolean;
-    isNewUser?: boolean;
-    needsPasswordSetup?: boolean;
-    provider?: string;
-    error?: string;
-  }> {
-    try {
-      const { data, error } = await this.supabase.auth.getSession();
+async handleAuthCallback(): Promise<{
+  success: boolean;
+  isNewUser?: boolean;
+  needsPasswordSetup?: boolean;
+  provider?: string;
+  error?: string;
+}> {
+  try {
+    this.debugLog('🔄 Processing auth callback...');
+    
+    // First try to get session from URL hash (for OAuth)
+    const hash = window.location.hash.substring(1);
+    const urlParams = new URLSearchParams(hash);
+    const accessToken = urlParams.get('access_token');
+    
+    if (accessToken) {
+      this.debugLog('🔑 Found access token in URL, setting session...');
+      const refreshToken = urlParams.get('refresh_token');
+      
+      const { data, error } = await this.supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken || '',
+      });
       
       if (error) throw error;
       
-      if (data.session?.user) {
-        const user = data.session.user;
-        const metadata = user.user_metadata as CustomUserMetadata;
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+      
+      // Wait for auth state to update
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    // Now get the current session
+    const { data, error } = await this.supabase.auth.getSession();
+    
+    if (error) throw error;
+    
+    if (data.session?.user) {
+      const user = data.session.user;
+      const metadata = user.user_metadata as CustomUserMetadata;
+      
+      // Check if this is a new user
+      const isNewUser = !metadata?.last_sign_in_at;
+      const provider = user.app_metadata?.provider;
+      
+      // Check if needs password setup (for email signups)
+      const needsPasswordSetup = metadata?.needs_password_setup === true && provider !== 'google';
+      
+      this.debugLog('✅ Auth callback successful:', { isNewUser, needsPasswordSetup, provider });
+      
+      // Update user metadata to mark as signed in
+      if (isNewUser) {
+        await this.supabase.auth.updateUser({
+          data: {
+            ...metadata,
+            last_sign_in_at: new Date().toISOString()
+          }
+        });
         
-        const isNewUser = !metadata?.last_sign_in_at;
-        const provider = user.app_metadata?.provider;
-        
-        const needsPasswordSetup = metadata?.needs_password_setup === true && provider !== 'google';
-        
-        if (isNewUser && provider === 'google') {
+        // Send welcome email for Google users
+        if (provider === 'google') {
           const displayName = metadata?.full_name || user.email?.split('@')[0] || 'New User';
           this.sendWelcomeEmailAsync(user.email!, displayName);
         }
-        
-        return {
-          success: true,
-          isNewUser,
-          needsPasswordSetup,
-          provider
-        };
       }
       
-      return { success: false, error: 'No session found' };
-    } catch (error: any) {
-      this.errorLog('🔐 Auth callback error:', error);
-      return { success: false, error: error.message };
+      return {
+        success: true,
+        isNewUser,
+        needsPasswordSetup,
+        provider
+      };
     }
+    
+    return { success: false, error: 'No session found after callback' };
+  } catch (error: any) {
+    this.errorLog('🔄 Auth callback error:', error);
+    return { success: false, error: error.message };
   }
+}
 
   // ===========================================
   // FLOW 4: PASSWORD RESET (OTP Based)

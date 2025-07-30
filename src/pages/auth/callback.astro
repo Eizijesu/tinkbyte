@@ -1,5 +1,5 @@
 ---
-// src/pages/auth/callback.astro
+// src/pages/auth/callback.astro - FIXED VERSION
 import Layout from "../../layouts/Layout.astro";
 ---
 
@@ -9,9 +9,16 @@ import Layout from "../../layouts/Layout.astro";
 >
   <div class="callback-container">
     <div class="callback-content">
-      <div class="square-spinner-large"></div>
+      <div class="spinner-wrapper">
+        <div class="square-spinner"></div>
+      </div>
       <h1>Processing Authentication</h1>
-      <p>Please wait while we complete your sign in...</p>
+      <p id="status-message">Please wait while we complete your sign in...</p>
+      <div class="progress-dots">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
     </div>
   </div>
 </Layout>
@@ -37,46 +44,100 @@ import Layout from "../../layouts/Layout.astro";
   .callback-content {
     text-align: center;
     max-width: 400px;
+    width: 100%;
   }
 
-  .square-spinner-large {
+  .spinner-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  /* Perfect Square Spinner */
+  .square-spinner {
     width: 48px;
     height: 48px;
-    border: 3px solid rgba(36, 55, 136, 0.2);
-    border-top: 3px solid #243788;
+    border: 3px solid rgba(36, 55, 136, 0.15);
+    border-radius: 4px;
+    position: relative;
     background: transparent;
-    margin: 0 auto 2rem;
+    animation: square-rotate 2s linear infinite;
+  }
+
+  .square-spinner::before {
+    content: "";
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 48px;
+    height: 48px;
+    border: 3px solid transparent;
+    border-top: 3px solid #243788;
+    border-radius: 4px;
     animation: square-spin 1s linear infinite;
   }
 
-  @keyframes square-spin {
+  .square-spinner::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    background: #243788;
+    border-radius: 2px;
+    transform: translate(-50%, -50%) scale(0);
+    animation: square-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes square-rotate {
     0% {
       transform: rotate(0deg);
-    }
-    25% {
-      transform: rotate(90deg);
-    }
-    50% {
-      transform: rotate(180deg);
-    }
-    75% {
-      transform: rotate(270deg);
     }
     100% {
       transform: rotate(360deg);
     }
   }
 
-  :global(.dark) .square-spinner-large {
-    border-color: rgba(180, 188, 225, 0.2);
+  @keyframes square-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes square-pulse {
+    0%,
+    100% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 1;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.7;
+    }
+  }
+
+  :global(.dark) .square-spinner {
+    border-color: rgba(180, 188, 225, 0.15);
+  }
+
+  :global(.dark) .square-spinner::before {
     border-top-color: #b4bce1;
   }
 
+  :global(.dark) .square-spinner::after {
+    background: #b4bce1;
+  }
+
   h1 {
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
     font-weight: 700;
     color: rgb(15, 23, 42);
     margin-bottom: 1rem;
+    line-height: 1.2;
   }
 
   :global(.dark) h1 {
@@ -85,53 +146,175 @@ import Layout from "../../layouts/Layout.astro";
 
   p {
     color: #64748b;
-    font-size: 1rem;
-    margin: 0;
+    font-size: clamp(0.875rem, 3vw, 1rem);
+    margin: 0 0 2rem 0;
+    line-height: 1.5;
   }
 
   :global(.dark) p {
     color: rgb(148, 163, 184);
   }
+
+  /* Progress Dots */
+  .progress-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #243788;
+    animation: dot-bounce 1.4s ease-in-out infinite both;
+  }
+
+  .dot:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  .dot:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+  .dot:nth-child(3) {
+    animation-delay: 0s;
+  }
+
+  @keyframes dot-bounce {
+    0%,
+    80%,
+    100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  :global(.dark) .dot {
+    background: #b4bce1;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 480px) {
+    .callback-container {
+      padding: 1rem;
+    }
+
+    .square-spinner {
+      width: 40px;
+      height: 40px;
+    }
+
+    .square-spinner::before {
+      width: 40px;
+      height: 40px;
+    }
+
+    .square-spinner::after {
+      width: 20px;
+      height: 20px;
+    }
+  }
 </style>
 
 <script>
+  // Import auth manager statically
   import { authManager } from "../../lib/auth.js";
+
+  let redirectTimeout: NodeJS.Timeout;
+
+  function updateStatus(message: string) {
+    const statusElement = document.getElementById("status-message");
+    if (statusElement) {
+      statusElement.textContent = message;
+    }
+  }
+
+  function safeRedirect(url: string, delay = 1000) {
+    clearTimeout(redirectTimeout);
+    redirectTimeout = setTimeout(() => {
+      try {
+        window.location.href = url;
+      } catch (error) {
+        console.error("Redirect failed:", error);
+        // Fallback
+        window.location.replace(url);
+      }
+    }, delay);
+  }
 
   document.addEventListener("DOMContentLoaded", async () => {
     console.log("🔄 Callback: Processing authentication...");
 
     try {
+      updateStatus("Initializing authentication...");
+
       // Initialize auth manager
       await authManager.initialize();
 
-      // Wait a moment for auth state to settle
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      updateStatus("Checking authentication status...");
 
-      // Check if user is authenticated
+      // Wait for auth state to settle
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Handle auth callback first
+      const callbackResult = await authManager.handleAuthCallback();
+
+      if (!callbackResult.success) {
+        throw new Error(
+          callbackResult.error || "Authentication callback failed"
+        );
+      }
+
+      updateStatus("Authentication successful! Redirecting...");
+
+      // Check current auth state
       const isAuthenticated = await authManager.isAuthenticated();
       const user = authManager.getUser();
+      const profile = authManager.getProfile();
+
+      console.log("🔍 Auth State:", {
+        isAuthenticated,
+        user: !!user,
+        profile: !!profile,
+      });
 
       if (isAuthenticated && user) {
-        console.log("🔄 Callback: User authenticated, redirecting...");
+        // Determine redirect destination
+        let redirectUrl = "/profile";
 
-        // Check if user needs to set password (first time login)
-        const profile = authManager.getProfile();
-        if (!profile) {
-          // New user, redirect to password setup
-          window.location.href = "/profile?setup=password";
+        // Check if it's a new user or needs password setup
+        if (callbackResult.isNewUser) {
+          updateStatus("Welcome! Setting up your profile...");
+          redirectUrl = "/profile?welcome=true";
+        } else if (callbackResult.needsPasswordSetup) {
+          updateStatus("Please set up your password...");
+          redirectUrl = "/profile?setup=password";
         } else {
-          // Existing user, redirect to profile
-          window.location.href = "/profile";
+          updateStatus("Welcome back! Redirecting to your profile...");
         }
+
+        console.log(`🔄 Callback: Redirecting to ${redirectUrl}`);
+        safeRedirect(redirectUrl, 2000);
       } else {
-        console.log(
-          "🔄 Callback: No authentication found, redirecting to signin"
-        );
-        window.location.href = "/auth/signin";
+        console.log("🔄 Callback: No authentication found");
+        updateStatus("Authentication failed. Redirecting to sign in...");
+        safeRedirect("/auth/signin?error=auth_failed", 2000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("🔄 Callback: Error processing authentication:", error);
-      window.location.href = "/auth/signin?error=callback_failed";
+      updateStatus("Authentication error. Redirecting...");
+
+      const errorParam = encodeURIComponent(error.message || "callback_failed");
+      safeRedirect(`/auth/signin?error=${errorParam}`, 2000);
     }
+  });
+
+  // Cleanup on page unload
+  window.addEventListener("beforeunload", () => {
+    clearTimeout(redirectTimeout);
   });
 </script>

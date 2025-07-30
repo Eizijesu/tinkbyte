@@ -25,7 +25,7 @@ function errorLog(message, error) {
 async function getSupabaseSingleton() {
   try {
     // Import your singleton
-    const { supabase } = await import('/src/lib/supabase.js');
+    //import { supabase } from '../lib/supabase.js';
     console.log('✅ Supabase singleton imported directly');
     return supabase;
   } catch (error) {

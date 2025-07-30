@@ -1,5 +1,5 @@
 ---
-// src/pages/404.astro - Fixed 404 page
+// src/pages/404.astro - FIXED with perfect square design
 import Layout from "../layouts/Layout.astro";
 import Button from "../components/ui/Button.astro";
 import { getCollection } from "astro:content";
@@ -67,37 +67,23 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
         </div>
 
         <!-- Error Message -->
-        <div
-          class="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-zinc-800/80 backdrop-blur-sm border border-zinc-200 dark:border-zinc-700 mb-6"
-        >
-          <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-          <span
-            class="text-sm font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300"
-          >
-            PAGE NOT FOUND
-          </span>
+        <div class="error-badge">
+          <div class="status-indicator"></div>
+          <span class="status-text"> PAGE NOT FOUND </span>
         </div>
 
-        <h1
-          class="text-4xl lg:text-5xl font-bold text-zinc-900 dark:text-white mb-6"
-        >
+        <h1 class="error-title">
           Lost in the
-          <span
-            class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-          >
-            Digital Space
-          </span>
+          <span class="gradient-text"> Digital Space </span>
         </h1>
 
-        <p
-          class="text-xl text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-8"
-        >
+        <p class="error-description">
           The page you're looking for doesn't exist or has been moved. Let's get
           you back on track with some helpful options.
         </p>
 
         <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <div class="error-actions">
           <Button variant="primary" href="/" className="error-action-btn">
             <i class="fas fa-home mr-2"></i>
             GO HOME
@@ -226,22 +212,16 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
   </main>
 
   <!-- Help Section -->
-  <section
-    class="py-16 px-4 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-200 dark:border-zinc-800"
-  >
+  <section class="help-section">
     <div class="max-w-2xl mx-auto text-center">
-      <h2
-        class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wide"
-      >
-        Still Can't Find What You're Looking For?
-      </h2>
+      <h2 class="help-title">Still Can't Find What You're Looking For?</h2>
 
-      <p class="text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
+      <p class="help-description">
         Our team is here to help. Reach out and we'll get you pointed in the
         right direction.
       </p>
 
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <div class="help-actions">
         <Button
           variant="primary"
           href="/newsletter"
@@ -265,6 +245,16 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
 </Layout>
 
 <style>
+  /* CSS Custom Properties for Consistent Design */
+  :root {
+    --tinkbyte-radius: 0px;
+    --tinkbyte-radius-sm: 0px;
+    --tinkbyte-radius-md: 0px;
+    --tinkbyte-radius-lg: 0px;
+    --tinkbyte-radius-card: 0px;
+    --tinkbyte-radius-button: 0px;
+  }
+
   /* Error Page Styling */
   .error-page {
     font-family: "Space Grotesk", sans-serif;
@@ -304,6 +294,106 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
     }
   }
 
+  /* Error Badge */
+  .error-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid #e2e8f0;
+    border-radius: var(--tinkbyte-radius-button);
+    backdrop-filter: blur(4px);
+    margin-bottom: 1.5rem;
+  }
+
+  :global(.dark) .error-badge {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgb(51, 65, 85);
+  }
+
+  .status-indicator {
+    width: 0.75rem;
+    height: 0.75rem;
+    background: #ef4444;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  .status-text {
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #374151;
+  }
+
+  :global(.dark) .status-text {
+    color: rgb(209, 213, 219);
+  }
+
+  /* Error Title */
+  .error-title {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+  }
+
+  :global(.dark) .error-title {
+    color: rgb(248, 250, 252);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% 200%;
+    animation: gradient 3s ease-in-out infinite;
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* Error Description */
+  .error-description {
+    font-size: 1.25rem;
+    color: #6b7280;
+    line-height: 1.6;
+    max-width: 48rem;
+    margin: 0 auto 2rem;
+  }
+
+  :global(.dark) .error-description {
+    color: rgb(156, 163, 175);
+  }
+
+  /* Error Actions */
+  .error-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+  }
+
+  @media (min-width: 640px) {
+    .error-actions {
+      flex-direction: row;
+    }
+  }
+
   /* Section Styling */
   .section-title {
     font-size: 2rem;
@@ -333,6 +423,7 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
   .popular-page-card {
     background: var(--color-bg-primary);
     border: 2px solid var(--color-border);
+    border-radius: var(--tinkbyte-radius-card);
     padding: 1.5rem;
     text-decoration: none;
     transition: all 0.3s ease;
@@ -360,6 +451,7 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
     height: 3rem;
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
+    border-radius: var(--tinkbyte-radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -423,6 +515,7 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
     display: block;
     background: var(--color-bg-primary);
     border: 2px solid var(--color-border);
+    border-radius: var(--tinkbyte-radius-card);
     padding: 1.5rem;
     text-decoration: none;
     transition: all 0.3s ease;
@@ -505,6 +598,7 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
   .category-card {
     background: var(--color-bg-secondary);
     border: 2px solid var(--color-border);
+    border-radius: var(--tinkbyte-radius-card);
     padding: 1.5rem;
     text-decoration: none;
     transition: all 0.3s ease;
@@ -553,6 +647,55 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
     transform: translateX(4px);
   }
 
+  /* Help Section */
+  .help-section {
+    padding: 4rem 1rem;
+    background: #f8fafc;
+    border-top: 2px solid #e2e8f0;
+  }
+
+  :global(.dark) .help-section {
+    background: rgba(30, 41, 59, 0.5);
+    border-top-color: rgb(51, 65, 85);
+  }
+
+  .help-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  :global(.dark) .help-title {
+    color: rgb(248, 250, 252);
+  }
+
+  .help-description {
+    color: #6b7280;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  :global(.dark) .help-description {
+    color: rgb(156, 163, 175);
+  }
+
+  .help-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+  }
+
+  @media (min-width: 640px) {
+    .help-actions {
+      flex-direction: row;
+    }
+  }
+
   /* Action Buttons */
   .error-action-btn,
   .view-all-btn,
@@ -587,24 +730,60 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
     .categories-grid {
       grid-template-columns: 1fr;
     }
+
+    .error-title {
+      font-size: clamp(2rem, 4vw, 2.5rem);
+    }
+
+    .error-description {
+      font-size: 1rem;
+      padding: 0 1rem;
+    }
+
+    .help-title {
+      font-size: 1.5rem;
+    }
   }
 
-  /* Gradient text animation */
-  @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
+  @media (max-width: 480px) {
+    .error-number {
+      font-size: 4rem;
     }
-    50% {
-      background-position: 100% 50%;
+
+    .error-icon {
+      font-size: 2.5rem;
     }
-    100% {
-      background-position: 0% 50%;
+
+    .popular-page-card,
+    .article-link,
+    .category-card {
+      padding: 1rem;
+    }
+
+    .help-section {
+      padding: 2rem 1rem;
     }
   }
 
-  .bg-gradient-to-r.bg-clip-text {
-    background-size: 200% 200%;
-    animation: gradient 3s ease-in-out infinite;
+  /* Animation optimizations */
+  @media (prefers-reduced-motion: reduce) {
+    .error-icon,
+    .status-indicator,
+    .gradient-text {
+      animation: none;
+    }
+
+    .recent-article-card {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+
+    .popular-page-card:hover,
+    .article-link:hover,
+    .category-card:hover {
+      transform: none;
+    }
   }
 </style>
 
@@ -614,26 +793,53 @@ const topCategories = allCategories.slice(0, 4).map((category) => ({
     const articleCards = document.querySelectorAll(".recent-article-card");
 
     articleCards.forEach((card, index) => {
-      // Fix: Cast to HTMLElement to access style property
-      (card as HTMLElement).style.setProperty(
-        "--animation-delay",
-        `${index * 0.1}s`
-      );
+      // FIXED: Proper TypeScript casting
+      const htmlCard = card as HTMLElement;
+      htmlCard.style.setProperty("--animation-delay", `${index * 0.1}s`);
     });
 
-    // Track 404 page interactions
+    // Track 404 page interactions with proper typing
     const links = document.querySelectorAll('a[href^="/"]');
     links.forEach((link) => {
-      link.addEventListener("click", (e) => {
-        // Fix: Check if gtag exists and cast link to HTMLAnchorElement
-        if (typeof (window as any).gtag !== "undefined") {
-          (window as any).gtag("event", "404_page_navigation", {
-            event_category: "404 Page",
-            event_label: (link as HTMLAnchorElement).href,
-            timestamp: Date.now(),
-          });
+      link.addEventListener("click", () => {
+        // FIXED: Proper window.gtag type checking
+        if (typeof window !== "undefined" && "gtag" in window) {
+          const gtag = (window as any).gtag;
+          if (typeof gtag === "function") {
+            gtag("event", "404_page_navigation", {
+              event_category: "404 Page",
+              event_label: (link as HTMLAnchorElement).href,
+              timestamp: Date.now(),
+            });
+          }
         }
       });
     });
+
+    // Enhanced error page analytics
+    if (typeof window !== "undefined" && "gtag" in window) {
+      const gtag = (window as any).gtag;
+      if (typeof gtag === "function") {
+        gtag("event", "404_page_view", {
+          event_category: "404 Page",
+          page_title: document.title,
+          page_location: window.location.href,
+          timestamp: Date.now(),
+        });
+      }
+    }
+
+    // Log 404 for debugging (development only)
+    if (import.meta.env.DEV) {
+      console.warn(`404 Page accessed: ${window.location.href}`);
+    }
+  });
+
+  // Handle Astro page navigation
+  document.addEventListener("astro:page-load", () => {
+    setTimeout(() => {
+      const event = new Event("DOMContentLoaded");
+      document.dispatchEvent(event);
+    }, 100);
   });
 </script>

@@ -403,7 +403,7 @@
 </style>
 
 <script>
-  // Declare types to fix TypeScript errors
+  import { AdminAPI } from "../../lib/admin-api.js";
   declare global {
     interface Window {
       showEngagementModal: (articleSlug: string) => void;
@@ -432,7 +432,6 @@
   async function loadArticleEngagement(articleSlug: string) {
     try {
       // Import AdminAPI dynamically to avoid module resolution issues
-      const { AdminAPI } = await import("../../lib/admin-api.js");
       const result = await AdminAPI.getArticleEngagementDetails(articleSlug);
 
       if (result.success && result.data) {
