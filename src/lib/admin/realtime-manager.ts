@@ -9,7 +9,7 @@ export class AdminRealtimeManager {
     if (this.subscription || this.isInitialized) return;
 
     try {
-      console.log('🔄 Initializing admin real-time updates...');
+      
       
       this.subscription = supabase
         .channel('admin-dashboard-updates')
@@ -65,18 +65,18 @@ export class AdminRealtimeManager {
           (payload) => this.handleUserUpdate('new_user', payload)
         )
         .subscribe((status) => {
-          console.log('📡 Admin real-time subscription status:', status);
+          
           this.isInitialized = status === 'SUBSCRIBED';
         });
 
-      console.log('✅ Admin real-time manager initialized');
+      
     } catch (error) {
       console.error('❌ Failed to initialize real-time manager:', error);
     }
   }
 
   private handleReactionUpdate(type: string, payload: any): void {
-    console.log(`👍 Real-time reaction update: ${type}`, payload);
+    
     
     // Update dashboard metrics in real-time
     const event = new CustomEvent('adminMetricsUpdate', {
@@ -96,7 +96,7 @@ export class AdminRealtimeManager {
   }
 
   private handleCommentUpdate(payload: any): void {
-    console.log('💬 Real-time comment update:', payload);
+    
     
     const event = new CustomEvent('adminMetricsUpdate', {
       detail: { 
@@ -115,7 +115,7 @@ export class AdminRealtimeManager {
   }
 
   private handleCommentModerationUpdate(payload: any): void {
-    console.log('🛡️ Real-time moderation update:', payload);
+    
     
     const event = new CustomEvent('adminMetricsUpdate', {
       detail: { 
@@ -130,7 +130,7 @@ export class AdminRealtimeManager {
   }
 
   private handleUserUpdate(type: string, payload: any): void {
-    console.log('👤 Real-time user update:', payload);
+    
     
     const event = new CustomEvent('adminMetricsUpdate', {
       detail: { 
@@ -201,11 +201,11 @@ export class AdminRealtimeManager {
 
   public destroy(): void {
     if (this.subscription) {
-      console.log('🔄 Destroying admin real-time subscription...');
+      
       supabase.removeChannel(this.subscription);
       this.subscription = null;
       this.isInitialized = false;
-      console.log('✅ Admin real-time subscription destroyed');
+      
     }
   }
 

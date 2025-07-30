@@ -981,9 +981,9 @@ const sortedPosts = posts.sort((a, b) =>
   
   const DEBUG = import.meta.env?.DEV || false;
 
-  const debugLog = (message: string, data?: any) => {
-    if (DEBUG) console.log(`[CategoryPage] ${message}`, data || '');
-  };
+const debugLog = (message: string, data?: any) => {
+  if (DEBUG) console.log(`[CategoryPage] ${message}`, data || '');
+};
 
   document.addEventListener('DOMContentLoaded', async () => {
     const followBtn = document.getElementById('follow-topic') as HTMLButtonElement;

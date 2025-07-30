@@ -11,7 +11,7 @@ import type { CommentWithProfile } from "../../lib/types/comments";
 const { articleId, postSlug, postTitle } = Astro.props;
 
 const ENVIRONMENT = "production";
-console.log("🔍 Using environment:", ENVIRONMENT);
+
 
 const currentUser = null;
 interface ArticleAuthor {
@@ -66,7 +66,7 @@ let initialDisplayComments: any[] = [];
 const COMMENTS_PER_PAGE = 5;
 
 try {
-  console.log("🔍 Querying comments for article:", articleId);
+  
 
   // Get total count of ROOT comments only
   const { count: rootCount, error: countError } = await supabase
@@ -84,7 +84,7 @@ try {
   }
 
   totalRootComments = rootCount || 0;
-  console.log(`📊 Total root comments: ${totalRootComments}`);
+  
 
   if (totalRootComments > 0) {
     // **CHANGED: Load ALL root comments (remove limit)**

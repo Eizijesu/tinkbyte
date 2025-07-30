@@ -32,7 +32,7 @@ const getImageSrc = () => {
 
   // Priority 1: Direct src prop (for simple usage)
   if (src) {
-    console.log("✅ Using direct src:", src);
+    
     return src;
   }
 
@@ -42,12 +42,12 @@ const getImageSrc = () => {
     
     // Handle different upload path formats
     if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-      console.log("✅ Using full URL upload:", imagePath);
+      
       return imagePath;
     }
     
     if (imagePath.startsWith("/")) {
-      console.log("✅ Using absolute path upload:", imagePath);
+      
       return imagePath;
     }
     
@@ -60,26 +60,26 @@ const getImageSrc = () => {
       `/${imagePath}`
     ];
     
-    console.log("✅ Using constructed upload path:", possiblePaths[0]);
+    
     return possiblePaths[0]; // Default to /images/
   }
 
   // Priority 3: External URL
   if (sourceType === "url" && externalUrl) {
-    console.log("✅ Using external URL:", externalUrl);
+    
     return externalUrl;
   }
 
   // Priority 4: Try uploadedImage regardless of sourceType (fallback)
   if (uploadedImage) {
     const fallbackPath = uploadedImage.startsWith("/") ? uploadedImage : `/images/${uploadedImage}`;
-    console.log("⚠️ Using fallback upload path:", fallbackPath);
+    
     return fallbackPath;
   }
 
   // Priority 5: Try externalUrl regardless of sourceType (fallback)
   if (externalUrl) {
-    console.log("⚠️ Using fallback external URL:", externalUrl);
+    
     return externalUrl;
   }
 
@@ -114,7 +114,7 @@ const sizeClass = sizeClasses[size] || sizeClasses.large;
             loading="lazy"
             decoding="async"
             class="tinkbyte-image"
-            onload="console.log('✅ Image loaded successfully:', this.src); this.classList.add('loaded');"
+            onload=" this.classList.add('loaded');"
             onerror="console.error('❌ Image failed to load:', this.src); this.classList.add('error');"
           />
           <div class="image-loading">Loading...</div>
@@ -157,7 +157,7 @@ const sizeClass = sizeClasses[size] || sizeClasses.large;
           </div>
           
           <!-- TinaCMS Edit Button for Admin Mode -->
-          <button class="edit-image-btn" onclick="console.log('Edit image in TinaCMS')">
+          <button class="edit-image-btn" onclick="">
             Edit Image
           </button>
         </div>
@@ -534,7 +534,7 @@ const sizeClass = sizeClasses[size] || sizeClasses.large;
       
       // Handle successful load
       img.addEventListener("load", () => {
-        console.log("✅ Image loaded:", img.src);
+        
         img.classList.add("loaded");
         img.style.opacity = "1";
       });
@@ -560,7 +560,7 @@ const sizeClass = sizeClasses[size] || sizeClasses.large;
               originalSrc.replace("/images/", "/media/")
             ];
             
-            console.log("🔄 Trying alternative paths:", alternatives);
+            
             
             // Try the first alternative
             if (alternatives[0]) {
@@ -585,7 +585,7 @@ const sizeClass = sizeClasses[size] || sizeClasses.large;
     // Debug mode toggle (for development)
     if (window.location.search.includes("debug=true")) {
       document.body.classList.add("debug-mode");
-      console.log("🐛 ImageBlock debug mode enabled");
+      
     }
   });
 </script>

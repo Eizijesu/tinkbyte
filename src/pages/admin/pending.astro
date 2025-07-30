@@ -245,7 +245,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       if (this.isInitialized) return;
 
       try {
-        console.log("🚀 Initializing Pending Comments Manager...");
+        
 
         // Initialize admin API manager
         await adminAPIManager.initialize();
@@ -258,7 +258,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
         await this.loadStats();
 
         this.isInitialized = true;
-        console.log("✅ Pending Comments Manager initialized successfully");
+        
       } catch (error) {
         console.error(
           "❌ Pending Comments Manager initialization failed:",
@@ -708,7 +708,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      console.log("🚀 Pending comments page initializing...");
+      
 
       pendingManager = PendingCommentsManager.getInstance();
       await pendingManager.initialize();
@@ -716,7 +716,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       // Make globally available for pagination
       (window as any).pendingManager = pendingManager;
 
-      console.log("✅ Pending comments page initialized successfully");
+      
     } catch (error) {
       console.error("❌ Pending comments page initialization failed:", error);
     }

@@ -52,12 +52,14 @@ class TinkByteAuthManager {
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   
   // Production logging control
-  private readonly DEBUG = typeof window !== 'undefined' && 
-    (window.location.hostname === 'localhost' || window.location.hostname.includes('dev'));
+private readonly DEBUG = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname.includes('dev'));
 
-  private debugLog(...args: any[]) {
-    if (this.DEBUG) console.log(...args);
+private debugLog(...args: any[]) {
+  if (this.DEBUG) {
+    console.log(...args);
   }
+}
 
   // **ADD: Quick auth state check from cache**
   private getAuthCache(): { user: User | null; profile: Profile | null; timestamp: number } | null {
@@ -425,7 +427,7 @@ class TinkByteAuthManager {
       if (error) {
         // Fallback: try a password reset to see if email exists
         // This is a workaround for static sites
-        console.log('🔍 Checking email existence via alternative method');
+        
         return { exists: false, methods: [], needsPasswordSetup: false };
       }
 
@@ -818,7 +820,7 @@ async handleAuthCallback(): Promise<{
   // Step 2: User enters OTP + new password
   async verifyPasswordResetOTP(email: string, otp: string, newPassword: string) {
     try {
-      console.log('🔐 Verifying password reset OTP for:', email);
+      
       
       const storedData = localStorage.getItem(`reset_otp_${email}`);
       if (!storedData) {

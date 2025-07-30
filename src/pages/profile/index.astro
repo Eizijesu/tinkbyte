@@ -838,7 +838,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       if (this.initialized) return;
 
       try {
-        console.log("🚀 Profile Page: Starting initialization...");
+        
 
         // Initialize auth manager
         await this.authManager.initialize();
@@ -848,12 +848,12 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         const profile = this.authManager.getProfile();
 
         if (!user) {
-          console.log("❌ Not authenticated, redirecting to signin");
+          
           window.location.href = "/auth/signin";
           return;
         }
 
-        console.log("✅ Profile Page: User authenticated:", user.email);
+        
 
         // Update UI immediately with available data
         this.updateProfileUI(user, profile, null);
@@ -876,7 +876,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         );
 
         this.initialized = true;
-        console.log("✅ Profile Page: Initialization complete");
+        
       } catch (error) {
         console.error("❌ Profile Page: Initialization failed:", error);
         this.showError("Failed to load profile data");
@@ -910,7 +910,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
     private async loadBackgroundData(userId: string) {
       try {
-        console.log("📊 Loading background data for user:", userId);
+        
 
         const [stats, activities] = await Promise.all([
           this.getUserStats(userId),
@@ -926,7 +926,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         // Load notifications
         await this.loadProfileNotifications();
 
-        console.log("✅ Background data loaded successfully");
+        
       } catch (error) {
         console.error("❌ Error loading background data:", error);
       }
@@ -937,12 +937,12 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       let stats = this.getCachedData(cacheKey);
 
       if (stats) {
-        console.log("⚡ Using cached user stats");
+        
         return stats;
       }
 
       try {
-        console.log("🔄 Fetching fresh user stats");
+        
 
         const [followedArticles, followingTopics, followingUsers] =
           await Promise.all([
@@ -980,12 +980,12 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       let activities = this.getCachedData(cacheKey);
 
       if (activities) {
-        console.log("⚡ Using cached activities");
+        
         return activities;
       }
 
       try {
-        console.log("🔄 Fetching fresh activities");
+        
 
         // For now, return mock data - replace with actual API call
         activities = [];
@@ -1000,7 +1000,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
     private async loadProfileNotifications() {
       try {
-        console.log("🔔 Loading profile notifications");
+        
 
         const result = await TinkByteAPI.getUserNotifications(15);
 

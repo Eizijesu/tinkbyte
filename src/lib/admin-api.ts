@@ -171,7 +171,7 @@ class AdminAPIManager {
     if (this.isInitialized) return;
 
     try {
-      console.log('🔄 Initializing Admin API Manager...');
+      
       
       // Initialize auth state
       this.authState = AuthState.getInstance();
@@ -181,7 +181,7 @@ class AdminAPIManager {
       await this.verifyAdminSession();
       
       this.isInitialized = true;
-      console.log('✅ Admin API Manager initialized');
+      
     } catch (error) {
       console.error('❌ Admin API Manager initialization failed:', error);
       throw error;
@@ -627,7 +627,7 @@ class AdminAPI {
   static async fixGoogleUserEmails(): Promise<ApiResponse> {
   try {
     await this.verifyAdmin();
-    console.log('🔧 Fixing Google user emails...');
+    
 
     // Get profiles without email
     const { data: profilesWithoutEmail, error: profilesError } = await supabase
@@ -644,7 +644,7 @@ class AdminAPI {
       return { success: true, message: 'No profiles need email updates' };
     }
 
-    console.log(`📧 Found ${profilesWithoutEmail.length} profiles without email`);
+    
 
     let updatedCount = 0;
     let errorCount = 0;
@@ -673,7 +673,7 @@ class AdminAPI {
           console.error(`❌ Failed to update email for ${profile.id}:`, updateError);
           errorCount++;
         } else {
-          console.log(`✅ Updated email for ${profile.id}: ${authUser.user.email}`);
+          
           updatedCount++;
         }
 
@@ -709,7 +709,7 @@ class AdminAPI {
   static async getDashboardStats(): Promise<ApiResponse<DashboardStats>> {
   try {
     await this.verifyAdmin();
-    console.log('📊 Loading enhanced dashboard stats for environment:', config.environment);
+    
 
     const now = new Date();
     const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -933,7 +933,7 @@ class AdminAPI {
 static async getAnalyticsData(period = '30d'): Promise<ApiResponse<AnalyticsData>> {
   try {
     await this.verifyAdmin();
-    console.log('📊 Loading enhanced analytics data...');
+    
 
     let startDate: Date;
     const now = new Date();
@@ -1115,7 +1115,9 @@ static async getUsers(options: {
                 })
                 .eq('id', user.id)
                 .then(
-                  () => console.log(`📧 Updated email for user ${user.id}`),
+                  () => {
+                    // Success callback - you can add success logic here if needed
+                  },
                   (err) => console.warn(`⚠️ Failed to update email for user ${user.id}:`, err)
                 );
             }
@@ -1141,7 +1143,7 @@ static async getUsers(options: {
   // Helper method to process users data
   private static async processUsersData(data: any[], count: number | null, page: number, limit: number) {
     if (!data || data.length === 0) {
-      console.log('ℹ️ No users found');
+      
       return {
         success: true,
         data: [],
@@ -1149,7 +1151,7 @@ static async getUsers(options: {
       };
     }
 
-    console.log(`✅ Found ${data.length} users`);
+    
 
     // Load engagement data for each user
     
@@ -1758,7 +1760,7 @@ static async submitFeedback(feedbackData: {
       return { success: false, error: error.message };
     }
 
-    console.log('✅ Feedback submitted to database:', data);
+    
     return { 
       success: true, 
       data, 
@@ -2228,7 +2230,7 @@ static async getArticleEngagementStats(): Promise<ApiResponse> {
 static async getArticleEngagementDetails(articleSlug: string): Promise<ApiResponse> {
   try {
     await this.verifyAdmin();
-    console.log(`📊 Loading engagement details for article: ${articleSlug}`);
+    
 
     const queries = await Promise.allSettled([
       // Article reads (views)

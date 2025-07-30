@@ -23,7 +23,7 @@ export async function onRequestPost(context: any) {
       });
     }
 
-    console.log('🔐 Attempting signin for:', email);
+    
 
     // Sign in with Supabase
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -53,13 +53,13 @@ export async function onRequestPost(context: any) {
       });
     }
 
-    console.log('✅ Auth successful, user:', data.user.email);
+    
 
     // Check admin status
     const isAdmin = data.user.email === 'tinkbytehq@gmail.com';
     
     if (!isAdmin) {
-      console.log('❌ User is not an admin:', data.user.email);
+      
       return new Response(JSON.stringify({
         success: false,
         error: 'Access denied. Admin privileges required.'
@@ -69,7 +69,7 @@ export async function onRequestPost(context: any) {
       });
     }
 
-    console.log('✅ Admin verification successful');
+    
 
     // Set cookies using Headers
     const headers = new Headers({
@@ -87,7 +87,7 @@ export async function onRequestPost(context: any) {
       isAdmin: true
     }))}; Path=/; Max-Age=${maxAge}; SameSite=lax`);
 
-    console.log('✅ Cookies set successfully');
+    
 
     // Return success
     return new Response(JSON.stringify({

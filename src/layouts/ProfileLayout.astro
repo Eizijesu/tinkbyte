@@ -1271,7 +1271,7 @@ const { title, description } = Astro.props;
       if (this.initialized) return;
 
       try {
-        console.log("🚀 ProfileLayout: Starting initialization...");
+        
 
         // Skip auth check for signin page
         if (window.location.pathname === "/auth/signin") {
@@ -1285,7 +1285,7 @@ const { title, description } = Astro.props;
 
         // Check authentication
         if (!(await authManager.isAuthenticated())) {
-          console.log("❌ Not authenticated, redirecting to signin");
+          
           window.location.href = "/auth/signin";
           return;
         }
@@ -1293,7 +1293,7 @@ const { title, description } = Astro.props;
         // Get user data
         const user = authManager.getUser();
         const profile = authManager.getProfile();
-        console.log("✅ User authenticated:", user?.email);
+        
 
         // Show app and update UI
         this.showMainApp();
@@ -1307,7 +1307,7 @@ const { title, description } = Astro.props;
         // Improved auth change listener with proper cleanup
         this.unsubscribeAuth = authManager.onAuthChange((user, profile) => {
           if (!user) {
-            console.log("🔄 User signed out, redirecting...");
+            
             // Clean up before redirect
             this.cleanup();
             window.location.href = "/auth/signin";
@@ -1317,7 +1317,7 @@ const { title, description } = Astro.props;
         });
 
         this.initialized = true;
-        console.log("✅ ProfileLayout: Initialization complete");
+        
       } catch (error) {
         console.error("❌ ProfileLayout: Initialization failed:", error);
         this.showMainApp(); // Show app anyway to prevent blank screen
@@ -1352,7 +1352,7 @@ const { title, description } = Astro.props;
         if (dropdownEmail) dropdownEmail.textContent = user?.email || "";
         if (dropdownAvatar) dropdownAvatar.src = avatarUrl;
 
-        console.log("✅ ProfileLayout: UI updated for", displayName);
+        
       } catch (error) {
         console.error("❌ ProfileLayout: UI update failed:", error);
       }
@@ -1372,7 +1372,7 @@ const { title, description } = Astro.props;
           this.loadNotificationCount();
         }, 30000);
 
-        console.log("✅ ProfileLayout: Notification system initialized");
+        
       } catch (error) {
         console.error(
           "❌ ProfileLayout: Error setting up notification system:",
@@ -1533,7 +1533,7 @@ const { title, description } = Astro.props;
 
     private setupProfileUpdateListener() {
       window.addEventListener("profile-updated", (event: any) => {
-        console.log("🔄 ProfileLayout: Profile updated, refreshing UI");
+        
         const user = authManager.getUser();
         const profile = authManager.getProfile();
         this.updateUI(user, profile);
@@ -1559,7 +1559,7 @@ const { title, description } = Astro.props;
         }
 
         this.initialized = false;
-        console.log("✅ ProfileLayout: Cleanup completed");
+        
       } catch (error) {
         console.error("❌ ProfileLayout: Error during cleanup:", error);
       }

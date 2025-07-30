@@ -4,7 +4,7 @@ import { supabase } from '../../../src/lib/supabase';
 export async function onRequestPost (context: any) {
   const { request } = context;
   try {
-    console.log('🔄 API: Processing signout request');
+    
     
     // Get the session token from the request if available
     const authHeader = request.headers.get('authorization');
@@ -25,7 +25,7 @@ export async function onRequestPost (context: any) {
       });
     }
 
-    console.log('✅ API: Signout successful');
+    
     return new Response(JSON.stringify({ 
       success: true, 
       message: 'Signed out successfully' 

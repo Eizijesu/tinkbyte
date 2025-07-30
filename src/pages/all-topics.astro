@@ -14,9 +14,9 @@ try {
   heroData = pageData?.hero;
   topicsData = pageData?.topics;
 
-  console.log("TinaCMS allTopics data found:", !!pageData);
-  console.log("Topics count from CMS:", topicsData?.length || 0);
-  console.log("Hero data:", heroData);
+  
+  
+  
 } catch (error) {
   console.warn(
     "Could not load allTopics from CMS, using fallback data:",
@@ -176,13 +176,13 @@ const pageDescription =
   pageData?.description ||
   "Explore all 21 topic categories covering everything from build thinking to people systems.";
 
-console.log("=== DEBUG INFO ===");
-console.log("allTopicsData length:", allTopicsData?.length || 0);
-console.log("pageData exists:", !!pageData);
-console.log("topicsData length:", topicsData?.length || 0);
-console.log("finalTopicsData length:", finalTopicsData.length);
-console.log("Using fallback data:", !topicsData);
-console.log("=================");
+
+
+
+
+
+
+
 ---
 
 <Layout title={pageTitle} description={pageDescription}>

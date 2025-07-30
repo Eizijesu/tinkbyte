@@ -134,6 +134,7 @@ export const db = {
   authors: () => supabase.from('authors'),
   podcasts: () => supabase.from('podcasts'),
   threads: () => supabase.from('threads'),
+  userActivities: () => supabase.from('user_activities'),
   userFollows: () => supabase.from('user_follows'),
   userPreferences: () => supabase.from('user_preferences'),
 };
@@ -620,7 +621,7 @@ static async deleteCommentDraft(articleId: string) {
       throw error;
     }
 
-    console.log('✅ Draft deleted successfully');
+    
     return { success: true };
   } catch (error: any) {
     console.error('Error deleting comment draft:', error);
@@ -704,7 +705,7 @@ static async addComment(articleSlug: string, content: string, parentId: string |
       updated_at: new Date().toISOString()
     };
 
-    console.log('💾 TinkByteAPI inserting comment with status:', commentData.moderation_status);
+    
 
     // Insert comment
     const { data: insertedComment, error: insertError } = await supabase
@@ -718,7 +719,7 @@ static async addComment(articleSlug: string, content: string, parentId: string |
       throw insertError;
     }
 
-    console.log('✅ Comment inserted with status:', insertedComment.moderation_status);
+    
 
     // Process mentions
     await this.processMentions(content, insertedComment.id, user.email?.split('@')[0] || 'Someone');
@@ -747,7 +748,7 @@ static async addComment(articleSlug: string, content: string, parentId: string |
     // **DELETE DRAFT AFTER SUCCESSFUL COMMENT**
     try {
       await this.deleteCommentDraft(articleSlug);
-      console.log('✅ Draft deleted after comment posted');
+      
     } catch (draftError) {
       console.warn('⚠️ Could not delete draft:', draftError);
       // Don't fail the comment creation if draft deletion fails
@@ -768,7 +769,7 @@ static async addComment(articleSlug: string, content: string, parentId: string |
       }
     };
 
-    console.log('🎉 Final comment data with status:', finalData.moderation_status);
+    
 
     return { success: true, data: finalData };
 
@@ -1206,7 +1207,7 @@ static async saveCommentDraft(articleId: string, content: string, draftKey?: str
       throw new Error('Must be logged in to save draft');
     }
 
-    console.log('💾 Saving draft for user:', user.id, 'article:', articleId);
+    
 
     // **FIX: Remove draft_key entirely to avoid constraint conflicts**
     const { data, error } = await supabase
@@ -1229,7 +1230,7 @@ static async saveCommentDraft(articleId: string, content: string, draftKey?: str
       throw error;
     }
     
-    console.log('✅ Draft saved successfully');
+    
     return { success: true, data };
   } catch (error: any) {
     console.error('Error saving comment draft:', error);
@@ -1368,7 +1369,7 @@ static async getCommentDraft(articleId: string, draftKey?: string) {
 
     // If not found and we're in production, try development as fallback
     if (!data && config.environment === 'production') {
-      console.log('🔄 No draft in production, checking development...');
+      
       const { data: devData, error: devError } = await supabase
         .from('comment_drafts')
         .select('*')
@@ -1378,7 +1379,7 @@ static async getCommentDraft(articleId: string, draftKey?: string) {
         .maybeSingle();
 
       if (devData) {
-        console.log('📝 Found draft in development, migrating to production...');
+        
         // Migrate the draft to production
         await supabase
           .from('comment_drafts')

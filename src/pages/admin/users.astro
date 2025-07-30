@@ -324,7 +324,7 @@ const stats = {
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      console.log("🚀 Initializing user management...");
+      
       await initializeUserManagement();
     } catch (error) {
       console.error("❌ Failed to initialize user management:", error);
@@ -338,7 +338,7 @@ const stats = {
       await adminAuthManager.initialize();
       await adminAPIManager.initialize();
 
-      console.log("✅ Singleton managers initialized");
+      
 
       // Wait for auth state to be ready
       const authState = AuthState.getInstance();
@@ -348,7 +348,7 @@ const stats = {
       await loadUsers();
       setupEventListeners();
 
-      console.log("✅ User management initialized successfully");
+      
     } catch (error) {
       console.error("❌ Failed to initialize user management:", error);
       throw error;
@@ -357,7 +357,7 @@ const stats = {
 
   async function loadUsers(options = {}) {
     try {
-      console.log("🔄 Loading users...");
+      
       showLoading(true);
 
       const loadOptions = {
@@ -367,17 +367,17 @@ const stats = {
         ...options,
       };
 
-      console.log("📋 Load options:", loadOptions);
+      
 
       // Use singleton manager instead of static AdminAPI
       const response = await adminAPIManager.getUsers(loadOptions);
-      console.log("📊 API response:", response);
+      
 
       if (response.success && response.data) {
         currentUsers = response.data;
         currentPagination = response.pagination || currentPagination;
 
-        console.log(`📈 Loaded ${currentUsers.length} users`);
+        
 
         renderUsers();
         renderPagination();
@@ -546,7 +546,7 @@ const stats = {
 
     // Attach action button event listeners
     attachActionButtonListeners();
-    console.log(`✅ Rendered ${currentUsers.length} users`);
+    
   }
 
   function renderPagination() {
@@ -631,11 +631,11 @@ const stats = {
       }
     });
 
-    console.log("📊 Stats updated:", stats);
+    
   }
 
   function setupEventListeners() {
-    console.log("🎯 Setting up event listeners...");
+    
 
     // Search functionality with debounce
     const searchInput = document.getElementById(
@@ -681,7 +681,7 @@ const stats = {
     // Refresh functionality
     const refreshBtn = document.getElementById("refresh-users-btn");
     refreshBtn?.addEventListener("click", () => {
-      console.log("🔄 Refreshing users...");
+      
       currentPagination.page = 1;
       loadUsers();
     });
@@ -746,11 +746,11 @@ const stats = {
     // Error retry
     const retryBtn = document.getElementById("retry-btn");
     retryBtn?.addEventListener("click", () => {
-      console.log("🔄 Retrying...");
+      
       loadUsers();
     });
 
-    console.log("✅ Event listeners setup complete");
+    
   }
 
   function attachActionButtonListeners() {
@@ -775,7 +775,7 @@ const stats = {
   }
 
   async function handleUserAction(userId: string, action: string) {
-    console.log(`🎯 Handling user action: ${action} for user ${userId}`);
+    
 
     if (action === "view") {
       await showUserDetails(userId);
@@ -807,7 +807,7 @@ const stats = {
     }
 
     try {
-      console.log(`🔄 Performing ${action} on user ${userId}...`);
+      
 
       // Use singleton manager
       const response = await adminAPIManager.performUserAction(userId, action);
@@ -836,7 +836,7 @@ const stats = {
 
   async function showUserDetails(userId: string) {
     try {
-      console.log(`👤 Loading details for user ${userId}...`);
+      
 
       // Use singleton manager
       const response = await adminAPIManager.getUserDetails(userId);
@@ -1001,7 +1001,7 @@ const stats = {
 
   async function bulkUserAction(userIds: string[], action: string) {
     try {
-      console.log(`🔄 Bulk ${action} for ${userIds.length} users...`);
+      
 
       // Use singleton manager
       const response = await adminAPIManager.bulkUserAction(userIds, action);
@@ -1113,7 +1113,7 @@ const stats = {
 
   async function performExport() {
     try {
-      console.log("📥 Starting export...");
+      
       const format =
         (
           document.querySelector(
@@ -1153,7 +1153,7 @@ const stats = {
   }
 
   function exportSelectedUsers(userIds: string[]) {
-    console.log(`📥 Exporting ${userIds.length} selected users...`);
+    
 
     const selectedData = currentUsers
       .filter((user) => userIds.includes(user.id))
@@ -1204,7 +1204,7 @@ const stats = {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    console.log(`💾 Downloaded: ${filename}`);
+    
   }
 
   function applyClientSideEngagementFilter(engagementValue: string) {

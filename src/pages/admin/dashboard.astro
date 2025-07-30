@@ -224,13 +224,13 @@ declare global {
   });
 
   async function initializeDashboard() {
-    console.log("🚀 Initializing dashboard...");
+    
 
     try {
       // Use singleton manager
       await adminAPIManager.initialize();
 
-      console.log("✅ Admin API Manager initialized");
+      
 
       // Initialize auth state
       const authState = AuthState.getInstance();
@@ -250,7 +250,7 @@ declare global {
       // Setup periodic refresh
       setInterval(refreshDashboard, 5 * 60 * 1000);
 
-      console.log("✅ Dashboard initialized successfully");
+      
     } catch (error) {
       console.error("❌ Dashboard initialization failed:", error);
       if (
@@ -280,14 +280,14 @@ declare global {
         "adminMetricsUpdate",
         metricsUpdateHandler as EventListener
       );
-      console.log("✅ Real-time updates initialized for dashboard");
+      
     } catch (error) {
       console.error("❌ Failed to initialize real-time updates:", error);
     }
   }
 
   async function loadDashboardData() {
-    console.log("📊 Loading dashboard data...");
+    
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -295,7 +295,7 @@ declare global {
       const result = await adminAPIManager.getDashboardStats();
 
       if (result.success && result.data) {
-        console.log("✅ Dashboard data loaded:", result.data);
+        
         updateStatNumbers(result.data);
       } else {
         console.error("❌ Failed to load dashboard data:", result.error);
@@ -315,7 +315,7 @@ declare global {
         updateStatusIndicator("db-status", "online", "All systems operational");
         updateStatusIndicator("auth-status", "online", "Working normally");
         updateStatusIndicator("comment-status", "online", "Fully operational");
-        console.log("✅ System status: All systems online");
+        
       } else {
         updateStatusIndicator("db-status", "offline", "Connection issues");
         updateStatusIndicator(
@@ -328,7 +328,7 @@ declare global {
           "offline",
           "System unavailable"
         );
-        console.log("⚠️ System status: Some systems offline");
+        
       }
     } catch (error) {
       console.error("❌ Status check error:", error);
@@ -339,7 +339,7 @@ declare global {
   }
 
   function handleRealtimeMetricsUpdate(detail: any) {
-    console.log("📊 Real-time metrics update received:", detail);
+    
 
     // Update specific metrics based on the update type
     switch (detail.type) {
@@ -522,19 +522,19 @@ declare global {
     const loadingOverlay = document.getElementById("loading-overlay");
     const dashboardContent = document.getElementById("dashboard-content");
 
-    console.log("✅ Showing dashboard content...");
+    
     if (loadingOverlay) {
       loadingOverlay.style.display = "none";
-      console.log("✅ Loading overlay hidden");
+      
     }
     if (dashboardContent) {
       dashboardContent.style.display = "block";
-      console.log("✅ Dashboard content shown");
+      
     }
 
     setTimeout(() => {
       if (loadingOverlay && loadingOverlay.style.display !== "none") {
-        console.log("⚠️ Force showing dashboard content due to timeout");
+        
         loadingOverlay.style.display = "none";
         if (dashboardContent) dashboardContent.style.display = "block";
       }

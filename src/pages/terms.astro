@@ -10,11 +10,11 @@ try {
   // Try different possible filenames
   termsPage = await getEntry("legal", "terms-of-service");
 } catch (error) {
-  console.log("Trying alternative filename...");
+  
   try {
     termsPage = await getEntry("legal", "terms");
   } catch (error2) {
-    console.log("Could not find terms page, using fallback");
+    
     termsPage = null;
   }
 }

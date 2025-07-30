@@ -949,13 +949,13 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
     async init(): Promise<void> {
       try {
-        console.log("🚀 Initializing settings manager...");
+        
 
         // Initialize singleton managers
         await adminAuthManager.initialize();
         await adminAPIManager.initialize();
 
-        console.log("✅ Singleton managers initialized");
+        
 
         // Initialize auth state
         const authState = AuthState.getInstance();
@@ -967,7 +967,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
         this.updateSettingsStats();
         this.hideLoading();
 
-        console.log("✅ Settings manager initialized successfully");
+        
       } catch (error) {
         console.error("❌ Settings initialization error:", error);
         this.showError("Failed to load settings");
@@ -997,7 +997,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
         }
 
         this.populateAllForms();
-        console.log("✅ Settings loaded successfully");
+        
       } catch (error) {
         console.error("❌ Error loading settings:", error);
         this.setDefaultValues();
@@ -1078,7 +1078,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
     private async loadCMSStats(): Promise<void> {
       try {
-        console.log("📊 Loading CMS stats...");
+        
 
         // Use singleton manager for all API calls
         const [articlesResult, categoriesResult, authorsResult] =
@@ -1114,7 +1114,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
         };
 
         this.renderCMSStats(stats);
-        console.log("✅ CMS stats loaded successfully");
+        
       } catch (error) {
         console.error("❌ Error loading CMS stats:", error);
         this.renderCMSStats({

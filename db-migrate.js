@@ -78,7 +78,7 @@ async function runMigration() {
       .rpc('fn_exists', { function_name: 'execute_sql' });
     
     if (!funcExists) {
-      console.log('ℹ️ Creating execute_sql function...');
+      
       const createFuncSql = `
         CREATE OR REPLACE FUNCTION public.execute_sql(sql text)
         RETURNS json
@@ -108,12 +108,12 @@ async function runMigration() {
       
       if (funcError) throw new Error(`Failed to create execute_sql: ${funcError.message}`);
       
-      console.log('✅ execute_sql function created');
+      
     }
 
     // Run migrations
     for (const sql of migrations) {
-      console.log(`Executing:\n${sql.substring(0, 100)}...`);
+      }...`);
       
       const { data, error } = await supabase.rpc('execute_sql', { sql });
       
@@ -125,10 +125,10 @@ async function runMigration() {
         throw new Error(`SQL error [${data.code}]: ${data.message}`);
       }
       
-      console.log('✓ Success\n');
+      
     }
     
-    console.log('✅ All migrations completed successfully');
+    
   } catch (error) {
     console.error('❌ Migration failed:', error.message);
     process.exit(1);

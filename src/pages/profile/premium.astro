@@ -732,11 +732,11 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       if (this.initialized) return;
 
       try {
-        console.log("🚀 Premium: Starting initialization...");
+        
         await this.loadPremiumStatus();
         this.setupEventListeners();
         this.initialized = true;
-        console.log("✅ Premium: Initialization complete");
+        
       } catch (error) {
         console.error("❌ Premium: Initialization failed:", error);
         this.updateStatusSection();
@@ -752,12 +752,12 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         this.currentUser = authManager.getUser();
 
         if (!this.currentUser) {
-          console.log("❌ Premium: Not authenticated, redirecting...");
+          
           window.location.href = "/auth/signin";
           return;
         }
 
-        console.log("✅ Premium: User authenticated:", this.currentUser.email);
+        
 
         // Load subscription status (placeholder for now)
         this.subscription = null; // TODO: Load actual subscription from database
@@ -775,7 +775,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       try {
         // TODO: Load actual subscription data from your database
         // For now, we'll simulate it
-        console.log("📊 Premium: Loading background data...");
+        
 
         // Example: Check if user has premium subscription
         // const { data: subscription } = await supabase
@@ -857,7 +857,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         return;
       }
 
-      console.log("💳 Premium: Plan selection:", plan);
+      
 
       const originalContent = button.innerHTML;
       button.disabled = true;

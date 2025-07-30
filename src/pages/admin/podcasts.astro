@@ -373,11 +373,11 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
     showLoading(true);
 
     try {
-      console.log("🚀 Initializing podcast management...");
+      
 
       // Initialize admin API manager
       await adminAPIManager.initialize();
-      console.log("✅ Admin API Manager initialized");
+      
 
       // Test connection
       const connectionTest = await adminAPIManager.testConnection();
@@ -390,7 +390,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
       setupEventListeners();
       showLoading(false);
-      console.log("✅ Podcast management initialized successfully");
+      
     } catch (error) {
       console.error("❌ Initialization error:", error);
       showError(error.message || "Failed to load podcast data");
@@ -400,14 +400,14 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
   async function loadPodcasts() {
     try {
-      console.log("🔄 Loading podcasts...");
+      
       const response = await adminAPIManager.getPodcasts();
 
       if (response.success && response.data) {
         podcasts = response.data;
         renderPodcasts();
         updatePodcastCounts();
-        console.log(`✅ Loaded ${podcasts.length} podcasts`);
+        
       } else {
         throw new Error(response.error || "Failed to load podcasts");
       }
@@ -419,7 +419,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
   async function loadPodcastStats() {
     try {
-      console.log("📊 Loading podcast stats...");
+      
       const response = await adminAPIManager.getPodcasts();
 
       if (response.success && response.data) {
@@ -440,7 +440,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
         };
 
         updatePodcastStats(stats);
-        console.log("✅ Podcast stats updated:", stats);
+        
       }
     } catch (error) {
       console.error("❌ Load podcast stats error:", error);
@@ -549,7 +549,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       )
       .join("");
 
-    console.log(`✅ Rendered ${podcasts.length} podcast episodes`);
+    
   }
 
   function updatePodcastStats(stats: PodcastStats) {
@@ -602,7 +602,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
   }
 
   function setupEventListeners() {
-    console.log("🎯 Setting up event listeners...");
+    
 
     // Tab switching
     const tabButtons = document.querySelectorAll(".tab-btn");
@@ -666,7 +666,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       initializePodcastManagement();
     });
 
-    console.log("✅ Event listeners setup complete");
+    
   }
 
   function openEpisodeModal(podcast?: Podcast) {
@@ -762,13 +762,13 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
     try {
       let result;
       if (currentEditingPodcastId) {
-        console.log(`🔄 Updating episode ${currentEditingPodcastId}...`);
+        
         result = await adminAPIManager.updatePodcast(
           currentEditingPodcastId,
           episodeData
         );
       } else {
-        console.log("🔄 Creating new episode...");
+        
         result = await adminAPIManager.createPodcast(episodeData);
       }
 
@@ -782,7 +782,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
         closeEpisodeModal();
         await loadPodcasts();
         await loadPodcastStats();
-        console.log("✅ Episode operation completed successfully");
+        
       } else {
         throw new Error(result.error || "Failed to save episode");
       }
@@ -799,7 +799,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
   // Global functions for onclick handlers - Updated to use singleton
   (window as any).editEpisode = async function (episodeId: string) {
-    console.log(`✏️ Editing episode ${episodeId}...`);
+    
     const episode = podcasts.find((p) => p.id === episodeId);
     if (episode) {
       openEpisodeModal(episode);
@@ -825,7 +825,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
         );
         await loadPodcasts();
         await loadPodcastStats();
-        console.log("✅ Episode status updated successfully");
+        
       } else {
         throw new Error(result.error || "Failed to update episode status");
       }
@@ -845,14 +845,14 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
     }
 
     try {
-      console.log(`🗑️ Deleting episode ${episodeId}...`);
+      
       const result = await adminAPIManager.deletePodcast(episodeId);
 
       if (result.success) {
         showNotification("Episode deleted successfully", "success");
         await loadPodcasts();
         await loadPodcastStats();
-        console.log("✅ Episode deleted successfully");
+        
       } else {
         throw new Error(result.error || "Failed to delete episode");
       }

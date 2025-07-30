@@ -104,7 +104,7 @@ export class DeploymentManager {
     };
 
     // Always log deployment info as it's crucial for debugging
-    console.log('🚀 Deployment Info:', info);
+    
   }
 
   // Get deployment summary for debugging

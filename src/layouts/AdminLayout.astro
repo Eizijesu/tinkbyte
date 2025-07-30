@@ -70,12 +70,12 @@ const { title, description, preloadData = true } = Astro.props;
 
       async init(): Promise<void> {
         try {
-          console.log("🚀 Admin layout initializing...");
+          
           await this.initializeAuth();
           await this.setupEventListeners();
           await this.loadInitialData();
           this.hideLoading();
-          console.log("✅ Admin layout initialized successfully");
+          
         } catch (error) {
           console.error("❌ Admin layout initialization error:", error);
           this.handleInitError(error);
@@ -98,7 +98,7 @@ const { title, description, preloadData = true } = Astro.props;
           this.currentUser = user;
 
           this.updateLoadingStatus("Authentication verified", 40);
-          console.log("✅ Admin authentication verified");
+          
         } catch (error) {
           console.error("❌ Authentication failed:", error);
           this.redirectToSignIn(error.message);
@@ -148,7 +148,7 @@ const { title, description, preloadData = true } = Astro.props;
         // Setup global keyboard shortcuts
         this.setupKeyboardShortcuts();
 
-        console.log("✅ Event listeners setup complete");
+        
       }
 
       private async loadInitialData(): Promise<void> {
@@ -165,7 +165,7 @@ const { title, description, preloadData = true } = Astro.props;
           this.setupPeriodicRefresh();
 
           this.updateLoadingStatus("Ready!", 100);
-          console.log("✅ Initial data loaded");
+          
         } catch (error) {
           console.warn("⚠️ Some data failed to load:", error);
           // Continue anyway, don't block the UI
@@ -370,7 +370,7 @@ const { title, description, preloadData = true } = Astro.props;
 
       private async handleSignOut(): Promise<void> {
         try {
-          console.log("🔄 Layout: Starting sign out...");
+          
 
           this.showGlobalLoading("Signing out...");
 

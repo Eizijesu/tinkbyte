@@ -14,10 +14,10 @@ console.log("Admin index check:", {
 });
 
 if (!user) {
-  console.log("No admin user, redirecting to signin");
+  
   return Astro.redirect("/auth/admin-signin");
 }
 
-console.log("Admin verified, redirecting to dashboard");
+
 return Astro.redirect("/admin/dashboard");
 ---

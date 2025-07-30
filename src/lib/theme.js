@@ -22,7 +22,7 @@ class ThemeManager {
 
     // Listen for system theme changes - FIXED
     this.systemMediaQuery.addEventListener('change', (e) => {
-      console.log('System theme changed to:', e.matches ? 'dark' : 'light');
+      
       if (this.currentTheme === 'system') {
         this.applyTheme('system');
         this.notifyListeners();
@@ -50,10 +50,10 @@ class ThemeManager {
     } else if (theme === 'system') {
       // FIXED: Properly check system preference
       isDark = this.systemMediaQuery.matches;
-      console.log('System theme is:', isDark ? 'dark' : 'light');
+      
     }
     
-    console.log('Applying theme:', theme, 'isDark:', isDark);
+    
     
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -68,7 +68,7 @@ class ThemeManager {
       return;
     }
 
-    console.log('Setting theme to:', theme);
+    
     this.currentTheme = theme;
     localStorage.setItem('theme', theme);
     this.applyTheme(theme);

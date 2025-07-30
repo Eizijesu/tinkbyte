@@ -21,9 +21,9 @@ export class EmailService {
 
   static async sendEmail(template: EmailTemplate): Promise<EmailResult> {
     try {
-      console.log('📧 Email Service: Sending via Cloudflare Worker...');
-      console.log('📧 To:', template.to);
-      console.log('📧 Subject:', template.subject);
+      
+      
+      
 
       const response = await fetch(this.workerUrl, {
         method: 'POST',
@@ -46,8 +46,8 @@ export class EmailService {
         return { success: false, error: data.message || 'Email sending failed' };
       }
 
-      console.log('✅ Email sent successfully via Worker');
-      console.log('✅ Email ID:', data?.id);
+      
+      
       
       return { success: true, data, id: data?.id };
     } catch (error: any) {

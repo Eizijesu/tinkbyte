@@ -229,7 +229,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       if (this.isInitialized) return;
 
       try {
-        console.log("🚀 Initializing Moderation Manager...");
+        
 
         // Initialize admin API manager
         await adminAPIManager.initialize();
@@ -246,7 +246,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
         await this.loadModerationData();
 
         this.isInitialized = true;
-        console.log("✅ Moderation Manager initialized successfully");
+        
       } catch (error) {
         console.error("❌ Moderation Manager initialization failed:", error);
         this.showError(
@@ -258,7 +258,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
     private setupRealtimeUpdates(): void {
       window.addEventListener("adminMetricsUpdate", (event: CustomEvent) => {
-        console.log("📊 Moderation real-time update:", event.detail);
+        
 
         if (
           event.detail.type === "comment" ||
@@ -915,7 +915,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      console.log("🚀 Moderation dashboard initializing...");
+      
 
       moderationManager = ModerationManager.getInstance();
       await moderationManager.initialize();
@@ -923,7 +923,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       // Make globally available
       (window as any).moderationManager = moderationManager;
 
-      console.log("✅ Moderation dashboard initialized successfully");
+      
     } catch (error) {
       console.error("❌ Moderation dashboard initialization failed:", error);
     }

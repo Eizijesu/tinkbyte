@@ -104,7 +104,7 @@ export async function getStaticPaths() {
         new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
     );
 
-    console.log(`✅ Generated ${sortedPosts.length} blog post paths`);
+    
 
     return sortedPosts.map((post: CollectionEntry<"blog">, index: number) => {
       const previousPost =
@@ -150,7 +150,7 @@ try {
   Content = rendered.Content;
   headings = rendered.headings || [];
 
-  console.log(`✅ Successfully rendered post: ${post.data.title}`);
+  
 } catch (error) {
   console.error(`❌ Error rendering post ${post.slug}:`, error);
   renderError = error as Error;
@@ -307,12 +307,12 @@ processedData.analyticsData = {
 };
 
 // Validation logging
-console.log(`📊 Post processed: ${processedData.title}`);
-console.log(`   - Word count: ${wordCount}`);
-console.log(`   - Reading time: ${processedData.readTime}`);
-console.log(`   - Has audio: ${processedData.analyticsData.hasAudio}`);
-console.log(`   - Has image: ${processedData.analyticsData.hasFeaturedImage}`);
-console.log(`   - Tags: ${processedData.tags.length}`);
+
+
+
+
+
+
 ---
 
 <BlogPost
@@ -514,7 +514,7 @@ console.log(`   - Tags: ${processedData.tags.length}`);
         { passive: true }
       );
 
-      console.log("📊 Analytics initialized for:", postTitle);
+      
     });
 
     // Error tracking

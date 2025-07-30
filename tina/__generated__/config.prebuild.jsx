@@ -770,7 +770,7 @@ var config_default = defineConfig({
                 ui: {
                   defaultItem: {
                     language: "javascript",
-                    code: "// Your code here\nconsole.log('Hello, TinkByte!');"
+                    code: "// Your code here\n"
                   }
                 },
                 fields: [

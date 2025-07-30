@@ -61,7 +61,7 @@ const fallbackStats = {
 
 const stats = fallbackStats;
 
-console.log("📂 Categories page initialized with fallback data");
+
 ---
 
 <AdminLayout title="Categories - TinkByte Admin">
@@ -779,13 +779,13 @@ console.log("📂 Categories page initialized with fallback data");
       showLoading();
       hideError();
 
-      console.log("🔄 Loading categories data from singleton API manager...");
+      
 
       // Initialize singleton managers
       await adminAuthManager.initialize();
       await adminAPIManager.initialize();
 
-      console.log("✅ Admin managers initialized");
+      
 
       // Use singleton API manager
       const result = await adminAPIManager.getCategories();
@@ -794,7 +794,7 @@ console.log("📂 Categories page initialized with fallback data");
         currentData = result.data;
         updateCategoriesUI(currentData);
         updateStats(currentData);
-        console.log("✅ Categories data loaded successfully:", currentData);
+        
       } else {
         throw new Error(result.error || "Failed to load categories data");
       }
@@ -995,7 +995,7 @@ console.log("📂 Categories page initialized with fallback data");
     attachCategoryActionListeners();
     attachBulkActionListeners();
 
-    console.log(`✅ Rendered ${categories.length} categories`);
+    
   }
 
   // Update stats
@@ -1420,11 +1420,11 @@ console.log("📂 Categories page initialized with fallback data");
 
   // Event listeners
   document.addEventListener("DOMContentLoaded", () => {
-    console.log("🚀 Categories dashboard initialized");
+    
 
     // Load data on page load (only if localStorage is available)
     if (isLocalStorageAvailable()) {
-      console.log("📱 LocalStorage available, loading data...");
+      
       loadCategoriesData();
     } else {
       console.warn("⚠️ LocalStorage not available, showing fallback data");

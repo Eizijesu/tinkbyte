@@ -117,7 +117,7 @@ const cleanupCommands = [
 async function runCleanup() {
   try {
     for (const sql of cleanupCommands) {
-      console.log(`Executing command...`);
+      
       
       const { data, error } = await supabase.rpc('execute_sql', { sql });
       
@@ -128,21 +128,21 @@ async function runCleanup() {
       
       if (data?.status === 'error') {
         if (data.code === '42710') {
-          console.log('ℹ️ Object already exists. Skipping...');
+          
           continue;
         }
         console.error(`❌ SQL error [${data.code}]: ${data.message}`);
         continue;
       }
       
-      console.log('✓ Command executed successfully');
+      
     }
     
-    console.log('✅ Function cleanup completed');
+    
     
     // VERIFICATION - FIXED SECTION
     try {
-      console.log('Verifying functions...');
+      
       
       // Get public namespace OID
       const { data: namespaceData, error: namespaceError } = await supabase
@@ -167,7 +167,7 @@ async function runCleanup() {
       if (funcError) {
         console.error('❌ Function query error:', funcError.message);
       } else if (functions && functions.length > 0) {
-        console.log('✅ Functions found:');
+        
         functions.forEach(f => {
           console.log(`- ${f.proname}:`, 
             f.proconfig ? `Search path: ${f.proconfig.join(',')}` : 'No search path');
@@ -177,7 +177,7 @@ async function runCleanup() {
           console.warn(`⚠️ Expected 2 functions but found ${functions.length}`);
         }
       } else {
-        console.log('ℹ️ No functions found after cleanup');
+        
       }
     } catch (verificationError) {
       console.error('❌ Verification failed:', verificationError.message);

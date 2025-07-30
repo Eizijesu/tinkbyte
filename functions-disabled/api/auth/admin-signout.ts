@@ -5,7 +5,7 @@ export async function onRequestPost(context: any) {
   const { request } = context;
   
   try {
-    console.log("🚪 Admin API signout initiated");
+    
     
     // Create response headers for clearing cookies
     const headers = new Headers({
@@ -20,7 +20,7 @@ export async function onRequestPost(context: any) {
     headers.append('Set-Cookie', `user-is-admin=; ${cookieOptions}`);
     headers.append('Set-Cookie', `user-info=; ${cookieOptions}`);
 
-    console.log("🧹 Admin cookies cleared via API");
+    
 
     return new Response(JSON.stringify({
       success: true,

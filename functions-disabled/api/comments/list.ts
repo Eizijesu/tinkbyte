@@ -13,7 +13,7 @@ export async function onRequestGet(context: any) {
     const limit = parseInt(url.searchParams.get('limit') || '50');
     const sort = url.searchParams.get('sort') || 'newest';
     
-    console.log('Article ID received:', articleId);
+    
     
     if (!articleId) {
       return new Response(JSON.stringify({ error: 'Article ID is required' }), {

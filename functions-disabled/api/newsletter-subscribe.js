@@ -62,7 +62,7 @@ export async function onRequestPost(context) {
       } : {}
     };
     
-    console.log('Attempting ConvertKit subscription for:', email);
+    
     
     // Subscribe to ConvertKit
     const convertkitResponse = await fetch(
@@ -81,7 +81,7 @@ export async function onRequestPost(context) {
     }
     
     const result = await convertkitResponse.json();
-    console.log('ConvertKit subscription successful:', result.subscription?.subscriber?.id);
+    
     
     return new Response(JSON.stringify({ 
       success: true, 

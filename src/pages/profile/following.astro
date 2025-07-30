@@ -643,7 +643,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       if (this.initialized) return;
 
       try {
-        console.log("🚀 Following: Starting initialization...");
+        
 
         // Initialize auth manager
         await authManager.initialize();
@@ -651,19 +651,19 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         // Check authentication
         this.currentUser = authManager.getUser();
         if (!this.currentUser) {
-          console.log("❌ Not authenticated, redirecting to signin");
+          
           window.location.href = "/auth/signin";
           return;
         }
 
-        console.log("✅ User authenticated:", this.currentUser.email);
+        
 
         // Load data and setup UI
         await this.loadFollowingData();
         this.setupEventListeners();
 
         this.initialized = true;
-        console.log("✅ Following: Initialization complete");
+        
       } catch (error) {
         console.error("❌ Following: Initialization failed:", error);
         this.showError("Failed to load following data");
@@ -672,7 +672,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
     async loadFollowingData() {
       try {
-        console.log("📊 Loading following data...");
+        
 
         // Show loading state initially
         this.updateCounts();
@@ -735,7 +735,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         this.updateCounts();
         this.updateSummaries();
 
-        console.log("✅ Background data loaded successfully");
+        
       } catch (error) {
         console.error("❌ Error loading background data:", error);
         this.showError("Failed to load following data");
@@ -872,7 +872,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
         this.showSuccess("Changes saved successfully!");
 
-        console.log("✅ Changes saved successfully");
+        
       } catch (error) {
         console.error("❌ Error saving changes:", error);
         this.showError("Failed to save changes");

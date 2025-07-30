@@ -4,7 +4,7 @@ import path from 'path';
 
 function fixFile(filePath, fixes) {
   if (!fs.existsSync(filePath)) {
-    console.log(`⚠️  File not found: ${filePath}`);
+    
     return false;
   }
 
@@ -17,16 +17,16 @@ function fixFile(filePath, fixes) {
       if (newContent !== content) {
         content = newContent;
         modified = true;
-        console.log(`✅ Applied fix: ${fix.description}`);
+        
       }
     });
 
     if (modified) {
       fs.writeFileSync(filePath, content);
-      console.log(`✅ Fixed: ${filePath}\n`);
+      
       return true;
     } else {
-      console.log(`ℹ️  No changes needed: ${filePath}\n`);
+      
       return false;
     }
   } catch (error) {
@@ -36,7 +36,7 @@ function fixFile(filePath, fixes) {
 }
 
 // Fix TinaCMS Provider
-console.log('🔧 Fixing TinaCMS Provider...');
+
 fixFile('src/components/tina/TinaCMSProvider.astro', [
   {
     pattern: /branch:\s*"main",?\s*\n?/g,
@@ -46,7 +46,7 @@ fixFile('src/components/tina/TinaCMSProvider.astro', [
 ]);
 
 // Fix ArticleCard
-console.log('🔧 Fixing ArticleCard...');
+
 fixFile('src/components/blog/ArticleCard.astro', [
   {
     pattern: /onError=/g,
@@ -61,7 +61,7 @@ fixFile('src/components/blog/ArticleCard.astro', [
 ]);
 
 // Fix RelatedPosts
-console.log('🔧 Fixing RelatedPosts...');
+
 fixFile('src/components/blog/RelatedPosts.astro', [
   {
     pattern: /entry\.target\.style\./g,
@@ -75,8 +75,7 @@ fixFile('src/components/blog/RelatedPosts.astro', [
   }
 ]);
 
-console.log('🎉 Build error fixes completed!');
-console.log('📝 Next steps:');
-console.log('   1. git add .');
-console.log('   2. git commit -m "Fix TypeScript build errors"');
-console.log('   3. git push');
+
+
+
+

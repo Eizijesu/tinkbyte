@@ -171,7 +171,7 @@ import AuthLayout from "../../components/auth/AuthLayout.astro";
       if (this.initialized) return;
 
       try {
-        console.log("🔄 VerifyEmail: Initializing...");
+        
 
         await authManager.initialize();
 
@@ -181,7 +181,7 @@ import AuthLayout from "../../components/auth/AuthLayout.astro";
         this.setupEventListeners();
 
         this.initialized = true;
-        console.log("✅ VerifyEmail: Initialized successfully");
+        
       } catch (error) {
         console.error("❌ VerifyEmail: Initialization failed:", error);
         this.showStatus("Failed to initialize email verification", "error");
@@ -244,7 +244,7 @@ import AuthLayout from "../../components/auth/AuthLayout.astro";
     private checkEmailVerification() {
       const urlHash = window.location.hash;
       if (urlHash.includes("access_token")) {
-        console.log("🔄 VerifyEmail: Email verification detected in URL");
+        
 
         if (this.passwordSetup) {
           this.passwordSetup.style.display = "block";
@@ -356,7 +356,7 @@ import AuthLayout from "../../components/auth/AuthLayout.astro";
       if (btnSpinner) btnSpinner.style.display = "block";
 
       try {
-        console.log("🔄 VerifyEmail: Setting up password");
+        
 
         const result = await authManager.setPassword(password);
 
@@ -364,7 +364,7 @@ import AuthLayout from "../../components/auth/AuthLayout.astro";
           throw new Error(result.error);
         }
 
-        console.log("✅ VerifyEmail: Password setup successful");
+        
 
         this.showStatus(
           "Account setup complete! Redirecting to your profile...",

@@ -10,7 +10,7 @@ export async function onRequestPost(context: any) {
   const { request } = context;
   
   try {
-    console.log('🔐 Admin signin API called');
+    
     
     const body = await request.json() as LoginData;
     const { email, password } = body;
@@ -25,7 +25,7 @@ export async function onRequestPost(context: any) {
       });
     }
 
-    console.log('🔐 Attempting signin for:', email);
+    
     
     // Sign in with Supabase
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -54,7 +54,7 @@ export async function onRequestPost(context: any) {
       });
     }
 
-    console.log('✅ Signin successful for:', data.user.email);
+    
 
     // Check admin status
     let isAdmin = false;
@@ -82,7 +82,7 @@ export async function onRequestPost(context: any) {
     }
 
     if (!isAdmin) {
-      console.log('❌ User is not an admin');
+      
       return new Response(JSON.stringify({ 
         success: false,
         error: 'Access denied. Admin privileges required.' 
@@ -92,7 +92,7 @@ export async function onRequestPost(context: any) {
       });
     }
 
-    console.log('✅ Admin verification successful');
+    
 
     // Set cookies using Headers constructor
     const maxAge = 60 * 60 * 24 * 7; // 7 days

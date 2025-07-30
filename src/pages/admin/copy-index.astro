@@ -13,12 +13,12 @@ console.log("Admin redirect check:", {
 });
 
 if (!user || !isAdmin) {
-  console.log("Redirecting to admin signin");
+  
   return Astro.redirect(
     "/auth/admin-signin?redirect=" + encodeURIComponent("/admin/index.html")
   );
 }
 
-console.log("Admin verified, redirecting to TinaCMS");
+
 return Astro.redirect("/admin/index.html");
 ---

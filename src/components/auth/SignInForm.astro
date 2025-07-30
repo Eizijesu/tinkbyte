@@ -555,7 +555,7 @@
       if (this.initialized) return;
 
       try {
-        console.log("🔑 SignInForm: Initializing...");
+        
 
         // Initialize auth manager
         await authManager.initialize();
@@ -565,7 +565,7 @@
         this.setupEventListeners();
 
         this.initialized = true;
-        console.log("🔑 SignInForm: Initialized successfully");
+        
       } catch (error) {
         console.error("❌ SignInForm: Initialization failed:", error);
         this.showToast("Failed to initialize sign in form", "error");
@@ -658,7 +658,7 @@
 
       try {
         this.setButtonLoading(this.googleBtn, true);
-        console.log("🔑 SignInForm: Google signin starting...");
+        
 
         const result = await authManager.signInWithGoogle();
 
@@ -666,7 +666,7 @@
           throw new Error(result.error);
         }
 
-        console.log("🔑 SignInForm: Google signin successful, redirecting...");
+        
       } catch (error: any) {
         console.error("❌ SignInForm: Google signin error:", error);
         this.showToast(error.message || "Google sign in failed", "error");
@@ -689,7 +689,7 @@
       this.setButtonLoading(this.signinBtn, true);
 
       try {
-        console.log("🔑 SignInForm: Email signin for:", email);
+        
 
         const result = await authManager.signInWithEmail(email, password);
 
@@ -697,7 +697,7 @@
           throw new Error(result.error);
         }
 
-        console.log("✅ SignInForm: Email signin successful");
+        
         this.showToast("Sign in successful! Redirecting...");
 
         setTimeout(() => {

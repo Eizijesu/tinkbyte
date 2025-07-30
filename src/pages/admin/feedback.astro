@@ -263,7 +263,7 @@ const stats = fallbackStats;
   // Initialize feedback management
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      console.log("🚀 Feedback management initializing...");
+      
       await initializeFeedbackManagement();
     } catch (error) {
       console.error("Feedback management initialization error:", error);
@@ -289,7 +289,7 @@ const stats = fallbackStats;
 
       setupEventListeners();
       hideLoading();
-      console.log("✅ Feedback management initialized successfully");
+      
     } catch (error) {
       console.error("❌ Feedback initialization failed:", error);
       showError(error.message || "Failed to initialize feedback management");
@@ -328,7 +328,7 @@ const stats = fallbackStats;
 
       if (result.success && result.data) {
         updateStatsDisplay(result.data);
-        console.log("✅ Feedback stats loaded:", result.data);
+        
       } else {
         throw new Error(result.error || "Failed to load feedback stats");
       }
@@ -371,7 +371,7 @@ const stats = fallbackStats;
         feedbackData = result.data || [];
         displayFeedback(feedbackData);
         updatePagination(result.pagination);
-        console.log(`✅ Loaded ${feedbackData.length} feedback items`);
+        
       } else {
         throw new Error(result.error || "Failed to load feedback");
       }
@@ -551,12 +551,12 @@ const stats = fallbackStats;
   }
 
   function showFeedbackDetails(feedbackId: string): void {
-    console.log("Show feedback details for:", feedbackId);
+    
     // TODO: Implement modal or navigation to feedback details
   }
 
   function setupEventListeners(): void {
-    console.log("🔧 Setting up event listeners...");
+    
 
     // Set up filter listeners
     const typeFilter = document.getElementById(
@@ -660,7 +660,7 @@ const stats = fallbackStats;
     );
     bulkDeleteBtn?.addEventListener("click", () => handleBulkAction("delete"));
 
-    console.log("✅ Event listeners setup complete");
+    
   }
 
   async function handleBulkAction(action: string): Promise<void> {

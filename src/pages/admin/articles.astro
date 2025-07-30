@@ -464,7 +464,7 @@ import { config } from "../../lib/config.js";
   // Initialize articles management
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      console.log("🚀 Articles management initializing...");
+      
 
       await adminAuthManager.initialize();
       const user = await adminAuthManager.getCurrentUser();
@@ -496,16 +496,16 @@ import { config } from "../../lib/config.js";
     showLoading(true);
 
     try {
-      console.log("🔌 Initializing admin API manager...");
+      
       await adminAPIManager.initialize();
 
-      console.log("🔌 Testing connection...");
+      
       const connectionTest = await adminAPIManager.testConnection();
       if (!connectionTest.success) {
         throw new Error(connectionTest.error || "Connection test failed");
       }
 
-      console.log("📊 Loading data...");
+      
       await Promise.all([
         loadArticles(),
         loadCategories(),
@@ -515,7 +515,7 @@ import { config } from "../../lib/config.js";
 
       setupEventListeners();
       showLoading(false);
-      console.log("✅ Articles management initialized successfully");
+      
     } catch (error: any) {
       console.error("Initialization error:", error);
       showError(error.message || "Failed to load articles data");
@@ -528,7 +528,7 @@ import { config } from "../../lib/config.js";
       if (isLoading) return;
       isLoading = true;
 
-      console.log("📰 Loading articles...", { page, filters: currentFilters });
+      
 
       const [sortBy, sortOrder] = currentFilters.sortBy.includes("-")
         ? currentFilters.sortBy.split("-")
@@ -554,7 +554,7 @@ import { config } from "../../lib/config.js";
 
         renderArticles();
         renderPagination(result.pagination);
-        console.log(`✅ Loaded ${articles.length} articles`);
+        
       } else {
         throw new Error(result.error || "Failed to load articles");
       }
@@ -568,13 +568,13 @@ import { config } from "../../lib/config.js";
 
   async function loadCategories() {
     try {
-      console.log("🏷️ Loading categories...");
+      
       const result = await adminAPIManager.getCategories();
 
       if (result.success) {
         categories = result.data || [];
         populateFilterOptions();
-        console.log(`✅ Loaded ${categories.length} categories`);
+        
       }
     } catch (error: any) {
       console.error("Load categories error:", error);
@@ -583,13 +583,13 @@ import { config } from "../../lib/config.js";
 
   async function loadAuthors() {
     try {
-      console.log("👥 Loading authors...");
+      
       const result = await adminAPIManager.getAuthors({ limit: 100 });
 
       if (result.success) {
         authors = result.data || [];
         populateFilterOptions();
-        console.log(`✅ Loaded ${authors.length} authors`);
+        
       }
     } catch (error: any) {
       console.error("Load authors error:", error);
@@ -598,7 +598,7 @@ import { config } from "../../lib/config.js";
 
   async function updateStats() {
     try {
-      console.log("📈 Updating stats...");
+      
 
       const [totalResult, publishedResult, draftResult, featuredResult] =
         await Promise.all([
@@ -1069,7 +1069,7 @@ import { config } from "../../lib/config.js";
     if (!detailsElement) return;
 
     try {
-      console.log(`📊 Loading engagement for article: ${articleSlug}`);
+      
 
       const result = await adminAPIManager.getArticleEngagementStats();
 
@@ -1084,7 +1084,7 @@ import { config } from "../../lib/config.js";
         }
       }
 
-      console.log("📊 Falling back to basic engagement stats...");
+      
       await loadBasicEngagementStats(detailsElement, articleSlug);
     } catch (error: any) {
       console.error("Engagement loading error:", error);
@@ -1111,7 +1111,7 @@ import { config } from "../../lib/config.js";
     articleSlug: string
   ) {
     try {
-      console.log(`📊 Loading basic engagement stats for: ${articleSlug}`);
+      
 
       const queries = await Promise.allSettled([
         supabase
@@ -1152,7 +1152,7 @@ import { config } from "../../lib/config.js";
             : 0,
       };
 
-      console.log(`✅ Loaded engagement stats:`, stats);
+      
       renderBasicEngagement(detailsElement, stats);
     } catch (error) {
       console.error("Basic engagement loading error:", error);
@@ -1260,11 +1260,11 @@ import { config } from "../../lib/config.js";
       const article = articles.find((a) => a.id === articleId);
       if (!article) throw new Error("Article not found");
 
-      console.log(`🔄 Refreshing stats for article: ${article.slug}`);
+      
 
       const result = await adminAPIManager.updateArticleStats(article.slug);
       if (result.success) {
-        console.log(`✅ Updated stats for ${article.slug}`);
+        
         showNotification("Article stats refreshed successfully", "success");
 
         await loadArticles(currentPage);
@@ -1371,7 +1371,7 @@ import { config } from "../../lib/config.js";
   }
 
   function setupEventListeners() {
-    console.log("🔧 Setting up event listeners...");
+    
 
     const createArticleBtn = document.getElementById(
       "create-article-btn"
@@ -1433,7 +1433,7 @@ import { config } from "../../lib/config.js";
       initializeArticlesManagement();
     });
 
-    console.log("✅ Event listeners setup complete");
+    
   }
 
   async function handleArticleFormSubmit(e: Event) {

@@ -676,7 +676,7 @@ import { authManager } from "../../lib/auth.js";
         // Initialize if not already done
         await this.authManager.initialize();
 
-        console.log("📡 Auth manager initialized for feedback");
+        
       } catch (error) {
         console.error("❌ Failed to initialize auth manager:", error);
       }
@@ -869,7 +869,7 @@ import { authManager } from "../../lib/auth.js";
           throw new Error(`Submission failed: ${error.message}`);
         }
 
-        console.log("✅ Feedback submitted successfully:", data);
+        
         this.showSuccessState();
 
         // Track successful submission

@@ -706,7 +706,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
   // Initialize newsletter management
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      console.log("🚀 Newsletter management initializing...");
+      
       await initializeNewsletterManagement();
     } catch (error) {
       console.error("Newsletter management initialization error:", error);
@@ -726,13 +726,13 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       const authState = AuthState.getInstance();
       await authState.initialize();
 
-      console.log("🔌 Testing connection...");
+      
       const connectionTest = await adminAPIManager.testConnection();
       if (!connectionTest.success) {
         throw new Error(connectionTest.error || "Connection test failed");
       }
 
-      console.log("📊 Loading real data from database...");
+      
       await Promise.all([
         loadNewslettersFromDB(),
         loadSubscribersFromDB(),
@@ -741,7 +741,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
       setupEventListeners();
       showLoading(false);
-      console.log("✅ Newsletter management initialized successfully");
+      
     } catch (error) {
       console.error("❌ Initialization error:", error);
       showError(error.message || "Failed to load newsletter data");
@@ -751,7 +751,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
   async function loadNewslettersFromDB() {
     try {
-      console.log("📰 Loading newsletters from database...");
+      
 
       // Use singleton manager
       const response = await adminAPIManager.getNewsletters();
@@ -778,7 +778,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
   async function loadSubscribersFromDB(page = 1, limit = 50) {
     try {
-      console.log("👥 Loading subscribers from database...");
+      
 
       const searchInput = document.getElementById(
         "subscriber-search"
@@ -821,7 +821,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
   async function loadDashboardStatsFromDB() {
     try {
-      console.log("📈 Loading dashboard stats from database...");
+      
 
       // Get real stats from database using singleton manager
       const [newslettersResponse, subscribersResponse] = await Promise.all([
@@ -865,7 +865,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       }
 
       updateDashboardStats(stats);
-      console.log("✅ Dashboard stats updated from database:", stats);
+      
     } catch (error) {
       console.error("❌ Load dashboard stats error:", error);
       // Fallback stats
@@ -1320,7 +1320,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
   }
 
   function initializeEmailBuilder(newsletterId?: string) {
-    console.log("🎨 Initializing email builder for newsletter:", newsletterId);
+    
 
     // Initialize drag and drop
     setupDragAndDrop();
@@ -1687,7 +1687,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
   }
 
   function setupEventListeners() {
-    console.log("🔧 Setting up event listeners...");
+    
 
     // Tab switching
     const tabButtons = document.querySelectorAll(".tab-button");
@@ -1842,7 +1842,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       initializeNewsletterManagement();
     });
 
-    console.log("✅ Event listeners setup complete");
+    
   }
 
   async function handleNewsletterFormSubmit(e: Event) {
@@ -1901,17 +1901,17 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
   }
 
   async function handleSubscriberSearch() {
-    console.log("🔍 Searching subscribers...");
+    
     await loadSubscribersFromDB(1);
   }
 
   async function handleSubscriberFilter() {
-    console.log("🔽 Filtering subscribers...");
+    
     await loadSubscribersFromDB(1);
   }
 
   async function handleNewsletterFilter() {
-    console.log("🔽 Filtering newsletters...");
+    
     await loadNewslettersFromDB();
   }
 
@@ -1980,7 +1980,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
     const emailHTML = generateEmailHTML();
 
     // TODO: Save to database via AdminAPI
-    console.log("📧 Saving email template:", emailHTML);
+    
 
     showNotification("Email template saved successfully", "success");
   }

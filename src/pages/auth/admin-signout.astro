@@ -8,7 +8,7 @@ import { adminAuthManager } from "../../lib/admin/auth.js";
 
   async function performAdminSignOut() {
     try {
-      console.log("🔄 Signing out...");
+      
 
       // Clear all storage immediately
       localStorage.clear();
@@ -21,14 +21,14 @@ import { adminAuthManager } from "../../lib/admin/auth.js";
           .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
 
-      console.log("✅ Storage cleared");
+      
 
       // Try to sign out from admin auth manager
       try {
         await adminAuthManager.signOut();
-        console.log("✅ Admin auth manager sign out completed");
+        
       } catch (error) {
-        console.log("⚠️ Admin auth manager sign out failed, continuing anyway");
+        
       }
 
       // Redirect

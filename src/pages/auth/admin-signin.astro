@@ -294,7 +294,7 @@ import Layout from "../../layouts/Layout.astro";
       if (this.initialized) return;
 
       try {
-        console.log("🔄 Admin Sign In: Initializing...");
+        
 
         // Initialize admin auth manager
         await adminAuthManager.initialize();
@@ -305,7 +305,7 @@ import Layout from "../../layouts/Layout.astro";
         this.setupEventListeners();
 
         this.initialized = true;
-        console.log("✅ Admin Sign In: Initialized successfully");
+        
       } catch (error) {
         console.error("❌ Admin Sign In: Initialization failed:", error);
         this.showError("Failed to initialize sign in form");
@@ -405,12 +405,12 @@ import Layout from "../../layouts/Layout.astro";
       this.updateButtonState(true, "Signing in...");
 
       try {
-        console.log("🔄 Admin Sign In: Attempting sign in for:", email);
+        
 
         const result = await adminAuthManager.signIn(email, password);
 
         if (result.success) {
-          console.log("✅ Admin Sign In: Sign in successful");
+          
           this.showSuccess("Sign in successful! Redirecting...");
 
           const redirect =

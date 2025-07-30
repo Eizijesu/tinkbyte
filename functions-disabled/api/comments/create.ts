@@ -52,7 +52,7 @@ export async function onRequestPost(context: any) {
     const body = await request.json();
     const { content, article_id, parent_id, guest_name, guest_email } = body;
     
-    console.log('Received comment data:', { content, article_id, parent_id, guest_name, guest_email });
+    
     
     // Validate required fields
     if (!content?.trim() || !article_id) {
@@ -185,7 +185,7 @@ export async function onRequestPost(context: any) {
 
     // Apply content moderation
     const moderation = moderateContent(trimmedContent, isAuthenticated);
-    console.log('Moderation result:', moderation);
+    
 
     // Prepare insert data - simplified for static site
     const insertData = {
@@ -210,7 +210,7 @@ export async function onRequestPost(context: any) {
       reply_count: 0
     };
 
-    console.log('Inserting comment:', insertData);
+    
 
     // Insert comment
     const { data: comment, error: insertError } = await supabase

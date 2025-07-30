@@ -677,7 +677,7 @@
       if (this.initialized) return;
 
       try {
-        console.log("📝 SignUpForm: Initializing...");
+        
 
         await authManager.initialize();
 
@@ -686,7 +686,7 @@
         this.setupFormValidation();
 
         this.initialized = true;
-        console.log("📝 SignUpForm: Initialized successfully");
+        
       } catch (error) {
         console.error("❌ SignUpForm: Initialization failed:", error);
         this.showToast("Failed to initialize sign up form", "error");
@@ -809,7 +809,7 @@
 
       try {
         this.setButtonLoading(this.googleBtn, true);
-        console.log("📝 SignUpForm: Google signup starting...");
+        
 
         const result = await authManager.signInWithGoogle();
 
@@ -817,7 +817,7 @@
           throw new Error(result.error);
         }
 
-        console.log("📝 SignUpForm: Google signup successful, redirecting...");
+        
       } catch (error: any) {
         console.error("❌ SignUpForm: Google signup error:", error);
         this.showToast(error.message || "Google sign up failed", "error");
@@ -891,7 +891,7 @@
       this.setButtonLoading(this.signupBtn, true);
 
       try {
-        console.log("📝 SignUpForm: Email signup for:", email);
+        
 
         this.currentDisplayName = displayName.trim();
 
@@ -914,7 +914,7 @@
           throw new Error(result.error);
         }
 
-        console.log("✅ SignUpForm: Verification code sent successfully");
+        
         this.showToast(
           "Verification code sent to your email! Check your inbox.",
           "success"
@@ -953,7 +953,7 @@
       this.setButtonLoading(this.verifyBtn, true);
 
       try {
-        console.log("📝 SignUpForm: Verifying OTP for:", this.currentEmail);
+        
 
         const result = await authManager.verifyOTP(this.currentEmail, otp);
 
@@ -961,7 +961,7 @@
           throw new Error(result.error);
         }
 
-        console.log("✅ SignUpForm: OTP verification successful");
+        
         this.showToast(
           "Account created successfully! Redirecting to setup...",
           "success"
@@ -1010,7 +1010,7 @@
           throw new Error(result.error);
         }
 
-        console.log("✅ SignUpForm: New verification code sent");
+        
         this.showToast(
           "New verification code sent! Check your email.",
           "success"

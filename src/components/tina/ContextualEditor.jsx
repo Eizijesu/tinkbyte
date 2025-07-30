@@ -23,7 +23,7 @@ const ContextualEditor = ({ data, query, variables, children }) => {
     
     if (editMode) {
       document.documentElement.classList.add('tina-edit-mode');
-      console.log('🦙 TinaCMS: React contextual editing enabled');
+      
     }
   }, []);
   

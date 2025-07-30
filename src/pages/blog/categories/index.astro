@@ -15,8 +15,8 @@ try {
   allTopicsData = await getCollection("allTopics");
   pageData = allTopicsData[0]?.data;
   topicsData = pageData?.topics;
-  console.log("TinaCMS allTopics data found:", !!pageData);
-  console.log("Topics count from CMS:", topicsData?.length || 0);
+  
+  
 } catch (error) {
   console.warn("Could not load allTopics from CMS:", error);
 }

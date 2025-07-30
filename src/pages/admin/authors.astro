@@ -364,7 +364,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       await adminAuthManager.initialize();
       await adminAPIManager.initialize();
 
-      console.log("✅ Admin managers initialized");
+      
 
       // Test connection using singleton
       const connectionTest = await adminAPIManager.testConnection();

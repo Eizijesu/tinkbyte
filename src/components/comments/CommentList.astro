@@ -420,7 +420,7 @@ const totalComments = comments?.length || 0;
             filter: `article_id=eq.${articleId}`,
           },
           (payload) => {
-            console.log("New comment received:", payload);
+            
             // Show a subtle notification instead of full reload
             showNewCommentNotification();
           }
@@ -494,7 +494,7 @@ const totalComments = comments?.length || 0;
 
       // Simulate sorting (in real implementation, this would refetch data)
       setTimeout(() => {
-        console.log("Sorting comments by:", sortType);
+        
         if (loadingState) {
           loadingState.style.display = "none";
         }
@@ -523,7 +523,7 @@ const totalComments = comments?.length || 0;
 
         // Simulate loading more comments
         setTimeout(() => {
-          console.log("Loading more comments...");
+          
           window.location.reload();
         }, 1000);
       }

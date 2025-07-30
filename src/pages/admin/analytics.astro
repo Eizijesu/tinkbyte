@@ -72,7 +72,7 @@ while (chartData.length < 7) {
   chartData.unshift({ date: "N/A", count: 0 });
 }
 
-console.log("📈 Analytics page initialized with fallback data");
+
 ---
 
 <AdminLayout title="Analytics Dashboard - TinkByte Admin">
@@ -622,7 +622,7 @@ console.log("📈 Analytics page initialized with fallback data");
       showLoading();
       hideError();
 
-      console.log("🔄 Loading analytics data using singleton manager...");
+      
 
       // Initialize the singleton manager
       await adminAPIManager.initialize();
@@ -635,7 +635,7 @@ console.log("📈 Analytics page initialized with fallback data");
       if (dashboardResult.success && dashboardResult.data) {
         currentData = dashboardResult.data;
         updateMetrics(currentData);
-        console.log("✅ Dashboard stats loaded successfully:", currentData);
+        
       } else {
         throw new Error(
           dashboardResult.error || "Failed to load dashboard stats"
@@ -780,7 +780,7 @@ console.log("📈 Analytics page initialized with fallback data");
 
   // Initialize when DOM is loaded
   document.addEventListener("DOMContentLoaded", async () => {
-    console.log("🚀 Analytics dashboard initialized");
+    
 
     try {
       // Verify authentication first
@@ -791,7 +791,7 @@ console.log("📈 Analytics page initialized with fallback data");
         throw new Error("Authentication required");
       }
 
-      console.log("✅ Admin authenticated, loading analytics data...");
+      
       await loadAnalyticsData();
     } catch (error: any) {
       console.error("❌ Analytics initialization error:", error);
@@ -814,7 +814,7 @@ console.log("📈 Analytics page initialized with fallback data");
         button.classList.add("active");
         const range = (button as HTMLElement).dataset.range;
         if (range) {
-          console.log(`📊 Loading data for range: ${range}`);
+          
           await loadAnalyticsData(range);
         }
       });

@@ -139,7 +139,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       if (this.isInitialized) return;
 
       try {
-        console.log("🚀 Initializing Comment Moderation Dashboard...");
+        
 
         // Initialize admin API manager
         await adminAPIManager.initialize();
@@ -152,7 +152,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
         await this.loadStats();
 
         this.isInitialized = true;
-        console.log("✅ Comment Moderation Dashboard initialized successfully");
+        
       } catch (error) {
         console.error(
           "❌ Comment Moderation Dashboard initialization failed:",
@@ -648,7 +648,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      console.log("🚀 Comment moderation dashboard initializing...");
+      
 
       commentDashboard = CommentModerationDashboard.getInstance();
       await commentDashboard.initialize();
@@ -656,7 +656,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       // Make globally available for pagination
       (window as any).commentDashboard = commentDashboard;
 
-      console.log("✅ Comment moderation dashboard initialized successfully");
+      
     } catch (error) {
       console.error(
         "❌ Comment moderation dashboard initialization failed:",

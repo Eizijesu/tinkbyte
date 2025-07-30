@@ -375,7 +375,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       if (this.initialized) return;
 
       try {
-        console.log("🚀 Preferences: Starting initialization...");
+        
 
         // Initialize auth manager
         await this.authManager.initialize();
@@ -383,19 +383,19 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         // Check authentication
         this.currentUser = this.authManager.getUser();
         if (!this.currentUser) {
-          console.log("❌ Not authenticated, redirecting to signin");
+          
           window.location.href = "/auth/signin";
           return;
         }
 
-        console.log("✅ User authenticated:", this.currentUser.email);
+        
 
         // Load user preferences
         await this.loadUserPreferences();
         this.setupEventListeners();
 
         this.initialized = true;
-        console.log("✅ Preferences: Initialization complete");
+        
       } catch (error) {
         console.error("❌ Preferences: Initialization failed:", error);
         // Show error but don't redirect
@@ -405,7 +405,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
     async loadUserPreferences() {
       try {
-        console.log("📊 Loading user preferences...");
+        
 
         const { data: userPrefs, error } = await supabase
           .from("user_preferences")
@@ -418,10 +418,10 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         }
 
         if (userPrefs) {
-          console.log("✅ Preferences loaded:", userPrefs);
+          
           this.updateUI(userPrefs);
         } else {
-          console.log("📝 Creating default preferences...");
+          
           await this.createDefaultPreferences();
         }
       } catch (error) {
@@ -451,7 +451,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
         if (error) throw error;
 
-        console.log("✅ Default preferences created");
+        
         this.updateUI(defaultPrefs);
       } catch (error) {
         console.error("❌ Error creating default preferences:", error);
@@ -502,7 +502,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         ) as HTMLInputElement;
         if (showEmail) showEmail.checked = prefs.show_email ?? false;
 
-        console.log("✅ UI updated with preferences");
+        
       } catch (error) {
         console.error("❌ Error updating UI:", error);
       }
@@ -570,7 +570,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
           updated_at: new Date().toISOString(),
         };
 
-        console.log("💾 Saving preferences:", formData);
+        
 
         const { error } = await supabase
           .from("user_preferences")
@@ -578,7 +578,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
         if (error) throw error;
 
-        console.log("✅ Preferences saved successfully");
+        
         this.showToast("Preferences saved successfully!");
       } catch (error: any) {
         console.error("❌ Error saving preferences:", error);
@@ -610,7 +610,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         localStorage.setItem("theme", "system");
       }
 
-      console.log("🎨 Theme changed to:", theme);
+      
     }
 
     showToast(message: string, type: "success" | "error" = "success") {

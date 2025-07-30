@@ -6,7 +6,7 @@ import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async (context) => {
   try {
-    console.log('🔄 Generating main RSS feed...');
+    
     
     const posts = await getPublishedPosts();
     
@@ -109,7 +109,7 @@ export const GET: APIRoute = async (context) => {
       `.trim(),
     };
 
-    console.log(`✅ Generated RSS feed with ${feedItems.length} items`);
+    
     
     return rss(feedConfig);
     

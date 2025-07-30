@@ -247,7 +247,7 @@ import Layout from "../../layouts/Layout.astro";
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
-    console.log("🔄 Callback: Processing authentication...");
+    
 
     try {
       updateStatus("Initializing authentication...");
@@ -297,10 +297,10 @@ import Layout from "../../layouts/Layout.astro";
           updateStatus("Welcome back! Redirecting to your profile...");
         }
 
-        console.log(`🔄 Callback: Redirecting to ${redirectUrl}`);
+        
         safeRedirect(redirectUrl, 2000);
       } else {
-        console.log("🔄 Callback: No authentication found");
+        
         updateStatus("Authentication failed. Redirecting to sign in...");
         safeRedirect("/auth/signin?error=auth_failed", 2000);
       }

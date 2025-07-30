@@ -1361,11 +1361,11 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       if (this.initialized) return;
 
       try {
-        console.log("🚀 Account: Starting initialization...");
+        
         await this.loadAccountData();
         this.setupEventListeners();
         this.initialized = true;
-        console.log("✅ Account: Initialization complete");
+        
       } catch (error) {
         console.error("❌ Account: Initialization failed:", error);
         this.showToast("Failed to load account data", "error");
@@ -1379,7 +1379,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
         // Check authentication
         if (!(await this.authManager.isAuthenticated())) {
-          console.log("❌ Not authenticated, redirecting...");
+          
           window.location.href = "/auth/signin";
           return;
         }
@@ -1393,7 +1393,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
           return;
         }
 
-        console.log("✅ Account: User authenticated:", this.currentUser.email);
+        
 
         // Set initial values
         if (this.currentProfile) {

@@ -413,7 +413,7 @@ export function initializeCommentHelpers() {
   if (typeof window === 'undefined') return;
   
   // Initialize any client-side only features
-  console.log('Comment helpers initialized for static site');
+  
 }
 
 // Utility to safely access window properties
