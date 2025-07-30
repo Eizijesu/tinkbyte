@@ -1,20 +1,13 @@
-# Handle client-side routing
-/auth/* /auth/signin 200
-/blog/* /blog/[slug] 200
-/api/* /api/[path] 200
+# Astro Static Site Redirects - CORRECTED
 
-# Fallback for SPA routes
-/* /index.html 200
+# Legacy redirects (specific first)
+/privacy /legal/privacy-policy 301
+/terms /legal/terms-of-service 301
+/cookies /legal/cookie-policy 301
+/legal/contact /contact 301
 
-# Handle auth module imports
-/src/lib/* /_astro/:splat 200
+# Handle static assets (keep these as-is)
+/_astro/* /_astro/:splat 200
 
-# Handle blog routes
-/blog/* /blog/:splat 200
-
-# Handle auth routes
-/auth/* /auth/:splat 200
-
-# Handle API routes
-/api/* /api/:splat 200
-
+# SPA fallback for 404s (this should be LAST)
+/* /404.html 404
