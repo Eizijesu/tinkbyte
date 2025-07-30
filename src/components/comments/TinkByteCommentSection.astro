@@ -10,8 +10,7 @@ import type { CommentWithProfile } from "../../lib/types/comments";
 
 const { articleId, postSlug, postTitle } = Astro.props;
 
-const ENVIRONMENT = "production";
-
+const ENVIRONMENT = config.environment;
 
 const currentUser = null;
 interface ArticleAuthor {
@@ -66,8 +65,6 @@ let initialDisplayComments: any[] = [];
 const COMMENTS_PER_PAGE = 5;
 
 try {
-  
-
   // Get total count of ROOT comments only
   const { count: rootCount, error: countError } = await supabase
     .from("comments")
@@ -84,7 +81,6 @@ try {
   }
 
   totalRootComments = rootCount || 0;
-  
 
   if (totalRootComments > 0) {
     // **CHANGED: Load ALL root comments (remove limit)**
@@ -683,5 +679,102 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
   @import "../../styles/comments.css";
 </style>
 
-<!-- Include the comment system script -->
+<script is:inline>
+  // Initialize auth and comments when page loads
+  document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      console.log("🔄 Initializing TinkByte Comments...");
+
+      // Import auth manager
+      const { authManager } = await import("/src/lib/auth.js");
+      await authManager.initialize();
+
+      // Import supabase and API
+      const { supabase, TinkByteAPI } = await import("/src/lib/supabase.js");
+
+      // Make globally available
+      window.authManager = {
+        authState: {
+          currentUser: authManager.getUser(),
+          profile: authManager.getProfile(),
+          isAuthenticated: !!authManager.getUser(),
+        },
+        getCurrentUser: () => authManager.getUser(),
+        getProfile: () => authManager.getProfile(),
+        isUserAuthenticated: () => !!authManager.getUser(),
+        onAuthStateChange: (callback) => authManager.onAuthChange(callback),
+        initialize: () => Promise.resolve(),
+      };
+
+      window.supabase = supabase;
+      window.TinkByteAPI = TinkByteAPI;
+
+      // Dispatch ready event
+      window.dispatchEvent(
+        new CustomEvent("authReady", {
+          detail: {
+            authManager: window.authManager,
+            supabase: window.supabase,
+          },
+        })
+      );
+
+      console.log("✅ TinkByte Comments initialized");
+    } catch (error) {
+      console.error("❌ Comment initialization failed:", error);
+
+      // Create fallback objects
+      window.authManager = {
+        authState: { currentUser: null, profile: null, isAuthenticated: false },
+        getCurrentUser: () => null,
+        getProfile: () => null,
+        isUserAuthenticated: () => false,
+        onAuthStateChange: () => () => {},
+        initialize: () => Promise.resolve(),
+      };
+
+      window.TinkByteAPI = {
+        addComment: async () => ({
+          success: false,
+          error: "API not available",
+        }),
+        updateComment: async () => ({
+          success: false,
+          error: "API not available",
+        }),
+        deleteComment: async () => ({
+          success: false,
+          error: "API not available",
+        }),
+        toggleCommentLike: async () => ({
+          success: false,
+          error: "API not available",
+        }),
+        toggleCommentBookmark: async () => ({
+          success: false,
+          error: "API not available",
+        }),
+        saveCommentDraft: async () => ({
+          success: false,
+          error: "API not available",
+        }),
+        getCommentDraft: async () => ({
+          success: false,
+          error: "API not available",
+        }),
+      };
+
+      window.dispatchEvent(
+        new CustomEvent("authReady", {
+          detail: {
+            authManager: window.authManager,
+            supabase: window.supabase,
+          },
+        })
+      );
+    }
+  });
+</script>
+
+<!-- Load comments script after initialization -->
 <script src="/scripts/comments.js" is:inline></script>

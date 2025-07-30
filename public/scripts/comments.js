@@ -102,7 +102,11 @@ function showInitializationError() {
 
 class TinkByteCommentSystem {
   constructor(authManager, supabase) {
-    this.authManager = authManager;
+  this.authState = this.authManager?.authState || {
+  currentUser: null,
+  profile: null,
+  isAuthenticated: false
+};
     this.supabase = supabase;
     
     // State management

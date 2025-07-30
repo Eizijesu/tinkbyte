@@ -47,6 +47,17 @@ class TinkByteAuthManager {
   private currentUser: User | null = null;
   private currentProfile: Profile | null = null;
   
+
+    public authState: {
+    currentUser: User | null;
+    profile: Profile | null;
+    isAuthenticated: boolean;
+  } = {
+    currentUser: null,
+    profile: null,
+    isAuthenticated: false
+  };
+
   // **ADD: Cache keys for faster loading**
   private readonly AUTH_CACHE_KEY = 'tinkbyte_auth_cache';
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -220,9 +231,15 @@ private debugLog(...args: any[]) {
       // **ADD: Cache the auth state**
       this.setAuthCache(this.currentUser, this.currentProfile);
       
-    } catch (error) {
+      } catch (error) {
       this.errorLog('❌ Error in setUserData:', error);
     }
+
+     this.authState = {
+    currentUser: this.currentUser,
+    profile: this.currentProfile,
+    isAuthenticated: !!this.currentUser
+  };
   }
 
   private clearAuthCache(): void {
@@ -289,7 +306,12 @@ private debugLog(...args: any[]) {
     this.debugLog('🧹 Auth: Clearing user data');
     this.currentUser = null;
     this.currentProfile = null;
-  }
+    this.authState = {
+    currentUser: null,
+    profile: null,
+    isAuthenticated: false
+  };
+}
 
   get supabase() {
     return supabase;
