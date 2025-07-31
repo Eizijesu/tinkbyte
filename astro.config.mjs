@@ -1,4 +1,4 @@
-// astro.config.mjs - Optimized with TinaCMS Support
+// astro.config.mjs - FIXED with TinaCMS Asset Support
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
@@ -127,11 +127,15 @@ export default defineConfig({
         '@supabase/supabase-js'
       ],
     },
+    // ADDED: Explicit public directory configuration
+    publicDir: 'public',
     build: {
       target: 'es2020',
       minify: 'esbuild',
       sourcemap: false,
       cssCodeSplit: true,
+      // ADDED: Ensure public directory is copied
+      copyPublicDir: true,
       rollupOptions: {
         output: {
           manualChunks: {
@@ -139,7 +143,6 @@ export default defineConfig({
             'date-vendor': ['date-fns'],
             'search-vendor': ['fuse.js'],
             'supabase-vendor': ['@supabase/supabase-js'],
-            // FIXED: Better path resolution for auth modules
             'auth-modules': ['./src/lib/admin/auth', './src/lib/supabase'],
           },
         },
@@ -164,6 +167,9 @@ export default defineConfig({
   },
 
   output: 'static',
+  
+  // ADDED: Explicit public directory setting
+  publicDir: './public',
   
   server: {
     port: 4321,

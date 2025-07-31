@@ -5,7 +5,6 @@ const branch = process.env.TINA_BRANCH || process.env.HEAD || "main";
 
 export default defineConfig({
   branch,
-  // FIXED: Use NEXT_PUBLIC_TINA_CLIENT_ID (not TINA_CLIENT_ID)
   clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID!,
   token: process.env.TINA_TOKEN!,
 
@@ -23,6 +22,12 @@ export default defineConfig({
     },
   },
 
+    // Add this for production
+  cmsCallback: (cms) => {
+    // Production callback
+    return cms;
+  },
+  
   search: {
     tina: {
       indexerToken: process.env.TINA_SEARCH_TOKEN,
