@@ -1,9 +1,8 @@
 ---
-// src/pages/blog/categories/index.astro - Fully Dynamic from TinaCMS
+// src/pages/blog/categories/index.astro - Fixed with Proper Tailwind Grid
 import Layout from "../../../layouts/Layout.astro";
 import Button from "../../../components/ui/Button.astro";
 import { getCollection } from "astro:content";
-import type { CollectionEntry } from "astro:content";
 
 // Get all posts directly
 const allPosts = await getCollection("blog", ({ data }) => !data.draft);
@@ -15,8 +14,6 @@ try {
   allTopicsData = await getCollection("allTopics");
   pageData = allTopicsData[0]?.data;
   topicsData = pageData?.topics;
-  
-  
 } catch (error) {
   console.warn("Could not load allTopics from CMS:", error);
 }
@@ -108,10 +105,10 @@ const fallbackTopics = [
     audience: "Designers, product leads",
   },
   {
-  name: "Build Loop",
-  href: "/blog/categories/build-loop",
-  description: "Fail, iterate, ship stories",
-  audience: "Learning from failure",
+    name: "Build Loop",
+    href: "/blog/categories/build-loop",
+    description: "Fail, iterate, ship stories",
+    audience: "Learning from failure",
   },
   {
     name: "Career Stacks",
@@ -304,30 +301,36 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
       
       <!-- Featured Categories Section -->
       {featuredCategories.length > 0 && (
-        <section class="featured-categories-section mb-16">
-          <h2 class="section-title">
+        <section class="mb-20">
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-8 uppercase tracking-wide flex items-center">
             <i class="fas fa-star mr-3 text-yellow-500"></i>
             Featured Categories
           </h2>
-          <div class="featured-categories-grid">
-            {featuredCategories.slice(0, 3).map((category: any) => (
-              <div class="featured-category-card theme-card">
-                <div class="card-header">
-                  <div class="category-indicator" data-color={category.data.color}></div>
-                  <span class="featured-badge">FEATURED</span>
-                </div>
-                <h3 class="card-title">
-                  <a href={`/blog/categories/${category.slug}`}>
-                    {category.data.name}
-                  </a>
-                </h3>
-                <p class="card-description">{category.data.description.slice(0, 120)}...</p>
-                <div class="card-stats">
-                  <span class="stat-item">{category.postCount} articles</span>
-                  <span class="stat-item">For {category.data.audience}</span>
-                  {category.lastUpdated && (
-                    <span class="stat-item">Updated {formatDate(category.lastUpdated, { month: 'short', day: 'numeric' })}</span>
-                  )}
+          <!-- FIXED: Using proper Tailwind grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredCategories.slice(0, 3).map((category: any, index: number) => (
+              <div class="newsletter-card" data-newsletter={category.slug}>
+                <div class="card-content">
+                  <div class="card-header">
+                    <div class="category-indicator" data-color={category.data.color}></div>
+                    <div class="card-frequency">FEATURED</div>
+                  </div>
+                  <h3 class="card-title">
+                    <a href={`/blog/categories/${category.slug}`}>
+                      {category.data.name}
+                    </a>
+                  </h3>
+                  <p class="card-description">{category.data.description}</p>
+                  <div class="card-meta">
+                    <span class="card-audience">
+                      {category.postCount} articles • For {category.data.audience}
+                    </span>
+                    {category.lastUpdated && (
+                      <span class="card-audience">
+                        Updated {formatDate(category.lastUpdated, { month: 'short', day: 'numeric' })}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -336,14 +339,14 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
       )}
 
       <!-- All Categories Section -->
-      <section class="all-categories-section">
-        <div class="section-header">
+      <section>
+        <div class="flex justify-between items-start mb-8">
           <div>
-            <h2 class="section-title">
+            <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4 uppercase tracking-wide flex items-center">
               <i class="fas fa-th-large mr-3 text-blue-600"></i>
               All Categories
             </h2>
-            <p class="section-subtitle">Choose your area of interest and explore curated content</p>
+            <p class="text-lg text-zinc-600 dark:text-zinc-300">Choose your area of interest and explore curated content</p>
           </div>
           <Button
             variant="outline"
@@ -357,34 +360,31 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
           </Button>
         </div>
 
-        <div class="categories-grid">
+        <!-- FIXED: Using proper Tailwind grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {enhancedCategories.map((category: any, index: number) => (
-            <article class="category-card theme-card" data-category={category.slug} style={`--animation-delay: ${index * 0.1}s`}>
+            <article class="newsletter-card" data-category={category.slug}>
               <div class="card-content">
                 <!-- Category Header -->
-                <div class="category-header">
-                  <div class="category-meta">
-                    <div class="category-indicator" data-color={category.data.color}></div>
-                    <span class="category-type">CATEGORY</span>
-                    {category.data.featured && (
-                      <span class="featured-badge">FEATURED</span>
-                    )}
+                <div class="card-header">
+                  <div class="category-indicator" data-color={category.data.color}></div>
+                  <div class="card-frequency">
+                    {category.data.featured ? "FEATURED" : "CATEGORY"}
                   </div>
+                </div>
 
-                  <h3 class="category-title">
-                    <a href={`/blog/categories/${category.slug}`}>
-                      {category.data.name}
-                    </a>
-                  </h3>
+                <h3 class="card-title">
+                  <a href={`/blog/categories/${category.slug}`}>
+                    {category.data.name}
+                  </a>
+                </h3>
 
-                  <p class="category-description">{category.data.description}</p>
-                  
-                  <div class="category-audience">
-                    <i class="fas fa-users text-xs mr-2"></i>
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">
-                      For {category.data.audience}
-                    </span>
-                  </div>
+                <p class="card-description">{category.data.description}</p>
+                
+                <div class="card-meta">
+                  <span class="card-audience">
+                    For {category.data.audience}
+                  </span>
                 </div>
 
                 <!-- Category Stats -->
@@ -398,14 +398,6 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
                     <div class="stat-label">FEATURED</div>
                   </div>
                 </div>
-                
-                <!-- Add this to your categories/index.astro -->
-<div class="page-navigation">
-  <a href="/all-topics" class="nav-link">
-    <i class="fas fa-th-large"></i>
-    View as Topics
-  </a>
-</div>
 
                 <!-- Latest Article Preview -->
                 {category.latestPost && (
@@ -433,6 +425,14 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
               </div>
             </article>
           ))}
+        </div>
+
+        <!-- Page Navigation -->
+        <div class="text-center mt-8">
+          <a href="/all-topics" class="nav-link">
+            <i class="fas fa-th-large"></i>
+            View as Topics
+          </a>
         </div>
 
         <!-- Empty State -->
@@ -488,12 +488,17 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
 </Layout>
 
 <style>
-  /* Categories Page - Enhanced with Newsletter Design Language */
+  /* Categories Page - Using Newsletter Card Styles with Tailwind Grid */
   .categories-page {
     font-family: "Space Grotesk", sans-serif;
-    background-color: var(--color-bg-primary);
-    color: var(--color-text-primary);
+    background-color: white;
+    color: rgb(17 24 39);
     min-height: 100vh;
+  }
+
+  :global(.dark) .categories-page {
+    background-color: rgb(15 23 42);
+    color: rgb(248 250 252);
   }
 
   /* Hero Section Stats */
@@ -505,100 +510,97 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
   .stat-number {
     font-size: 2rem;
     font-weight: 800;
-    color: var(--color-text-primary);
+    color: rgb(17 24 39);
     line-height: 1;
     margin-bottom: 0.5rem;
+  }
+
+  :global(.dark) .stat-number {
+    color: rgb(248 250 252);
   }
 
   .stat-label {
     font-size: 0.75rem;
     font-weight: 700;
-    color: var(--color-text-secondary);
+    color: rgb(55 65 81);
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
 
-  /* Theme Card Base */
-  .theme-card {
-    background: var(--color-bg-primary);
-    border: 2px solid var(--color-border);
+  :global(.dark) .stat-label {
+    color: rgb(226 232 240);
+  }
+
+  /* Newsletter Card Styles (Same as working 404 page) */
+  .newsletter-card {
+    padding: 1.25rem;
+    background: white;
+    border: 2px solid rgb(229 231 235);
     transition: all 0.3s ease;
+    cursor: pointer;
     position: relative;
-    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
-  .theme-card:hover {
+  :global(.dark) .newsletter-card {
+    background: rgb(30 41 59);
+    border-color: rgb(51 65 85);
+  }
+
+  .newsletter-card:hover {
     border-color: #243788;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  :global(.dark) .theme-card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  :global(.dark) .newsletter-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
-  /* Section Styling */
-  .section-title {
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--color-text-primary);
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+  /* Card Content */
+  .card-content {
+    flex: 1;
     display: flex;
-    align-items: center;
-  }
-
-  .section-subtitle {
-    font-size: 1.125rem;
-    color: var(--color-text-secondary);
-    margin-bottom: 2rem;
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 3rem;
-  }
-
-  /* Featured Categories */
-  .featured-categories-section {
-    margin-bottom: 4rem;
-  }
-
-  .featured-categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-  }
-
-  .featured-category-card {
-    padding: 2rem;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border: 2px solid #e2e8f0;
-  }
-
-  :global(.dark) .featured-category-card {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    border-color: #334155;
+    flex-direction: column;
   }
 
   .card-header {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-frequency {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: rgb(248 250 252);
+    color: rgb(55 65 81);
+    border: 1px solid rgb(229 231 235);
+  }
+
+  :global(.dark) .card-frequency {
+    background: rgb(30 41 59);
+    color: rgb(226 232 240);
+    border-color: rgb(51 65 85);
   }
 
   .card-title {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--color-text-primary);
-    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: rgb(17 24 39);
+    margin-bottom: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
-    line-height: 1.2;
+  }
+
+  :global(.dark) .card-title {
+    color: rgb(248 250 252);
   }
 
   .card-title a {
@@ -611,25 +613,39 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
     color: #243788;
   }
 
+  :global(.dark) .card-title a:hover {
+    color: rgb(96 165 250);
+  }
+
   .card-description {
     font-size: 0.875rem;
-    color: var(--color-text-secondary);
-    line-height: 1.4;
+    color: rgb(55 65 81);
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+    flex-grow: 1;
+  }
+
+  :global(.dark) .card-description {
+    color: rgb(226 232 240);
+  }
+
+  .card-meta {
     margin-bottom: 1rem;
   }
 
-  .card-stats {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
+  .card-audience {
+    font-size: 0.75rem;
+    color: rgb(107 114 128);
+    font-style: italic;
+    word-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.2;
+    display: block;
+    margin-bottom: 0.25rem;
   }
 
-  .stat-item {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+  :global(.dark) .card-audience {
+    color: rgb(148 163 184);
   }
 
   /* Category Indicators */
@@ -651,86 +667,6 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
   .category-indicator[data-color="violet"] { background: #8B5CF6; }
   .category-indicator[data-color="emerald"] { background: #10B981; }
 
-  /* Badges */
-  .featured-badge {
-    font-size: 0.625rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 0.25rem 0.5rem;
-    background: #243788;
-    color: white;
-    border-radius: 2px;
-  }
-
-  .category-type {
-    font-size: 0.625rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-text-muted);
-  }
-
-  /* All Categories Grid */
-  .categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
-  }
-
-  .category-card {
-    padding: 2rem;
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp 0.6s ease forwards;
-    animation-delay: var(--animation-delay, 0s);
-  }
-
-  @keyframes fadeInUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Category Card Content */
-  .category-header {
-    margin-bottom: 1.5rem;
-  }
-
-  .category-meta {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-
-  .category-title {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--color-text-primary);
-    margin-bottom: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    line-height: 1.2;
-  }
-
-  .category-title a {
-    color: inherit;
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-
-  .category-title a:hover {
-    color: #243788;
-  }
-
-  .category-description {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
-    line-height: 1.4;
-  }
-
   /* Category Stats */
   .category-stats {
     display: grid;
@@ -742,47 +678,69 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
   .stat-box {
     text-align: center;
     padding: 1rem;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
+    background: rgb(248 250 252);
+    border: 1px solid rgb(229 231 235);
+  }
+
+  :global(.dark) .stat-box {
+    background: rgb(30 41 59);
+    border-color: rgb(51 65 85);
   }
 
   .stat-box .stat-number {
     font-size: 1.5rem;
     font-weight: 800;
-    color: var(--color-text-primary);
+    color: rgb(17 24 39);
     line-height: 1;
     margin-bottom: 0.25rem;
+  }
+
+  :global(.dark) .stat-box .stat-number {
+    color: rgb(248 250 252);
   }
 
   .stat-box .stat-label {
     font-size: 0.625rem;
     font-weight: 700;
-    color: var(--color-text-muted);
+    color: rgb(107 114 128);
     text-transform: uppercase;
     letter-spacing: 0.1em;
+  }
+
+  :global(.dark) .stat-box .stat-label {
+    color: rgb(148 163 184);
   }
 
   /* Latest Article */
   .latest-article {
     padding: 1rem;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
+    background: rgb(248 250 252);
+    border: 1px solid rgb(229 231 235);
     margin-bottom: 1.5rem;
+  }
+
+  :global(.dark) .latest-article {
+    background: rgb(30 41 59);
+    border-color: rgb(51 65 85);
   }
 
   .latest-label {
     font-size: 0.625rem;
     font-weight: 700;
-    color: var(--color-text-muted);
+    color: rgb(107 114 128);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     margin-bottom: 0.5rem;
   }
 
+  :global(.dark) .latest-label {
+    color: rgb(148 163 184);
+  }
+
   .latest-title {
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-text-primary);
+    color: rgb(17 24 39);
     text-decoration: none;
     line-height: 1.3;
     display: block;
@@ -790,13 +748,25 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
     transition: color 0.3s ease;
   }
 
+  :global(.dark) .latest-title {
+    color: rgb(248 250 252);
+  }
+
   .latest-title:hover {
     color: #243788;
   }
 
+  :global(.dark) .latest-title:hover {
+    color: rgb(96 165 250);
+  }
+
   .latest-date {
     font-size: 0.75rem;
-    color: var(--color-text-muted);
+    color: rgb(107 114 128);
+  }
+
+  :global(.dark) .latest-date {
+    color: rgb(148 163 184);
   }
 
   /* Explore Button */
@@ -817,11 +787,22 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
     text-decoration: none;
     transition: all 0.3s ease;
     font-family: inherit;
+    margin-top: auto;
   }
 
   .explore-button:hover {
     background: #243788;
     color: white;
+  }
+
+  :global(.dark) .explore-button {
+    color: rgb(96 165 250);
+    border-color: rgb(96 165 250);
+  }
+
+  :global(.dark) .explore-button:hover {
+    background: rgb(96 165 250);
+    color: rgb(15 23 42);
   }
 
   .button-icon {
@@ -830,6 +811,40 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
 
   .explore-button:hover .button-icon {
     transform: translateX(4px);
+  }
+
+  /* Navigation Link */
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: 2px solid rgb(229 231 235);
+    background: transparent;
+    color: rgb(55 65 81);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    text-decoration: none;
+  }
+
+  :global(.dark) .nav-link {
+    border-color: rgb(51 65 85);
+    color: rgb(226 232 240);
+  }
+
+  .nav-link:hover {
+    border-color: #243788;
+    color: #243788;
+  }
+
+  :global(.dark) .nav-link:hover {
+    border-color: rgb(96 165 250);
+    color: rgb(96 165 250);
   }
 
   /* Action Buttons */
@@ -853,58 +868,38 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
 
   .empty-icon {
     font-size: 4rem;
-    color: var(--color-text-muted);
+    color: rgb(107 114 128);
     margin-bottom: 1.5rem;
+  }
+
+  :global(.dark) .empty-icon {
+    color: rgb(148 163 184);
   }
 
   .empty-title {
     font-size: 1.5rem;
     font-weight: 800;
-    color: var(--color-text-primary);
+    color: rgb(17 24 39);
     margin-bottom: 1rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
+  :global(.dark) .empty-title {
+    color: rgb(248 250 252);
+  }
+
   .empty-description {
     font-size: 1rem;
-    color: var(--color-text-secondary);
+    color: rgb(55 65 81);
     margin-bottom: 2rem;
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
   }
 
-  /* Responsive Design */
-  @media (max-width: 1024px) {
-    .section-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-
-    .categories-grid {
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    }
-  }
-
-  @media (max-width: 768px) {
-    .featured-categories-grid,
-    .categories-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .category-stats {
-      grid-template-columns: 1fr;
-    }
-
-    .section-title {
-      font-size: 1.5rem;
-    }
-
-    .category-card {
-      padding: 1.5rem;
-    }
+  :global(.dark) .empty-description {
+    color: rgb(226 232 240);
   }
 
   /* Gradient text animation */
@@ -922,17 +917,28 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // Make newsletter cards clickable (same as newsletter page)
+    const newsletterCards = document.querySelectorAll(".newsletter-card");
+
+    newsletterCards.forEach((card) => {
+      card.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "A") return;
+
+        const link = card.querySelector("a");
+        if (link) {
+          window.location.href = link.href;
+        }
+      });
+    });
+
     // Enhanced category card interactions
-    const categoryCards = document.querySelectorAll('.category-card');
-    
-    categoryCards.forEach((card, index) => {
+    newsletterCards.forEach((card, index) => {
       const element = card as HTMLElement;
-      // Add staggered animation
-      element.style.setProperty('--animation-delay', `${index * 0.1}s`);
       
       // Enhanced hover effects
       card.addEventListener('mouseenter', () => {
-        element.style.transform = 'translateY(-8px) scale(1.02)';
+        element.style.transform = 'translateY(-4px) scale(1.02)';
       });
       
       card.addEventListener('mouseleave', () => {
@@ -946,35 +952,13 @@ const pageDescription = `Explore ${totalCategories} categories with ${totalArtic
     categoryLinks.forEach(link => {
       link.addEventListener('click', (e) => {
         // Add loading state
-        const card = link.closest('.category-card');
+        const card = link.closest('.newsletter-card');
         if (card) {
           const element = card as HTMLElement;
           element.style.opacity = '0.7';
           element.style.transform = 'scale(0.98)';
         }
       });
-    });
-
-    // Intersection Observer for scroll animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px',
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const element = entry.target as HTMLElement;
-          element.style.opacity = '1';
-          element.style.transform = 'translateY(0)';
-          observer.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-
-    // Observe all category cards
-    categoryCards.forEach((card) => {
-      observer.observe(card);
     });
 
     // Analytics tracking

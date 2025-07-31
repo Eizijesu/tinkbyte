@@ -490,17 +490,11 @@ export type BlogBodyVideoBlockFilter = {
   startTime?: InputMaybe<StringFilter>;
 };
 
-export type RichTextFilter = {
-  startsWith?: InputMaybe<Scalars['String']['input']>;
-  eq?: InputMaybe<Scalars['String']['input']>;
-  exists?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
 export type BlogBodyCalloutFilter = {
   type?: InputMaybe<StringFilter>;
   customColor?: InputMaybe<StringFilter>;
   title?: InputMaybe<StringFilter>;
-  content?: InputMaybe<RichTextFilter>;
+  content?: InputMaybe<StringFilter>;
   dismissible?: InputMaybe<BooleanFilter>;
 };
 
@@ -546,6 +540,12 @@ export type BlogBodyTableBlockFilter = {
   rows?: InputMaybe<BlogBodyTableBlockRowsFilter>;
   style?: InputMaybe<StringFilter>;
   sortable?: InputMaybe<BooleanFilter>;
+};
+
+export type RichTextFilter = {
+  startsWith?: InputMaybe<Scalars['String']['input']>;
+  eq?: InputMaybe<Scalars['String']['input']>;
+  exists?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type BlogBodyTwoColumnLayoutFilter = {

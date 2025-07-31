@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/authors/index.astro - Authors listing page
+// src/pages/blog/authors/index.astro - Fixed Spacing
 import Layout from "../../../layouts/Layout.astro";
 import Button from "../../../components/ui/Button.astro";
 import { getCollection } from "astro:content";
@@ -94,86 +94,56 @@ const pageDescription = `Meet our ${totalAuthors} contributors who share insight
     </div>
   </section>
 
-  <main class="authors-page">
-    <div class="max-w-7xl mx-auto px-4 py-12">
+  <main class="newsletter-page" data-theme-aware="true">
+    <!-- FIXED: Using exact same container structure as newsletter page -->
+    <div class="max-w-7xl mx-auto px-4 py-16">
       
       <!-- Featured Authors -->
       {featuredAuthors.length > 0 && (
-        <section class="mb-12">
-          <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 flex items-center">
+        <section class="newsletter-section">
+          <!-- FIXED: Consistent spacing with mb-6 -->
+          <h2 class="section-title mb-6">
             <i class="fas fa-star mr-3 text-yellow-500"></i>
             Featured Authors
           </h2>
-          <div class="featured-authors-grid">
-            {featuredAuthors.map((author) => (
-              <div class="author-card featured-author">
-                <div class="author-card-content">
-                  <!-- Author Avatar -->
-                  <div class="author-avatar">
-                    {author.data.avatar ? (
-                      <img
-                        src={author.data.avatar}
-                        alt={`${author.data.name} profile picture`}
-                        class="w-16 h-16 rounded-sm object-cover border-2 border-zinc-200 dark:border-zinc-700"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div class="w-16 h-16 rounded-sm bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center border-2 border-zinc-200 dark:border-zinc-700">
-                        <i class="fas fa-user text-2xl text-blue-600 dark:text-blue-400"></i>
-                      </div>
-                    )}
-                    <div class="featured-badge">FEATURED</div>
-                  </div>
-
-                  <!-- Author Info -->
-                  <div class="author-info">
-                    <h3 class="author-name">
-                      <a href={`/blog/authors/${author.slug}`}>{author.data.name}</a>
-                    </h3>
-                    
-                    {author.data.role && (
-                      <p class="author-role">{author.data.role}</p>
-                    )}
-                    
-                    {author.data.bio && (
-                      <p class="author-bio">{author.data.bio.slice(0, 120)}...</p>
-                    )}
-
-                    <!-- Author Stats -->
-                    <div class="author-stats">
-                      <span class="stat-item">{author.postCount} articles</span>
-                      {author.lastPublished && (
-                        <span class="stat-item">
-                          Last: {author.lastPublished.toLocaleDateString("en-US", { month: 'short', year: 'numeric' })}
-                        </span>
+          <!-- FIXED: Using exact same grid as newsletter page -->
+          <div class="newsletter-grid">
+            {featuredAuthors.map((author, index) => (
+              <div class="newsletter-card" data-newsletter={author.slug}>
+                <div class="card-content">
+                  <div class="card-header">
+                    <div class="author-avatar-small">
+                      {author.data.avatar ? (
+                        <img
+                          src={author.data.avatar}
+                          alt={`${author.data.name} profile picture`}
+                          class="w-12 h-12 rounded-sm object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div class="w-12 h-12 rounded-sm bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center">
+                          <i class="fas fa-user text-lg text-blue-600 dark:text-blue-400"></i>
+                        </div>
                       )}
                     </div>
-
-                    <!-- Social Links -->
-                    {author.data.social && Object.values(author.data.social).some(link => link) && (
-                      <div class="author-social">
-                        {author.data.social.twitter && (
-                          <a href={author.data.social.twitter} target="_blank" rel="noopener noreferrer" class="social-link">
-                            <i class="fab fa-twitter"></i>
-                          </a>
-                        )}
-                        {author.data.social.linkedin && (
-                          <a href={author.data.social.linkedin} target="_blank" rel="noopener noreferrer" class="social-link">
-                            <i class="fab fa-linkedin"></i>
-                          </a>
-                        )}
-                        {author.data.social.github && (
-                          <a href={author.data.social.github} target="_blank" rel="noopener noreferrer" class="social-link">
-                            <i class="fab fa-github"></i>
-                          </a>
-                        )}
-                        {author.data.social.website && (
-                          <a href={author.data.social.website} target="_blank" rel="noopener noreferrer" class="social-link">
-                            <i class="fas fa-globe"></i>
-                          </a>
-                        )}
-                      </div>
-                    )}
+                    <div class="card-frequency">FEATURED</div>
+                  </div>
+                  <h3 class="card-title">
+                    <a href={`/blog/authors/${author.slug}`}>{author.data.name}</a>
+                  </h3>
+                  {author.data.role && (
+                    <p class="card-description">{author.data.role}</p>
+                  )}
+                  {author.data.bio && (
+                    <p class="card-description">{author.data.bio.slice(0, 100)}...</p>
+                  )}
+                  <div class="card-meta">
+                    <span class="card-audience">
+                      {author.postCount} articles
+                      {author.lastPublished && (
+                        <> • Last: {author.lastPublished.toLocaleDateString("en-US", { month: 'short', year: 'numeric' })}</>
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -183,85 +153,85 @@ const pageDescription = `Meet our ${totalAuthors} contributors who share insight
       )}
 
       <!-- All Authors -->
-      <section>
-        <div class="flex items-center justify-between mb-8">
-          <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center">
-            <i class="fas fa-users mr-3 text-blue-600"></i>
-            All Authors
-          </h2>
+      <section class="newsletter-section">
+        <div class="section-header">
+          <div>
+            <!-- FIXED: Consistent spacing with mb-2 -->
+            <h2 class="section-title mb-2">
+              <i class="fas fa-users mr-3 text-blue-600"></i>
+              All Authors
+            </h2>
+            <p class="section-subtitle">Meet our contributors and their expertise</p>
+          </div>
           <span class="text-sm text-zinc-500 dark:text-zinc-400">
             {totalAuthors} {totalAuthors === 1 ? 'author' : 'authors'}
           </span>
         </div>
 
-        <div class="authors-grid">
+        <!-- FIXED: Using exact same grid as newsletter page -->
+        <div class="newsletter-grid">
           {enhancedAuthors.map((author, index) => (
-            <div class="author-card" style={`--animation-delay: ${index * 0.1}s`}>
-              <div class="author-card-content">
-                <!-- Author Avatar -->
-                <div class="author-avatar">
-                  {author.data.avatar ? (
-                    <img
-                      src={author.data.avatar}
-                      alt={`${author.data.name} profile picture`}
-                      class="w-12 h-12 rounded-sm object-cover border-2 border-zinc-200 dark:border-zinc-700"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div class="w-12 h-12 rounded-sm bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center border-2 border-zinc-200 dark:border-zinc-700">
-                      <i class="fas fa-user text-lg text-blue-600 dark:text-blue-400"></i>
-                    </div>
-                  )}
-                  {author.data.featured && (
-                    <div class="featured-badge small">FEATURED</div>
-                  )}
-                </div>
-
-                <!-- Author Info -->
-                <div class="author-info">
-                  <h3 class="author-name">
-                    <a href={`/blog/authors/${author.slug}`}>{author.data.name}</a>
-                  </h3>
-                  
-                  {author.data.role && (
-                    <p class="author-role">{author.data.role}</p>
-                  )}
-                  
-                  {author.data.bio && (
-                    <p class="author-bio">{author.data.bio.slice(0, 80)}...</p>
-                  )}
-
-                  <!-- Author Stats -->
-                  <div class="author-stats">
-                    <span class="stat-item">{author.postCount} articles</span>
+            <div class="newsletter-card" data-newsletter={author.slug}>
+              <div class="card-content">
+                <div class="card-header">
+                  <div class="author-avatar-small">
+                    {author.data.avatar ? (
+                      <img
+                        src={author.data.avatar}
+                        alt={`${author.data.name} profile picture`}
+                        class="w-12 h-12 rounded-sm object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div class="w-12 h-12 rounded-sm bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center">
+                        <i class="fas fa-user text-lg text-blue-600 dark:text-blue-400"></i>
+                      </div>
+                    )}
                   </div>
-
-                  <!-- Social Links -->
-                  {author.data.social && Object.values(author.data.social).some(link => link) && (
-                    <div class="author-social">
-                      {author.data.social.twitter && (
-                        <a href={author.data.social.twitter} target="_blank" rel="noopener noreferrer" class="social-link">
-                          <i class="fab fa-twitter"></i>
-                        </a>
-                      )}
-                      {author.data.social.linkedin && (
-                        <a href={author.data.social.linkedin} target="_blank" rel="noopener noreferrer" class="social-link">
-                          <i class="fab fa-linkedin"></i>
-                        </a>
-                      )}
-                      {author.data.social.github && (
-                        <a href={author.data.social.github} target="_blank" rel="noopener noreferrer" class="social-link">
-                          <i class="fab fa-github"></i>
-                        </a>
-                      )}
-                      {author.data.social.website && (
-                        <a href={author.data.social.website} target="_blank" rel="noopener noreferrer" class="social-link">
-                          <i class="fas fa-globe"></i>
-                        </a>
-                      )}
-                    </div>
-                  )}
+                  <div class="card-frequency">
+                    {author.data.featured ? "FEATURED" : "AUTHOR"}
+                  </div>
                 </div>
+                <h3 class="card-title">
+                  <a href={`/blog/authors/${author.slug}`}>{author.data.name}</a>
+                </h3>
+                {author.data.role && (
+                  <p class="card-description">{author.data.role}</p>
+                )}
+                {author.data.bio && (
+                  <p class="card-description">{author.data.bio.slice(0, 80)}...</p>
+                )}
+                <div class="card-meta">
+                  <span class="card-audience">
+                    {author.postCount} articles
+                  </span>
+                </div>
+
+                <!-- Social Links -->
+                {author.data.social && Object.values(author.data.social).some(link => link) && (
+                  <div class="author-social">
+                    {author.data.social.twitter && (
+                      <a href={author.data.social.twitter} target="_blank" rel="noopener noreferrer" class="social-link">
+                        <i class="fab fa-twitter"></i>
+                      </a>
+                    )}
+                    {author.data.social.linkedin && (
+                      <a href={author.data.social.linkedin} target="_blank" rel="noopener noreferrer" class="social-link">
+                        <i class="fab fa-linkedin"></i>
+                      </a>
+                    )}
+                    {author.data.social.github && (
+                      <a href={author.data.social.github} target="_blank" rel="noopener noreferrer" class="social-link">
+                        <i class="fab fa-github"></i>
+                      </a>
+                    )}
+                    {author.data.social.website && (
+                      <a href={author.data.social.website} target="_blank" rel="noopener noreferrer" class="social-link">
+                        <i class="fas fa-globe"></i>
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -269,18 +239,15 @@ const pageDescription = `Meet our ${totalAuthors} contributors who share insight
 
         <!-- Empty State -->
         {enhancedAuthors.length === 0 && (
-          <div class="text-center py-16">
-            <div class="mb-6">
-              <i class="fas fa-users text-4xl text-zinc-300 dark:text-zinc-600"></i>
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="fas fa-users"></i>
             </div>
-            <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
-              No Authors Yet
-            </h3>
-            <p class="text-zinc-600 dark:text-zinc-400 mb-6">
+            <h3 class="empty-title">NO AUTHORS YET</h3>
+            <p class="empty-description">
               Authors will appear here once they start publishing content.
             </p>
-            <Button href="/blog" variant="primary" className="compact-btn">
-              <i class="fas fa-newspaper mr-2"></i>
+            <Button href="/blog" variant="primary" className="empty-action">
               BROWSE ARTICLES
             </Button>
           </div>
@@ -291,11 +258,19 @@ const pageDescription = `Meet our ${totalAuthors} contributors who share insight
 </Layout>
 
 <style>
-  /* Authors Page Styling */
-  .authors-page {
+  /* FIXED: Using exact same CSS as newsletter page with proper spacing */
+  
+  /* Newsletter Page - Enhanced with new colors */
+  .newsletter-page {
     font-family: "Space Grotesk", sans-serif;
-    background-color: var(--color-bg-primary);
-    color: var(--color-text-primary);
+    background-color: white;
+    color: rgb(17 24 39);
+    min-height: 100vh;
+  }
+
+  :global(.dark) .newsletter-page {
+    background-color: rgb(15 23 42);
+    color: rgb(248 250 252);
   }
 
   /* Hero Stats */
@@ -307,172 +282,295 @@ const pageDescription = `Meet our ${totalAuthors} contributors who share insight
   .stat-number {
     font-size: 2.5rem;
     font-weight: 800;
-    color: var(--color-text-primary);
+    color: rgb(17 24 39);
     line-height: 1;
     margin-bottom: 0.5rem;
+  }
+
+  :global(.dark) .stat-number {
+    color: rgb(248 250 252);
   }
 
   .stat-label {
     font-size: 0.75rem;
     font-weight: 700;
-    color: var(--color-text-secondary);
+    color: rgb(55 65 81);
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
 
-  /* Featured Authors Grid */
-  .featured-authors-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
+  :global(.dark) .stat-label {
+    color: rgb(226 232 240);
+  }
+
+  /* FIXED: Newsletter Section Structure (Same as newsletter page) */
+  .newsletter-section {
     margin-bottom: 3rem;
   }
 
-  /* All Authors Grid */
-  .authors-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-  }
-
-  /* Author Cards */
-  .author-card {
-    background: var(--color-bg-primary);
-    border: 2px solid var(--color-border);
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp 0.6s ease forwards;
-    animation-delay: var(--animation-delay, 0s);
-  }
-
-  .author-card:hover {
-    border-color: #243788;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  }
-
-  :global(.dark) .author-card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  }
-
-  .featured-author {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border: 2px solid #e2e8f0;
-  }
-
-  :global(.dark) .featured-author {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    border-color: #334155;
-  }
-
-  .author-card-content {
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: rgb(17 24 39);
+    /* REMOVED: margin-bottom from here - now handled by utility classes */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid rgb(229 231 235);
+    padding-bottom: 0.5rem;
     display: flex;
-    gap: 1rem;
-    align-items: flex-start;
+    align-items: center;
   }
 
-  /* Author Avatar */
-  .author-avatar {
+  :global(.dark) .section-title {
+    color: rgb(248 250 252);
+    border-color: rgb(51 65 85);
+  }
+
+  .section-subtitle {
+    font-size: 1.125rem;
+    color: rgb(55 65 81);
+    margin-bottom: 2rem;
+  }
+
+  :global(.dark) .section-subtitle {
+    color: rgb(226 232 240);
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3rem;
+  }
+
+  /* FIXED: Newsletter Grid - Exact same as newsletter page */
+  .newsletter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1rem;
+  }
+
+  .newsletter-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: white;
+    border: 2px solid rgb(229 231 235);
+    transition: all 0.3s ease;
+    cursor: pointer;
     position: relative;
+  }
+
+  :global(.dark) .newsletter-card {
+    background: rgb(30 41 59);
+    border-color: rgb(51 65 85);
+  }
+
+  .newsletter-card:hover {
+    border-color: #243788;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  :global(.dark) .newsletter-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .section-header-fixed {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem; /* Reduced gap */
+}
+
+.section-subtitle-fixed {
+  font-size: 1.125rem;
+  color: rgb(55 65 81);
+  margin-bottom: 1rem; /* Reduced gap */
+}
+
+:global(.dark) .section-subtitle-fixed {
+  color: rgb(226 232 240);
+}
+
+  /* FIXED: Card Content Structure (Same as newsletter page) */
+  .card-content {
+    flex: 1;
+    min-width: 0;
+    display: block;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .author-avatar-small {
     flex-shrink: 0;
   }
 
-  .featured-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #243788;
-    color: white;
-    font-size: 0.625rem;
+  .card-frequency {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.6875rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    padding: 0.25rem 0.5rem;
-    border-radius: 2px;
+    background: rgb(248 250 252);
+    color: rgb(55 65 81);
+    border: 1px solid rgb(229 231 235);
   }
 
-  .featured-badge.small {
-    font-size: 0.5rem;
-    padding: 0.2rem 0.4rem;
+  :global(.dark) .card-frequency {
+    background: rgb(30 41 59);
+    color: rgb(226 232 240);
+    border-color: rgb(51 65 85);
   }
 
-  /* Author Info */
-  .author-info {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .author-name {
-    font-size: 1.125rem;
+  .card-title {
+    font-size: 1rem;
     font-weight: 700;
-    color: var(--color-text-primary);
+    color: rgb(17 24 39);
     margin-bottom: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
   }
 
-  .author-name a {
+  :global(.dark) .card-title {
+    color: rgb(248 250 252);
+  }
+
+  .card-title a {
     color: inherit;
     text-decoration: none;
     transition: color 0.3s ease;
   }
 
-  .author-name a:hover {
+  .card-title a:hover {
     color: #243788;
   }
 
-  .author-role {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
-    margin-bottom: 0.75rem;
-    font-weight: 500;
+  :global(.dark) .card-title a:hover {
+    color: rgb(96 165 250);
   }
 
-  .author-bio {
+  .card-description {
     font-size: 0.875rem;
-    color: var(--color-text-secondary);
-    line-height: 1.4;
+    color: rgb(55 65 81);
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+
+  :global(.dark) .card-description {
+    color: rgb(226 232 240);
+  }
+
+  .card-meta {
     margin-bottom: 1rem;
   }
 
-  /* Author Stats */
-  .author-stats {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .stat-item {
+  .card-audience {
     font-size: 0.75rem;
-    color: var(--color-text-muted);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    color: rgb(107 114 128);
+    font-style: italic;
+    word-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.2;
+  }
+
+  :global(.dark) .card-audience {
+    color: rgb(148 163 184);
   }
 
   /* Social Links */
   .author-social {
     display: flex;
     gap: 0.75rem;
+    margin-top: 1rem;
   }
 
   .social-link {
-    color: var(--color-text-muted);
+    color: rgb(107 114 128);
     font-size: 0.875rem;
     transition: color 0.3s ease;
+  }
+
+  :global(.dark) .social-link {
+    color: rgb(148 163 184);
   }
 
   .social-link:hover {
     color: #243788;
   }
 
-  /* Animations */
-  @keyframes fadeInUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
+  :global(.dark) .social-link:hover {
+    color: rgb(96 165 250);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    color: rgb(107 114 128);
+    margin-bottom: 1.5rem;
+  }
+
+  :global(.dark) .empty-icon {
+    color: rgb(148 163 184);
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: rgb(17 24 39);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  :global(.dark) .empty-title {
+    color: rgb(248 250 252);
+  }
+
+  .empty-description {
+    font-size: 1rem;
+    color: rgb(55 65 81);
+    margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  :global(.dark) .empty-description {
+    color: rgb(226 232 240);
+  }
+
+  /* FIXED: Responsive Design - Same as newsletter page */
+  @media (max-width: 768px) {
+    .newsletter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .newsletter-card {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
     }
   }
 
@@ -487,62 +585,36 @@ const pageDescription = `Meet our ${totalAuthors} contributors who share insight
     background-size: 200% 200%;
     animation: gradient 3s ease-in-out infinite;
   }
-
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .featured-authors-grid,
-    .authors-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .author-card-content {
-      flex-direction: column;
-      text-align: center;
-    }
-
-    .author-avatar {
-      align-self: center;
-    }
-  }
-
-  /* Compact buttons */
-  .compact-btn {
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 700;
-    font-size: 0.875rem;
-    padding: 0.75rem 1.5rem;
-  }
 </style>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // Staggered animation for author cards
-    const authorCards = document.querySelectorAll('.author-card') as NodeListOf<HTMLElement>;
-    
-    authorCards.forEach((card, index) => {
-      card.style.setProperty('--animation-delay', `${index * 0.1}s`);
-    });
+    // Make newsletter cards clickable (same as newsletter page)
+    const newsletterCards = document.querySelectorAll(".newsletter-card");
 
-    // Intersection Observer for scroll animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px',
-    };
+    newsletterCards.forEach((card) => {
+      card.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "A") return;
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const element = entry.target as HTMLElement;
-          element.style.opacity = '1';
-          element.style.transform = 'translateY(0)';
-          observer.unobserve(entry.target);
+        const link = card.querySelector("a");
+        if (link) {
+          window.location.href = link.href;
         }
       });
-    }, observerOptions);
+    });
 
-    authorCards.forEach((card) => {
-      observer.observe(card);
+    // Enhanced hover effects
+    newsletterCards.forEach((card, index) => {
+      const element = card as HTMLElement;
+      
+      card.addEventListener('mouseenter', () => {
+        element.style.transform = 'translateY(-4px) scale(1.02)';
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        element.style.transform = 'translateY(0) scale(1)';
+      });
     });
   });
 </script>

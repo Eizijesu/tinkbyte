@@ -339,26 +339,28 @@ const sortedPosts = posts.sort((a, b) =>
       {posts.length > 0 ? (
         <>
           <!-- Featured Articles -->
-          {featuredPosts.length > 0 && (
-            <section class="featured-section">
-              <h2 class="section-title">
-                <i class="fas fa-star section-icon"></i>
-                Featured Articles
-              </h2>
-              <div class="featured-grid">
-                {featuredPosts.slice(0, 3).map((post: BlogPost) => (
-                  <div class="featured-article">
-                    <ArticleCard {...formatPost(post)} />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+            {featuredPosts.length > 0 && (
+                <section class="featured-section-fixed">
+                <!-- FIXED: Added proper spacing with mb-6 -->
+                <h2 class="section-title mb-6">
+                  <i class="fas fa-star section-icon"></i>
+                  Featured Articles
+                </h2>
+                <div class="featured-grid">
+                  {featuredPosts.slice(0, 3).map((post: BlogPost) => (
+                    <div class="featured-article">
+                      <ArticleCard {...formatPost(post)} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
           <!-- All Articles -->
-          <section class="all-articles-section">
-            <div class="section-header">
-              <h2 class="section-title">
+          <section class="all-articles-section-fixed">
+            <div class="section-header-fixed">
+              <!-- FIXED: Added proper spacing with mb-4 -->
+              <h2 class="section-title mb-4">
                 <i class={categoryIcon} style={`color: ${categoryColor}`}></i>
                 All {categoryName} Articles
               </h2>
@@ -582,6 +584,32 @@ const sortedPosts = posts.sort((a, b) =>
     gap: 0.5rem;
   }
 
+  .featured-section-fixed {
+  margin-bottom: 3rem;
+}
+
+.all-articles-section-fixed {
+  margin-bottom: 3rem;
+}
+
+.section-header-fixed {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem; /* Consistent spacing */
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0; /* Remove default margin, use utility classes */
+}
   /* Quick Actions Sidebar */
   .quick-actions {
     position: fixed;

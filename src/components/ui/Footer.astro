@@ -35,6 +35,8 @@ const resourceLinks = [
   { text: "RESEARCH", href: "/research" },
   { text: "PODCAST", href: "/podcast" },
   { text: "ARCHIVE", href: "/archive" },
+  { text: "AUTHORS", href: "/blog/authors" },
+  { text: "ISSUES", href: "/newsletter/archive" },
 ];
 
 const socialLinks = [
@@ -1185,8 +1187,6 @@ const contactInfo = {
           // Hide previous status
           statusDiv.style.display = "none";
           statusDiv.className = "form-status";
-
-          
 
           // Simulate API call (replace with your actual newsletter service)
           await new Promise((resolve) => setTimeout(resolve, 1500));

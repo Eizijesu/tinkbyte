@@ -5,8 +5,10 @@ const branch = process.env.TINA_BRANCH || process.env.HEAD || "main";
 
 export default defineConfig({
   branch,
-  clientId: process.env.TINA_CLIENT_ID,
+  // FIXED: Use NEXT_PUBLIC_TINA_CLIENT_ID (not TINA_CLIENT_ID)
+  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID!,
   token: process.env.TINA_TOKEN!,
+
 
   build: {
     outputFolder: "admin",
@@ -756,55 +758,58 @@ export default defineConfig({
               },
 
               // Enhanced Callout (Fixed)
-              {
-                name: "Callout",
-                label: "💡 Callout Box",
-                ui: {
-                  defaultItem: {
-                    type: "info",
-                    title: "Important Note",
-                    content: "Add your callout content here..."
-                  }
-                },
-                fields: [
-                  {
-                    type: "string",
-                    name: "type",
-                    label: "Callout Type",
-                    options: [
-                      { label: "💡 Info (Blue)", value: "info" },
-                      { label: "⚠️ Warning (Yellow)", value: "warning" },
-                      { label: "✅ Success (Green)", value: "success" },
-                      { label: "❌ Error (Red)", value: "error" },
-                      { label: "🔥 Tip (Purple)", value: "tip" },
-                      { label: "📝 Note (Gray)", value: "note" },
-                      { label: "🎯 Custom", value: "custom" }
-                    ]
-                  },
-                  {
-                    type: "string",
-                    name: "customColor",
-                    label: "Custom Color",
-                    description: "Hex color code for custom callout (only use if Custom type is selected)",
-                  },
-                  {
-                    type: "string",
-                    name: "title",
-                    label: "Title",
-                  },
-                  {
-                    type: "rich-text",
-                    name: "content",
-                    label: "Content",
-                  },
-                  {
-                    type: "boolean",
-                    name: "dismissible",
-                    label: "Dismissible",
-                    description: "Allow users to close this callout (recommended for info/tip types)",
-                  },
-                ]
-              },
+{
+  name: "Callout",
+  label: "💡 Callout Box",
+  ui: {
+    defaultItem: {
+      type: "info",
+      title: "Important Note",
+      content: "Add your callout content here..."
+    }
+  },
+  fields: [
+    {
+      type: "string",
+      name: "type",
+      label: "Callout Type",
+      options: [
+        { label: "💡 Info (Blue)", value: "info" },
+        { label: "⚠️ Warning (Yellow)", value: "warning" },
+        { label: "✅ Success (Green)", value: "success" },
+        { label: "❌ Error (Red)", value: "error" },
+        { label: "🔥 Tip (Purple)", value: "tip" },
+        { label: "📝 Note (Gray)", value: "note" },
+        { label: "🎯 Custom", value: "custom" }
+      ]
+    },
+    {
+      type: "string",
+      name: "customColor",
+      label: "Custom Color",
+      description: "Hex color code for custom callout (only use if Custom type is selected)",
+    },
+    {
+      type: "string",
+      name: "title",
+      label: "Title",
+    },
+    {
+      type: "string", // Changed from rich-text to string
+      name: "content",
+      label: "Content",
+      ui: {
+        component: "textarea", // Use textarea for multi-line text
+      }
+    },
+    {
+      type: "boolean",
+      name: "dismissible",
+      label: "Dismissible",
+      description: "Allow users to close this callout (recommended for info/tip types)",
+    },
+  ]
+},
 
               // Enhanced Code Block (Fixed)
               {

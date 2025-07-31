@@ -1,13 +1,11 @@
-# Astro Static Site Redirects - CORRECTED
-
 # Legacy redirects (specific first)
 /privacy /legal/privacy-policy 301
 /terms /legal/terms-of-service 301
 /cookies /legal/cookie-policy 301
 /legal/contact /contact 301
 
-# Handle static assets (keep these as-is)
+# Static assets - MUST be explicit
 /_astro/* /_astro/:splat 200
 
-# SPA fallback for 404s (this should be LAST)
+# Only catch-all for missing pages (MUST be last)
 /* /404.html 404

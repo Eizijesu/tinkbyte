@@ -1,4 +1,4 @@
-// src/lib/admin/auth.ts - FIXED TypeScript errors
+// src/lib/admin/auth.ts - FIXED Type Error
 import { supabase } from '../supabase.js';
 import { config } from '../config.js';
 
@@ -14,7 +14,7 @@ class AdminAuthManager {
   private static instance: AdminAuthManager;
   private initialized: boolean = false;
   private currentUser: any = null;
-  private sessionCheckInterval: NodeJS.Timeout | null = null;
+  private sessionCheckInterval: number | null = null;
 
   static readonly ADMIN_EMAILS = ["tinkbytehq@gmail.com"];
   static readonly STORAGE_KEY = "tinkbyte-admin-session";
@@ -58,8 +58,7 @@ class AdminAuthManager {
   }
 
   private setupSessionMonitoring(): void {
-    // Check session validity every 5 minutes
-    this.sessionCheckInterval = setInterval(async () => {
+    this.sessionCheckInterval = window.setInterval(async () => {
       try {
         await this.getCurrentUser();
       } catch (error) {
@@ -69,111 +68,111 @@ class AdminAuthManager {
     }, 5 * 60 * 1000);
   }
 
-async signIn(email: string, password: string) {
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  async signIn(email: string, password: string) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      console.error('❌ Signin error:', error);
-      return { success: false, error: error.message };
-    }
+      if (error) {
+        console.error('❌ Signin error:', error);
+        return { success: false, error: error.message };
+      }
 
-    if (!data.user || !data.session) {
-      return { success: false, error: "Authentication failed" };
-    }
+      if (!data.user || !data.session) {
+        return { success: false, error: "Authentication failed" };
+      }
 
-    // **ENHANCED: Better error logging and fallback**
-    let profile: AdminProfile | null = null;
-    let lastError = null;
+      // **ENHANCED: Better error logging and fallback**
+      let profile: AdminProfile | null = null;
+      let lastError: any = null; // FIXED: Proper type for lastError
 
-    console.log('🔍 Checking profile for user:', data.user.id);
-    console.log('🌍 Current environment:', config.environment);
+      console.log('🔍 Checking profile for user:', data.user.id);
+      console.log('🌍 Current environment:', config.environment);
 
-    // Try current environment first
-    const { data: currentProfile, error: currentError } = await supabase
-      .from('profiles')
-      .select('is_admin, is_blocked, email, environment')
-      .eq('id', data.user.id)
-      .eq('environment', config.environment)
-      .maybeSingle();
-
-    console.log('📊 Current env query result:', { currentProfile, currentError });
-
-    if (currentProfile) {
-      profile = currentProfile as AdminProfile;
-      console.log('✅ Found profile in current environment:', profile);
-    } else {
-      let lastError: any = null;
-      console.log('⚠️ Profile not found in current environment, trying production...');
-
-      // Try production as fallback
-      const { data: prodProfile, error: prodError } = await supabase
+      // Try current environment first
+      const { data: currentProfile, error: currentError } = await supabase
         .from('profiles')
         .select('is_admin, is_blocked, email, environment')
         .eq('id', data.user.id)
-        .eq('environment', 'production')
+        .eq('environment', config.environment)
         .maybeSingle();
 
-      console.log('📊 Production env query result:', { prodProfile, prodError });
+      console.log('📊 Current env query result:', { currentProfile, currentError });
 
-      if (prodProfile) {
-        profile = prodProfile as AdminProfile;
-        console.log('✅ Found profile in production environment:', profile);
+      if (currentProfile) {
+        profile = currentProfile as AdminProfile;
+        console.log('✅ Found profile in current environment:', profile);
       } else {
-        let lastError: any = null;
-        console.log('❌ Profile not found in production either');
+        lastError = currentError; // Store current environment error
+        console.log('⚠️ Profile not found in current environment, trying production...');
+
+        // Try production as fallback
+        const { data: prodProfile, error: prodError } = await supabase
+          .from('profiles')
+          .select('is_admin, is_blocked, email, environment')
+          .eq('id', data.user.id)
+          .eq('environment', 'production')
+          .maybeSingle();
+
+        console.log('📊 Production env query result:', { prodProfile, prodError });
+
+        if (prodProfile) {
+          profile = prodProfile as AdminProfile;
+          console.log('✅ Found profile in production environment:', profile);
+        } else {
+          lastError = prodError || lastError; // FIXED: Store production error or keep current
+          console.log('❌ Profile not found in production either');
+        }
       }
+
+      if (!profile) {
+        console.error('❌ Profile not found in any environment');
+        console.error('❌ Last error:', lastError);
+        await supabase.auth.signOut();
+        return { success: false, error: "Admin profile not found in any environment" };
+      }
+
+      if (profile.is_blocked) {
+        await supabase.auth.signOut();
+        return { success: false, error: "Account is blocked" };
+      }
+
+      if (!profile.is_admin && !this.isAdmin(data.user.email || "")) {
+        await supabase.auth.signOut();
+        return { success: false, error: "Access denied. Admin privileges required." };
+      }
+
+      console.log('✅ Admin verification successful');
+
+      const adminUser = {
+        id: data.user.id,
+        email: data.user.email,
+        isAdmin: true,
+        profile: profile
+      };
+
+      const sessionData = {
+        user: adminUser,
+        token: data.session.access_token,
+        expiresAt: data.session.expires_at,
+        refreshToken: data.session.refresh_token,
+        createdAt: Date.now()
+      };
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(AdminAuthManager.STORAGE_KEY, JSON.stringify(sessionData));
+      }
+      
+      this.currentUser = adminUser;
+      
+      return { success: true, user: adminUser };
+    } catch (error: any) {
+      console.error('❌ Signin exception:', error);
+      return { success: false, error: error.message || "Signin failed" };
     }
-
-    if (!profile) {
-      console.error('❌ Profile not found in any environment');
-      console.error('❌ Last error:', lastError);
-      await supabase.auth.signOut();
-      return { success: false, error: "Admin profile not found in any environment" };
-    }
-
-    if (profile.is_blocked) {
-      await supabase.auth.signOut();
-      return { success: false, error: "Account is blocked" };
-    }
-
-    if (!profile.is_admin && !this.isAdmin(data.user.email || "")) {
-      await supabase.auth.signOut();
-      return { success: false, error: "Access denied. Admin privileges required." };
-    }
-
-    console.log('✅ Admin verification successful');
-
-    const adminUser = {
-      id: data.user.id,
-      email: data.user.email,
-      isAdmin: true,
-      profile: profile
-    };
-
-    const sessionData = {
-      user: adminUser,
-      token: data.session.access_token,
-      expiresAt: data.session.expires_at,
-      refreshToken: data.session.refresh_token,
-      createdAt: Date.now()
-    };
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(AdminAuthManager.STORAGE_KEY, JSON.stringify(sessionData));
-    }
-    
-    this.currentUser = adminUser;
-    
-    return { success: true, user: adminUser };
-  } catch (error: any) {
-    console.error('❌ Signin exception:', error);
-    return { success: false, error: error.message || "Signin failed" };
   }
-}
 
   async getCurrentUser() {
     try {
@@ -285,7 +284,7 @@ async signIn(email: string, password: string) {
       
       // Clear intervals
       if (this.sessionCheckInterval) {
-        clearInterval(this.sessionCheckInterval);
+        window.clearInterval(this.sessionCheckInterval);
         this.sessionCheckInterval = null;
       }
       
@@ -335,7 +334,7 @@ async signIn(email: string, password: string) {
 
   destroy(): void {
     if (this.sessionCheckInterval) {
-      clearInterval(this.sessionCheckInterval);
+      window.clearInterval(this.sessionCheckInterval);
       this.sessionCheckInterval = null;
     }
     this.initialized = false;

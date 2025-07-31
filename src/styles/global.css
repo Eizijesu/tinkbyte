@@ -1212,3 +1212,316 @@ html.dark .cancel-btn:hover {
   background: #334155 !important;
   border-color: #475569 !important;
 }
+
+/* =================================
+   TinkByte Page Components - 404 Styles
+   ================================= */
+
+/* Error Page Specific Styles */
+.error-hero {
+  position: relative;
+  padding: 4rem 0;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  width: 100%;
+}
+
+.error-hero-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #06b6d4 100%);
+  opacity: 0.05;
+}
+
+.dark .error-hero-bg {
+  opacity: 0.1;
+}
+
+.error-number {
+  font-size: clamp(4rem, 12vw, 8rem);
+  font-weight: 900;
+  color: rgb(107 114 128);
+  opacity: 0.3;
+  line-height: 1;
+  user-select: none;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.dark .error-number {
+  color: rgb(148 163 184);
+}
+
+.error-icon {
+  font-size: 3rem;
+  color: rgb(37 99 235);
+  animation: float 3s ease-in-out infinite;
+}
+
+.dark .error-icon {
+  color: rgb(96 165 250);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, rgb(37 99 235) 0%, #7c3aed 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradient 3s ease-in-out infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  background: rgb(239 68 68);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* TinkByte Card Components */
+.tinkbyte-card {
+  background: white;
+  border: 2px solid rgb(229 231 235);
+  padding: 1.5rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: block;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dark .tinkbyte-card {
+  background: rgb(30 41 59);
+  border-color: rgb(51 65 85);
+}
+
+.tinkbyte-card:hover {
+  border-color: rgb(37 99 235);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.dark .tinkbyte-card:hover {
+  border-color: rgb(96 165 250);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* TinkByte Section Titles */
+.tinkbyte-section-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: rgb(17 24 39);
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.dark .tinkbyte-section-title {
+  color: rgb(248 250 252);
+}
+
+.tinkbyte-section-title i {
+  color: rgb(37 99 235);
+}
+
+.dark .tinkbyte-section-title i {
+  color: rgb(96 165 250);
+}
+
+/* TinkByte Page Icon */
+.tinkbyte-page-icon {
+  width: 48px;
+  height: 48px;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(229 231 235);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: rgb(55 65 81);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.dark .tinkbyte-page-icon {
+  background: rgb(30 41 59);
+  border-color: rgb(51 65 85);
+  color: rgb(226 232 240);
+}
+
+.tinkbyte-card:hover .tinkbyte-page-icon {
+  background: rgb(37 99 235);
+  color: white;
+  border-color: rgb(37 99 235);
+}
+
+/* TinkByte Arrow */
+.tinkbyte-arrow {
+  color: rgb(107 114 128);
+  transition: all 0.3s ease;
+}
+
+.dark .tinkbyte-arrow {
+  color: rgb(148 163 184);
+}
+
+.tinkbyte-card:hover .tinkbyte-arrow {
+  color: rgb(37 99 235);
+  transform: translateX(4px);
+}
+
+/* TinkByte Fade In Animation */
+.tinkbyte-fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* TinkByte Help Section */
+.tinkbyte-help-section {
+  padding: 4rem 0;
+  background: rgb(248 250 252);
+  border-top: 2px solid rgb(229 231 235);
+  width: 100%;
+}
+
+.dark .tinkbyte-help-section {
+  background: rgb(30 41 59);
+  border-color: rgb(51 65 85);
+}
+
+/* TinkByte Category/Article Meta */
+.tinkbyte-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tinkbyte-category {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: rgb(37 99 235);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.dark .tinkbyte-category {
+  color: rgb(96 165 250);
+}
+
+.tinkbyte-date {
+  font-size: 0.75rem;
+  color: rgb(107 114 128);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .tinkbyte-date {
+  color: rgb(148 163 184);
+}
+
+.tinkbyte-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: rgb(17 24 39);
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.dark .tinkbyte-title {
+  color: rgb(248 250 252);
+}
+
+.tinkbyte-excerpt {
+  font-size: 0.875rem;
+  color: rgb(55 65 81);
+  line-height: 1.4;
+  margin-bottom: 1rem;
+}
+
+.dark .tinkbyte-excerpt {
+  color: rgb(226 232 240);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .error-hero {
+    padding: 2rem 0;
+  }
+  
+  .tinkbyte-section-title {
+    font-size: 1.25rem;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .error-number {
+    font-size: 4rem;
+  }
+
+  .error-icon {
+    font-size: 2rem;
+  }
+
+  .tinkbyte-card {
+    padding: 1rem;
+  }
+
+  .tinkbyte-help-section {
+    padding: 2rem 0;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .error-icon,
+  .status-indicator,
+  .gradient-text,
+  .tinkbyte-fade-in {
+    animation: none;
+  }
+  
+  .tinkbyte-fade-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  .tinkbyte-card:hover {
+    transform: none;
+  }
+}

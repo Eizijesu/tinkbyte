@@ -1,11 +1,17 @@
 ---
-// src/layouts/AdminLayout.astro -
+// src/layouts/AdminLayout.astro - COMPLETE Navigation Restored
 import "../styles/admin-global.css";
+
 declare global {
   interface WindowEventMap {
     adminMetricsUpdate: CustomEvent;
   }
+  interface Window {
+    handleSignOut?: () => Promise<void>;
+    adminLayout?: any;
+  }
 }
+
 export interface Props {
   title: string;
   description?: string;
@@ -24,6 +30,115 @@ const { title, description, preloadData = true } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
 
+    <!-- Critical CSS for instant loading -->
+    <style>
+      /* Perfect Square Loader - Critical CSS */
+      .admin-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .loading-content {
+        text-align: center;
+        color: #f8fafc;
+      }
+
+      /* Perfect Square Spinner */
+      .perfect-square-spinner {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 1.5rem;
+        position: relative;
+      }
+
+      .square-block {
+        width: 18px;
+        height: 18px;
+        background: #3b82f6;
+        position: absolute;
+        animation: square-pulse 1.5s ease-in-out infinite;
+      }
+
+      .square-block:nth-child(1) {
+        top: 0;
+        left: 0;
+        animation-delay: 0s;
+      }
+
+      .square-block:nth-child(2) {
+        top: 0;
+        right: 0;
+        animation-delay: 0.1s;
+      }
+
+      .square-block:nth-child(3) {
+        bottom: 0;
+        left: 0;
+        animation-delay: 0.2s;
+      }
+
+      .square-block:nth-child(4) {
+        bottom: 0;
+        right: 0;
+        animation-delay: 0.3s;
+      }
+
+      @keyframes square-pulse {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: scale(0.8);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .loading-text h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #f8fafc;
+      }
+
+      .loading-text p {
+        font-size: 0.875rem;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+      }
+
+      /* Progress Bar */
+      .loading-progress {
+        width: 200px;
+        height: 3px;
+        background: #1e293b;
+        margin: 0 auto;
+        overflow: hidden;
+      }
+
+      .progress-bar {
+        height: 100%;
+        background: #3b82f6;
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      /* Hide admin content initially */
+      .admin-content {
+        display: none;
+      }
+    </style>
+
     <!-- Performance optimizations -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -41,12 +156,13 @@ const { title, description, preloadData = true } = Astro.props;
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
     />
 
-    <!-- Preload admin modules -->
+    <!-- Preload admin modules for faster loading -->
     {
       preloadData && (
         <>
           <link rel="modulepreload" href="/src/lib/admin-api.js" />
           <link rel="modulepreload" href="/src/lib/supabase.js" />
+          <link rel="modulepreload" href="/src/lib/admin/auth.js" />
         </>
       )
     }
@@ -56,13 +172,13 @@ const { title, description, preloadData = true } = Astro.props;
     import { adminAPIManager } from "../lib/admin-api.js";
     import { adminAuthManager } from "../lib/admin/auth.js";
 
-    // Global admin layout management
+    // OPTIMIZED: Faster admin layout management
     class AdminLayout {
       private isAuthenticated: boolean = false;
       private currentUser: any = null;
       private pendingCommentsCount: number = 0;
       private loadingProgress: number = 0;
-      private notificationQueue: any[] = [];
+      private initStartTime: number = Date.now();
 
       constructor() {
         this.init();
@@ -70,12 +186,22 @@ const { title, description, preloadData = true } = Astro.props;
 
       async init(): Promise<void> {
         try {
-          
-          await this.initializeAuth();
-          await this.setupEventListeners();
-          await this.loadInitialData();
-          this.hideLoading();
-          
+          console.log("🚀 Fast admin layout initialization...");
+
+          const [authResult, setupResult] = await Promise.allSettled([
+            this.initializeAuth(),
+            this.setupEventListeners(),
+          ]);
+
+          if (authResult.status === "rejected") {
+            throw authResult.reason;
+          }
+
+          this.showAdminInterface();
+          this.loadInitialDataInBackground();
+
+          const totalTime = Date.now() - this.initStartTime;
+          console.log(`✅ Admin layout ready in ${totalTime}ms`);
         } catch (error) {
           console.error("❌ Admin layout initialization error:", error);
           this.handleInitError(error);
@@ -83,32 +209,49 @@ const { title, description, preloadData = true } = Astro.props;
       }
 
       private async initializeAuth(): Promise<void> {
-        this.updateLoadingStatus("Verifying authentication...", 20);
+        this.updateLoadingStatus("Verifying authentication...", 30);
 
         try {
-          // Use singleton auth manager
-          await adminAuthManager.initialize();
-          const user = await adminAuthManager.getCurrentUser();
+          const [authInit, userCheck] = await Promise.all([
+            adminAuthManager.initialize(),
+            adminAuthManager.getCurrentUser(),
+          ]);
 
-          if (!user) {
+          if (!userCheck) {
             throw new Error("No admin session found");
           }
 
           this.isAuthenticated = true;
-          this.currentUser = user;
-
-          this.updateLoadingStatus("Authentication verified", 40);
-          
+          this.currentUser = userCheck;
+          this.updateLoadingStatus("Authentication verified", 60);
         } catch (error) {
           console.error("❌ Authentication failed:", error);
-          this.redirectToSignIn(error.message);
+          this.redirectToSignIn((error as Error).message);
           throw error;
         }
       }
 
       private async setupEventListeners(): Promise<void> {
-        this.updateLoadingStatus("Setting up interface...", 60);
+        this.updateLoadingStatus("Setting up interface...", 80);
 
+        this.setupCriticalListeners();
+        this.setActiveNavigation();
+
+        setTimeout(() => {
+          this.setupNonCriticalListeners();
+        }, 100);
+      }
+
+      private setupCriticalListeners(): void {
+        const signoutBtn = document.getElementById("admin-signout");
+        if (signoutBtn) {
+          signoutBtn.addEventListener("click", () => {
+            this.handleSignOut();
+          });
+        }
+      }
+
+      private setupNonCriticalListeners(): void {
         // Mobile menu toggle
         const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
         const adminNav = document.getElementById("admin-nav");
@@ -121,54 +264,57 @@ const { title, description, preloadData = true } = Astro.props;
         const userMenuToggle = document.getElementById("user-menu-toggle");
         const userDropdown = document.getElementById("user-dropdown");
 
-        userMenuToggle?.addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (userDropdown) {
+        if (userMenuToggle && userDropdown) {
+          userMenuToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
             userDropdown.style.display =
               userDropdown.style.display === "none" ? "block" : "none";
-          }
-        });
+          });
+        }
 
-        // Close user dropdown when clicking outside
         document.addEventListener("click", (e) => {
           if (userDropdown && !userDropdown.contains(e.target as Node)) {
             userDropdown.style.display = "none";
           }
         });
 
-        // Sign out functionality
-        const signoutBtn = document.getElementById("admin-signout");
-        signoutBtn?.addEventListener("click", () => {
-          this.handleSignOut();
-        });
-
-        // Set active navigation
-        this.setActiveNavigation();
-
-        // Setup global keyboard shortcuts
         this.setupKeyboardShortcuts();
-
-        
       }
 
-      private async loadInitialData(): Promise<void> {
-        this.updateLoadingStatus("Loading dashboard data...", 80);
+      private showAdminInterface(): void {
+        this.updateLoadingStatus("Ready!", 100);
+        this.updateUserInfo();
 
+        setTimeout(() => {
+          const loadingElement = document.getElementById("admin-loading");
+          const contentElement = document.getElementById("admin-content");
+
+          if (loadingElement) {
+            loadingElement.style.opacity = "0";
+            loadingElement.style.transition = "opacity 0.3s ease";
+            setTimeout(() => {
+              loadingElement.style.display = "none";
+            }, 300);
+          }
+
+          if (contentElement) {
+            contentElement.style.display = "flex";
+            contentElement.style.opacity = "0";
+            contentElement.style.transition = "opacity 0.3s ease";
+            setTimeout(() => {
+              contentElement.style.opacity = "1";
+            }, 50);
+          }
+        }, 200);
+      }
+
+      private async loadInitialDataInBackground(): Promise<void> {
         try {
-          // Update user info
-          this.updateUserInfo();
-
-          // Load pending comments count for badge
           await this.updatePendingCommentsCount();
-
-          // Setup periodic data refresh
           this.setupPeriodicRefresh();
-
-          this.updateLoadingStatus("Ready!", 100);
-          
+          console.log("✅ Background data loaded");
         } catch (error) {
-          console.warn("⚠️ Some data failed to load:", error);
-          // Continue anyway, don't block the UI
+          console.warn("⚠️ Some background data failed to load:", error);
         }
       }
 
@@ -180,7 +326,6 @@ const { title, description, preloadData = true } = Astro.props;
           const displayName = this.currentUser.email.split("@")[0];
           userNameElement.textContent = displayName;
 
-          // Update avatar with first letter
           if (userAvatar) {
             userAvatar.innerHTML = `<span>${displayName.charAt(0).toUpperCase()}</span>`;
           }
@@ -189,7 +334,6 @@ const { title, description, preloadData = true } = Astro.props;
 
       private async updatePendingCommentsCount(): Promise<void> {
         try {
-          // Use singleton API manager
           const result = await adminAPIManager.getComments({
             status: "pending",
             limit: 1,
@@ -240,31 +384,22 @@ const { title, description, preloadData = true } = Astro.props;
 
       private setupKeyboardShortcuts(): void {
         document.addEventListener("keydown", (e) => {
-          // Alt + D for Dashboard
           if (e.altKey && e.key === "d") {
             e.preventDefault();
             window.location.href = "/admin/dashboard";
           }
-
-          // Alt + M for Moderation
           if (e.altKey && e.key === "m") {
             e.preventDefault();
             window.location.href = "/admin/moderation";
           }
-
-          // Alt + U for Users
           if (e.altKey && e.key === "u") {
             e.preventDefault();
             window.location.href = "/admin/users";
           }
-
-          // Alt + A for Analytics
           if (e.altKey && e.key === "a") {
             e.preventDefault();
             window.location.href = "/admin/analytics";
           }
-
-          // Escape to close dropdowns
           if (e.key === "Escape") {
             const userDropdown = document.getElementById("user-dropdown");
             if (userDropdown) {
@@ -275,32 +410,12 @@ const { title, description, preloadData = true } = Astro.props;
       }
 
       private setupPeriodicRefresh(): void {
-        // Refresh pending comments count every 2 minutes
         setInterval(
           () => {
             this.updatePendingCommentsCount();
           },
           2 * 60 * 1000
         );
-
-        // Update user status every 5 minutes
-        setInterval(
-          () => {
-            this.updateUserStatus();
-          },
-          5 * 60 * 1000
-        );
-      }
-
-      private updateUserStatus(): void {
-        const statusElement = document.getElementById("user-status");
-        if (statusElement) {
-          // Update online status
-          const statusText = statusElement.querySelector(".status-text");
-          if (statusText) {
-            statusText.textContent = "Online";
-          }
-        }
       }
 
       private updateLoadingStatus(status: string, progress: number): void {
@@ -318,45 +433,40 @@ const { title, description, preloadData = true } = Astro.props;
         this.loadingProgress = progress;
       }
 
-      private hideLoading(): void {
-        const loadingElement = document.getElementById("admin-loading");
-        const contentElement = document.getElementById("admin-content");
-
-        setTimeout(() => {
-          if (loadingElement) loadingElement.style.display = "none";
-          if (contentElement) contentElement.style.display = "flex";
-        }, 500); // Small delay for smooth transition
-      }
-
       private handleInitError(error: any): void {
         const loadingElement = document.getElementById("admin-loading");
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred";
 
         if (loadingElement) {
           loadingElement.innerHTML = `
-              <div class="loading-content">
-                <div style="color: #da3633; font-size: 3rem; margin-bottom: 1rem;">
-                  <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="loading-text">
-                  <h3>Initialization Failed</h3>
-                  <p>${error.message || "An unexpected error occurred"}</p>
-                </div>
-                <button 
-                  onclick="window.location.reload()" 
-                  style="
-                    padding: 0.75rem 1.5rem; 
-                    background: #4285f4; 
-                    color: white; 
-                    border: none; 
-                    cursor: pointer; 
-                    font-weight: 500;
-                    margin-top: 1rem;
-                  "
-                >
-                  <i class="fas fa-refresh"></i> Retry
-                </button>
+            <div class="loading-content">
+              <div style="color: #ef4444; font-size: 3rem; margin-bottom: 1rem;">
+                <i class="fas fa-exclamation-triangle"></i>
               </div>
-            `;
+              <div class="loading-text">
+                <h3>Initialization Failed</h3>
+                <p>${errorMessage}</p>
+              </div>
+              <button 
+                onclick="window.location.reload()" 
+                style="
+                  padding: 0.75rem 1.5rem; 
+                  background: #3b82f6; 
+                  color: white; 
+                  border: none; 
+                  cursor: pointer; 
+                  font-weight: 500;
+                  margin-top: 1rem;
+                  border-radius: 4px;
+                "
+              >
+                <i class="fas fa-refresh"></i> Retry
+              </button>
+            </div>
+          `;
         }
       }
 
@@ -370,21 +480,15 @@ const { title, description, preloadData = true } = Astro.props;
 
       private async handleSignOut(): Promise<void> {
         try {
-          
-
-          this.showGlobalLoading("Signing out...");
-
-          // ✅ REDIRECT IMMEDIATELY TO SIGN OUT PAGE
-          window.location.href = "/auth/admin-signout";
+          await adminAuthManager.signOut();
+          window.location.href = "/auth/admin-signin";
         } catch (error) {
-          console.error("❌ Layout sign out error:", error);
-          this.hideGlobalLoading();
-
-          // ✅ FALLBACK: Direct redirect
-          window.location.href = "/auth/admin-signout";
+          console.error("Sign out error:", error);
+          window.location.href = "/auth/admin-signin";
         }
       }
-      // Public methods for other scripts to use
+
+      // All your public methods preserved
       public showGlobalLoading(message: string = "Loading..."): void {
         const loadingElement = document.getElementById("global-loading");
         const loadingText = document.getElementById("global-loading-text");
@@ -418,13 +522,12 @@ const { title, description, preloadData = true } = Astro.props;
 
         const icon = this.getNotificationIcon(type);
         notification.innerHTML = `
-            <i class="${icon}"></i>
-            <span>${message}</span>
-          `;
+          <i class="${icon}"></i>
+          <span>${message}</span>
+        `;
 
         container.appendChild(notification);
 
-        // Auto remove after duration
         setTimeout(() => {
           if (notification.parentNode) {
             notification.style.animation = "slideOutRight 0.3s ease";
@@ -434,7 +537,6 @@ const { title, description, preloadData = true } = Astro.props;
           }
         }, duration);
 
-        // Allow manual dismiss by clicking
         notification.addEventListener("click", () => {
           notification.remove();
         });
@@ -469,63 +571,33 @@ const { title, description, preloadData = true } = Astro.props;
       }
     }
 
-    // Global admin layout instance
-    let adminLayoutInstance: AdminLayout;
-
-    // Initialize when DOM is loaded
-    document.addEventListener("DOMContentLoaded", () => {
-      adminLayoutInstance = new AdminLayout();
-
-      // Make it globally available
+    // Initialize immediately when DOM is ready
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        const adminLayoutInstance = new AdminLayout();
+        (window as any).adminLayout = adminLayoutInstance;
+      });
+    } else {
+      const adminLayoutInstance = new AdminLayout();
       (window as any).adminLayout = adminLayoutInstance;
-    });
-
-    // Add slide out animation
-    if (!document.getElementById("admin-layout-animations")) {
-      const style = document.createElement("style");
-      style.id = "admin-layout-animations";
-      style.textContent = `
-          @keyframes slideOutRight {
-            from {
-              transform: translateX(0);
-              opacity: 1;
-            }
-            to {
-              transform: translateX(100%);
-              opacity: 0;
-            }
-          }
-        `;
-      document.head.appendChild(style);
     }
   </script>
 </html>
 
 <body>
   <div id="admin-app">
-    <!-- Enhanced Loading State -->
+    <!-- Perfect Square Loader -->
     <div id="admin-loading" class="admin-loading">
       <div class="loading-content">
-        <div class="loading-spinner">
-          <svg
-            class="animate-spin"
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <rect x="10" y="10" width="4" height="4"></rect>
-            <rect x="6" y="6" width="4" height="4"></rect>
-            <rect x="14" y="6" width="4" height="4"></rect>
-            <rect x="6" y="14" width="4" height="4"></rect>
-            <rect x="14" y="14" width="4" height="4"></rect>
-          </svg>
+        <div class="perfect-square-spinner">
+          <div class="square-block"></div>
+          <div class="square-block"></div>
+          <div class="square-block"></div>
+          <div class="square-block"></div>
         </div>
         <div class="loading-text">
           <h3>Loading Admin Panel...</h3>
-          <p id="loading-status">Verifying authentication...</p>
+          <p id="loading-status">Initializing...</p>
         </div>
         <div class="loading-progress">
           <div class="progress-bar" id="progress-bar"></div>
@@ -533,9 +605,9 @@ const { title, description, preloadData = true } = Astro.props;
       </div>
     </div>
 
-    <!-- Main Admin Content -->
-    <div id="admin-content" class="admin-content" style="display: none;">
-      <!-- Enhanced Admin Navigation -->
+    <!-- COMPLETE Admin Content with ALL Navigation -->
+    <div id="admin-content" class="admin-content">
+      <!-- Enhanced Admin Navigation - COMPLETE -->
       <nav class="admin-nav" id="admin-nav">
         <!-- Mobile Menu Toggle -->
         <div class="mobile-menu-toggle" id="mobile-menu-toggle">
@@ -594,7 +666,7 @@ const { title, description, preloadData = true } = Astro.props;
           </a>
         </div>
 
-        <!-- Navigation Menu -->
+        <!-- Navigation Menu - COMPLETE -->
         <div class="nav-menu" id="nav-menu">
           <div class="nav-section">
             <div class="nav-section-title">Overview</div>
@@ -650,7 +722,7 @@ const { title, description, preloadData = true } = Astro.props;
               <div class="nav-indicator"></div>
             </a>
             <a href="/admin/feedback" class="nav-link" data-page="feedback">
-              <i class="fas fa-feedback"></i>
+              <i class="fas fa-comment-dots"></i>
               <span>Feedback</span>
               <div class="nav-indicator"></div>
             </a>
@@ -703,7 +775,7 @@ const { title, description, preloadData = true } = Astro.props;
           </div>
         </div>
 
-        <!-- Fixed User Section -->
+        <!-- Fixed User Section - COMPLETE -->
         <div class="nav-user" id="nav-user">
           <div class="user-profile">
             <div class="user-avatar" id="user-avatar">
@@ -750,7 +822,6 @@ const { title, description, preloadData = true } = Astro.props;
 
       <!-- Main Content Area -->
       <main class="admin-main" id="admin-main">
-        <!-- Page Content -->
         <div class="page-content">
           <slot />
         </div>
@@ -761,8 +832,11 @@ const { title, description, preloadData = true } = Astro.props;
         <!-- Global Loading Overlay -->
         <div id="global-loading" class="global-loading" style="display: none;">
           <div class="loading-overlay">
-            <div class="loading-spinner">
-              <div class="spinner-square"></div>
+            <div class="perfect-square-spinner">
+              <div class="square-block"></div>
+              <div class="square-block"></div>
+              <div class="square-block"></div>
+              <div class="square-block"></div>
             </div>
             <p id="global-loading-text">Loading...</p>
           </div>

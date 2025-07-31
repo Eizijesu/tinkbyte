@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/authors/[author].astro - Fixed Content rendering
+// src/pages/blog/authors/[author].astro - Fixed with Newsletter Grid Pattern
 import Layout from "../../../layouts/Layout.astro";
 import ArticleCard from "../../../components/blog/ArticleCard.astro";
 import Button from "../../../components/ui/Button.astro";
@@ -190,22 +190,38 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
   </section>
 
   <!-- Author Articles -->
-  <main class="author-articles-page">
-    <div class="max-w-7xl mx-auto px-4 py-12">
+  <main class="newsletter-page" data-theme-aware="true">
+    <!-- FIXED: Using exact same container structure as newsletter page -->
+    <div class="max-w-7xl mx-auto px-4 py-16">
       
       {authorPosts.length > 0 ? (
         <>
           <!-- Featured Articles -->
           {featuredPosts.length > 0 && (
-            <section class="mb-12">
-              <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-8 flex items-center">
+            <section class="newsletter-section">
+              <!-- FIXED: Consistent spacing with mb-6 -->
+              <h2 class="section-title mb-6">
                 <i class="fas fa-star mr-3 text-yellow-500"></i>
                 Featured Articles
               </h2>
-              <div class="articles-grid featured-grid">
-                {featuredPosts.slice(0, 3).map((post) => (
-                  <div class="article-wrapper featured-article">
-                    <ArticleCard {...formatPost(post)} />
+              <!-- FIXED: Using exact same grid as newsletter page -->
+              <div class="newsletter-grid">
+                {featuredPosts.slice(0, 3).map((post, index) => (
+                  <div class="newsletter-card featured-article" data-newsletter={post.slug}>
+                    <div class="card-content">
+                      <div class="card-header">
+                        <div class="card-frequency">FEATURED</div>
+                      </div>
+                      <h3 class="card-title">
+                        <a href={`/blog/${post.slug}`}>{post.data.title}</a>
+                      </h3>
+                      <p class="card-description">{post.data.excerpt?.slice(0, 100)}...</p>
+                      <div class="card-meta">
+                        <span class="card-audience">
+                          {formatPost(post).date} • {formatPost(post).readTime}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -213,21 +229,38 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
           )}
 
           <!-- All Articles -->
-          <section>
-            <div class="flex items-center justify-between mb-8">
-              <h2 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center">
-                <i class="fas fa-newspaper mr-3 text-blue-600"></i>
-                All Articles by {author.data.name}
-              </h2>
-              <span class="text-sm text-zinc-500 dark:text-zinc-400">
-                {authorPosts.length} {authorPosts.length === 1 ? 'article' : 'articles'}
-              </span>
+          <section class="newsletter-section">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title mb-2">
+                  <i class="fas fa-newspaper mr-3 text-blue-600"></i>
+                  All Articles by {author.data.name}
+                </h2>
+                <p class="section-subtitle">{authorPosts.length} {authorPosts.length === 1 ? 'article' : 'articles'} published</p>
+              </div>
             </div>
 
-            <div class="articles-grid">
+            <!-- FIXED: Using exact same grid as newsletter page -->
+            <div class="newsletter-grid">
               {authorPosts.map((post, index) => (
-                <div class="article-wrapper" style={`--animation-delay: ${index * 0.1}s`}>
-                  <ArticleCard {...formatPost(post)} />
+                <div class="newsletter-card" data-newsletter={post.slug}>
+                  <div class="card-content">
+                    <div class="card-header">
+                      <div class="card-frequency">
+                        {post.data.category?.toUpperCase() || "ARTICLE"}
+                      </div>
+                    </div>
+                    <h3 class="card-title">
+                      <a href={`/blog/${post.slug}`}>{post.data.title}</a>
+                    </h3>
+                    <p class="card-description">{post.data.excerpt?.slice(0, 120)}...</p>
+                    <div class="card-meta">
+                      <span class="card-audience">
+                        {formatPost(post).date} • {formatPost(post).readTime}
+                        {post.data.featured && <> • Featured</>}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -235,27 +268,21 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
         </>
       ) : (
         <!-- No Articles State -->
-        <section class="text-center py-16">
-          <div class="max-w-md mx-auto">
-            <div class="mb-6">
-              <i class="fas fa-newspaper text-4xl text-zinc-300 dark:text-zinc-600"></i>
-            </div>
-            <h3 class="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
-              No Articles Yet
-            </h3>
-            <p class="text-zinc-600 dark:text-zinc-400 mb-6">
-              {author.data.name} hasn't published any articles yet. Check back soon for fresh insights!
-            </p>
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button href="/blog" variant="primary" className="compact-btn">
-                <i class="fas fa-newspaper mr-2"></i>
-                BROWSE ALL ARTICLES
-              </Button>
-              <Button href="/blog/authors" variant="outline" className="compact-btn">
-                <i class="fas fa-users mr-2"></i>
-                OTHER AUTHORS
-              </Button>
-            </div>
+        <section class="empty-state">
+          <div class="empty-icon">
+            <i class="fas fa-newspaper"></i>
+          </div>
+          <h3 class="empty-title">NO ARTICLES YET</h3>
+          <p class="empty-description">
+            {author.data.name} hasn't published any articles yet. Check back soon for fresh insights!
+          </p>
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button href="/blog" variant="primary" className="empty-action">
+              BROWSE ALL ARTICLES
+            </Button>
+            <Button href="/blog/authors" variant="outline" className="empty-action">
+              OTHER AUTHORS
+            </Button>
           </div>
         </section>
       )}
@@ -275,12 +302,32 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
 </Layout>
 
 <style>
+  /* FIXED: Using exact same CSS structure as newsletter page */
+  
+  /* Newsletter Page - Enhanced with new colors */
+  .newsletter-page {
+    font-family: "Space Grotesk", sans-serif;
+    background-color: white;
+    color: rgb(17 24 39);
+    min-height: 100vh;
+  }
+
+  :global(.dark) .newsletter-page {
+    background-color: rgb(15 23 42);
+    color: rgb(248 250 252);
+  }
+
   /* Author Profile Styling */
   .author-profile {
-    background: var(--color-bg-primary);
-    border: 2px solid var(--color-border);
+    background: white;
+    border: 2px solid rgb(229 231 235);
     padding: 2rem;
     margin-bottom: 2rem;
+  }
+
+  :global(.dark) .author-profile {
+    background: rgb(30 41 59);
+    border-color: rgb(51 65 85);
   }
 
   .profile-content {
@@ -317,30 +364,46 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
   .profile-name {
     font-size: 2rem;
     font-weight: 800;
-    color: var(--color-text-primary);
+    color: rgb(17 24 39);
     margin-bottom: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
   }
 
+  :global(.dark) .profile-name {
+    color: rgb(248 250 252);
+  }
+
   .profile-role {
     font-size: 1.125rem;
-    color: var(--color-text-secondary);
+    color: rgb(55 65 81);
     font-weight: 600;
     margin-bottom: 0.25rem;
   }
 
+  :global(.dark) .profile-role {
+    color: rgb(226 232 240);
+  }
+
   .profile-company {
     font-size: 1rem;
-    color: var(--color-text-muted);
+    color: rgb(107 114 128);
     margin-bottom: 1rem;
+  }
+
+  :global(.dark) .profile-company {
+    color: rgb(148 163 184);
   }
 
   .profile-bio {
     font-size: 1rem;
-    color: var(--color-text-secondary);
+    color: rgb(55 65 81);
     line-height: 1.6;
     margin-bottom: 1.5rem;
+  }
+
+  :global(.dark) .profile-bio {
+    color: rgb(226 232 240);
   }
 
   .profile-stats {
@@ -357,16 +420,24 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
     display: block;
     font-size: 1.5rem;
     font-weight: 800;
-    color: var(--color-text-primary);
+    color: rgb(17 24 39);
     line-height: 1;
+  }
+
+  :global(.dark) .stat-number {
+    color: rgb(248 250 252);
   }
 
   .stat-label {
     font-size: 0.75rem;
     font-weight: 700;
-    color: var(--color-text-muted);
+    color: rgb(107 114 128);
     text-transform: uppercase;
     letter-spacing: 0.1em;
+  }
+
+  :global(.dark) .stat-label {
+    color: rgb(148 163 184);
   }
 
   .profile-social {
@@ -380,13 +451,19 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    color: var(--color-text-secondary);
+    background: rgb(248 250 252);
+    border: 1px solid rgb(229 231 235);
+    color: rgb(55 65 81);
     text-decoration: none;
     font-size: 0.875rem;
     font-weight: 500;
     transition: all 0.3s ease;
+  }
+
+  :global(.dark) .social-link {
+    background: rgb(30 41 59);
+    border-color: rgb(51 65 85);
+    color: rgb(226 232 240);
   }
 
   .social-link:hover {
@@ -395,50 +472,230 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
     border-color: #243788;
   }
 
-  /* Articles Grid */
-  .articles-grid {
+  /* FIXED: Newsletter Section Structure (Same as newsletter page) */
+  .newsletter-section {
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: rgb(17 24 39);
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid rgb(229 231 235);
+    padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+  }
+
+  :global(.dark) .section-title {
+    color: rgb(248 250 252);
+    border-color: rgb(51 65 85);
+  }
+
+  .section-subtitle {
+    font-size: 1.125rem;
+    color: rgb(55 65 81);
+    margin-bottom: 2rem;
+  }
+
+  :global(.dark) .section-subtitle {
+    color: rgb(226 232 240);
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3rem;
+  }
+
+  /* FIXED: Newsletter Grid - Exact same as newsletter page */
+  .newsletter-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
+    gap: 1rem;
   }
 
-  .featured-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-
-  .article-wrapper {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp 0.6s ease forwards;
-    animation-delay: var(--animation-delay, 0s);
-  }
-
-  .featured-article {
+  .newsletter-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: white;
+    border: 2px solid rgb(229 231 235);
+    transition: all 0.3s ease;
+    cursor: pointer;
     position: relative;
   }
 
-  .featured-article::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(45deg, #243788, #8B5CF6, #06B6D4);
-    border-radius: 4px;
-    z-index: -1;
-    opacity: 0.6;
+  :global(.dark) .newsletter-card {
+    background: rgb(30 41 59);
+    border-color: rgb(51 65 85);
   }
 
-  @keyframes fadeInUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .newsletter-card:hover {
+    border-color: #243788;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  /* Responsive Design */
+  :global(.dark) .newsletter-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .featured-article {
+    border-color: #243788;
+  }
+
+  /* FIXED: Card Content Structure (Same as newsletter page) */
+  .card-content {
+    flex: 1;
+    min-width: 0;
+    display: block;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-frequency {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: rgb(248 250 252);
+    color: rgb(55 65 81);
+    border: 1px solid rgb(229 231 235);
+  }
+
+  :global(.dark) .card-frequency {
+    background: rgb(30 41 59);
+    color: rgb(226 232 240);
+    border-color: rgb(51 65 85);
+  }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: rgb(17 24 39);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  :global(.dark) .card-title {
+    color: rgb(248 250 252);
+  }
+
+  .card-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .card-title a:hover {
+    color: #243788;
+  }
+
+  :global(.dark) .card-title a:hover {
+    color: rgb(96 165 250);
+  }
+
+  .card-description {
+    font-size: 0.875rem;
+    color: rgb(55 65 81);
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+
+  :global(.dark) .card-description {
+    color: rgb(226 232 240);
+  }
+
+  .card-meta {
+    margin-bottom: 1rem;
+  }
+
+  .card-audience {
+    font-size: 0.75rem;
+    color: rgb(107 114 128);
+    font-style: italic;
+    word-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.2;
+  }
+
+  :global(.dark) .card-audience {
+    color: rgb(148 163 184);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .empty-icon {
+    font-size: 4rem;
+    color: rgb(107 114 128);
+    margin-bottom: 1.5rem;
+  }
+
+  :global(.dark) .empty-icon {
+    color: rgb(148 163 184);
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: rgb(17 24 39);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  :global(.dark) .empty-title {
+    color: rgb(248 250 252);
+  }
+
+  .empty-description {
+    font-size: 1rem;
+    color: rgb(55 65 81);
+    margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  :global(.dark) .empty-description {
+    color: rgb(226 232 240);
+  }
+
+  .empty-action {
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+  }
+
+  /* FIXED: Responsive Design - Same as newsletter page */
   @media (max-width: 768px) {
+    .newsletter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .newsletter-card {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+
     .profile-content {
       flex-direction: column;
       text-align: center;
@@ -456,50 +713,46 @@ const pageDescription = author.data.bio || `Articles and insights by ${author.da
       justify-content: center;
     }
 
-    .articles-grid,
-    .featured-grid {
-      grid-template-columns: 1fr;
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
     }
-  }
 
-  /* Compact buttons */
-  .compact-btn {
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 700;
-    font-size: 0.875rem;
-    padding: 0.75rem 1.5rem;
+    .section-title {
+      font-size: 1.25rem;
+    }
   }
 </style>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // Staggered animation for article cards
-    const articleWrappers = document.querySelectorAll('.article-wrapper') as NodeListOf<HTMLElement>;
-    
-    articleWrappers.forEach((wrapper, index) => {
-      wrapper.style.setProperty('--animation-delay', `${index * 0.1}s`);
-    });
+    // Make newsletter cards clickable (same as newsletter page)
+    const newsletterCards = document.querySelectorAll(".newsletter-card");
 
-    // Intersection Observer for scroll animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px',
-    };
+    newsletterCards.forEach((card) => {
+      card.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "A") return;
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const element = entry.target as HTMLElement;
-          element.style.opacity = '1';
-          element.style.transform = 'translateY(0)';
-          observer.unobserve(entry.target);
+        const link = card.querySelector("a");
+        if (link) {
+          window.location.href = link.href;
         }
       });
-    }, observerOptions);
+    });
 
-    articleWrappers.forEach((wrapper) => {
-      observer.observe(wrapper);
+    // Enhanced hover effects
+    newsletterCards.forEach((card, index) => {
+      const element = card as HTMLElement;
+      
+      card.addEventListener('mouseenter', () => {
+        element.style.transform = 'translateY(-4px) scale(1.02)';
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        element.style.transform = 'translateY(0) scale(1)';
+      });
     });
   });
 </script>

@@ -1,4 +1,4 @@
-// astro.config.mjs - Complete with Auth Module Support
+// astro.config.mjs - Optimized with TinaCMS Support
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
@@ -13,7 +13,7 @@ import remarkGfm from 'remark-gfm';
 
 export default defineConfig({
   site: 'https://tinkbyte.com',
-  trailingSlash: 'never',
+  trailingSlash: 'ignore',
   
   redirects: {
     '/privacy': '/legal/privacy-policy',
@@ -66,7 +66,7 @@ export default defineConfig({
         {
           userAgent: '*',
           allow: '/',
-          disallow: ['/admin/', '/api/', '/_astro/', '/tina/'],
+          disallow: ['/admin/', '/api/', '/tina/', '/_astro/'],
         },
         {
           userAgent: 'GPTBot',
@@ -74,6 +74,10 @@ export default defineConfig({
         },
         {
           userAgent: 'ChatGPT-User',
+          disallow: '/',
+        },
+        {
+          userAgent: 'CCBot',
           disallow: '/',
         },
       ],
@@ -127,6 +131,7 @@ export default defineConfig({
       target: 'es2020',
       minify: 'esbuild',
       sourcemap: false,
+      cssCodeSplit: true,
       rollupOptions: {
         output: {
           manualChunks: {
@@ -134,8 +139,8 @@ export default defineConfig({
             'date-vendor': ['date-fns'],
             'search-vendor': ['fuse.js'],
             'supabase-vendor': ['@supabase/supabase-js'],
-            // Ensure auth modules are properly chunked
-            'auth-modules': ['./src/lib/auth', './src/lib/supabase'],
+            // FIXED: Better path resolution for auth modules
+            'auth-modules': ['./src/lib/admin/auth', './src/lib/supabase'],
           },
         },
       },
@@ -146,7 +151,6 @@ export default defineConfig({
         strict: false,
       },
     },
-    // Define globals for better module resolution
     define: {
       global: 'globalThis',
     },
@@ -156,7 +160,6 @@ export default defineConfig({
     format: 'file',
     inlineStylesheets: 'auto',
     assets: '_astro',
-    // Ensure modules are included in build
     splitting: true,
   },
 
@@ -173,7 +176,7 @@ export default defineConfig({
   },
 
   prefetch: {
-    prefetchAll: true,
+    prefetchAll: false,
     defaultStrategy: 'viewport',
   },
 

@@ -1,12 +1,14 @@
 ---
-// src/components/tina/CalloutBox.astro - TinkByte Design System (Fixed Icons)
+// src/components/tina/CalloutBox.astro - Fixed for all content types
 export interface Props {
   type: "info" | "warning" | "success" | "error" | "tip" | "note" | "custom";
   title?: string;
-  content: any;
+  content?: any;
+  customColor?: string;
+  dismissible?: boolean;
 }
 
-const { type, title, content } = Astro.props;
+const { type, title, content, customColor, dismissible } = Astro.props;
 
 const typeStyles = {
   info: "bg-blue-50 border-tinkbyte-primary text-blue-800 dark:bg-blue-900/20 dark:border-tinkbyte-light dark:text-blue-200",
@@ -18,8 +20,9 @@ const typeStyles = {
     "bg-red-50 border-red-600 text-red-800 dark:bg-red-900/20 dark:border-red-600 dark:text-red-200",
   tip: "bg-purple-50 border-purple-600 text-purple-800 dark:bg-purple-900/20 dark:border-purple-600 dark:text-purple-200",
   note: "bg-gray-50 border-gray-600 text-gray-800 dark:bg-gray-900/20 dark:border-gray-600 dark:text-gray-200",
-  custom:
-    "bg-tinkbyte-primary/10 border-tinkbyte-primary text-tinkbyte-primary dark:bg-tinkbyte-light/10 dark:border-tinkbyte-light dark:text-tinkbyte-light",
+  custom: customColor
+    ? `bg-gray-50 border-gray-600 text-gray-800 dark:bg-gray-900/20 dark:border-gray-600 dark:text-gray-200`
+    : "bg-tinkbyte-primary/10 border-tinkbyte-primary text-tinkbyte-primary dark:bg-tinkbyte-light/10 dark:border-tinkbyte-light dark:text-tinkbyte-light",
 };
 
 const typeIcons = {
@@ -39,14 +42,99 @@ const iconColors = {
   error: "#ef4444",
   tip: "#8b5cf6",
   note: "#6b7280",
-  custom: "#243788",
+  custom: customColor || "#243788",
 };
 
-// Use the iconColors for dynamic styling
 const currentIconColor = iconColors[type];
+
+// Enhanced content rendering function
+const renderContent = () => {
+  // Handle undefined or null content
+  if (!content) {
+    return "No content provided";
+  }
+
+  // Handle string content (direct text)
+  if (typeof content === "string") {
+    return content;
+  }
+
+  // Handle Astro JSX objects (from MDX components)
+  if (content && typeof content === "object" && content["astro:jsx"] === true) {
+    if (content.props && content.props.children) {
+      return content.props.children;
+    }
+  }
+
+  // Handle TinaCMS rich-text object
+  if (content && typeof content === "object") {
+    // If it has children array (TinaCMS rich-text format)
+    if (Array.isArray(content.children)) {
+      return content.children
+        .map((child: any) => {
+          if (child.type === "p" && Array.isArray(child.children)) {
+            const text = child.children
+              .map((textNode: any) => {
+                if (typeof textNode === "string") return textNode;
+                if (textNode.text) return textNode.text;
+                return "";
+              })
+              .join("");
+            return `<p>${text}</p>`;
+          }
+
+          // Handle direct text nodes
+          if (child.text) return child.text;
+          if (typeof child === "string") return child;
+
+          return "";
+        })
+        .join("");
+    }
+
+    // If it's a direct rich-text object with text property
+    if (content.text) {
+      return content.text;
+    }
+
+    // If it has a root property (another TinaCMS format)
+    if (content.root && content.root.children) {
+      return content.root.children
+        .map((child: any) => {
+          if (child.type === "paragraph" && child.children) {
+            return `<p>${child.children.map((c: any) => c.text || "").join("")}</p>`;
+          }
+          return child.text || "";
+        })
+        .join("");
+    }
+  }
+
+  // Fallback for any other format
+  return content?.toString() || "Content could not be rendered";
+};
+
+// Remove debug log in production
+// console.log('Callout content:', JSON.stringify(content, null, 2));
 ---
 
-<div class={`tinkbyte-callout border-l-4 p-6 my-6 ${typeStyles[type]}`}>
+<div
+  class={`tinkbyte-callout border-l-4 p-6 my-6 ${typeStyles[type]} ${dismissible ? "dismissible" : ""}`}
+  style={customColor && type === "custom"
+    ? `border-left-color: ${customColor};`
+    : ""}
+>
+  {
+    dismissible && (
+      <button
+        class="callout-dismiss"
+        onclick="this.parentElement.style.display='none'"
+      >
+        ×
+      </button>
+    )
+  }
+
   {
     title && (
       <div class="flex items-center mb-3">
@@ -62,14 +150,14 @@ const currentIconColor = iconColors[type];
   }
 
   <div class="callout-content">
-    <Fragment set:html={content} />
+    <Fragment set:html={renderContent()} />
   </div>
 </div>
 
 <style>
   .tinkbyte-callout {
     font-family: "Space Grotesk", sans-serif;
-    border-radius: 0; /* Square corners */
+    border-radius: 0;
     position: relative;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
@@ -80,7 +168,33 @@ const currentIconColor = iconColors[type];
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
-  /* Fixed icon styling */
+  /* Dismissible callout styling */
+  .tinkbyte-callout.dismissible {
+    padding-right: 3rem;
+  }
+
+  .callout-dismiss {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .callout-dismiss:hover {
+    opacity: 1;
+  }
+
   .callout-icon {
     display: flex;
     align-items: center;
@@ -88,67 +202,53 @@ const currentIconColor = iconColors[type];
     width: 1.5rem;
     height: 1.5rem;
     color: white;
-    border-radius: 0; /* Square corners */
+    border-radius: 0;
     font-size: 0.875rem;
     font-weight: 700;
     margin-right: 0.75rem;
     flex-shrink: 0;
   }
 
-  /* Specific icon background colors */
   .callout-icon-info {
     background: #3b82f6;
   }
-
   .callout-icon-warning {
     background: #eab308;
   }
-
   .callout-icon-success {
     background: #10b981;
   }
-
   .callout-icon-error {
     background: #ef4444;
   }
-
   .callout-icon-tip {
     background: #8b5cf6;
   }
-
   .callout-icon-note {
     background: #6b7280;
   }
-
   .callout-icon-custom {
     background: #243788;
   }
 
-  /* Dark mode icon adjustments */
   :global(.dark) .callout-icon-info {
     background: #60a5fa;
   }
-
   :global(.dark) .callout-icon-warning {
     background: #fbbf24;
   }
-
   :global(.dark) .callout-icon-success {
     background: #34d399;
   }
-
   :global(.dark) .callout-icon-error {
     background: #f87171;
   }
-
   :global(.dark) .callout-icon-tip {
     background: #a78bfa;
   }
-
   :global(.dark) .callout-icon-note {
     background: #9ca3af;
   }
-
   :global(.dark) .callout-icon-custom {
     background: #b4bce1;
   }
@@ -193,7 +293,6 @@ const currentIconColor = iconColors[type];
     opacity: 0.8;
   }
 
-  /* TinkByte Brand Colors */
   .border-tinkbyte-primary {
     border-color: #243788;
   }
@@ -202,7 +301,6 @@ const currentIconColor = iconColors[type];
     border-color: #b4bce1;
   }
 
-  /* Dark mode adjustments */
   :global(.dark) .tinkbyte-callout {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
@@ -211,11 +309,14 @@ const currentIconColor = iconColors[type];
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   }
 
-  /* Responsive adjustments */
   @media (max-width: 768px) {
     .tinkbyte-callout {
       padding: 1rem;
       margin: 1.5rem 0;
+    }
+
+    .tinkbyte-callout.dismissible {
+      padding-right: 2.5rem;
     }
 
     .callout-title {
@@ -228,9 +329,16 @@ const currentIconColor = iconColors[type];
       font-size: 0.75rem;
       margin-right: 0.5rem;
     }
+
+    .callout-dismiss {
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      font-size: 1.25rem;
+    }
   }
 
-  /* Accessibility */
   @media (prefers-reduced-motion: reduce) {
     .tinkbyte-callout {
       transition: none;

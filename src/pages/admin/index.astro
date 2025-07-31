@@ -1,23 +1,12 @@
 ---
-// src/pages/admin/index.astro - FIXED VERSION
+// src/pages/admin/index.astro - SIMPLE
 import { adminAuthManager } from "../../lib/admin/auth.js";
 
-// Initialize admin auth
-await adminAuthManager.initialize();
-
-// Check admin status
 const user = await adminAuthManager.getCurrentUser();
 
-console.log("Admin index check:", {
-  hasUser: !!user,
-  userEmail: user?.email,
-});
-
 if (!user) {
-  
   return Astro.redirect("/auth/admin-signin");
 }
-
 
 return Astro.redirect("/admin/dashboard");
 ---

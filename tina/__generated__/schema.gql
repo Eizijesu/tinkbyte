@@ -271,17 +271,11 @@ input BlogBodyVideoBlockFilter {
   startTime: StringFilter
 }
 
-input RichTextFilter {
-  startsWith: String
-  eq: String
-  exists: Boolean
-}
-
 input BlogBodyCalloutFilter {
   type: StringFilter
   customColor: StringFilter
   title: StringFilter
-  content: RichTextFilter
+  content: StringFilter
   dismissible: BooleanFilter
 }
 
@@ -327,6 +321,12 @@ input BlogBodyTableBlockFilter {
   rows: BlogBodyTableBlockRowsFilter
   style: StringFilter
   sortable: BooleanFilter
+}
+
+input RichTextFilter {
+  startsWith: String
+  eq: String
+  exists: Boolean
 }
 
 input BlogBodyTwoColumnLayoutFilter {

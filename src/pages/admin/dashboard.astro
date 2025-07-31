@@ -1,11 +1,12 @@
 ---
-// src/pages/admin/dashboard.astro - CLEANED VERSION
+// src/pages/admin/dashboard.astro - FIXED gtag Type Conflict
 import AdminLayout from "../../layouts/AdminLayout.astro";
 
 declare global {
   interface WindowEventMap {
     adminMetricsUpdate: CustomEvent;
   }
+  // REMOVED: Conflicting gtag declaration - it's already declared in Layout.astro
 }
 ---
 
@@ -217,20 +218,20 @@ declare global {
       await initializeRealtime();
     } catch (error) {
       console.error("Dashboard initialization error:", error);
-      showError(
-        "Failed to initialize dashboard: " + (error?.message || "Unknown error")
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      showError("Failed to initialize dashboard: " + errorMessage);
     }
   });
 
   async function initializeDashboard() {
-    
+    console.log("🚀 Initializing dashboard...");
 
     try {
       // Use singleton manager
       await adminAPIManager.initialize();
 
-      
+      console.log("✅ Admin API Manager initialized");
 
       // Initialize auth state
       const authState = AuthState.getInstance();
@@ -250,15 +251,17 @@ declare global {
       // Setup periodic refresh
       setInterval(refreshDashboard, 5 * 60 * 1000);
 
-      
+      console.log("✅ Dashboard initialized successfully");
     } catch (error) {
       console.error("❌ Dashboard initialization failed:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       if (
-        error.message.includes("session") ||
-        error.message.includes("sign in")
+        errorMessage.includes("session") ||
+        errorMessage.includes("sign in")
       ) {
         setTimeout(() => {
-          window.location.href = `/auth/admin-signin?error=${encodeURIComponent(error.message)}`;
+          window.location.href = `/auth/admin-signin?error=${encodeURIComponent(errorMessage)}`;
         }, 2000);
       }
       throw error;
@@ -280,14 +283,15 @@ declare global {
         "adminMetricsUpdate",
         metricsUpdateHandler as EventListener
       );
-      
+
+      console.log("✅ Real-time updates initialized");
     } catch (error) {
       console.error("❌ Failed to initialize real-time updates:", error);
     }
   }
 
   async function loadDashboardData() {
-    
+    console.log("📊 Loading dashboard data...");
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -295,7 +299,7 @@ declare global {
       const result = await adminAPIManager.getDashboardStats();
 
       if (result.success && result.data) {
-        
+        console.log("✅ Dashboard data loaded:", result.data);
         updateStatNumbers(result.data);
       } else {
         console.error("❌ Failed to load dashboard data:", result.error);
@@ -315,7 +319,7 @@ declare global {
         updateStatusIndicator("db-status", "online", "All systems operational");
         updateStatusIndicator("auth-status", "online", "Working normally");
         updateStatusIndicator("comment-status", "online", "Fully operational");
-        
+        console.log("✅ System status check passed");
       } else {
         updateStatusIndicator("db-status", "offline", "Connection issues");
         updateStatusIndicator(
@@ -328,7 +332,7 @@ declare global {
           "offline",
           "System unavailable"
         );
-        
+        console.log("⚠️ System status check failed");
       }
     } catch (error) {
       console.error("❌ Status check error:", error);
@@ -339,7 +343,7 @@ declare global {
   }
 
   function handleRealtimeMetricsUpdate(detail: any) {
-    
+    console.log("📡 Real-time metrics update:", detail);
 
     // Update specific metrics based on the update type
     switch (detail.type) {
@@ -451,9 +455,9 @@ declare global {
       try {
         await initializeDashboard();
       } catch (error) {
-        showError(
-          "Failed to load dashboard: " + (error?.message || "Unknown error")
-        );
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        showError("Failed to load dashboard: " + errorMessage);
       }
     });
   }
@@ -522,19 +526,19 @@ declare global {
     const loadingOverlay = document.getElementById("loading-overlay");
     const dashboardContent = document.getElementById("dashboard-content");
 
-    
+    console.log("🎨 Showing dashboard content");
     if (loadingOverlay) {
       loadingOverlay.style.display = "none";
-      
+      console.log("✅ Loading overlay hidden");
     }
     if (dashboardContent) {
       dashboardContent.style.display = "block";
-      
+      console.log("✅ Dashboard content shown");
     }
 
     setTimeout(() => {
       if (loadingOverlay && loadingOverlay.style.display !== "none") {
-        
+        console.log("⚠️ Fallback: Force hiding loading overlay");
         loadingOverlay.style.display = "none";
         if (dashboardContent) dashboardContent.style.display = "block";
       }

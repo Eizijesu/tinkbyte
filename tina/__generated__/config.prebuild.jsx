@@ -3,7 +3,8 @@ import { defineConfig } from "tinacms";
 var branch = process.env.TINA_BRANCH || process.env.HEAD || "main";
 var config_default = defineConfig({
   branch,
-  clientId: process.env.TINA_CLIENT_ID,
+  // FIXED: Use NEXT_PUBLIC_TINA_CLIENT_ID (not TINA_CLIENT_ID)
+  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID,
   token: process.env.TINA_TOKEN,
   build: {
     outputFolder: "admin",
@@ -751,9 +752,14 @@ var config_default = defineConfig({
                     label: "Title"
                   },
                   {
-                    type: "rich-text",
+                    type: "string",
+                    // Changed from rich-text to string
                     name: "content",
-                    label: "Content"
+                    label: "Content",
+                    ui: {
+                      component: "textarea"
+                      // Use textarea for multi-line text
+                    }
                   },
                   {
                     type: "boolean",

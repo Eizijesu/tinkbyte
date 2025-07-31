@@ -553,6 +553,49 @@ const structuredData = getStructuredData();
     <!-- Enhanced Theme and Functionality Script -->
     <script is:inline>
       document.addEventListener("DOMContentLoaded", function () {
+        // Minimal Smart Loader - Brand Style
+        let loader, loadTimeout;
+
+        function showLoader() {
+          if (loader) return;
+          loader = document.createElement("div");
+          loader.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        padding: 12px;
+        background: var(--color-bg-primary);
+        border: 2px solid var(--color-border);
+        box-shadow: var(--card-shadow);
+      ">
+        <div style="
+          width: 6px;
+          height: 6px;
+          background: var(--color-accent);
+          animation: tinkbyte-pulse 1.2s ease-in-out infinite;
+        "></div>
+      </div>
+      <style>
+        @keyframes tinkbyte-pulse {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+      </style>
+    `;
+          document.body.appendChild(loader);
+        }
+
+        function hideLoader() {
+          if (loader) {
+            loader.remove();
+            loader = null;
+          }
+          clearTimeout(loadTimeout);
+        }
+
         // Apply theme to all elements
         const applyThemeToAllElements = () => {
           // Apply theme classes to cards and components
@@ -587,6 +630,27 @@ const structuredData = getStructuredData();
             }, 50);
           });
         }
+
+        // Smart loader for navigation - only when needed
+        document.addEventListener("click", function (e) {
+          const link = e.target.closest("a");
+          if (
+            link &&
+            link.href &&
+            link.href.startsWith(window.location.origin)
+          ) {
+            // Wait 400ms before showing - if page loads fast, loader never appears
+            loadTimeout = setTimeout(showLoader, 400);
+          }
+        });
+
+        // Show loader on connection issues
+        window.addEventListener("offline", showLoader);
+        window.addEventListener("online", hideLoader);
+
+        // Hide loader when page loads
+        window.addEventListener("load", hideLoader);
+        window.addEventListener("beforeunload", hideLoader);
 
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
@@ -691,6 +755,8 @@ const structuredData = getStructuredData();
               .forEach((el) => {
                 el.classList.add("hidden");
               });
+            // Also hide loader on escape
+            hideLoader();
           }
 
           // Tab navigation improvements
