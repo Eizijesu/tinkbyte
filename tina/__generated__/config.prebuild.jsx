@@ -9,7 +9,6 @@ var config_default = defineConfig({
     outputFolder: "admin",
     publicFolder: "public"
   },
-  // ADD THIS SECTION HERE:
   ui: {
     previewUrl: (context) => {
       if (false) {
