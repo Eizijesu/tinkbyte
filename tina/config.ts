@@ -8,16 +8,15 @@ export default defineConfig({
   clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID!,
   token: process.env.TINA_TOKEN!,
 
-
   build: {
     outputFolder: "admin",
     publicFolder: "public",
   },
 
-    // ADD THIS SECTION HERE:
+    
   ui: {
     previewUrl: (context) => {
-      if (process.env.NODE_ENV === 'production') {
+      if (process.env.NODE_ENV === 'production') { 
         return { url: 'https://tinkbyte.com' };
       }
       return { url: 'http://localhost:4321' };
