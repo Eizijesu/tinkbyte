@@ -13,6 +13,14 @@ dist/
 .tina/database.db
 .tina/database.db-*
 
+# TinaCMS Build Files - Allow production assets
+public/admin/
+!public/admin/index.html
+!public/admin/assets/
+!public/cms/
+!public/cms/index.html
+!public/cms/assets/
+
 # Environment variables
 .env
 .env.local
@@ -62,5 +70,5 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# Build files
-public/admin/.env 
+# Build files - Allow TinaCMS production files
+# public/admin/ (commented out - allowing CMS files)
