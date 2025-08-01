@@ -5,6 +5,7 @@ import Header from "../components/ui/Header.astro";
 import Footer from "../components/ui/Footer.astro";
 import "../styles/global.css";
 import FeedbackWidget from "../components/ui/FeedbackWidget.astro";
+import NewsletterForm from "../components/forms/NewsletterForm.astro";
 
 // Type-safe window property assignment
 declare global {
@@ -530,6 +531,19 @@ const structuredData = getStructuredData();
       theme="auto"
       hideOnPages={["/admin"]}
     />
+
+    <!-- Smart Newsletter Modal - Site-wide -->
+    <NewsletterForm
+      variant="modal"
+      autoShow={true}
+      showDelay={20000}
+      title="Before You Go..."
+      description="Join 1,200+ product builders getting weekly insights that actually matter. No hype, just substance."
+      showFeatures={true}
+    />
+
+    <!-- Cookie Consent Widget -->
+    <script src="https://cookiechimp.com/widget/gZvtaXJ.js"></script>
 
     <!-- Clean Supabase Initialization -->
     <script>

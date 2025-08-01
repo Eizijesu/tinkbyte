@@ -1,0 +1,120 @@
+---
+// src/pages/admin/clear-session.astro - FIXED TypeScript Errors
+---
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clear Admin Session</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 2rem;
+        background: #1e293b;
+        color: #f1f5f9;
+        text-align: center;
+      }
+      .container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: #334155;
+        border-radius: 8px;
+      }
+      a {
+        color: #60a5fa;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .status {
+        margin: 1rem 0;
+        padding: 1rem;
+        border-radius: 4px;
+        font-weight: 600;
+      }
+      .success {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+        border: 1px solid #22c55e;
+      }
+      .error {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid #ef4444;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧹 Clearing Admin Session...</h1>
+      <div id="status" class="status">Processing...</div>
+      <p>
+        <a href="/auth/admin-signin">Sign in again</a> | <a href="/admin/debug"
+          >Debug Info</a>
+      </p>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const statusEl = document.getElementById("status");
+
+        if (!statusEl) {
+          console.error("Status element not found");
+          return;
+        }
+
+        try {
+          let clearedKeys: string[] = [];
+
+          // Clear all admin-related storage
+          if (typeof localStorage !== "undefined") {
+            const hadSession = localStorage.getItem("tinkbyte-admin-session");
+            localStorage.removeItem("tinkbyte-admin-session");
+
+            // Clear any other potential admin keys
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+              const key = localStorage.key(i);
+              if (key && (key.includes("admin") || key.includes("tinkbyte"))) {
+                clearedKeys.push(key);
+                localStorage.removeItem(key);
+              }
+            }
+
+            console.log("Cleared localStorage keys:", clearedKeys);
+            console.log("Had admin session:", !!hadSession);
+          }
+
+          if (typeof sessionStorage !== "undefined") {
+            sessionStorage.clear();
+            console.log("Cleared sessionStorage");
+          }
+
+          // Update status element safely
+          statusEl.className = "status success";
+          statusEl.textContent = "✅ All sessions cleared successfully!";
+
+          console.log("All admin sessions cleared");
+
+          // Redirect after 3 seconds
+          setTimeout(() => {
+            window.location.href = "/auth/admin-signin?message=session_cleared";
+          }, 3000);
+        } catch (error) {
+          console.error("Error clearing sessions:", error);
+
+          // Update status element safely
+          if (statusEl) {
+            statusEl.className = "status error";
+            statusEl.textContent =
+              "❌ Error clearing sessions: " +
+              (error instanceof Error ? error.message : "Unknown error");
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

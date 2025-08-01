@@ -1,0 +1,89 @@
+---
+// src/pages/admin/simple-debug.astro - Minimal Version
+import { adminAuthManager } from "../../lib/admin/auth.js";
+
+let userInfo = "No user";
+let errorInfo = "";
+
+try {
+  await adminAuthManager.initialize();
+  const user = await adminAuthManager.getCurrentUser();
+  userInfo = user
+    ? `User: ${user.email} (Admin: ${user.isAdmin})`
+    : "No user found";
+} catch (error: any) {
+  errorInfo = error.message || "Unknown error";
+}
+---
+
+<html>
+  <head>
+    <title>Simple Admin Debug</title>
+    <style>
+      body {
+        font-family: monospace;
+        margin: 2rem;
+        background: #1e293b;
+        color: #f1f5f9;
+      }
+      .info {
+        background: #334155;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 4px;
+      }
+      a {
+        color: #60a5fa;
+        margin-right: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔍 Simple Admin Debug</h1>
+
+    <div class="info">
+      <strong>URL:</strong>
+      {Astro.url.href}
+    </div>
+
+    <div class="info">
+      <strong>User Info:</strong>
+      {userInfo}
+    </div>
+
+    {
+      errorInfo && (
+        <div class="info" style="color: #ef4444;">
+          <strong>Error:</strong> {errorInfo}
+        </div>
+      )
+    }
+
+    <div class="info">
+      <a href="/admin">Admin</a>
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/admin/index.html">TinaCMS</a>
+      <a href="/auth/admin-signin">Sign In</a>
+    </div>
+
+    <script>
+      console.log("Current URL:", window.location.href);
+
+      // Check localStorage
+      if (typeof localStorage !== "undefined") {
+        const session = localStorage.getItem("tinkbyte-admin-session");
+        console.log("Has admin session:", !!session);
+
+        if (session) {
+          try {
+            const parsed = JSON.parse(session);
+            console.log("Session valid:", Date.now() < parsed.expiresAt * 1000);
+            console.log("Session user:", parsed.user?.email);
+          } catch (e) {
+            console.log("Session parse error:", e);
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

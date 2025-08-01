@@ -1,5 +1,5 @@
 ---
-// src/components/forms/NewsletterForm.astro - Clean & Optimized
+// src/components/forms/NewsletterForm.astro - Smart & Non-Intrusive (TypeScript Fixed)
 export interface Props {
   variant?: "inline" | "modal" | "sidebar" | "hero" | "minimal" | "footer";
   size?: "small" | "medium" | "large";
@@ -9,6 +9,8 @@ export interface Props {
   buttonText?: string;
   showFeatures?: boolean;
   className?: string;
+  autoShow?: boolean;
+  showDelay?: number;
 }
 
 const {
@@ -20,9 +22,10 @@ const {
   buttonText = "Subscribe",
   showFeatures = false,
   className = "",
+  autoShow = false,
+  showDelay = 5000,
 } = Astro.props;
 
-// Get ConvertKit form ID from environment variables
 const convertKitFormId = import.meta.env.PUBLIC_CONVERTKIT_FORM_ID;
 
 const sizeClasses = {
@@ -32,96 +35,84 @@ const sizeClasses = {
 };
 
 const variantStyles = {
-  inline:
-    "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm p-6",
-  modal: "bg-white dark:bg-zinc-900 rounded-sm p-8 shadow-2xl",
-  sidebar:
-    "bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white rounded-sm p-6",
+  inline: "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-sm p-6",
+  modal: "bg-white dark:bg-zinc-900 rounded-sm p-8 shadow-2xl max-w-md mx-auto",
+  sidebar: "bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white rounded-sm p-6",
   hero: "bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white rounded-sm p-8 lg:p-12",
   minimal: "bg-zinc-50 dark:bg-zinc-800/50 rounded-sm p-6",
-  footer:
-    "bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/50 rounded-sm p-6",
+  footer: "bg-zinc-800/50 backdrop-blur-sm border border-zinc-700/50 rounded-sm p-6",
 };
 
 const features = [
-  {
-    icon: "fas fa-brain",
-    title: "Deep Analysis",
-    description: "Research-driven insights",
-    color: "blue",
-  },
-  {
-    icon: "fas fa-rocket",
-    title: "Product Focus",
-    description: "Builder-first content",
-    color: "purple",
-  },
-  {
-    icon: "fas fa-users",
-    title: "1,200+ Builders",
-    description: "Join the community",
-    color: "green",
-  },
+  { icon: "fas fa-brain", title: "Deep Analysis", description: "Research-driven insights", color: "blue" },
+  { icon: "fas fa-rocket", title: "Product Focus", description: "Builder-first content", color: "purple" },
+  { icon: "fas fa-users", title: "1,200+ Builders", description: "Join the community", color: "green" },
 ];
 ---
 
+<!-- Modal Backdrop (only for modal variant) -->
+{variant === "modal" && (
+  <div 
+    id="newsletter-modal-backdrop" 
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300"
+    data-newsletter-modal="true"
+  >
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="newsletter-modal-content transform scale-95 transition-transform duration-300">
+        <!-- Close button -->
+        <button 
+          class="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+          onclick="window.TinkByteNewsletter?.closeModal()"
+          aria-label="Close newsletter signup"
+        >
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 <div
-  class={`newsletter-form relative overflow-hidden ${variantStyles[variant]} ${className}`}
+  class={`newsletter-form relative overflow-hidden ${variantStyles[variant]} ${className} ${variant === "modal" ? "newsletter-modal-inner" : ""}`}
+  data-newsletter-variant={variant}
+  data-auto-show={autoShow}
+  data-show-delay={showDelay}
 >
   <!-- Background decorations for gradient variants -->
-  {
-    (variant === "sidebar" || variant === "hero" || variant === "footer") && (
-      <div class="absolute inset-0 overflow-hidden rounded-sm">
-        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl animate-pulse" />
-        <div
-          class="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-xl animate-pulse"
-          style="animation-delay: 1s;"
-        />
-      </div>
-    )
-  }
+  {(variant === "sidebar" || variant === "hero" || variant === "footer") && (
+    <div class="absolute inset-0 overflow-hidden rounded-sm">
+      <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl animate-pulse" />
+      <div class="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-xl animate-pulse" style="animation-delay: 1s;" />
+    </div>
+  )}
 
   <div class="relative z-10">
     <!-- Header -->
     <div class="mb-6">
-      {
-        (variant === "sidebar" ||
-          variant === "hero" ||
-          variant === "footer") && (
-          <div class="flex items-center gap-2 mb-4">
-            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span class="text-sm font-semibold uppercase tracking-wider text-green-400">
-              Weekly Newsletter
-            </span>
-          </div>
-        )
-      }
+      {(variant === "sidebar" || variant === "hero" || variant === "footer") && (
+        <div class="flex items-center gap-2 mb-4">
+          <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+          <span class="text-sm font-semibold uppercase tracking-wider text-green-400">Weekly Newsletter</span>
+        </div>
+      )}
 
-      <h3
-        class={`font-bold mb-3 font-space-grotesk ${
-          variant === "hero"
-            ? "text-3xl lg:text-4xl"
-            : variant === "sidebar"
-              ? "text-xl"
-              : variant === "footer"
-                ? "text-xl"
-                : "text-2xl"
-        } ${
-          variant === "sidebar" || variant === "hero" || variant === "footer"
-            ? "text-white"
-            : "text-zinc-900 dark:text-zinc-100"
-        }`}
-      >
+      <h3 class={`font-bold mb-3 font-space-grotesk ${
+        variant === "hero" ? "text-3xl lg:text-4xl" : 
+        variant === "sidebar" ? "text-xl" : 
+        variant === "footer" ? "text-xl" : "text-2xl"
+      } ${
+        variant === "sidebar" || variant === "hero" || variant === "footer" 
+          ? "text-white" 
+          : "text-zinc-900 dark:text-zinc-100"
+      }`}>
         {title}
       </h3>
 
-      <p
-        class={`leading-relaxed ${sizeClasses[size]} ${
-          variant === "sidebar" || variant === "hero" || variant === "footer"
-            ? "text-zinc-300"
-            : "text-zinc-600 dark:text-zinc-400"
-        }`}
-      >
+      <p class={`leading-relaxed ${sizeClasses[size]} ${
+        variant === "sidebar" || variant === "hero" || variant === "footer"
+          ? "text-zinc-300"
+          : "text-zinc-600 dark:text-zinc-400"
+      }`}>
         {description}
       </p>
     </div>
@@ -136,9 +127,7 @@ const features = [
       data-format="inline"
       data-version="5"
     >
-      <div
-        class={`flex gap-3 ${variant === "hero" ? "flex-col sm:flex-row" : "flex-col sm:flex-row"}`}
-      >
+      <div class={`flex gap-3 ${variant === "hero" ? "flex-col sm:flex-row" : "flex-col sm:flex-row"}`}>
         <input
           type="email"
           name="email_address"
@@ -163,130 +152,102 @@ const features = [
         </button>
       </div>
 
+      <!-- Optional Consent Checkbox -->
+      <label class="flex items-start gap-2 text-xs mt-4">
+        <input type="checkbox" name="consent" required class="mt-1 rounded-sm" />
+        <span class={`${
+          variant === "sidebar" || variant === "hero" || variant === "footer"
+            ? "text-zinc-300"
+            : "text-zinc-500 dark:text-zinc-400"
+        }`}>
+          I agree to receive the TinkByte newsletter and understand that ConvertKit will process my email address.
+        </span>
+      </label>
+
       <!-- Hidden ConvertKit fields -->
       <input type="hidden" name="utf8" value="✓" />
       <input type="hidden" name="authenticity_token" value="" />
     </form>
 
     <!-- Features -->
-    {
-      showFeatures && (
-        <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {features.map((feature) => (
-            <div class="flex flex-col items-center text-center group">
-              <div
-                class={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-all duration-200 group-hover:scale-110 ${
-                  variant === "sidebar" ||
-                  variant === "hero" ||
-                  variant === "footer"
-                    ? "bg-white/10 backdrop-blur-sm"
-                    : "bg-zinc-100 dark:bg-zinc-800"
-                }`}
-              >
-                <i
-                  class={`${feature.icon} ${
-                    feature.color === "blue"
-                      ? "text-blue-500"
-                      : feature.color === "purple"
-                        ? "text-purple-500"
-                        : "text-green-500"
-                  } text-lg`}
-                />
-              </div>
-              <h4
-                class={`text-sm font-semibold mb-1 uppercase tracking-wide ${
-                  variant === "sidebar" ||
-                  variant === "hero" ||
-                  variant === "footer"
-                    ? "text-white"
-                    : "text-zinc-900 dark:text-zinc-100"
-                }`}
-              >
-                {feature.title}
-              </h4>
-              <p
-                class={`text-xs ${
-                  variant === "sidebar" ||
-                  variant === "hero" ||
-                  variant === "footer"
-                    ? "text-zinc-300"
-                    : "text-zinc-500 dark:text-zinc-400"
-                }`}
-              >
-                {feature.description}
-              </p>
+    {showFeatures && (
+      <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {features.map((feature) => (
+          <div class="flex flex-col items-center text-center group">
+            <div class={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-all duration-200 group-hover:scale-110 ${
+              variant === "sidebar" || variant === "hero" || variant === "footer"
+                ? "bg-white/10 backdrop-blur-sm"
+                : "bg-zinc-100 dark:bg-zinc-800"
+            }`}>
+              <i class={`${feature.icon} ${
+                feature.color === "blue" ? "text-blue-500" : 
+                feature.color === "purple" ? "text-purple-500" : "text-green-500"
+              } text-lg`} />
             </div>
-          ))}
-        </div>
-      )
-    }
+            <h4 class={`text-sm font-semibold mb-1 uppercase tracking-wide ${
+              variant === "sidebar" || variant === "hero" || variant === "footer"
+                ? "text-white"
+                : "text-zinc-900 dark:text-zinc-100"
+            }`}>
+              {feature.title}
+            </h4>
+            <p class={`text-xs ${
+              variant === "sidebar" || variant === "hero" || variant === "footer"
+                ? "text-zinc-300"
+                : "text-zinc-500 dark:text-zinc-400"
+            }`}>
+              {feature.description}
+            </p>
+          </div>
+        ))}
+      </div>
+    )}
 
     <!-- Stats Bar -->
-    {
-      (variant === "hero" || variant === "footer") && (
-        <div class="mt-6 flex items-center justify-center gap-8 text-center">
-          <div>
-            <div class="text-2xl font-bold text-white">1.2K+</div>
-            <div class="text-xs text-zinc-300 uppercase tracking-wide">
-              Subscribers
-            </div>
-          </div>
-          <div class="w-px h-8 bg-white/20" />
-          <div>
-            <div class="text-2xl font-bold text-white">45</div>
-            <div class="text-xs text-zinc-300 uppercase tracking-wide">
-              Countries
-            </div>
-          </div>
-          <div class="w-px h-8 bg-white/20" />
-          <div>
-            <div class="text-2xl font-bold text-white">0</div>
-            <div class="text-xs text-zinc-300 uppercase tracking-wide">
-              Hype
-            </div>
-          </div>
+    {(variant === "hero" || variant === "footer") && (
+      <div class="mt-6 flex items-center justify-center gap-8 text-center">
+        <div>
+          <div class="text-2xl font-bold text-white">1.2K+</div>
+          <div class="text-xs text-zinc-300 uppercase tracking-wide">Subscribers</div>
         </div>
-      )
-    }
+        <div class="w-px h-8 bg-white/20"></div>
+        <div>
+          <div class="text-2xl font-bold text-white">45</div>
+          <div class="text-xs text-zinc-300 uppercase tracking-wide">Countries</div>
+        </div>
+        <div class="w-px h-8 bg-white/20"></div>
+        <div>
+          <div class="text-2xl font-bold text-white">0</div>
+          <div class="text-xs text-zinc-300 uppercase tracking-wide">Hype</div>
+        </div>
+      </div>
+    )}
 
-    <!-- Privacy notice -->
-    <p
-      class={`text-xs mt-6 text-center leading-relaxed ${
+    <!-- Enhanced Privacy Notice -->
+    <p class={`text-xs mt-6 text-center leading-relaxed ${
+      variant === "sidebar" || variant === "hero" || variant === "footer"
+        ? "text-zinc-400"
+        : "text-zinc-500 dark:text-zinc-400"
+    }`}>
+      No spam, unsubscribe anytime. We use ConvertKit and may set cookies for analytics.
+      <a href="/privacy#cookies" class={`underline hover:no-underline transition-colors ml-1 ${
         variant === "sidebar" || variant === "hero" || variant === "footer"
-          ? "text-zinc-400"
-          : "text-zinc-500 dark:text-zinc-400"
-      }`}
-    >
-      No spam, unsubscribe anytime. Read our
-      <a
-        href="/privacy"
-        class={`underline hover:no-underline transition-colors ${
-          variant === "sidebar" || variant === "hero" || variant === "footer"
-            ? "text-blue-400 hover:text-blue-300"
-            : "text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-        }`}
-      >
-        privacy policy
+          ? "text-blue-400 hover:text-blue-300"
+          : "text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+      }`}>
+        Learn about our cookie usage
       </a>.
     </p>
 
     <!-- Messages -->
-    <div
-      id="newsletter-success"
-      class="hidden mt-4 p-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-sm"
-    >
+    <div id="newsletter-success" class="hidden mt-4 p-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-sm">
       <div class="flex items-center gap-2 text-green-800 dark:text-green-300">
         <i class="fas fa-check-circle"></i>
-        <span class="font-medium"
-          >Thanks for subscribing! Check your email to confirm.</span
-        >
+        <span class="font-medium">Thanks for subscribing! Check your email to confirm.</span>
       </div>
     </div>
 
-    <div
-      id="newsletter-error"
-      class="hidden mt-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-sm"
-    >
+    <div id="newsletter-error" class="hidden mt-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-sm">
       <div class="flex items-center gap-2 text-red-800 dark:text-red-300">
         <i class="fas fa-exclamation-circle"></i>
         <span class="font-medium">Something went wrong. Please try again.</span>
@@ -323,94 +284,376 @@ const features = [
   .newsletter-signup-form.loading input {
     pointer-events: none;
   }
+
+  /* Modal specific styles */
+  .newsletter-modal-content {
+    position: relative;
+  }
+
+  .newsletter-modal-backdrop.show {
+    opacity: 1;
+  }
+
+  .newsletter-modal-backdrop.show .newsletter-modal-content {
+    transform: scale(1);
+  }
+
+  /* Prevent modal from showing if user dismissed or subscribed */
+  .newsletter-modal-backdrop.permanently-hidden {
+    display: none !important;
+  }
 </style>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll(".newsletter-signup-form").forEach((form) => {
-      form.addEventListener("submit", async function (e) {
-        e.preventDefault();
+  // Smart Newsletter System - Non-intrusive & Cookie-aware
+  (function() {
+    // Define interfaces for TypeScript-like behavior
+    interface NewsletterState {
+      subscribed: boolean;
+      dismissed: boolean;
+      lastShown: number | null;
+      dismissCount: number;
+      subscribedEmail: string | null;
+    }
 
-        const button = this.querySelector('button[type="submit"]');
-        const input = this.querySelector('input[type="email"]');
-        const successDiv = document.getElementById("newsletter-success");
-        const errorDiv = document.getElementById("newsletter-error");
+    interface WindowWithNewsletter extends Window {
+      TinkByteNewsletter?: TinkByteNewsletterSystem;
+      ck_form_settings?: any;
+    }
 
-        if (!button || !input) return;
+    const windowWithNewsletter = window as WindowWithNewsletter;
 
-        const originalText = button.textContent;
-        const email = input.value.trim();
+    class TinkByteNewsletterSystem {
+      private readonly STORAGE_KEY = 'tinkbyte_newsletter_state';
+      private readonly COOKIE_CONSENT_KEY = 'cookiechimp_consent';
+      private state: NewsletterState;
 
-        if (!email || !email.includes("@")) {
-          input.focus();
+      constructor() {
+        this.state = this.loadState();
+        this.init();
+      }
+
+      private loadState(): NewsletterState {
+        try {
+          const stored = localStorage.getItem(this.STORAGE_KEY);
+          return stored ? JSON.parse(stored) : {
+            subscribed: false,
+            dismissed: false,
+            lastShown: null,
+            dismissCount: 0,
+            subscribedEmail: null
+          };
+        } catch {
+          return {
+            subscribed: false,
+            dismissed: false,
+            lastShown: null,
+            dismissCount: 0,
+            subscribedEmail: null
+          };
+        }
+      }
+
+      private saveState(): void {
+        try {
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state));
+        } catch (error) {
+          console.warn('Could not save newsletter state:', error);
+        }
+      }
+
+      private hasCookieConsent(): boolean {
+        return localStorage.getItem(this.COOKIE_CONSENT_KEY) === 'accepted' || 
+               document.cookie.includes('cookiechimp=accepted') ||
+               document.cookie.includes('cookie_consent=accepted');
+      }
+
+      private shouldShowModal(): boolean {
+        // Never show if already subscribed or permanently dismissed
+        if (this.state.subscribed || this.state.dismissed) {
+          return false;
+        }
+
+        // Don't show if dismissed more than 2 times
+        if (this.state.dismissCount >= 2) {
+          this.state.dismissed = true;
+          this.saveState();
+          return false;
+        }
+
+        // Don't show if shown recently (within 7 days)
+        if (this.state.lastShown) {
+          const daysSince = (Date.now() - this.state.lastShown) / (1000 * 60 * 60 * 24);
+          if (daysSince < 7) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      public showModal(delay: number = 5000): void {
+        if (!this.shouldShowModal()) {
           return;
         }
 
-        if (successDiv) successDiv.classList.add("hidden");
-        if (errorDiv) errorDiv.classList.add("hidden");
+        const backdrop = document.getElementById('newsletter-modal-backdrop');
+        if (!backdrop) return;
 
-        button.textContent = "Subscribing...";
-        button.disabled = true;
-        this.classList.add("loading");
-
-        try {
-          const formData = new FormData(this);
-          const response = await fetch(this.action, {
-            method: "POST",
-            body: formData,
-            headers: { Accept: "application/json" },
-          });
-
-          if (response.ok) {
-            button.textContent = "Subscribed!";
-            button.className = button.className.replace(
-              /bg-\w+-\d+/g,
-              "bg-green-600"
-            );
-
-            if (successDiv) successDiv.classList.remove("hidden");
-            input.value = "";
-
-            setTimeout(() => {
-              button.textContent = originalText || "Subscribe";
-              button.disabled = false;
-              button.className = button.className.replace(
-                "bg-green-600",
-                "bg-zinc-900"
-              );
-              this.classList.remove("loading");
-              if (successDiv) successDiv.classList.add("hidden");
-            }, 3000);
-          } else {
-            throw new Error("Network response was not ok");
-          }
-        } catch (error) {
-          console.error("Newsletter subscription error:", error);
-
-          button.textContent = "Try Again";
-          button.disabled = false;
-          this.classList.remove("loading");
-          if (errorDiv) errorDiv.classList.remove("hidden");
-
+        // Wait for cookie consent first
+        const showAfterConsent = () => {
           setTimeout(() => {
-            button.textContent = originalText || "Subscribe";
-            if (errorDiv) errorDiv.classList.add("hidden");
-          }, 3000);
-        }
-      });
-    });
+            if (this.shouldShowModal()) { // Check again
+              backdrop.classList.remove('hidden');
+              setTimeout(() => {
+                backdrop.classList.add('show');
+              }, 50);
+              
+              this.state.lastShown = Date.now();
+              this.saveState();
+            }
+          }, delay);
+        };
 
-    document.querySelectorAll('input[type="email"]').forEach((input) => {
-      input.addEventListener("blur", function () {
-        const email = this.value.trim();
-        if (email && !email.includes("@")) {
-          this.classList.add("border-red-500", "focus:border-red-500");
-          this.classList.remove("border-zinc-300", "dark:border-zinc-600");
+        if (this.hasCookieConsent()) {
+          showAfterConsent();
         } else {
-          this.classList.remove("border-red-500", "focus:border-red-500");
-          this.classList.add("border-zinc-300", "dark:border-zinc-600");
+          // Wait for cookie consent
+          const checkConsent = () => {
+            if (this.hasCookieConsent()) {
+              showAfterConsent();
+            } else {
+              setTimeout(checkConsent, 1000);
+            }
+          };
+          checkConsent();
         }
-      });
-    });
-  });
+      }
+
+      public closeModal(): void {
+        const backdrop = document.getElementById('newsletter-modal-backdrop');
+        if (!backdrop) return;
+
+        backdrop.classList.remove('show');
+        setTimeout(() => {
+          backdrop.classList.add('hidden');
+        }, 300);
+
+        this.state.dismissCount++;
+        this.state.lastShown = Date.now();
+        this.saveState();
+      }
+
+      private markAsSubscribed(email: string): void {
+        this.state.subscribed = true;
+        this.state.subscribedEmail = email;
+        this.state.dismissed = false; // Reset dismiss state
+        this.saveState();
+
+        // Hide modal if open
+        this.closeModal();
+      }
+
+      private init(): void {
+        // Handle form submissions
+        document.addEventListener('DOMContentLoaded', () => {
+          this.setupFormHandlers();
+          this.setupModalTriggers();
+          this.setupCookieConsentIntegration();
+        });
+      }
+
+      private setupFormHandlers(): void {
+        document.querySelectorAll('.newsletter-signup-form').forEach((formElement) => {
+          const form = formElement as HTMLFormElement;
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const button = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+            const input = form.querySelector('input[type="email"]') as HTMLInputElement;
+            const consentCheckbox = form.querySelector('input[name="consent"]') as HTMLInputElement;
+            const successDiv = document.getElementById('newsletter-success');
+            const errorDiv = document.getElementById('newsletter-error');
+
+            if (!button || !input) return;
+
+            const originalText = button.textContent || 'Subscribe';
+            const email = input.value.trim();
+
+            // Validation
+            if (!email || !email.includes('@')) {
+              input.focus();
+              return;
+            }
+
+            if (consentCheckbox && !consentCheckbox.checked) {
+              consentCheckbox.focus();
+              return;
+            }
+
+            // Check if already subscribed with this email
+            if (this.state.subscribedEmail === email) {
+              if (successDiv) {
+                successDiv.classList.remove('hidden');
+                const span = successDiv.querySelector('span');
+                if (span) span.textContent = 'You\'re already subscribed!';
+              }
+              return;
+            }
+
+            // Hide previous messages
+            if (successDiv) successDiv.classList.add('hidden');
+            if (errorDiv) errorDiv.classList.add('hidden');
+
+            // Loading state
+            button.textContent = 'Subscribing...';
+            button.disabled = true;
+            form.classList.add('loading');
+
+            try {
+              const formData = new FormData(form);
+              
+              // Add cookie consent info if available
+              if (this.hasCookieConsent()) {
+                formData.append('cookie_consent', 'accepted');
+              }
+
+              const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: { 
+                  'Accept': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest'
+                },
+              });
+
+              if (response.ok) {
+                // Success
+                button.textContent = 'Subscribed!';
+                button.className = button.className.replace(/bg-\w+-\d+/g, 'bg-green-600');
+
+                if (successDiv) successDiv.classList.remove('hidden');
+                input.value = '';
+                if (consentCheckbox) consentCheckbox.checked = false;
+
+                // Mark as subscribed
+                this.markAsSubscribed(email);
+
+                // Reset button after success
+                setTimeout(() => {
+                  button.textContent = originalText;
+                  button.disabled = false;
+                  button.className = button.className.replace('bg-green-600', 'bg-zinc-900');
+                  form.classList.remove('loading');
+                  if (successDiv) successDiv.classList.add('hidden');
+                }, 5000);
+
+              } else {
+                throw new Error('Network response was not ok');
+              }
+            } catch (error) {
+              console.error('Newsletter subscription error:', error);
+
+              button.textContent = 'Try Again';
+              button.disabled = false;
+              form.classList.remove('loading');
+              if (errorDiv) errorDiv.classList.remove('hidden');
+
+              setTimeout(() => {
+                button.textContent = originalText;
+                if (errorDiv) errorDiv.classList.add('hidden');
+              }, 3000);
+            }
+          });
+        });
+
+        // Email validation
+        document.querySelectorAll('input[type="email"]').forEach((inputElement) => {
+          const input = inputElement as HTMLInputElement;
+          input.addEventListener('blur', function() {
+            const email = this.value.trim();
+            if (email && !email.includes('@')) {
+              this.classList.add('border-red-500', 'focus:border-red-500');
+              this.classList.remove('border-zinc-300', 'dark:border-zinc-600');
+            } else {
+              this.classList.remove('border-red-500', 'focus:border-red-500');
+              this.classList.add('border-zinc-300', 'dark:border-zinc-600');
+            }
+          });
+        });
+      }
+
+      private setupModalTriggers(): void {
+        // Auto-show modal forms
+        document.querySelectorAll('[data-auto-show="true"]').forEach((form) => {
+          const variant = form.getAttribute('data-newsletter-variant');
+          const delayAttr = form.getAttribute('data-show-delay');
+          const delay = delayAttr ? parseInt(delayAttr) : 5000;
+          
+          if (variant === 'modal') {
+            this.showModal(delay);
+          }
+        });
+
+        // Close modal on backdrop click
+        document.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement;
+          if (target && target.id === 'newsletter-modal-backdrop') {
+            this.closeModal();
+          }
+        });
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            this.closeModal();
+          }
+        });
+      }
+
+      private setupCookieConsentIntegration(): void {
+        // Enhanced ConvertKit tracking based on consent
+        const updateTrackingConsent = () => {
+          if (this.hasCookieConsent()) {
+            // Enable ConvertKit analytics
+            if (windowWithNewsletter.ck_form_settings) {
+              windowWithNewsletter.ck_form_settings.analytics = true;
+            }
+          } else {
+            // Disable ConvertKit analytics
+            if (windowWithNewsletter.ck_form_settings) {
+              windowWithNewsletter.ck_form_settings.analytics = false;
+            }
+          }
+        };
+
+        // Check on load
+        updateTrackingConsent();
+
+        // Listen for consent changes
+        window.addEventListener('cookieConsentChanged', updateTrackingConsent);
+        document.addEventListener('cookieConsentAccepted', updateTrackingConsent);
+        document.addEventListener('cookieConsentDeclined', updateTrackingConsent);
+      }
+
+      // Public methods
+      public reset(): void {
+        this.state = {
+          subscribed: false,
+          dismissed: false,
+          lastShown: null,
+          dismissCount: 0,
+          subscribedEmail: null
+        };
+        this.saveState();
+      }
+
+      public getState(): NewsletterState {
+        return { ...this.state };
+      }
+    }
+
+    // Initialize the system
+    windowWithNewsletter.TinkByteNewsletter = new TinkByteNewsletterSystem();
+  })();
 </script>
