@@ -1,0 +1,37 @@
+---
+// src/pages/tinkbyte-cms.astro - Direct TinaCMS Access
+---
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Loading TinaCMS...</title>
+  </head>
+  <body>
+    <div>Loading TinaCMS...</div>
+
+    <script>
+      // Handle auth client-side and redirect to TinaCMS
+      import { adminAuthManager } from "../lib/admin/auth.js";
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          await adminAuthManager.initialize();
+          const user = await adminAuthManager.getCurrentUser();
+
+          if (!user) {
+            window.location.href = "/auth/admin-signin?redirect=/cms";
+            return;
+          }
+
+          // Redirect to TinaCMS with timestamp to avoid caching
+          const timestamp = Date.now();
+          window.location.href = `/admin/index.html?t=${timestamp}`;
+        } catch (error) {
+          console.error("TinaCMS auth failed:", error);
+          window.location.href = "/auth/admin-signin?redirect=/cms";
+        }
+      });
+    </script>
+  </body>
+</html>

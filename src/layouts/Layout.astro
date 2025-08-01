@@ -57,7 +57,7 @@ const getSafeCanonicalURL = () => {
     }
     return `${Astro.url.origin}${Astro.url.pathname}`;
   } catch (error) {
-    console.warn("Error constructing canonical URL:", error);
+    //console.warn("Error constructing canonical URL:", error);
     return Astro.url.href;
   }
 };
@@ -72,7 +72,7 @@ const getSafeSocialImage = () => {
     }
     return `${Astro.url.origin}${image}`;
   } catch (error) {
-    console.warn("Error constructing social image URL:", error);
+    //console.warn("Error constructing social image URL:", error);
     return `${Astro.url.origin}${SITE.defaultImage}`;
   }
 };
@@ -536,33 +536,33 @@ const structuredData = getStructuredData();
     <SimpleNewsletterModal autoShow={true} showDelay={25000} />
 
     <!-- Load CookieChimp properly -->
-    <script is:inline>
-      (function () {
+    //<script is:inline>
+     // (function () {
         // Create script element
-        const script = document.createElement("script");
-        script.src = "https://cookiechimp.com/widget/gZvtaXJ.js";
-        script.async = true;
-        script.defer = true;
+     //   const script = document.createElement("script");
+      //  script.src = "https://cookiechimp.com/widget/gZvtaXJ.js";
+      //  script.async = true;
+     //   script.defer = true;
 
         // Handle load success
-        script.onload = function () {
-          console.log("CookieChimp loaded successfully");
+      //  script.onload = function () {
+         //console.log("CookieChimp loaded successfully");
           // Dispatch event for newsletter modal
-          window.dispatchEvent(new CustomEvent("cookieChimpLoaded"));
-        };
+      //    window.dispatchEvent(new CustomEvent("cookieChimpLoaded"));
+       // };
 
         // Handle load error
-        script.onerror = function () {
-          console.warn("CookieChimp failed to load, using fallback");
+       // script.onerror = function () {
+          //console.warn("CookieChimp failed to load, using fallback");
           // Set fallback consent
-          localStorage.setItem("cookiechimp_consent", "accepted");
-          window.dispatchEvent(new CustomEvent("cookieChimpLoaded"));
-        };
+          //localStorage.setItem("cookiechimp_consent", "accepted");
+       //   window.dispatchEvent(new CustomEvent("cookieChimpLoaded"));
+       // };
 
         // Append to head
-        document.head.appendChild(script);
-      })();
-    </script>
+     //   document.head.appendChild(script);
+     // })();
+    //</script>
 
     <!-- Clean Supabase Initialization -->
     <script>

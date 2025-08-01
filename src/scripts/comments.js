@@ -84,13 +84,13 @@ window.addEventListener('load', () => {
   }, 500);
 });
 
-function showInitializationError() {
+//function showInitializationError() {
   // Just log to console instead of showing UI error
-  console.warn('⚠️ Comment system initialization had issues, but continuing...');
+  //console.warn('⚠️ Comment system initialization had issues, but continuing...');
   
   // You could optionally show a less intrusive message
   // console.log('💡 Comments may take a moment to load');
-}
+//}
 
 class TinkByteCommentSystem {
   constructor(authManager, supabase) {

@@ -84,13 +84,13 @@ window.addEventListener('load', () => {
   }, 500);
 });
 
-function showInitializationError() {
+//function showInitializationError() {
   // Just log to console instead of showing UI error
-  console.warn('⚠️ Comment system initialization had issues, but continuing...');
+ // console.warn('⚠️ Comment system initialization had issues, but continuing...');
   
   // You could optionally show a less intrusive message
-  // console.log('💡 Comments may take a moment to load');
-}
+  // console.log('💡 Comments may take a moment to load');//
+//}
 
 class TinkByteCommentSystem {
   constructor(authManager, supabase) {
@@ -1165,20 +1165,20 @@ class TinkByteCommentSystem {
   }
 
   // ✅ SILENT API WRAPPER
-  async callAPI(method, args = []) {
-    try {
+  //async callAPI(method, args = []) {
+   //try {
       // Check if TinkByteAPI exists and has the method
-      if (window.TinkByteAPI && typeof window.TinkByteAPI[method] === 'function') {
-        return await window.TinkByteAPI[method](...args);
-      }
+      //if (window.TinkByteAPI && typeof window.TinkByteAPI[method] === 'function') {
+      //  return await window.TinkByteAPI[method](...args);
+     // }
       
       // Fallback for missing API
-      throw new Error(`API method ${method} not available`);
-    } catch (error) {
-      debugLog(`❌ API call failed for ${method}:`, error);
-      return { success: false, error: error.message };
-    }
-  }
+     // throw new Error(`API method ${method} not available`);
+    //} catch (error) {
+    //  debugLog(`❌ API call failed for ${method}:`, error);
+    //  return { success: false, error: error.message };
+   // }
+  //}
 
   // Inline reply setup with optimized auth check
   async handleInlineReplySetup(commentId, author) {

@@ -1,46 +1,44 @@
 ---
-// src/pages/admin/index.astro - FIXED for Production
-import { adminAuthManager } from "../../lib/admin/auth";
-
-console.log("🔍 Admin Index - URL:", Astro.url.href);
-console.log("🔍 Admin Index - Pathname:", Astro.url.pathname);
-console.log("🔍 Admin Index - Search:", Astro.url.search);
-
-// Initialize admin auth
-try {
-  await adminAuthManager.initialize();
-} catch (error) {
-  console.error("❌ Admin auth initialization failed:", error);
-  return Astro.redirect("/auth/admin-signin?error=init_failed");
-}
-
-// Check admin status
-const user = await adminAuthManager.getCurrentUser();
-
-console.log("🔍 Admin Index - User check:", {
-  hasUser: !!user,
-  userEmail: user?.email,
-  isAdmin: user?.isAdmin,
-});
-
-if (!user) {
-  console.log("❌ No user found, redirecting to signin");
-  const currentUrl = Astro.url.pathname + Astro.url.search;
-  return Astro.redirect(
-    `/auth/admin-signin?redirect=${encodeURIComponent(currentUrl)}`
-  );
-}
-
-// Check if this is a direct TinaCMS access request
-const searchParams = Astro.url.searchParams;
-const accessTina =
-  searchParams.get("cms") === "true" || searchParams.get("tina") === "true";
-
-if (accessTina) {
-  console.log("✅ TinaCMS access requested, redirecting directly");
-  return Astro.redirect("/admin/index.html");
-}
-
-console.log("✅ User authenticated, redirecting to dashboard");
-return Astro.redirect("/admin/dashboard");
+// src/pages/admin/index.astro - FIXED Server-Safe
+// Don't run auth on server-side, handle it client-side
 ---
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Redirect</title>
+  </head>
+  <body>
+    <div id="loading">Loading admin...</div>
+
+    <script>
+      // Handle auth client-side only
+      import { adminAuthManager } from "../../lib/admin/auth.js";
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          await adminAuthManager.initialize();
+          const user = await adminAuthManager.getCurrentUser();
+
+          if (!user) {
+            window.location.href = "/auth/admin-signin";
+            return;
+          }
+
+          // Check if this is TinaCMS access
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get("cms") === "true") {
+            window.location.href = "/admin/index.html";
+            return;
+          }
+
+          // Default redirect to dashboard
+          window.location.href = "/admin/dashboard";
+        } catch (error) {
+          console.error("Admin auth failed:", error);
+          window.location.href = "/auth/admin-signin";
+        }
+      });
+    </script>
+  </body>
+</html>
