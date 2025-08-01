@@ -63,6 +63,3 @@ jspm_packages/
 
 # Yarn Integrity file
 .yarn-integrity
-
-# Build files - Allow TinaCMS production files
-# public/admin/ (commented out - allowing CMS files)
