@@ -927,9 +927,9 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 </AdminLayout>
 
 <script>
-  import { adminAPIManager } from "../../lib/admin-api.js";
-  import { adminAuthManager } from "../../lib/admin/auth.js";
-  import { AuthState } from "../../lib/supabase.js";
+  import { adminAPIManager } from "../../lib/admin-api";
+  import { adminAuthManager } from "../../lib/admin/auth";
+  import { AuthState } from "../../lib/supabase";
 
   interface SettingsData {
     general?: any;
@@ -1456,7 +1456,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       const dataUri =
         "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
 
-      const exportFileDefaultName = `tinkbyte-settings-${new Date().toISOString().split("T")[0]}.json`;
+      const exportFileDefaultName = `tinkbyte-settings-${new Date().toISOString().split("T")[0]}on`;
 
       const linkElement = document.createElement("a");
       linkElement.setAttribute("href", dataUri);

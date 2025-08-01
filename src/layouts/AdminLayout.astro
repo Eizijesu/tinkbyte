@@ -160,17 +160,17 @@ const { title, description, preloadData = true } = Astro.props;
     {
       preloadData && (
         <>
-          <link rel="modulepreload" href="/src/lib/admin-api.js" />
-          <link rel="modulepreload" href="/src/lib/supabase.js" />
-          <link rel="modulepreload" href="/src/lib/admin/auth.js" />
+          <link rel="modulepreload" href="/src/lib/admin-api" />
+          <link rel="modulepreload" href="/src/lib/supabase" />
+          <link rel="modulepreload" href="/src/lib/admin/auth" />
         </>
       )
     }
   </head>
 
   <script>
-    import { adminAPIManager } from "../lib/admin-api.js";
-    import { adminAuthManager } from "../lib/admin/auth.js";
+    import { adminAPIManager } from "../lib/admin-api";
+    import { adminAuthManager } from "../lib/admin/auth";
 
     // OPTIMIZED: Faster admin layout management
     class AdminLayout {

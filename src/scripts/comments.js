@@ -1,36 +1,19 @@
 // public/scripts/comments.js
 console.log('TinkByte Comments loading...');
 
-//const DEBUG = window.location.hostname === 'localhost' || window.location.hostname.includes('dev');
-
-// Debug logging function
-//function debugLog(...args) {
-  //if (DEBUG) console.log(...args);
-//}
-
-const DEBUG = false; 
+const DEBUG = false;
 
 function debugLog(...args) {
-  // No logging in production
-  return;
+  if (DEBUG) console.log(...args);
 }
 
-// Keep only critical error logs:
-function errorLog(message, error) {
-  console.error(`[Comments] ${message}`, error);
-}
-
-
-// ✅ IMPORT  SINGLETON DIRECTLY
+// ✅ IMPORT YOUR SINGLETON DIRECTLY
 async function getSupabaseSingleton() {
   try {
-    // Import your singleton
-    //import { supabase } from '../lib/supabase.js';
-    console.log('✅ Supabase singleton imported directly');
+    const { supabase } = await import('/src/lib/supabase.js');
     return supabase;
   } catch (error) {
     console.error('❌ Failed to import Supabase singleton:', error);
-    // Fallback to window if import fails
     return window.supabase;
   }
 }
@@ -38,9 +21,7 @@ async function getSupabaseSingleton() {
 // Wait for auth modules to be ready
 function waitForAuth() {
   return new Promise((resolve, reject) => {
-    // Check if auth is already available
     if (window.authManager && window.supabase) {
-      console.log('✅ Auth modules already available');
       resolve({
         authManager: window.authManager,
         supabase: window.supabase
@@ -48,9 +29,7 @@ function waitForAuth() {
       return;
     }
 
-    // Listen for the authReady event from your layout
     const authReadyHandler = (event) => {
-      console.log('✅ Auth ready event received');
       window.removeEventListener('authReady', authReadyHandler);
       resolve({
         authManager: event.detail.authManager,
@@ -60,48 +39,33 @@ function waitForAuth() {
 
     window.addEventListener('authReady', authReadyHandler);
 
-    // Fallback timeout - increased to 3000ms as requested
     setTimeout(() => {
       window.removeEventListener('authReady', authReadyHandler);
       
-      // Try one more time to get from window
       if (window.authManager && window.supabase) {
-        console.log('✅ Auth found via fallback');
         resolve({
           authManager: window.authManager,
           supabase: window.supabase
         });
       } else {
-        console.error('❌ Auth modules not available after timeout');
         reject(new Error('Auth modules not available'));
       }
-    }, 3000); // Changed from 5000 to 3000 as requested
+    }, 5000);
   });
 }
 
 // Initialize comments when DOM and auth are ready
 document.addEventListener('DOMContentLoaded', async () => {
-  debugLog('🚀 Initializing TinkByte Comments (Static Mode)');
-  
   try {
-    // Wait for auth modules to be available
-    debugLog('⏳ Waiting for auth modules...');
     const { authManager, supabase } = await waitForAuth();
-    debugLog('✅ Auth modules received');
-
-    // Create comment system instance
     const commentSystem = new TinkByteCommentSystem(authManager, supabase);
 
-    // Expose to window
     if (typeof window !== 'undefined') {
       window.tinkbyteComments = commentSystem;
-      console.log('✅ Comment system exposed to window.tinkbyteComments');
     }
 
-    // Additional permission updates for static sites
     setTimeout(() => {
       if (window.tinkbyteComments) {
-        debugLog('🔄 DOM fully loaded, updating permissions...');
         window.tinkbyteComments.updateAllCommentPermissions();
       }
     }, 1000);
@@ -112,38 +76,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// Also listen for window load
 window.addEventListener('load', () => {
   setTimeout(() => {
     if (window.tinkbyteComments) {
-      debugLog('🔄 Window fully loaded, final permission update...');
       window.tinkbyteComments.updateAllCommentPermissions();
     }
   }, 500);
 });
 
 function showInitializationError() {
-  const errorDiv = document.createElement('div');
-  errorDiv.style.cssText = `
-    position: fixed; top: 20px; right: 20px; background: #ef4444; color: white;
-    padding: 12px 24px; border-radius: 8px; z-index: 10000; display: flex;
-    gap: 10px; align-items: center;
-  `;
-  errorDiv.innerHTML = `
-    Comment system failed to load. 
-    <button onclick="window.location.reload()" style="background: white; color: #ef4444; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
-      Retry
-    </button>
-  `;
-  document.body.appendChild(errorDiv);
+  // Just log to console instead of showing UI error
+  console.warn('⚠️ Comment system initialization had issues, but continuing...');
+  
+  // You could optionally show a less intrusive message
+  // console.log('💡 Comments may take a moment to load');
 }
 
 class TinkByteCommentSystem {
   constructor(authManager, supabase) {
-    this.authManager = authManager;
+  this.authState = this.authManager?.authState || {
+  currentUser: null,
+  profile: null,
+  isAuthenticated: false
+};
     this.supabase = supabase;
-    
-    this.authState = authManager.authState || null;
     
     // State management
     this.currentUser = null;
@@ -152,7 +108,6 @@ class TinkByteCommentSystem {
     this.isAuthenticated = false;
     this.authInitialized = false;
     this.authPromise = null;
-
     this.environment = 'production';
     
     // Form and interaction state
@@ -192,15 +147,13 @@ class TinkByteCommentSystem {
 
   async init() {
     try {
-      debugLog('🔄 Initializing comment system...');
-      
       const commentSection = document.getElementById('comments-section');
       if (!commentSection) return;
       
       this.articleId = commentSection.dataset.articleId;
       this.environment = commentSection.dataset.environment || 'production';
       
-      // Initialize auth and wait for it to complete
+      // Initialize auth silently
       await this.initializeAuth();
       
       // Then initialize UI and event listeners
@@ -218,70 +171,144 @@ class TinkByteCommentSystem {
         await this.loadDrafts();
       }
       
-      console.log('✅ TinkByte Comments initialized');
     } catch (error) {
-      console.error('❌ Error initializing comment system:', error);
+      debugLog('❌ Init error:', error);
+    }
+  }
+
+  preventFormRefresh() {
+    document.addEventListener('submit', (e) => {
+      if (e.target.closest('#comments-section')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
+    
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest('button');
+      if (target && target.closest('#comments-section')) {
+        if (!target.getAttribute('type')) {
+          target.setAttribute('type', 'button');
+        }
+      }
+    });
+  }
+
+  // ✅ SILENT AUTH INITIALIZATION
+  async initializeAuth() {
+    if (!this.authPromise) {
+      this.authPromise = this._doAuthInitialization();
+    }
+    return this.authPromise;
+  }
+
+  async _doAuthInitialization() {
+    try {
+      if (this.authManager?.initialize) {
+        await this.authManager.initialize();
+      }
+      
+      // ✅ SILENT SESSION CHECK
+      const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
+      
+      if (session?.user && !sessionError) {
+        this.currentUser = { id: session.user.id, email: session.user.email };
+        this.isAuthenticated = true;
+        await this.loadUserProfile();
+      }
+      
+      this.authInitialized = true;
+      this.updateUI();
+      
+      // ✅ SILENT PERMISSION UPDATE
+      this.waitForCommentsToRender(() => {
+        this.updateCommentDataAttributes();
+        setTimeout(() => {
+          this.updateAllCommentPermissions();
+        }, 500);
+      });
+
+      // Listen for auth changes
+      this.supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          this.currentUser = { id: session.user.id, email: session.user.email };
+          this.isAuthenticated = true;
+          await this.loadUserProfile();
+          this.updateUI();
+          
+          this.waitForCommentsToRender(() => {
+            this.updateCommentDataAttributes();
+            setTimeout(() => {
+              this.updateAllCommentPermissions();
+            }, 500);
+          });
+        } else if (event === 'SIGNED_OUT') {
+          this.currentUser = null;
+          this.profile = null;
+          this.isAuthenticated = false;
+          this.updateUI();
+          this.updateAllCommentPermissions();
+        }
+      });
+      
+    } catch (error) {
+      debugLog('❌ Auth initialization error:', error);
+      this.authInitialized = true;
+      
+      this.waitForCommentsToRender(() => {
+        this.updateAllCommentPermissions();
+      });
     }
   }
 
   // Method to wait for comments to render
-waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
-  const commentCards = document.querySelectorAll('.comment-card[data-comment-id], .reply-card[data-comment-id]');
-  
-  if (commentCards.length > 0) {
-    callback();
-    return;
+  waitForCommentsToRender(callback, maxAttempts = 10, attempt = 1) {
+    const commentCards = document.querySelectorAll('.comment-card[data-comment-id], .reply-card[data-comment-id]');
+    
+    if (commentCards.length > 0) {
+      callback();
+      return;
+    }
+    
+    if (attempt >= maxAttempts) {
+      return;
+    }
+    
+    setTimeout(() => {
+      this.waitForCommentsToRender(callback, maxAttempts, attempt + 1);
+    }, 200);
   }
-  
-  if (attempt >= maxAttempts) {
-    // Silent fail - no logging
-    return;
-  }
-  
-  setTimeout(() => {
-    this.waitForCommentsToRender(callback, maxAttempts, attempt + 1);
-  }, 100); // Reduced from 200ms
-}
 
-  // *** CONSOLIDATED: Single updateAllCommentPermissions method ***
   updateAllCommentPermissions() {
     if (!this.authInitialized) {
-      debugLog('⏳ Auth not initialized yet, skipping permission update');
       return;
     }
 
     // Debounce to prevent excessive calls
     clearTimeout(this.permissionUpdateTimeout);
     this.permissionUpdateTimeout = setTimeout(() => {
-      debugLog('🔄 Updating all comment permissions...');
+      const commentCards = document.querySelectorAll('.comment-card[data-comment-id], .reply-card[data-comment-id]');
       
-      // Wait for comments to render, then update permissions
-      this.waitForCommentsToRender(() => {
-        const commentCards = document.querySelectorAll('.comment-card[data-comment-id], .reply-card[data-comment-id]');
-        
-        commentCards.forEach(card => {
-          const commentId = card.dataset.commentId;
-          if (commentId) {
-            this.updateCommentPermissions(commentId);
-          }
-        });
-        
-        debugLog(`✅ Updated permissions for ${commentCards.length} comments`);
+      commentCards.forEach(card => {
+        const commentId = card.dataset.commentId;
+        if (commentId) {
+          this.updateCommentPermissions(commentId);
+        }
       });
     }, 100);
   }
 
   updateCommentPermissions(commentId) {
-    if (!commentId) return;
-    
+    const dropdown = document.getElementById(`dropdown-${commentId}`);
     const commentCard = document.querySelector(`[data-comment-id="${commentId}"]`);
-    if (!commentCard) {
-      debugLog(`⚠️ Comment card not found for ID: ${commentId}`);
+    
+    if (!dropdown || !commentCard) {
       return;
     }
-
-    const editBtn = commentCard.querySelector('.edit-comment-btn');
-    const deleteBtn = commentCard.querySelector('.delete-comment-btn');
+    
+    const editBtn = dropdown.querySelector('.edit-comment-btn');
+    const deleteBtn = dropdown.querySelector('.delete-comment-btn');
+    const reportBtn = dropdown.querySelector('.report-btn');
     const replyBtn = commentCard.querySelector('.reply-btn');
 
     // Show/hide reply button based on auth status
@@ -294,13 +321,17 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       const isOwner = this.isCommentOwner(commentCard);
       
       if (editBtn) {
-        const canEdit = isOwner && this.canStillEdit(commentCard.dataset.createdAt);
-        editBtn.style.display = canEdit ? 'inline-flex' : 'none';
+        const canStillEdit = this.canStillEdit(commentCard.dataset.createdAt);
+        editBtn.style.display = (isOwner && canStillEdit) ? 'inline-flex' : 'none';
       }
       
       if (deleteBtn) {
         deleteBtn.style.display = isOwner ? 'inline-flex' : 'none';
       }
+    }
+
+    if (reportBtn) {
+      reportBtn.style.display = 'flex';
     }
   }
 
@@ -310,16 +341,11 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     const commentUserId = commentCard.dataset.userId;
     const currentUserId = this.currentUser.id;
     
-    debugLog(`🔍 Checking ownership: comment user ${commentUserId} vs current user ${currentUserId}`);
-    
     return commentUserId === currentUserId;
   }
 
   updateCommentDataAttributes() {
-    debugLog('🔄 Updating comment data attributes after auth...');
-    
     if (!this.currentUser) {
-      debugLog('❌ No current user, skipping data attribute update');
       return;
     }
     
@@ -330,7 +356,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       const currentUserId = card.dataset.userId;
       
       if (!currentUserId || currentUserId.trim() === '' || currentUserId === 'null' || currentUserId === 'undefined') {
-        debugLog(`⚠️ Comment ${commentId} has invalid user_id, attempting to fix...`);
         this.fixCommentDataAttribute(commentId, card);
       }
     });
@@ -338,8 +363,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
 
   async fixCommentDataAttribute(commentId, commentCard) {
     try {
-      debugLog(`🔧 Attempting to fix data attributes for comment: ${commentId}`);
-      
       const { data, error } = await this.supabase
         .from('comments')
         .select('user_id, created_at')
@@ -347,214 +370,30 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         .eq('environment', this.environment)
         .single();
       
-      if (error) {
-        console.error(`❌ Error fetching comment ${commentId}:`, error);
-        return;
+      if (error || !data) return;
+      
+      if (data.user_id) {
+        commentCard.setAttribute('data-user-id', data.user_id);
+        commentCard.dataset.userId = data.user_id;
       }
       
-      if (data) {
-        debugLog(`✅ Found comment data for ${commentId}:`, data);
-        
-        if (data.user_id) {
-          commentCard.setAttribute('data-user-id', data.user_id);
-          commentCard.dataset.userId = data.user_id;
-          debugLog(`✅ Updated user_id for comment ${commentId}: ${data.user_id}`);
-        }
-        
-        if (data.created_at) {
-          commentCard.setAttribute('data-created-at', data.created_at);
-          commentCard.dataset.createdAt = data.created_at;
-          debugLog(`✅ Updated created_at for comment ${commentId}: ${data.created_at}`);
-        }
-        
-        setTimeout(() => {
-          this.updateCommentPermissions(commentId);
-        }, 100);
+      if (data.created_at) {
+        commentCard.setAttribute('data-created-at', data.created_at);
+        commentCard.dataset.createdAt = data.created_at;
       }
       
-    } catch (error) {
-      console.error(`❌ Error fixing comment ${commentId} data:`, error);
-    }
-  }
-
-  async identifyCommentOwnership(commentId) {
-    if (!this.currentUser) return false;
-    
-    try {
-      const { data, error } = await this.supabase
-        .from('comments')
-        .select('user_id')
-        .eq('id', commentId)
-        .eq('user_id', this.currentUser.id)
-        .eq('environment', this.environment)
-        .single();
-      
-      return !error && !!data;
-    } catch (error) {
-      console.error('Error checking comment ownership:', error);
-      return false;
-    }
-  }
-
-  // Add this method to your TinkByteCommentSystem class
-  async forceFixCommentData() {
-    debugLog('🔧 Force fixing all comment data attributes...');
-    
-    if (!this.currentUser) {
-      debugLog('❌ No authenticated user');
-      return;
-    }
-    
-    const commentCards = document.querySelectorAll('.comment-card[data-comment-id], .reply-card[data-comment-id]');
-    debugLog(`Found ${commentCards.length} comment cards to check`);
-    
-    for (const card of commentCards) {
-      const commentId = card.dataset.commentId;
-      const currentUserId = card.dataset.userId;
-      
-      // Check if data attributes are missing or empty
-      if (!currentUserId || currentUserId.trim() === '' || currentUserId === 'null') {
-        debugLog(`🔧 Fixing comment ${commentId} - missing user data`);
-        await this.fixCommentDataAttribute(commentId, card);
-      } else {
-        debugLog(`✅ Comment ${commentId} already has user data: ${currentUserId}`);
-      }
-    }
-    
-    // Update all permissions after fixing data
-    setTimeout(() => {
-      debugLog('🔄 Updating permissions after data fix...');
-      this.updateAllCommentPermissions();
-    }, 1000);
-  }
-
-  preventFormRefresh() {
-    // Prevent any form from causing page refresh
-    document.addEventListener('submit', (e) => {
-      if (e.target.closest('#comments-section')) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    });
-    
-    // Prevent button clicks from causing navigation
-    document.addEventListener('click', (e) => {
-      const target = e.target.closest('button');
-      if (target && target.closest('#comments-section')) {
-        if (!target.getAttribute('type')) {
-          target.setAttribute('type', 'button');
-        }
-      }
-    });
-  }
-
-  // Enhanced initialization for static sites
-  async initializeAuth() {
-    if (!this.authPromise) {
-      this.authPromise = this._doAuthInitialization();
-    }
-    return this.authPromise;
-  }
-
-  async _doAuthInitialization() {
-    try {
-      debugLog('🔐 Starting auth initialization...');
-      debugLog('🔐 Environment:', this.environment);
-      
-      await this.authState.initialize();
-      
-      // ✅ ADD MORE DETAILED DEBUG
-      const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
-      
-      debugLog('🔐 DETAILED AUTH DEBUG:', {
-        hasSession: !!session,
-        hasUser: !!session?.user,
-        sessionError,
-        userId: session?.user?.id,
-        userEmail: session?.user?.email,
-        sessionData: session
-      });
-      
-      if (session?.user) {
-        this.currentUser = { id: session.user.id, email: session.user.email };
-        this.isAuthenticated = true;
-        debugLog('✅ User IS authenticated:', this.currentUser);
-        
-        await this.loadUserProfile();
-        debugLog('✅ Profile loaded:', this.profile);
-      } else {
-        debugLog('❌ No session found - user not authenticated');
-      }
-      
-      this.authInitialized = true;
-      
-      // ✅ FORCE UPDATE UI
-      debugLog('🎨 About to update UI with auth state:', this.isAuthenticated);
-      this.updateUI();
-      
-      // ✅ UPDATE PERMISSIONS
-      this.waitForCommentsToRender(() => {
-        this.updateCommentDataAttributes();
-        setTimeout(() => {
-          this.updateAllCommentPermissions();
-        }, 500);
-      });
-
-      // Listen for auth changes
-      this.supabase.auth.onAuthStateChange(async (event, session) => {
-        debugLog('🔄 Auth state changed:', event);
-        
-        if (event === 'SIGNED_IN' && session?.user) {
-          this.currentUser = { id: session.user.id, email: session.user.email };
-          this.isAuthenticated = true;
-          await this.loadUserProfile();
-          this.updateUI();
-          
-          // Fix data attributes and update permissions after login
-          this.waitForCommentsToRender(() => {
-            this.updateCommentDataAttributes();
-            setTimeout(() => {
-              this.updateAllCommentPermissions();
-            }, 500);
-          });
-          
-          debugLog('✅ Auth updated - user now logged in:', this.currentUser);
-        } else if (event === 'SIGNED_OUT') {
-          this.currentUser = null;
-          this.profile = null;
-          this.isAuthenticated = false;
-          this.updateUI();
-          this.updateAllCommentPermissions();
-          debugLog('👤 Auth updated - user logged out');
-        }
-      });
-      
-    } catch (error) {
-      console.error('❌ Auth initialization error:', error);
-      this.authInitialized = true;
-      
-      this.waitForCommentsToRender(() => {
-        this.updateAllCommentPermissions();
-      });
-    }
-  }
-
-  updatePermissionsWithRetry() {
-    const attempts = [100, 500, 1000, 2000, 5000]; // Multiple timing attempts
-    
-    attempts.forEach((delay, index) => {
       setTimeout(() => {
-        debugLog(`🔄 Permission update attempt ${index + 1}...`);
-        this.updateAllCommentPermissions();
-      }, delay);
-    });
+        this.updateCommentPermissions(commentId);
+      }, 100);
+      
+    } catch (error) {
+      debugLog('❌ Error fixing comment data:', error);
+    }
   }
 
   // Ultra-fast auth check - instant after first load
   async ensureAuth() {
-    if (this.authInitialized) return; // Immediate return 99% of the time
-    
-    // Wait for the cached auth promise
+    if (this.authInitialized) return;
     await this.authPromise;
   }
 
@@ -569,10 +408,11 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         .eq('environment', this.environment)
         .single();
       
-      if (error) throw error;
-      this.profile = data;
+      if (!error && data) {
+        this.profile = data;
+      }
     } catch (error) {
-      console.error('❌ Profile load error:', error);
+      debugLog('❌ Profile load error:', error);
     }
   }
 
@@ -581,28 +421,18 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     
     this.waitForCommentsToRender(() => {
       this.updateAllCommentPermissions();
-      // ADD THIS LINE:
       this.initializePagination();
     });
   }
 
-  // Add this method to your class
   initializePagination() {
     const commentSection = document.getElementById('comments-section');
-    if (!commentSection) {
-      console.error('❌ Comment section not found');
-      return;
-    }
+    if (!commentSection) return;
 
     this.totalComments = parseInt(commentSection.dataset.totalComments || '0');
     this.loadedComments = parseInt(commentSection.dataset.loadedComments || '0');
     this.commentsPerPage = parseInt(commentSection.dataset.commentsPerPage || '5');
     
-    debugLog(`📊 Pagination initialized:`);
-    debugLog(`   - Total: ${this.totalComments}`);
-    debugLog(`   - Loaded: ${this.loadedComments}`);
-    debugLog(`   - Per page: ${this.commentsPerPage}`);
-
     this.updateLoadMoreUI();
   }
 
@@ -610,8 +440,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     const showingCount = document.getElementById('showing-count');
     const totalCount = document.getElementById('total-count');
     const loadMoreSection = document.getElementById('load-more-section');
-    
-    debugLog(`🔄 Updating load more UI: ${this.loadedComments}/${this.totalComments}`);
     
     if (showingCount) {
       showingCount.textContent = this.loadedComments.toString();
@@ -624,10 +452,8 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     if (loadMoreSection) {
       if (this.loadedComments >= this.totalComments) {
         loadMoreSection.style.display = 'none';
-        debugLog('✅ All comments loaded, hiding load more button');
       } else {
         loadMoreSection.style.display = 'block';
-        debugLog(`📊 Showing load more: ${this.loadedComments}/${this.totalComments} remaining`);
       }
     }
   }
@@ -678,8 +504,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
   }
 
   setupEventListeners() {
-    debugLog('🔧 Setting up event listeners...');
-    
     // Main comment form
     const commentForm = document.getElementById('comment-form');
     if (commentForm) {
@@ -715,24 +539,16 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
   }
 
   setupKeyboardShortcuts() {
-    debugLog('🎹 Setting up keyboard shortcuts...');
-    
     document.addEventListener('keydown', (e) => {
       // Ctrl/Cmd + Enter to submit
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         const activeElement = document.activeElement;
-        debugLog('⌨️ Keyboard shortcut triggered:', {
-          element: activeElement?.tagName,
-          id: activeElement?.id,
-          isTextarea: activeElement?.tagName === 'TEXTAREA'
-        });
         
         if (activeElement?.tagName === 'TEXTAREA') {
           const form = activeElement.closest('form');
           if (form) {
             e.preventDefault();
             e.stopPropagation();
-            debugLog('🚀 Submitting form via keyboard shortcut');
             
             const submitEvent = new Event('submit', { 
               bubbles: true, 
@@ -745,12 +561,9 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       
       // Escape to close
       if (e.key === 'Escape') {
-        debugLog('🔄 Escape key pressed - closing forms and modals');
         this.handleEscapeKey();
       }
     });
-    
-    debugLog('✅ Keyboard shortcuts setup complete');
   }
 
   handleEscapeKey() {
@@ -794,20 +607,16 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
   }
 
   setupInlineHandlers() {
-    debugLog('🔧 Setting up inline handlers...');
-    
     // Inline reply cancel handlers
     document.addEventListener('click', (e) => {
       if (e.target.closest('.cancel-inline-reply')) {
         e.preventDefault();
         e.stopPropagation();
-        debugLog('❌ Cancel inline reply clicked');
         
         const container = e.target.closest('.inline-reply-container');
         if (container) {
           container.style.display = 'none';
           container.innerHTML = '';
-          debugLog('✅ Inline reply form closed');
         }
       }
     });
@@ -817,13 +626,11 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       if (e.target.closest('.cancel-edit-inline')) {
         e.preventDefault();
         e.stopPropagation();
-        debugLog('❌ Cancel inline edit clicked');
         
         const container = e.target.closest('.inline-edit-container');
         if (container) {
           container.style.display = 'none';
           container.innerHTML = '';
-          debugLog('✅ Inline edit form closed');
         }
       }
     });
@@ -833,13 +640,11 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       if (e.target.closest('.cancel-btn')) {
         e.preventDefault();
         e.stopPropagation();
-        debugLog('❌ Main cancel button clicked');
         
         const form = e.target.closest('form');
         if (form) {
           this.resetForm(form);
           this.resetFormState(form);
-          debugLog('✅ Main form reset');
         }
       }
     });
@@ -849,38 +654,31 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       if (e.target.classList.contains('inline-comment-form')) {
         e.preventDefault();
         e.stopPropagation();
-        debugLog('📝 Inline reply form submitted');
         this.handleInlineReply(e.target);
       }
       
       if (e.target.classList.contains('edit-comment-form-inline')) {
         e.preventDefault();
         e.stopPropagation();
-        debugLog('✏️ Inline edit form submitted');
         this.handleInlineEdit(e.target);
       }
     });
   }
 
   setupFormResponsiveness() {
-    debugLog('🔄 Setting up form responsiveness...');
-    
     // Re-initialize forms periodically
     setInterval(() => {
       this.refreshFormEventListeners();
-    }, 60000); // Every 1 minutes
+    }, 60000);
   }
 
   refreshFormEventListeners() {
-    debugLog('🔄 Refreshing form event listeners...');
-    
     // Re-check auth state
     this.updateUI();
     
-    // Re-setup character counters (but don't interfere with mentions)
+    // Re-setup character counters
     const textareas = document.querySelectorAll('textarea');
     textareas.forEach(textarea => {
-      // Only re-add character count, not all input listeners
       textarea.removeEventListener('input', this.updateCharacterCount);
       textarea.addEventListener('input', this.updateCharacterCount.bind(this));
     });
@@ -893,8 +691,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         form.addEventListener('submit', this.handleCommentSubmit.bind(this));
       }
     });
-    
-    // DON'T re-setup mention system here - it should only be set up once
   }
 
   setupFormattingButtons() {
@@ -909,7 +705,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         this.applyFormatting(format, textarea);
       }
 
-      // *** ADD THIS: Mention button handler ***
+      // Mention button handler
       if (e.target.closest('.mention-btn')) {
         e.preventDefault();
         e.stopPropagation();
@@ -919,7 +715,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         const textarea = form.querySelector('textarea');
         
         if (textarea) {
-          // Insert @ symbol and trigger mention detection
           const cursorPos = textarea.selectionStart;
           const textBefore = textarea.value.substring(0, cursorPos);
           const textAfter = textarea.value.substring(cursorPos);
@@ -928,7 +723,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
           textarea.focus();
           textarea.setSelectionRange(cursorPos + 1, cursorPos + 1);
           
-          // Trigger mention input detection
           this.handleMentionInput(textarea);
         }
       }
@@ -1108,29 +902,19 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       ],
       
       flags: [
-        // Major countries including Nigeria with full flag emojis
         '🇳🇬', '🇺🇸', '🇬🇧', '🇨🇦', '🇦🇺', '🇩🇪', '🇫🇷', '🇮🇹', '🇪🇸', '🇷🇺', '🇨🇳', '🇯🇵', '🇰🇷', '🇮🇳', '🇧🇷', '🇲🇽',
-        // African countries
         '🇿🇦', '🇪🇬', '🇰🇪', '🇬🇭', '🇪🇹', '🇲🇦', '🇹🇳', '🇩🇿', '🇱🇾', '🇸🇩', '🇺🇬', '🇹🇿', '🇷🇼', '🇿🇼', '🇧🇼', '🇳🇦',
-        // European countries
         '🇳🇱', '🇧🇪', '🇨🇭', '🇦🇹', '🇵🇱', '🇨🇿', '🇭🇺', '🇷🇴', '🇧🇬', '🇭🇷', '🇷🇸', '🇸🇮', '🇸🇰', '🇺🇦', '🇧🇾', '🇱🇹',
-        // Asian countries
         '🇹🇭', '🇻🇳', '🇵🇭', '🇮🇩', '🇲🇾', '🇸🇬', '🇧🇩', '🇵🇰', '🇱🇰', '🇦🇫', '🇮🇷', '🇮🇶', '🇸🇦', '🇦🇪', '🇮🇱', '🇹🇷',
-        // Special flags
         '🏁', '🚩', '🎌', '🏴', '🏳️', '🏳️‍🌈', '🏳️‍⚧️', '🏴‍☠️', '🇺🇳', '🇪🇺'
       ],
       
       coding: [
-        // Programming and tech symbols
         '💻', '🖥️', '⌨️', '🖱️', '🖲️', '💾', '💿', '📀', '🧮', '📱', '📲', '☎️', '📞', '📟', '📠', '📡',
-        // Code symbols
         '⚡', '🔌', '🔋', '🪫', '💡', '🔦', '🕯️', '🧯', '⚙️', '🔧', '🔨', '⚒️', '🛠️', '⛏️', '🔩', '⚗️',
-        // Mathematical and logical symbols
         '🔢', '🔣', '🔤', '🔡', '🔠', '#️⃣', '*️⃣', '0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣',
         '9️⃣', '🔟', '💯', '➕', '➖', '✖️', '➗', '♾️', '‼️', '⁉️', '❓', '❔', '❗', '❕', '〰️', '🔀',
-        // Arrows and navigation
         '⬆️', '↗️', '➡️', '↘️', '⬇️', '↙️', '⬅️', '↖️', '↕️', '↔️', '↩️', '↪️', '⤴️', '⤵️', '🔄', '🔃',
-        // Status and controls
         '▶️', '⏸️', '⏹️', '⏺️', '⏭️', '⏮️', '⏩', '⏪', '⏫', '⏬', '🔼', '🔽', '◀️', '🔁', '🔂', '🔀'
       ]
     };
@@ -1271,8 +1055,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
   }
 
   setupLoadMore() {
-    debugLog('🔧 Setting up load more functionality...');
-    
     const loadMoreBtn = document.getElementById('load-more-btn');
     if (loadMoreBtn) {
       // Remove any existing listeners first
@@ -1284,19 +1066,13 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         e.preventDefault();
         e.stopPropagation();
         
-        debugLog('🔄 Load more button clicked');
-        
         try {
           await this.loadMoreComments();
         } catch (error) {
-          console.error('❌ Load more error:', error);
+          debugLog('❌ Load more error:', error);
           this.showError('Failed to load more comments. Please try again.');
         }
       });
-      
-      debugLog('✅ Load more button listener attached');
-    } else {
-      debugLog('⚠️ Load more button not found');
     }
     
     // Setup load more replies buttons
@@ -1310,11 +1086,10 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         const currentlyLoaded = parseInt(btn.dataset.loaded || '0');
         
         if (commentId) {
-          debugLog(`🔄 Loading more replies for comment: ${commentId}`);
           try {
             await this.loadMoreReplies(commentId, currentlyLoaded);
           } catch (error) {
-            console.error('❌ Load more replies error:', error);
+            debugLog('❌ Load more replies error:', error);
             this.showError('Failed to load more replies. Please try again.');
           }
         }
@@ -1322,31 +1097,20 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     });
   }
 
-  // Optimized comment submission with ultra-fast auth check
+  // ✅ OPTIMIZED COMMENT SUBMISSION
   async handleCommentSubmit(e) {
     e.preventDefault();
     e.stopPropagation();
     
-    debugLog('Comment form submitted');
-    
-    // Ultra-fast auth check - instant after first load
+    // Ultra-fast auth check
     await this.ensureAuth();
     
     if (!this.isAuthenticated || !this.currentUser) {
-      debugLog('❌ User not authenticated:', { 
-        isAuthenticated: this.isAuthenticated, 
-        currentUser: this.currentUser,
-        authInitialized: this.authInitialized
-      });
       this.showError('Please sign in to comment');
       return;
     }
 
-    if (this.isSubmitting) {
-      debugLog('Form already submitting...');
-      return;
-    }
-
+    if (this.isSubmitting) return;
     this.isSubmitting = true;
 
     const form = e.target;
@@ -1364,16 +1128,14 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     this.showLoading(form);
 
     try {
-      debugLog('🚀 Submitting comment with user:', this.currentUser);
-      
-      const result = await this.TinkByteAPI.addComment(
+      // ✅ SILENT API CALL WITH PROPER ERROR HANDLING
+      const result = await this.callAPI('addComment', [
         this.articleId,
         content, 
         this.replyingTo?.id || null
-      );
+      ]);
 
       if (result.success) {
-        // Check moderation status and show appropriate message
         if (['auto_approved', 'approved'].includes(result.data.moderation_status)) {
           this.showSuccess('Comment posted successfully!');
           this.addCommentToUI(result.data);
@@ -1386,7 +1148,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         this.updateCommentCount(1);
         this.resetFormState(form);
       } else {
-        // Handle specific error messages
         if (result.error && result.error.includes('links are not allowed')) {
           this.showError('Links are not allowed in comments. Please remove any URLs and try again.');
         } else {
@@ -1394,12 +1155,28 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         }
       }
     } catch (error) {
-      console.error('Comment submission error:', error);
+      debugLog('❌ Comment submission error:', error);
       this.showError('Network error. Please try again.');
     } finally {
       this.hideLoading(form);
       this.isSubmitting = false;
       if (submitBtn) submitBtn.disabled = false;
+    }
+  }
+
+  // ✅ SILENT API WRAPPER
+  async callAPI(method, args = []) {
+    try {
+      // Check if TinkByteAPI exists and has the method
+      if (window.TinkByteAPI && typeof window.TinkByteAPI[method] === 'function') {
+        return await window.TinkByteAPI[method](...args);
+      }
+      
+      // Fallback for missing API
+      throw new Error(`API method ${method} not available`);
+    } catch (error) {
+      debugLog(`❌ API call failed for ${method}:`, error);
+      return { success: false, error: error.message };
     }
   }
 
@@ -1473,11 +1250,11 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     this.showLoading(form);
 
     try {
-      const result = await this.TinkByteAPI.addComment(
+      const result = await this.callAPI('addComment', [
         this.articleId, 
         content, 
         commentId
-      );
+      ]);
 
       if (result.success) {
         this.showSuccess('Reply posted successfully!');
@@ -1494,7 +1271,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         this.showError(result.error || 'Failed to post reply');
       }
     } catch (error) {
-      console.error('Reply submission error:', error);
+      debugLog('❌ Reply submission error:', error);
       this.showError('Network error. Please try again.');
     } finally {
       this.hideLoading(form);
@@ -1562,7 +1339,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     this.showLoading(form);
 
     try {
-      const result = await this.TinkByteAPI.updateComment(commentId, content, editReason);
+      const result = await this.callAPI('updateComment', [commentId, content, editReason]);
 
       if (result.success) {
         this.showSuccess('Comment updated successfully!');
@@ -1578,7 +1355,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         this.showError(result.error || 'Failed to update comment');
       }
     } catch (error) {
-      console.error('Edit submission error:', error);
+      debugLog('❌ Edit submission error:', error);
       this.showError('Network error. Please try again.');
     } finally {
       this.hideLoading(form);
@@ -1595,7 +1372,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     }
 
     try {
-      const result = await this.TinkByteAPI.toggleCommentLike(commentId);
+      const result = await this.callAPI('toggleCommentLike', [commentId]);
       
       if (result.success) {
         this.updateVoteUI(commentId, result);
@@ -1603,7 +1380,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         this.showError(result.error || 'Failed to vote');
       }
     } catch (error) {
-      console.error('Vote error:', error);
+      debugLog('❌ Vote error:', error);
       this.showError('Network error. Please try again.');
     }
   }
@@ -1618,7 +1395,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     }
 
     try {
-      const result = await this.TinkByteAPI.toggleCommentReaction(commentId, reactionType);
+      const result = await this.callAPI('toggleCommentReaction', [commentId, reactionType]);
       
       if (result.success) {
         this.updateReactionUI(commentId, reactionType, result);
@@ -1626,7 +1403,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         this.showError(result.error || 'Failed to react');
       }
     } catch (error) {
-      console.error('Reaction error:', error);
+      debugLog('❌ Reaction error:', error);
       this.showError('Network error. Please try again.');
     }
   }
@@ -1641,7 +1418,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     }
 
     try {
-      const result = await this.TinkByteAPI.toggleCommentBookmark(commentId);
+      const result = await this.callAPI('toggleCommentBookmark', [commentId]);
       
       if (result.success) {
         this.updateBookmarkUI(commentId, result.bookmarked);
@@ -1650,7 +1427,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         this.showError(result.error || 'Failed to bookmark');
       }
     } catch (error) {
-      console.error('Bookmark error:', error);
+      debugLog('❌ Bookmark error:', error);
       this.showError('Network error. Please try again.');
     }
   }
@@ -1666,7 +1443,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       await navigator.clipboard.writeText(commentText);
       this.showSuccess('Comment copied to clipboard!');
     } catch (error) {
-      console.error('Copy error:', error);
+      debugLog('❌ Copy error:', error);
       this.showError('Failed to copy comment');
     }
   }
@@ -1674,13 +1451,11 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
   // Delete setup
   handleDeleteSetup(commentId) {
     if (!commentId) {
-      console.error('No comment ID provided for deletion');
       return;
     }
 
     const commentCard = this.getCommentCardElement(commentId);
     if (!commentCard) {
-      console.error('Comment card not found for ID:', commentId);
       return;
     }
 
@@ -1706,7 +1481,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     const commentId = confirmBtn?.dataset.commentId;
 
     if (!commentId) {
-      console.error('No comment ID found for deletion');
       this.showError('Error: No comment ID found');
       return;
     }
@@ -1714,7 +1488,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     this.showLoading(confirmBtn.closest('.modal-actions'));
 
     try {
-      const result = await this.TinkByteAPI.deleteComment(commentId);
+      const result = await this.callAPI('deleteComment', [commentId]);
 
       if (result.success) {
         this.showSuccess('Comment deleted successfully!');
@@ -1726,7 +1500,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         this.showError(result.error || 'Failed to delete comment');
       }
     } catch (error) {
-      console.error('Delete error:', error);
+      debugLog('❌ Delete error:', error);
       this.showError('Network error. Please try again.');
     } finally {
       this.hideLoading(confirmBtn.closest('.modal-actions'));
@@ -1769,44 +1543,14 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     this.showLoading(confirmBtn.closest('.modal-actions'));
 
     try {
-      // For now, just show success - you can implement actual reporting later
       this.showSuccess('Comment reported successfully!');
       this.hideModal('report-modal');
     } catch (error) {
-      console.error('Report error:', error);
+      debugLog('❌ Report error:', error);
       this.showError('Network error. Please try again.');
     } finally {
       this.hideLoading(confirmBtn.closest('.modal-actions'));
     }
-  }
-
-  toggleDropdown(commentId) {
-    const dropdown = document.getElementById(`dropdown-${commentId}`);
-    if (!dropdown) return;
-
-    // Close other dropdowns
-    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-      if (menu !== dropdown) {
-        menu.classList.remove('show');
-      }
-    });
-
-    // Toggle current dropdown
-    dropdown.classList.toggle('show');
-    
-    if (dropdown.classList.contains('show')) {
-      this.updateCommentPermissions(commentId);
-    }
-  }
-
-  canStillEdit(createdAtString) {
-    if (!createdAtString) return false;
-    
-    const createdAt = new Date(createdAtString);
-    const now = new Date();
-    const diffInMinutes = (now - createdAt) / (1000 * 60);
-    
-    return diffInMinutes <= 15;
   }
 
   // UI Update Methods
@@ -1871,10 +1615,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
   }
 
   addCommentToUI(commentData) {
-    debugLog('Adding comment to UI:', commentData);
-    
     if (commentData.moderation_status === 'pending' && commentData.user_id !== this.currentUser?.id) {
-      debugLog('Comment is pending and not from current user, not displaying');
       return;
     }
 
@@ -1885,11 +1626,8 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     let commentsContainer = this.getMainCommentsContainer();
     
     if (!commentsContainer) {
-      console.error('❌ Could not find comments container');
-      // **FIX 2: Force create container if needed**
       const commentsSection = document.getElementById('comments-section');
       if (commentsSection) {
-        // Look for existing lists first
         let commentsList = commentsSection.querySelector('.comments-list');
         if (!commentsList) {
           commentsList = document.createElement('div');
@@ -1903,7 +1641,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         commentsContainer.id = 'comments-items';
         commentsList.appendChild(commentsContainer);
       } else {
-        console.error('❌ No comments section found');
         return;
       }
     }
@@ -1914,7 +1651,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     
     if (emptyState) {
       emptyState.style.display = 'none';
-      debugLog('Hidden empty state');
     }
 
     // Create the comment element
@@ -2072,7 +1808,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       commentsContainer.appendChild(commentElement);
     } else {
       commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
-      debugLog('Root comment added to main container');
     }
     
     // Highlight the new comment
@@ -2089,10 +1824,10 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       block: 'center' 
     });
     
-      // Update permissions for the new comment
+    // Update permissions for the new comment
     this.updateCommentPermissions(commentData.id);
       
-     if (!commentData.parent_id) {
+    if (!commentData.parent_id) {
       this.totalComments++;
       this.loadedComments++;
       
@@ -2104,19 +1839,16 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       
       this.updateLoadMoreUI();
     }
-    
-    debugLog('✅ Comment added to UI successfully');
   }
 
   async syncCommentsWithDatabase() {
     try {
-      const result = await this.TinkByteAPI.getComments(this.articleId);
+      const result = await this.callAPI('getComments', [this.articleId]);
       if (result.success) {
         this.updateCommentCount(result.data.length);
-        debugLog('Comments synced with database');
       }
     } catch (error) {
-      console.error('Failed to sync comments:', error);
+      debugLog('❌ Failed to sync comments:', error);
     }
   }
 
@@ -2128,17 +1860,13 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
                           document.querySelector('.comments-container');
     
     if (!commentsContainer) {
-      debugLog('Comments container not found. Creating new one...');
-      
       const commentsSection = document.getElementById('comments-section');
       if (commentsSection) {
         commentsContainer = document.createElement('div');
         commentsContainer.id = 'comments-items';
         commentsContainer.className = 'comments-items';
         commentsSection.appendChild(commentsContainer);
-        debugLog('Created new comments container');
       } else {
-        console.error('Could not find or create comments container');
         return null;
       }
     }
@@ -2147,11 +1875,8 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
   }
 
   addReplyToUI(replyData, parentId) {
-    debugLog('Adding reply to UI:', replyData, 'Parent:', parentId);
-    
     const parentComment = document.querySelector(`[data-comment-id="${parentId}"]`);
     if (!parentComment) {
-      console.error('Parent comment not found:', parentId);
       return;
     }
 
@@ -2311,8 +2036,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     
     // Update permissions for the new reply
     this.updateCommentPermissions(replyData.id);
-    
-    debugLog('✅ Reply added to UI successfully');
   }
 
   removeCommentFromUI(commentId) {
@@ -2336,6 +2059,35 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       const currentCount = parseInt(countElement.textContent) || 0;
       countElement.textContent = Math.max(0, currentCount + change);
     }
+  }
+
+  toggleDropdown(commentId) {
+    const dropdown = document.getElementById(`dropdown-${commentId}`);
+    if (!dropdown) return;
+
+    // Close other dropdowns
+    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+      if (menu !== dropdown) {
+        menu.classList.remove('show');
+      }
+    });
+
+    // Toggle current dropdown
+    dropdown.classList.toggle('show');
+    
+    if (dropdown.classList.contains('show')) {
+      this.updateCommentPermissions(commentId);
+    }
+  }
+
+  canStillEdit(createdAtString) {
+    if (!createdAtString) return false;
+    
+    const createdAt = new Date(createdAtString);
+    const now = new Date();
+    const diffInMinutes = (now - createdAt) / (1000 * 60);
+    
+    return diffInMinutes <= 15;
   }
 
   // Utility Methods
@@ -2480,9 +2232,9 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     }
   }
 
-  // Notifications
+  // ✅ SILENT NOTIFICATIONS
   showError(message) {
-    console.error('Comment error:', message);
+    if (DEBUG) console.error('Comment error:', message);
     
     const notification = document.createElement('div');
     notification.className = 'comment-error-notification';
@@ -2508,7 +2260,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
   }
 
   showSuccess(message) {
-    debugLog('Comment success:', message);
+    if (DEBUG) console.log('Comment success:', message);
     
     const notification = document.createElement('div');
     notification.className = 'comment-success-notification';
@@ -2534,8 +2286,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
   }
 
   resetForm(form) {
-    debugLog('🔄 Resetting form...');
-    
     const textarea = form.querySelector('textarea');
     if (textarea) {
       textarea.value = '';
@@ -2551,13 +2301,9 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     
     // Close any open pickers
     this.closeAllEmojiPickers();
-    
-    debugLog('✅ Form reset complete');
   }
 
   resetFormState(form) {
-    debugLog('🔄 Resetting form state...');
-    
     const textarea = form.querySelector('textarea');
     const charCount = form.querySelector('.character-count .count, .count');
     const submitBtn = form.querySelector('.submit-btn');
@@ -2586,8 +2332,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     }
     
     this.closeAllEmojiPickers();
-    
-    debugLog('✅ Form state reset complete');
   }
 
   cancelReply() {
@@ -2618,10 +2362,8 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     });
   }
 
-  // Add this method after your existing methods in the class
+  // ✅ MENTION SYSTEM
   setupMentionSystem() {
-    debugLog('🔧 Setting up mention system...');
-    
     // Remove any existing mention listeners first
     document.removeEventListener('input', this.mentionInputHandler);
     document.removeEventListener('keydown', this.mentionKeyHandler);
@@ -2629,7 +2371,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     // Create bound handlers to avoid conflicts
     this.mentionInputHandler = (e) => {
       if (e.target.tagName === 'TEXTAREA') {
-        debugLog('📝 Mention input detected:', e.target.value);
         this.handleMentionInput(e.target);
       }
     };
@@ -2650,42 +2391,26 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         this.closeMentionDropdown();
       }
     });
-    
-    debugLog('✅ Mention system setup complete');
   }
 
   handleMentionInput(textarea) {
-    debugLog('🔍 handleMentionInput called with:', {
-      value: textarea.value,
-      selectionStart: textarea.selectionStart,
-      selectionEnd: textarea.selectionEnd
-    });
-    
     const cursorPosition = textarea.selectionStart;
     const textBeforeCursor = textarea.value.substring(0, cursorPosition);
     
-    debugLog('🔍 Text before cursor:', textBeforeCursor);
-    
     // Look for @ symbol followed by word characters
     const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
-    
-    debugLog('🔍 Mention match result:', mentionMatch);
     
     if (mentionMatch) {
       const query = mentionMatch[1]; // The text after @
       const mentionStart = cursorPosition - mentionMatch[0].length; // Position of @
       
-      debugLog('✅ Mention detected!', { query, mentionStart });
       this.showMentionDropdown(textarea, query, mentionStart);
     } else {
-      debugLog('❌ No mention pattern found');
       this.closeMentionDropdown();
     }
   }
 
   async showMentionDropdown(textarea, query, mentionStart) {
-    debugLog('🔍 showMentionDropdown called:', { query, mentionStart });
-    
     // Close any existing dropdown
     this.closeMentionDropdown();
     
@@ -2693,11 +2418,8 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     const users = await this.getMentionableUsers(query);
     
     if (!users || users.length === 0) {
-      debugLog('❌ No users found for query:', query);
       return;
     }
-    
-    debugLog('✅ Found users:', users);
     
     // Create dropdown
     const dropdown = document.createElement('div');
@@ -2772,17 +2494,12 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     this.currentMentionTextarea = textarea;
     this.currentMentionStart = mentionStart;
     this.selectedMentionIndex = 0;
-    
-    debugLog('✅ Mention dropdown created and positioned');
   }
 
   async getMentionableUsers(query = '') {
     try {
-      debugLog('🔍 getMentionableUsers called with query:', query);
-      
       // Check if user is authenticated
       if (!this.isAuthenticated || !this.currentUser) {
-        debugLog('❌ User not authenticated');
         return [];
       }
       
@@ -2824,11 +2541,8 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       
       try {
         const result = await Promise.race([apiCall(), timeoutPromise]);
-        debugLog('✅ API success:', result);
         return result;
       } catch (apiError) {
-        debugLog('⚠️ API failed, using fallback data:', apiError.message);
-        
         // Fallback mock data for testing
         const mockUsers = [
           { 
@@ -2857,7 +2571,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       }
       
     } catch (error) {
-      console.error('❌ Error in getMentionableUsers:', error);
+      debugLog('❌ Error in getMentionableUsers:', error);
       return [];
     }
   }
@@ -3005,7 +2719,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     }
   }
 
-  // Optimized draft management with auth check
+  // ✅ SILENT DRAFT MANAGEMENT
   async saveDraft() {
     await this.ensureAuth();
     
@@ -3020,51 +2734,46 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     clearTimeout(this.draftTimeout);
     this.draftTimeout = setTimeout(async () => {
       try {
-        // Check if the API method exists before calling it
-        if (this.TinkByteAPI && typeof this.TinkByteAPI.saveCommentDraft === 'function') {
-          await this.TinkByteAPI.saveCommentDraft(this.articleId, content);
-          debugLog('✅ Draft saved via API');
-        } else {
-          // Fallback to localStorage
-          const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
-          localStorage.setItem(draftKey, content);
-          debugLog('✅ Draft saved to localStorage (API method not available)');
+        // Try API first if available
+        const result = await this.callAPI('saveCommentDraft', [this.articleId, content]);
+        if (result.success) {
+          return; // API worked
         }
       } catch (error) {
-        console.error('❌ Draft save error:', error);
-        // Fallback to localStorage if API fails
-        try {
-          const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
-          localStorage.setItem(draftKey, content);
-          debugLog('✅ Draft saved to localStorage (API fallback)');
-        } catch (localError) {
-          console.error('❌ localStorage fallback failed:', localError);
-        }
+        debugLog('❌ Draft API failed:', error);
+      }
+      
+      // Fallback to localStorage
+      try {
+        const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
+        localStorage.setItem(draftKey, content);
+      } catch (localError) {
+        debugLog('❌ localStorage draft failed:', localError);
       }
     }, 2000);
   }
 
-  // Update existing loadDrafts method:
   async loadDrafts() {
     if (!this.isAuthenticated || !this.currentUser) return;
     
     try {
       // Try API first if available
-      if (this.TinkByteAPI && typeof this.TinkByteAPI.getCommentDraft === 'function') {
-        const result = await this.TinkByteAPI.getCommentDraft(this.articleId);
-        
-        if (result.success && result.data?.content) {
-          const textarea = document.getElementById('comment-textarea');
-          if (textarea) {
-            textarea.value = result.data.content;
-            this.updateCharacterCount();
-            debugLog('✅ Draft loaded via API');
-            return; // Exit early if API worked
-          }
+      const result = await this.callAPI('getCommentDraft', [this.articleId]);
+      
+      if (result.success && result.data?.content) {
+        const textarea = document.getElementById('comment-textarea');
+        if (textarea) {
+          textarea.value = result.data.content;
+          this.updateCharacterCount();
+          return; // Exit early if API worked
         }
       }
-      
-      // Fallback to localStorage
+    } catch (error) {
+      debugLog('❌ Draft API load failed:', error);
+    }
+    
+    // Fallback to localStorage
+    try {
       const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
       const savedDraft = localStorage.getItem(draftKey);
       
@@ -3073,52 +2782,30 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         if (textarea) {
           textarea.value = savedDraft;
           this.updateCharacterCount();
-          debugLog('✅ Draft loaded from localStorage');
         }
       }
     } catch (error) {
-      console.error('❌ Draft load error:', error);
-      // Try localStorage as fallback
-      try {
-        const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
-        const savedDraft = localStorage.getItem(draftKey);
-        
-        if (savedDraft) {
-          const textarea = document.getElementById('comment-textarea');
-          if (textarea) {
-            textarea.value = savedDraft;
-            this.updateCharacterCount();
-            debugLog('✅ Draft loaded from localStorage (API fallback)');
-          }
-        }
-      } catch (localError) {
-        console.error('❌ localStorage fallback failed:', localError);
-      }
+      debugLog('❌ localStorage draft load failed:', error);
     }
   }
 
-  // Update existing clearDraft method:
   clearDraft() {
     if (!this.isAuthenticated || !this.currentUser) return;
     
     setTimeout(async () => {
       try {
         // Try API first if available
-        if (this.TinkByteAPI && typeof this.TinkByteAPI.saveCommentDraft === 'function') {
-          await this.TinkByteAPI.saveCommentDraft(this.articleId, '');
-          debugLog('✅ Draft cleared via API');
-        }
+        await this.callAPI('saveCommentDraft', [this.articleId, '']);
       } catch (error) {
-        console.error('❌ API draft clear error:', error);
+        debugLog('❌ API draft clear failed:', error);
       }
       
       // Also clear localStorage
       try {
         const draftKey = `comment_draft_${this.articleId}_${this.currentUser.id}`;
         localStorage.removeItem(draftKey);
-        debugLog('✅ Draft cleared from localStorage');
       } catch (error) {
-        console.error('❌ localStorage clear error:', error);
+        debugLog('❌ localStorage clear failed:', error);
       }
     }, 500);
   }
@@ -3133,12 +2820,10 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
 
   async loadMoreComments() {
     if (this.isLoadingMore) {
-      debugLog('⚠️ Already loading more comments');
       return;
     }
 
     if (this.loadedComments >= this.totalComments) {
-      debugLog('✅ All comments already loaded');
       this.updateLoadMoreUI();
       return;
     }
@@ -3146,25 +2831,20 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     this.isLoadingMore = true;
     const loadMoreBtn = document.getElementById('load-more-btn');
     
-    debugLog(`🔄 Loading more comments: showing ${this.loadedComments + this.commentsPerPage} of ${this.totalComments}`);
-
     this.showLoadMoreLoading(loadMoreBtn);
 
     try {
-      // **NEW: Get cached comments from data attribute**
+      // Get cached comments from data attribute
       const commentSection = document.getElementById('comments-section');
       const allCommentsData = commentSection?.dataset.allComments;
       
       if (allCommentsData) {
         const allComments = JSON.parse(allCommentsData);
-        debugLog('📋 Using cached comments:', allComments.length);
         
         // Get the next batch of comments
         const startIndex = this.loadedComments;
         const endIndex = startIndex + this.commentsPerPage;
         const nextComments = allComments.slice(startIndex, endIndex);
-        
-        debugLog(`📄 Loading comments ${startIndex} to ${endIndex - 1}:`, nextComments.length);
         
         if (nextComments.length > 0) {
           // Add to UI
@@ -3172,9 +2852,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
           
           // Update state
           this.loadedComments += nextComments.length;
-          debugLog(`📊 Updated state: loaded=${this.loadedComments}, total=${this.totalComments}`);
         } else {
-          debugLog('ℹ️ No more comments to show');
           this.loadedComments = this.totalComments;
         }
       }
@@ -3182,7 +2860,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
       this.updateLoadMoreUI();
 
     } catch (error) {
-      console.error('❌ Error loading more comments:', error);
+      debugLog('❌ Error loading more comments:', error);
       this.showError('Failed to load more comments. Please try again.');
     } finally {
       this.isLoadingMore = false;
@@ -3190,78 +2868,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     }
   }
 
-  // **ADD: Fallback method to manually add comments**
-  manuallyAddComments(commentTree) {
-    debugLog('🔧 Using manual comment addition fallback');
-    
-    const container = document.getElementById('comments-items');
-    if (!container) {
-      console.error('❌ No comments container found');
-      return;
-    }
-
-    commentTree.forEach((comment, index) => {
-      debugLog(`🔧 Manually adding comment ${index + 1}:`, comment.id);
-      
-      // Create a simple comment element
-      const wrapper = document.createElement('div');
-      wrapper.className = 'comment-wrapper fade-in-new';
-      wrapper.dataset.commentId = comment.id;
-      
-      const displayName = comment.profiles?.display_name || 'Anonymous';
-      const avatarUrl = this.getUserAvatar(comment.profiles);
-      const formattedContent = this.formatContent(comment.content);
-      
-      wrapper.innerHTML = `
-        <div class="comment-card" 
-             data-comment-id="${comment.id}" 
-             data-user-id="${comment.user_id}" 
-             data-created-at="${comment.created_at}">
-          
-          <div class="comment-header">
-            <div class="comment-user-info">
-              <div class="comment-avatar">
-                <img src="${avatarUrl}" alt="${displayName}" loading="lazy" />
-              </div>
-              <div class="comment-meta">
-                <div class="user-details">
-                  <span class="username">${displayName}</span>
-                </div>
-                <div class="comment-time-wrapper">
-                  <span class="comment-time">${this.formatDate(comment.created_at)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="comment-content">
-            <div class="comment-text">${formattedContent}</div>
-          </div>
-
-          <div class="comment-footer">
-            <div class="vote-section">
-              <button class="vote-btn upvote-btn" data-comment-id="${comment.id}">👍</button>
-              <span class="vote-count">${comment.like_count || 0}</span>
-            </div>
-            
-            <div class="comment-actions">
-              <button class="action-btn reply-btn" data-comment-id="${comment.id}" data-author="${displayName}">Reply</button>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      container.appendChild(wrapper);
-      debugLog(`✅ Manually added comment ${comment.id}`);
-      
-      // Update permissions
-      setTimeout(() => {
-        this.updateCommentPermissions(comment.id);
-      }, 100);
-    });
-  }
-
-  // **NEW: Helper methods for load more UI**
+  // Helper methods for load more UI
   showLoadMoreLoading(btn) {
     if (!btn) return;
     btn.disabled = true;
@@ -3280,20 +2887,14 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     if (btnSpinner) btnSpinner.style.display = 'none';
   }
 
-  // **NEW: Add multiple comments to UI**
+  // Add multiple comments to UI
   addCommentsToUI(commentTree) {
     const commentsContainer = document.getElementById('comments-items');
     if (!commentsContainer) {
-      console.error('❌ Comments container not found');
       return;
     }
 
-    debugLog(`📝 Adding ${commentTree.length} comment trees to UI`);
-
     commentTree.forEach((comment, index) => {
-      debugLog(`📝 Processing comment ${index + 1}:`, comment.id);
-      
-      // **FIXED: Use the existing method that works**
       const commentElement = this.createCommentElementFromData(comment);
       
       if (commentElement) {
@@ -3302,7 +2903,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         
         // Append to container
         commentsContainer.appendChild(commentElement);
-        debugLog(`✅ Added comment ${comment.id} to DOM`);
         
         // Update permissions after a short delay
         setTimeout(() => {
@@ -3315,15 +2915,10 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
             });
           }
         }, 100);
-      } else {
-        console.error(`❌ Failed to create element for comment: ${comment.id}`);
       }
     });
-
-    debugLog('✅ Comments added to UI successfully');
   }
 
-  // **NEW: Add this method to create comment elements properly**
   createCommentElementFromData(comment) {
     const wrapper = document.createElement('div');
     wrapper.className = 'comment-wrapper';
@@ -3490,7 +3085,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     return wrapper;
   }
 
-  // **NEW: Helper method for creating reply elements**
+  // Helper method for creating reply elements
   createReplyElementFromData(reply) {
     const wrapper = document.createElement('div');
     wrapper.className = 'comment-wrapper reply-wrapper';
@@ -3572,7 +3167,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     return wrapper;
   }
 
-  // Add helper method for date formatting if not exists
+  // Add helper method for date formatting
   formatDate(dateString) {
     const date = new Date(dateString);
     const now = new Date();
@@ -3586,7 +3181,7 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
     return date.toLocaleDateString();
   }
 
-  // Add helper method for building comment tree if not exists
+  // Add helper method for building comment tree
   buildCommentTree(comments) {
     const commentMap = new Map();
     const rootComments = [];
@@ -3603,6 +3198,26 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
         commentMap.get(comment.parent_id).replies.push(comment);
       } else if (!comment.parent_id) {
         rootComments.push(comment);
+      }
+    });
+    
+    return rootComments;
+  }
+
+  buildCommentTreeWithReplies(rootComments, replies) {
+    const commentMap = new Map();
+    
+    // Add root comments
+    rootComments.forEach(comment => {
+      comment.replies = [];
+      commentMap.set(comment.id, comment);
+    });
+    
+    // Add replies to their parents
+    replies.forEach(reply => {
+      const parent = commentMap.get(reply.parent_id);
+      if (parent) {
+        parent.replies.push(reply);
       }
     });
     
@@ -3643,8 +3258,6 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
 
   async loadMoreReplies(commentId, currentlyLoaded) {
     try {
-      debugLog(`🔄 Loading more replies for comment: ${commentId}`);
-      
       const { data: replies, error } = await this.supabase
         .from('comments')
         .select(`
@@ -3712,85 +3325,292 @@ waitForCommentsToRender(callback, maxAttempts = 3, attempt = 1) {
             }
           }
         }
-        
-        debugLog(`✅ Loaded ${replies.length} more replies`);
       }
       
     } catch (error) {
-      console.error('❌ Error loading more replies:', error);
+      debugLog('❌ Error loading more replies:', error);
       this.showError('Failed to load more replies. Please try again.');
     }
   }
 
-  // Add this method temporarily for debugging
-  async debugCommentCounts() {
-    debugLog('🔍 DEBUG: Checking actual comment counts in database...');
+  // ✅ CREATE COMMENT AND REPLY ELEMENTS (RETAINED FROM ORIGINAL)
+  createCommentElement(comment) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'comment-wrapper';
+    wrapper.dataset.commentId = comment.id;
     
-    try {
-      // Check total root comments
-      const { count: totalRoot, error: countError } = await this.supabase
-        .from('comments')
-        .select('id', { count: 'exact', head: true })
-        .eq('article_id', this.articleId)
-        .eq('environment', this.environment)
-        .eq('is_deleted', false)
-        .in('moderation_status', ['approved', 'auto_approved'])
-        .is('parent_id', null);
+    const threadLevel = Math.min(comment.thread_level || 0, 4);
+    const avatarUrl = this.getUserAvatar(comment.profiles);
+    const formattedContent = this.formatContent(comment.content);
+    const displayName = comment.profiles?.display_name || 'Anonymous';
+    const isAdmin = comment.profiles?.is_admin || false;
+    
+    wrapper.innerHTML = `
+      <div class="comment-card" data-comment-id="${comment.id}" data-user-id="${comment.user_id}" data-created-at="${comment.created_at}" data-thread-level="${threadLevel}">
+        <div class="comment-header">
+          <div class="comment-user-info">
+            <div class="comment-avatar">
+              <img src="${avatarUrl}" alt="${displayName}" loading="lazy" />
+              ${isAdmin ? '<div class="admin-badge">👑</div>' : ''}
+            </div>
+            <div class="comment-meta">
+              <div class="user-details">
+                <span class="username ${isAdmin ? 'admin' : ''}">${displayName}</span>
+                ${isAdmin ? '<span class="admin-badge">Admin</span>' : ''}
+              </div>
+              <div class="comment-time-wrapper">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12,6 12,12 16,14"></polyline>
+                </svg>
+                <span class="comment-time" title="${new Date(comment.created_at).toLocaleString()}">
+                  ${this.formatDate(comment.created_at)}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="comment-actions-menu">
+            <button class="menu-btn" data-comment-id="${comment.id}" title="More options" aria-label="Comment options">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="19" cy="12" r="1"></circle>
+                <circle cx="5" cy="12" r="1"></circle>
+              </svg>
+            </button>
+            <div class="dropdown-menu" id="dropdown-${comment.id}">
+              <button class="dropdown-item edit-comment-btn" data-comment-id="${comment.id}" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Edit
+              </button>
+              <button class="dropdown-item delete-comment-btn" data-comment-id="${comment.id}" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3,6 5,6 21,6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Delete
+              </button>
+              <button class="dropdown-item report-btn" data-comment-id="${comment.id}" style="display: flex;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                  <line x1="4" y1="22" x2="4" y2="15"></line>
+                </svg>
+                Report
+              </button>
+            </div>
+          </div>
+        </div>
 
-      debugLog('📊 Total root comments in DB:', totalRoot);
+        <div class="comment-content">
+          <div class="comment-text">${formattedContent}</div>
+        </div>
 
-      // Check what comments exist
-      const { data: allComments, error: allError } = await this.supabase
-        .from('comments')
-        .select('id, content, parent_id, created_at')
-        .eq('article_id', this.articleId)
-        .eq('environment', this.environment)
-        .eq('is_deleted', false)
-        .in('moderation_status', ['approved', 'auto_approved'])
-        .is('parent_id', null)
-        .order('created_at', { ascending: false });
+        <div class="comment-footer">
+          <div class="vote-section">
+            <button class="vote-btn upvote-btn" data-comment-id="${comment.id}" data-action="upvote" title="Upvote">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 14l5-5 5 5"></path>
+              </svg>
+            </button>
+            <span class="vote-count" id="vote-count-${comment.id}">${comment.like_count || 0}</span>
+            <button class="vote-btn downvote-btn" data-comment-id="${comment.id}" data-action="downvote" title="Downvote">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 10l-5 5-5-5"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="comment-reactions">
+            <button class="reaction-btn" data-reaction="like" data-comment-id="${comment.id}" title="Like">
+              <span class="reaction-emoji">👍</span>
+              <span class="reaction-count" id="reaction-like-${comment.id}">${comment.reaction_counts?.like || 0}</span>
+            </button>
+            <button class="reaction-btn" data-reaction="love" data-comment-id="${comment.id}" title="Love">
+              <span class="reaction-emoji">❤️</span>
+              <span class="reaction-count" id="reaction-love-${comment.id}">${comment.reaction_counts?.love || 0}</span>
+            </button>
+            <button class="reaction-btn" data-reaction="laugh" data-comment-id="${comment.id}" title="Laugh">
+              <span class="reaction-emoji">😂</span>
+              <span class="reaction-count" id="reaction-laugh-${comment.id}">${comment.reaction_counts?.laugh || 0}</span>
+            </button>
+            <button class="reaction-btn" data-reaction="wow" data-comment-id="${comment.id}" title="Wow">
+              <span class="reaction-emoji">😮</span>
+              <span class="reaction-count" id="reaction-wow-${comment.id}">${comment.reaction_counts?.wow || 0}</span>
+            </button>
+            <button class="reaction-btn" data-reaction="angry" data-comment-id="${comment.id}" title="Angry">
+              <span class="reaction-emoji">😠</span>
+              <span class="reaction-count" id="reaction-angry-${comment.id}">${comment.reaction_counts?.angry || 0}</span>
+            </button>
+          </div>
 
-      debugLog('📋 All root comments:', allComments);
-      debugLog('📋 Comment IDs:', allComments?.map(c => c.id));
+          <div class="comment-actions">
+            <button class="action-btn reply-btn" data-comment-id="${comment.id}" data-author="${displayName}" title="Reply">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9,17 4,12 9,7"></polyline>
+                <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+              </svg>
+              Reply
+            </button>
+            <button class="action-btn bookmark-btn" data-comment-id="${comment.id}" title="Bookmark">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Bookmark
+            </button>
+            <button class="action-btn copy-btn" data-comment-id="${comment.id}" title="Copy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy
+            </button>
+          </div>
+        </div>
 
-      // Test the exact query that's failing
-      const { data: rangeTest, error: rangeError } = await this.supabase
-        .from('comments')
-        .select('id, content, created_at')
-        .eq('article_id', this.articleId)
-        .eq('environment', this.environment)
-        .eq('is_deleted', false)
-        .in('moderation_status', ['approved', 'auto_approved'])
-        .is('parent_id', null)
-        .order('created_at', { ascending: false })
-        .range(5, 9);
-
-      debugLog('🎯 Range query (5-9) result:', rangeTest);
-      
-    } catch (error) {
-      console.error('❌ Debug error:', error);
-    }
+        <div class="inline-reply-container" data-comment-id="${comment.id}" style="display: none;"></div>
+        <div class="inline-edit-container" data-comment-id="${comment.id}" style="display: none;"></div>
+        <div class="replies-container comment-replies"></div>
+      </div>
+    `;
+    
+    // Update permissions for the new comment after adding to DOM
+    setTimeout(() => {
+      this.updateCommentPermissions(comment.id);
+    }, 100);
+    
+    return wrapper;
   }
 
-  // Add these helper methods
-  buildCommentTreeWithReplies(rootComments, replies) {
-    const commentMap = new Map();
+  // Add helper method for creating reply elements
+  createReplyElement(reply) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'comment-wrapper reply-wrapper';
+    wrapper.dataset.commentId = reply.id;
     
-    // Add root comments
-    rootComments.forEach(comment => {
-      comment.replies = [];
-      commentMap.set(comment.id, comment);
-    });
+    const avatarUrl = this.getUserAvatar(reply.profiles);
+    const formattedContent = this.formatContent(reply.content);
+    const displayName = reply.profiles?.display_name || 'Anonymous';
+    const isAdmin = reply.profiles?.is_admin || false;
     
-    // Add replies to their parents
-    replies.forEach(reply => {
-      const parent = commentMap.get(reply.parent_id);
-      if (parent) {
-        parent.replies.push(reply);
-      }
-    });
+    wrapper.innerHTML = `
+      <div class="comment-card reply-card" data-comment-id="${reply.id}" data-user-id="${reply.user_id}" data-created-at="${reply.created_at}">
+        <div class="reply-connector"></div>
+        
+        <div class="comment-header">
+          <div class="comment-user-info">
+            <div class="comment-avatar">
+              <img src="${avatarUrl}" alt="${displayName}" loading="lazy" />
+              ${isAdmin ? '<div class="admin-badge">👑</div>' : ''}
+            </div>
+            <div class="comment-meta">
+              <div class="user-details">
+                <span class="username ${isAdmin ? 'admin' : ''}">${displayName}</span>
+              </div>
+              <div class="comment-time-wrapper">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12,6 12,12 16,14"></polyline>
+                </svg>
+                <span class="comment-time">${this.formatDate(reply.created_at)}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="comment-actions-menu">
+            <button class="menu-btn" data-comment-id="${reply.id}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="19" cy="12" r="1"></circle>
+                <circle cx="5" cy="12" r="1"></circle>
+              </svg>
+            </button>
+            <div class="dropdown-menu" id="dropdown-${reply.id}">
+              <button class="dropdown-item edit-comment-btn" data-comment-id="${reply.id}" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Edit
+              </button>
+              <button class="dropdown-item delete-comment-btn" data-comment-id="${reply.id}" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3,6 5,6 21,6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Delete
+              </button>
+              <button class="dropdown-item report-btn" data-comment-id="${reply.id}" style="display: flex;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                  <line x1="4" y1="22" x2="4" y2="15"></line>
+                </svg>
+                Report
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="comment-content">
+          <div class="comment-text">${formattedContent}</div>
+        </div>
+
+        <div class="comment-footer">
+          <div class="vote-section">
+            <button class="vote-btn upvote-btn" data-comment-id="${reply.id}" data-action="upvote">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 14l5-5 5 5"></path>
+              </svg>
+            </button>
+            <span class="vote-count">${reply.like_count || 0}</span>
+            <button class="vote-btn downvote-btn" data-comment-id="${reply.id}" data-action="downvote">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 10l-5 5-5-5"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="comment-reactions">
+            <button class="reaction-btn" data-reaction="like" data-comment-id="${reply.id}">
+              <span class="reaction-emoji">👍</span>
+              <span class="reaction-count">${reply.reaction_counts?.like || 0}</span>
+            </button>
+            <button class="reaction-btn" data-reaction="love" data-comment-id="${reply.id}">
+              <span class="reaction-emoji">❤️</span>
+              <span class="reaction-count">${reply.reaction_counts?.love || 0}</span>
+            </button>
+          </div>
+
+          <div class="comment-actions">
+            <button class="action-btn reply-btn" data-comment-id="${reply.id}" data-author="${displayName}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9,17 4,12 9,7"></polyline>
+                <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+              </svg>
+              Reply
+            </button>
+            <button class="action-btn copy-btn" data-comment-id="${reply.id}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <div class="inline-reply-container" data-comment-id="${reply.id}" style="display: none;"></div>
+        <div class="inline-edit-container" data-comment-id="${reply.id}" style="display: none;"></div>
+      </div>
+    `;
     
-    return rootComments;
+    setTimeout(() => {
+      this.updateCommentPermissions(reply.id);
+    }, 100);
+    
+    return wrapper;
   }
 }
 
@@ -3803,4 +3623,4 @@ document.addEventListener('click', (e) => {
   }
 });
 
-debugLog('TinkByte Comments script loaded successfully');
+console.log('TinkByte Comments script loaded successfully');

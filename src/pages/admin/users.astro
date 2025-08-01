@@ -258,9 +258,9 @@ const stats = {
 </AdminLayout>
 
 <script>
-  import { adminAPIManager } from "../../lib/admin-api.js";
-  import { adminAuthManager } from "../../lib/admin/auth.js";
-  import { AuthState } from "../../lib/supabase.js";
+  import { adminAPIManager } from "../../lib/admin-api";
+  import { adminAuthManager } from "../../lib/admin/auth";
+  import { AuthState } from "../../lib/supabase";
 
   // Enhanced TypeScript interfaces
   interface UserWithEngagement {
@@ -1137,7 +1137,7 @@ const stats = {
           const jsonData = JSON.stringify(response.data, null, 2);
           downloadFile(
             jsonData,
-            `tinkbyte-users-${new Date().toISOString().split("T")[0]}.json`,
+            `tinkbyte-users-${new Date().toISOString().split("T")[0]}on`,
             "application/json"
           );
         }

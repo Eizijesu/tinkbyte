@@ -2,8 +2,8 @@
 // src/pages/admin/articles.astro - ARTICLES MANAGEMENT
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import ArticleEngagementModal from "../../components/admin/ArticleEngagementModal.astro";
-import { supabase } from "../../lib/supabase.js";
-import { config } from "../../lib/config.js";
+import { supabase } from "../../lib/supabase";
+import { config } from "../../lib/config";
 ---
 
 <AdminLayout title="Articles Management - TinkByte Admin">
@@ -392,10 +392,10 @@ import { config } from "../../lib/config.js";
 
 <script>
   // Re-import everything needed in the script
-  import { supabase } from "../../lib/supabase.js";
-  import { config } from "../../lib/config.js";
-  import { adminAPIManager } from "../../lib/admin-api.js";
-  import { adminAuthManager } from "../../lib/admin/auth.js";
+  import { supabase } from "../../lib/supabase";
+  import { config } from "../../lib/config";
+  import { adminAPIManager } from "../../lib/admin-api";
+  import { adminAuthManager } from "../../lib/admin/auth";
 
   // TypeScript interfaces
   interface Article {

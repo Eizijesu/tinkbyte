@@ -204,14 +204,14 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
 </AdminLayout>
 
 <script>
-  import { adminAPIManager } from "../../lib/admin-api.js";
-  import { adminAuthManager } from "../../lib/admin/auth.js";
+  import { adminAPIManager } from "../../lib/admin-api";
+  import { adminAuthManager } from "../../lib/admin/auth";
   
   import {
     CommentRenderer,
     NotificationManager,
     UIHelpers,
-  } from "../../lib/admin/comment-utils.js";
+  } from "../../lib/admin/comment-utils";
 
   interface PendingStats {
     totalPending: number;

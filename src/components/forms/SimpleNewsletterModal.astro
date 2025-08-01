@@ -1,0 +1,302 @@
+---
+// src/components/forms/SimpleNewsletterModal.astro - TypeScript Fixed
+export interface Props {
+  autoShow?: boolean;
+  showDelay?: number;
+}
+
+const { autoShow = true, showDelay = 20000 } = Astro.props;
+
+const convertKitFormId = import.meta.env.PUBLIC_CONVERTKIT_FORM_ID;
+---
+
+<!-- Modal Backdrop - Fixed positioning -->
+<div
+  id="newsletter-modal"
+  class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] hidden opacity-0 transition-all duration-300"
+  data-auto-show={autoShow}
+  data-show-delay={showDelay}
+>
+  <!-- Modal Container -->
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <!-- Modal Content -->
+    <div
+      class="bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 w-full max-w-md transform scale-95 transition-transform duration-300 relative"
+    >
+      <!-- Close Button -->
+      <button
+        class="absolute -top-3 -right-3 w-8 h-8 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors"
+        onclick="window.closeNewsletterModal && window.closeNewsletterModal()"
+        aria-label="Close"
+      >
+        <i class="fas fa-times text-sm"></i>
+      </button>
+
+      <!-- Content -->
+      <div class="p-8">
+        <!-- Header -->
+        <div class="text-center mb-6">
+          <h3
+            class="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2 font-space-grotesk"
+          >
+            Before You Go...
+          </h3>
+          <p class="text-zinc-600 dark:text-zinc-400">
+            Join 1,200+ builders getting weekly insights. No spam, just
+            substance.
+          </p>
+        </div>
+
+        <!-- Form -->
+        <form
+          action={`https://app.convertkit.com/forms/${convertKitFormId}/subscriptions`}
+          method="post"
+          class="newsletter-modal-form space-y-4"
+        >
+          <!-- Email Input -->
+          <input
+            type="email"
+            name="email_address"
+            placeholder="Enter your email address"
+            required
+            class="w-full px-4 py-3 border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors"
+          />
+
+          <!-- Subscribe Button -->
+          <button
+            type="submit"
+            class="w-full px-6 py-3 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors uppercase tracking-wider"
+          >
+            Subscribe
+          </button>
+
+          <!-- Consent -->
+          <label
+            class="flex items-start gap-2 text-xs text-zinc-500 dark:text-zinc-400"
+          >
+            <input type="checkbox" name="consent" required class="mt-1" />
+            <span>I agree to receive emails from TinkByte via ConvertKit.</span>
+          </label>
+
+          <!-- Hidden fields -->
+          <input type="hidden" name="utf8" value="✓" />
+        </form>
+
+        <!-- Privacy -->
+        <p class="text-xs text-center text-zinc-400 mt-4">
+          No spam. Unsubscribe anytime.
+          <a href="/privacy" class="underline hover:no-underline"
+            >Privacy Policy</a
+          >
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Modal animations */
+  #newsletter-modal.show {
+    opacity: 1;
+  }
+
+  #newsletter-modal.show > div > div {
+    transform: scale(1);
+  }
+
+  /* Perfect squares */
+  #newsletter-modal input,
+  #newsletter-modal button,
+  #newsletter-modal > div > div {
+    border-radius: 0 !important;
+  }
+
+  /* Loading state */
+  .newsletter-modal-form.loading button {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+</style>
+
+<script>
+  // TypeScript-safe Modal System
+  (function () {
+    // Interfaces for type safety
+    interface ModalState {
+      dismissed: boolean;
+      subscribed: boolean;
+      dismissCount: number;
+      lastShown: number | null;
+    }
+
+    interface WindowWithModal extends Window {
+      closeNewsletterModal?: () => void;
+    }
+
+    const windowWithModal = window as WindowWithModal;
+
+    // Modal state
+    let modalState: ModalState = {
+      dismissed: false,
+      subscribed: false,
+      dismissCount: 0,
+      lastShown: null,
+    };
+
+    // Load state
+    function loadModalState(): void {
+      try {
+        const stored = localStorage.getItem("tinkbyte_modal_state");
+        if (stored) {
+          modalState = { ...modalState, ...JSON.parse(stored) };
+        }
+      } catch (e) {
+        console.warn("Could not load modal state");
+      }
+    }
+
+    // Save state
+    function saveModalState(): void {
+      try {
+        localStorage.setItem(
+          "tinkbyte_modal_state",
+          JSON.stringify(modalState)
+        );
+      } catch (e) {
+        console.warn("Could not save modal state");
+      }
+    }
+
+    // Check if should show
+    function shouldShowModal(): boolean {
+      if (modalState.subscribed || modalState.dismissed) return false;
+      if (modalState.dismissCount >= 2) return false;
+
+      if (modalState.lastShown) {
+        const daysSince =
+          (Date.now() - modalState.lastShown) / (1000 * 60 * 60 * 24);
+        if (daysSince < 7) return false;
+      }
+
+      return true;
+    }
+
+    // Show modal
+    function showNewsletterModal(): void {
+      if (!shouldShowModal()) return;
+
+      const modal = document.getElementById("newsletter-modal");
+      if (!modal) return;
+
+      modal.classList.remove("hidden");
+      setTimeout(() => modal.classList.add("show"), 50);
+
+      modalState.lastShown = Date.now();
+      saveModalState();
+    }
+
+    // Close modal
+    function closeNewsletterModal(): void {
+      const modal = document.getElementById("newsletter-modal");
+      if (!modal) return;
+
+      modal.classList.remove("show");
+      setTimeout(() => modal.classList.add("hidden"), 300);
+
+      modalState.dismissCount++;
+      if (modalState.dismissCount >= 2) modalState.dismissed = true;
+      saveModalState();
+    }
+
+    // Expose global function
+    windowWithModal.closeNewsletterModal = closeNewsletterModal;
+
+    // Initialize
+    document.addEventListener("DOMContentLoaded", () => {
+      loadModalState();
+
+      // Auto-show logic
+      const modal = document.getElementById("newsletter-modal");
+      if (modal && modal.dataset.autoShow === "true") {
+        const delayAttr = modal.dataset.showDelay;
+        const delay = delayAttr ? parseInt(delayAttr, 10) : 20000;
+
+        // Wait for cookie consent, then show
+        setTimeout(() => {
+          showNewsletterModal();
+        }, delay);
+      }
+
+      // Form handling
+      const formElement = document.querySelector(".newsletter-modal-form");
+      if (formElement) {
+        const form = formElement as HTMLFormElement;
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const button = form.querySelector(
+            'button[type="submit"]'
+          ) as HTMLButtonElement;
+          const input = form.querySelector(
+            'input[type="email"]'
+          ) as HTMLInputElement;
+          const consent = form.querySelector(
+            'input[name="consent"]'
+          ) as HTMLInputElement;
+
+          if (!button || !input || !consent) return;
+
+          const email = input.value.trim();
+          if (!email || !consent.checked) return;
+
+          // Loading state
+          const originalText = button.textContent || "Subscribe";
+          button.textContent = "Subscribing...";
+          button.disabled = true;
+          form.classList.add("loading");
+
+          try {
+            const response = await fetch(form.action, {
+              method: "POST",
+              body: new FormData(form),
+              headers: { Accept: "application/json" },
+            });
+
+            if (response.ok) {
+              button.textContent = "Subscribed!";
+              button.classList.add("bg-green-600");
+
+              modalState.subscribed = true;
+              saveModalState();
+
+              setTimeout(() => {
+                closeNewsletterModal();
+              }, 2000);
+            } else {
+              throw new Error("Failed");
+            }
+          } catch (error) {
+            button.textContent = "Try Again";
+            setTimeout(() => {
+              button.textContent = originalText;
+              button.disabled = false;
+              form.classList.remove("loading");
+            }, 2000);
+          }
+        });
+      }
+
+      // Close on backdrop click
+      if (modal) {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) closeNewsletterModal();
+        });
+      }
+
+      // Close on escape
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeNewsletterModal();
+      });
+    });
+  })();
+</script>

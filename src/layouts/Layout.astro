@@ -5,7 +5,7 @@ import Header from "../components/ui/Header.astro";
 import Footer from "../components/ui/Footer.astro";
 import "../styles/global.css";
 import FeedbackWidget from "../components/ui/FeedbackWidget.astro";
-import NewsletterForm from "../components/forms/NewsletterForm.astro";
+import SimpleNewsletterModal from "../components/forms/SimpleNewsletterModal.astro";
 
 // Type-safe window property assignment
 declare global {
@@ -533,17 +533,36 @@ const structuredData = getStructuredData();
     />
 
     <!-- Smart Newsletter Modal - Site-wide -->
-    <NewsletterForm
-      variant="modal"
-      autoShow={true}
-      showDelay={20000}
-      title="Before You Go..."
-      description="Join 1,200+ product builders getting weekly insights that actually matter. No hype, just substance."
-      showFeatures={true}
-    />
+    <SimpleNewsletterModal autoShow={true} showDelay={25000} />
 
-    <!-- Cookie Consent Widget -->
-    <script src="https://cookiechimp.com/widget/gZvtaXJ.js"></script>
+    <!-- Load CookieChimp properly -->
+    <script is:inline>
+      (function () {
+        // Create script element
+        const script = document.createElement("script");
+        script.src = "https://cookiechimp.com/widget/gZvtaXJ.js";
+        script.async = true;
+        script.defer = true;
+
+        // Handle load success
+        script.onload = function () {
+          console.log("CookieChimp loaded successfully");
+          // Dispatch event for newsletter modal
+          window.dispatchEvent(new CustomEvent("cookieChimpLoaded"));
+        };
+
+        // Handle load error
+        script.onerror = function () {
+          console.warn("CookieChimp failed to load, using fallback");
+          // Set fallback consent
+          localStorage.setItem("cookiechimp_consent", "accepted");
+          window.dispatchEvent(new CustomEvent("cookieChimpLoaded"));
+        };
+
+        // Append to head
+        document.head.appendChild(script);
+      })();
+    </script>
 
     <!-- Clean Supabase Initialization -->
     <script>

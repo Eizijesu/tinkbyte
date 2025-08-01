@@ -134,8 +134,6 @@ export default defineConfig({
       minify: 'esbuild',
       sourcemap: false,
       cssCodeSplit: true,
-      // ADDED: Ensure public directory is copied
-      copyPublicDir: true,
       rollupOptions: {
         output: {
           manualChunks: {
@@ -143,7 +141,6 @@ export default defineConfig({
             'date-vendor': ['date-fns'],
             'search-vendor': ['fuse.js'],
             'supabase-vendor': ['@supabase/supabase-js'],
-            'auth-modules': ['./src/lib/admin/auth', './src/lib/supabase'],
           },
         },
       },

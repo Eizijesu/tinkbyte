@@ -204,9 +204,9 @@ declare global {
 </AdminLayout>
 
 <script>
-  import { adminAPIManager } from "../../lib/admin-api.js";
-  import { AuthState } from "../../lib/supabase.js";
-  import { getAdminRealtimeManager } from "../../lib/admin/realtime-manager.js";
+  import { adminAPIManager } from "../../lib/admin-api";
+  import { AuthState } from "../../lib/supabase";
+  import { getAdminRealtimeManager } from "../../lib/admin/realtime-manager";
 
   let realtimeManager: any = null;
   let metricsUpdateHandler: ((event: CustomEvent) => void) | null = null;
