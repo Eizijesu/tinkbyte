@@ -20,7 +20,7 @@
           const user = await adminAuthManager.getCurrentUser();
 
           if (!user) {
-            window.location.href = "/auth/admin-signin?redirect=/cms";
+            window.location.href = "/auth/admin-signin?redirect=/tinkbyte-cms";
             return;
           }
 
@@ -29,7 +29,7 @@
           window.location.href = `/admin/index.html?t=${timestamp}`;
         } catch (error) {
           console.error("TinaCMS auth failed:", error);
-          window.location.href = "/auth/admin-signin?redirect=/cms";
+          window.location.href = "/auth/admin-signin?redirect=/tinkbyte-cms";
         }
       });
     </script>
