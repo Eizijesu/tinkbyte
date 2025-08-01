@@ -5,28 +5,34 @@ const branch = process.env.TINA_BRANCH || process.env.HEAD || "main";
 
 export default defineConfig({
   branch,
-  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID!,
+  clientId: process.env.TINA_CLIENT_ID!,
   token: process.env.TINA_TOKEN!,
 
 
   build: {
-    outputFolder: "cms",
+    outputFolder: "admin",
     publicFolder: "public",
   },
 
+    // ADD THIS SECTION HERE:
+  ui: {
+    previewUrl: (context) => {
+      if (process.env.NODE_ENV === 'production') {
+        return { url: 'https://tinkbyte.com' };
+      }
+      return { url: 'http://localhost:4321' };
+    },
+  },
+
+
   media: {
     tina: {
-      mediaRoot: "",
+      mediaRoot: "uploads",
       publicFolder: "public",
       static: false,
     },
   },
 
-    // Add this for production
-  cmsCallback: (cms) => {
-    // Production callback
-    return cms;
-  },
   
   search: {
     tina: {
