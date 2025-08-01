@@ -66,7 +66,7 @@ export default defineConfig({
         {
           userAgent: '*',
           allow: '/',
-          disallow: ['/admin/', '/api/', '/tina/', '/_astro/'],
+          disallow: ['/admin/', '/api/', '/tina/', '/cms/', '/_astro/'],
         },
         {
           userAgent: 'GPTBot',
