@@ -3,7 +3,7 @@ import { defineConfig } from "tinacms";
 var branch = process.env.TINA_BRANCH || process.env.HEAD || "main";
 var config_default = defineConfig({
   branch,
-  clientId: process.env.TINA_CLIENT_ID,
+  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID,
   token: process.env.TINA_TOKEN,
   build: {
     outputFolder: "admin",
