@@ -1,0 +1,33 @@
+[33mcommit 8f2560e78b5373cb4dd2ac1ae24cbe741b269e40[m
+Author: Eizijesu <victoriousvirtue@gmail.com>
+Date:   Fri Aug 1 23:45:27 2025 +0100
+
+    tina still
+
+[1mdiff --git a/tina/__generated__/client.ts b/tina/__generated__/client.ts[m
+[1mindex 81d0f63..c479a2b 100644[m
+[1m--- a/tina/__generated__/client.ts[m
+[1m+++ b/tina/__generated__/client.ts[m
+[36m@@ -1,5 +1,5 @@[m
+ import { createClient } from "tinacms/dist/client";[m
+ import { queries } from "./types";[m
+[31m-export const client = createClient({ cacheDir: 'C:/Users/Eizi-Jesu/Desktop/Sites-Project/tinkbyte/tina/__generated__/.cache/1754087069341', url: 'https://content.tinajs.io/1.6/content/20a76123-916e-418a-bf43-1535aa1712e9/github/main', token: 'aa70bea9e913342a2d548fc751698e43a760212a3', queries,  });[m
+[32m+[m[32mexport const client = createClient({ cacheDir: 'C:/Users/Eizi-Jesu/Desktop/Sites-Project/tinkbyte/tina/__generated__/.cache/1754087208472', url: 'https://content.tinajs.io/1.6/content/20a76123-916e-418a-bf43-1535aa1712e9/github/main', token: 'aa70bea9e913342a2d548fc751698e43a760212a3', queries,  });[m
+ export default client;[m
+   [m
+\ No newline at end of file[m
+[1mdiff --git a/tina/config.ts b/tina/config.ts[m
+[1mindex 6795510..bdc9ab3 100644[m
+[1m--- a/tina/config.ts[m
+[1m+++ b/tina/config.ts[m
+[36m@@ -5,8 +5,8 @@[m [mconst branch = process.env.TINA_BRANCH || process.env.HEAD || "main";[m
+ [m
+ export default defineConfig({[m
+   branch,[m
+[31m-  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID!,[m
+[31m-  token: process.env.TINA_TOKEN!,[m
+[32m+[m[32m  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID,[m
+[32m+[m[32m  token: process.env.TINA_TOKEN,[m
+ [m
+   build: {[m
+     outputFolder: "admin",[m
