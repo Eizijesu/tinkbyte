@@ -44,7 +44,7 @@ function createSupabaseClient(): SupabaseClient {
 export const supabase = createSupabaseClient();
 export { createSupabaseClient as getSupabaseClient };
 
-// **ADD: Export AuthState class that was missing**
+// AuthState class
 export class AuthState {
   private static instance: AuthState | null = null;
   private currentUser: any = null;
@@ -122,6 +122,7 @@ export const db = {
   commentReactions: () => supabase.from('comment_reactions'),
   commentBookmarks: () => supabase.from('comment_bookmarks'),
   commentDrafts: () => supabase.from('comment_drafts'),
+  commentSaves: () => supabase.from('comment_saves'),
   commentEditHistory: () => supabase.from('comment_edit_history'),
   commentNotifications: () => supabase.from('comment_notifications'),
   userRateLimits: () => supabase.from('user_rate_limits'),
@@ -129,6 +130,10 @@ export const db = {
   userCategoryFollows: () => supabase.from('user_category_follows'),
   articles: () => supabase.from('articles'),
   articleLikes: () => supabase.from('article_likes'),
+  articleReads: () => supabase.from('article_reads'),
+  articleFollows: () => supabase.from('article_follows'),
+  articleSaves: () => supabase.from('article_saves'),
+  authorFollows: () => supabase.from('author_follows'),
   moderationRules: () => supabase.from('moderation_rules'),
   categories: () => supabase.from('categories'),
   authors: () => supabase.from('authors'),
@@ -207,6 +212,12 @@ export const envDb = {
     update: (data: any) => db.newsletterSubscriptions().update({ ...data, environment: config.environment }),
     delete: () => db.newsletterSubscriptions().delete().eq('environment', config.environment),
   },
+  userActivities: {
+    select: (columns: string = '*') => db.userActivities().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.userActivities().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.userActivities().update({ ...data, environment: config.environment }),
+    delete: () => db.userActivities().delete().eq('environment', config.environment),
+  },
 };
 
 // Utility for RPC calls
@@ -215,7 +226,7 @@ export const rpc = (fn: string, params: object) =>
 
 export type TableName = keyof typeof db;
 
-// All your interfaces stay exactly the same
+// All your interfaces - keeping them exactly as they were
 export interface User {
   id: string;
   email?: string;
@@ -385,6 +396,20 @@ export interface ArticleLike {
   created_at: string;
 }
 
+export interface ArticleSave {
+  id: string;
+  user_id: string;
+  article_id: string;
+  created_at: string;
+}
+
+export interface CommentSave {
+  id: string;
+  user_id: string;
+  comment_id: string;
+  created_at: string;
+}
+
 export interface CommentLike {
   id: string;
   user_id: string;
@@ -393,13 +418,24 @@ export interface CommentLike {
   created_at: string;
 }
 
-export interface ReadingHistory {
+export interface ArticleRead {
   id: string;
   user_id: string;
   article_id: string;
   read_percentage: number;
-  time_spent: number;
-  last_read_at: string;
+  time_spent_seconds: number;
+  created_at: string;
+}
+
+export interface UserActivity {
+  id: string;
+  user_id: string;
+  activity_type: string;
+  entity_type: string;
+  entity_id: string;
+  description: string;
+  metadata: any;
+  environment: string;
   created_at: string;
 }
 
@@ -464,9 +500,113 @@ export const dbWithRetry = {
   }
 };
 
-// Complete TinkByteAPI with ALL your methods restored
+// Complete TinkByteAPI with ALL methods
 export class TinkByteAPI {
-  // Article operations
+  // UUID generator with fallback
+  private static generateUUID(): string {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback for environments without crypto.randomUUID
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  // **CORE ACTIVITY RECORDING METHODS**
+  static async recordActivity(activityType: string, entityType: string, entityId: string, metadata?: any) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) return { success: false, error: 'User not authenticated' };
+
+      // Create a readable description based on activity type
+      let description = '';
+      switch (activityType) {
+        case 'comment':
+          description = `Commented on ${entityType}`;
+          break;
+        case 'like':
+          description = `Liked a ${entityType}`;
+          break;
+        case 'unlike':
+          description = `Unliked a ${entityType}`;
+          break;
+        case 'follow':
+          description = `Followed a ${entityType}`;
+          break;
+        case 'unfollow':
+          description = `Unfollowed a ${entityType}`;
+          break;
+        case 'read':
+          description = `Read an ${entityType}`;
+          break;
+        case 'save':
+          description = `Saved an ${entityType}`;
+          break;
+        case 'bookmark':
+          description = `Bookmarked a ${entityType}`;
+          break;
+        default:
+          description = `Performed ${activityType} on ${entityType}`;
+      }
+
+      const { data, error } = await supabase
+        .from('user_activities')
+        .insert({
+          user_id: user.id,
+          activity_type: activityType,
+          entity_type: entityType,
+          entity_id: entityId,
+          description: description,
+          metadata: metadata || {},
+          environment: config.environment,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error recording activity:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Update profile statistics
+  static async updateProfileStats(userId: string, field: string, increment: number = 1) {
+    try {
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select(field)
+        .eq('id', userId)
+        .eq('environment', config.environment)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const currentValue = profile[field] || 0;
+      const newValue = Math.max(0, currentValue + increment);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ [field]: newValue })
+        .eq('id', userId)
+        .eq('environment', config.environment);
+
+      if (updateError) throw updateError;
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error updating profile stats:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // **ARTICLE OPERATIONS**
   static async getArticles(options: {
     limit?: number;
     offset?: number;
@@ -553,7 +693,230 @@ export class TinkByteAPI {
     }
   }
 
-  // Get comments for an article with environment filtering
+
+  // **ARTICLE READ TRACKING**
+  static async recordArticleRead(articleSlug: string, readPercentage: number = 100, timeSpentSeconds: number = 0) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) return { success: false, error: 'User not authenticated' };
+
+      // Check if already read
+      const { data: existingRead } = await supabase
+        .from('article_reads')
+        .select('id, read_percentage')
+        .eq('user_id', user.id)
+        .eq('article_id', articleSlug)
+        .single();
+
+      if (existingRead) {
+        // Update read percentage if higher
+        if (readPercentage > existingRead.read_percentage) {
+          await supabase
+            .from('article_reads')
+            .update({
+              read_percentage: readPercentage,
+              time_spent_seconds: timeSpentSeconds
+            })
+            .eq('id', existingRead.id);
+        }
+      } else {
+        // Insert new reading record
+        await supabase
+          .from('article_reads')
+          .insert({
+            user_id: user.id,
+            article_id: articleSlug,
+            read_percentage: readPercentage,
+            time_spent_seconds: timeSpentSeconds,
+            created_at: new Date().toISOString()
+          });
+
+        // Record activity
+        await this.recordActivity('read', 'article', articleSlug, {
+          read_percentage: readPercentage,
+          time_spent_seconds: timeSpentSeconds
+        });
+
+        // Update profile stats
+        await this.updateProfileStats(user.id, 'total_reads', 1);
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error recording article read:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // **ARTICLE FOLLOWS**
+static async followArticle(articleSlug: string) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+
+    if (!user) {
+      throw new Error('Must be logged in to follow articles');
+    }
+
+    // Check if already following
+    const { data: existingFollow } = await supabase
+      .from('article_follows')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('article_id', articleSlug)
+      .single();
+
+    if (existingFollow) {
+      return { success: false, error: 'Already following this article' };
+    }
+
+    const { error } = await supabase
+      .from('article_follows')
+      .insert({
+        user_id: user.id,
+        article_id: articleSlug,
+        created_at: new Date().toISOString()
+      });
+
+    if (error) throw error;
+
+    // Record activity
+    await this.recordActivity('follow', 'article', articleSlug);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error following article:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+static async unfollowArticle(articleSlug: string) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+
+    if (!user) {
+      throw new Error('Must be logged in to unfollow articles');
+    }
+
+    const { error } = await supabase
+      .from('article_follows')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('article_id', articleSlug);
+
+    if (error) throw error;
+
+    // Record activity
+    await this.recordActivity('unfollow', 'article', articleSlug);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error unfollowing article:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+  // **ARTICLE LIKES**
+  static async toggleArticleLike(articleId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to like articles');
+      }
+
+      // Check if already liked
+      const { data: existingLike } = await supabase
+        .from('article_likes')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('article_id', articleId)
+        .single();
+
+      if (existingLike) {
+        // Remove like
+        await supabase
+          .from('article_likes')
+          .delete()
+          .eq('id', existingLike.id);
+
+        // Record unlike activity
+        await this.recordActivity('unlike', 'article', articleId);
+
+        return { success: true, liked: false };
+      } else {
+        // Add like
+        await supabase
+          .from('article_likes')
+          .insert({
+            user_id: user.id,
+            article_id: articleId,
+            created_at: new Date().toISOString()
+          });
+
+        // Record like activity
+        await this.recordActivity('like', 'article', articleId);
+
+        return { success: true, liked: true };
+      }
+    } catch (error: any) {
+      console.error('Error toggling article like:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // **ARTICLE SAVES**
+  static async toggleArticleSave(articleId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to save articles');
+      }
+
+      // Check if already saved
+      const { data: existingSave } = await supabase
+        .from('article_saves')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('article_id', articleId)
+        .single();
+
+      if (existingSave) {
+        // Remove save
+        await supabase
+          .from('article_saves')
+          .delete()
+          .eq('id', existingSave.id);
+
+        return { success: true, saved: false };
+      } else {
+        // Add save
+        await supabase
+          .from('article_saves')
+          .insert({
+            user_id: user.id,
+            article_id: articleId,
+            created_at: new Date().toISOString()
+          });
+
+        // Record save activity
+        await this.recordActivity('save', 'article', articleId);
+
+        return { success: true, saved: true };
+      }
+    } catch (error: any) {
+      console.error('Error toggling article save:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // **COMMENT OPERATIONS**
   static async getComments(articleId: string) {
     try {
       const { data, error } = await supabase
@@ -599,187 +962,954 @@ export class TinkByteAPI {
     }
   }
 
-  // Add this method to your TinkByteAPI class
-static async deleteCommentDraft(articleId: string) {
+  static async addComment(articleSlug: string, content: string, parentId: string | null = null) {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.user) {
+        throw new Error('Must be logged in to comment');
+      }
+
+      const user = session.user;
+
+      // Verify the article exists
+      const { data: article, error: articleError } = await supabase
+        .from('articles')
+        .select('slug, title')
+        .eq('slug', articleSlug)
+        .single();
+
+      if (articleError || !article) {
+        throw new Error(`Article with slug "${articleSlug}" not found`);
+      }
+
+      // Calculate thread level for replies
+      let threadLevel = 0;
+      if (parentId) {
+        const { data: parentComment } = await supabase
+          .from('comments')
+          .select('thread_level')
+          .eq('id', parentId)
+          .single();
+        
+        if (parentComment) {
+          threadLevel = Math.min((parentComment.thread_level || 0) + 1, 4);
+        }
+      }
+
+      const commentId = this.generateUUID();
+      const commentData = {
+        id: commentId,
+        content: content,
+        raw_content: content,
+        user_id: user.id,
+        article_id: articleSlug,
+        parent_id: parentId || null,
+        thread_level: threadLevel,
+        environment: config.environment,
+        moderation_status: 'auto_approved' as const,
+        auto_approved_reason: 'Auto-approved by content filter',
+        quality_score: 50,
+        like_count: 0,
+        reply_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Insert comment
+      const { data: insertedComment, error: insertError } = await supabase
+        .from('comments')
+        .insert(commentData)
+        .select('*')
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Record activity
+      await this.recordActivity('comment', 'article', articleSlug, {
+        comment_id: commentId,
+        article_title: article.title,
+        is_reply: !!parentId
+      });
+
+      // Update profile stats
+      await this.updateProfileStats(user.id, 'total_comments', 1);
+
+      // Process mentions
+      await this.processMentions(content, insertedComment.id, user.email?.split('@')[0] || 'Someone');
+
+      // Fetch profile separately
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select(`
+          id, display_name, avatar_type, avatar_preset_id, avatar_url,
+          reputation_score, is_admin, membership_type
+        `)
+        .eq('id', user.id)
+        .eq('environment', config.environment)
+        .maybeSingle();
+
+      // Delete draft after successful comment
+      try {
+        await this.deleteCommentDraft(articleSlug);
+      } catch (draftError) {
+        console.warn('Could not delete draft:', draftError);
+      }
+
+      // Combine the data
+      const finalData = {
+        ...insertedComment,
+        profiles: profileData || {
+          id: user.id,
+          display_name: user.email?.split('@')[0] || 'User',
+          avatar_type: 'preset' as const,
+          avatar_preset_id: 1,
+          avatar_url: null,
+          reputation_score: 0,
+          is_admin: false,
+          membership_type: 'free' as const
+        }
+      };
+
+      return { success: true, data: finalData };
+
+    } catch (error: any) {
+      console.error('Error adding comment:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // **COMMENT SAVES** 
+static async toggleCommentSave(commentId: string) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user;
 
     if (!user) {
-      return { success: false, error: 'Must be logged in to delete draft' };
+      throw new Error('Must be logged in to save comments');
     }
 
-    const { error } = await supabase
-      .from('comment_drafts')
-      .delete()
+    // Check if already saved
+    const { data: existingSave } = await supabase
+      .from('comment_saves')
+      .select('id')
       .eq('user_id', user.id)
-      .eq('article_id', articleId)
+      .eq('comment_id', commentId)
+      .single();
+
+    if (existingSave) {
+      // Remove save
+      await supabase
+        .from('comment_saves')
+        .delete()
+        .eq('id', existingSave.id);
+
+      return { success: true, saved: false };
+    } else {
+      // Add save
+      await supabase
+        .from('comment_saves')
+        .insert({
+          user_id: user.id,
+          comment_id: commentId,
+          created_at: new Date().toISOString()
+        });
+
+      // Record save activity
+      await this.recordActivity('save', 'comment', commentId);
+
+      return { success: true, saved: true };
+    }
+  } catch (error: any) {
+    console.error('Error toggling comment save:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+  static async toggleCommentLike(commentId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to like comments');
+      }
+
+      // Check if already liked
+      const { data: existingLike } = await supabase
+        .from('comment_likes')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('comment_id', commentId)
+        .eq('environment', config.environment)
+        .single();
+
+      if (existingLike) {
+        // Remove like
+        await supabase
+          .from('comment_likes')
+          .delete()
+          .eq('id', existingLike.id)
+          .eq('environment', config.environment);
+
+        // Update comment like count
+        const { data: comment } = await supabase
+          .from('comments')
+          .select('like_count')
+          .eq('id', commentId)
+          .eq('environment', config.environment)
+          .single();
+
+        const newCount = Math.max((comment?.like_count || 1) - 1, 0);
+        
+        await supabase
+          .from('comments')
+          .update({ like_count: newCount })
+          .eq('id', commentId)
+          .eq('environment', config.environment);
+
+        // Record unlike activity
+        await this.recordActivity('unlike', 'comment', commentId);
+
+        return { success: true, liked: false };
+      } else {
+        // Add like
+        await supabase
+          .from('comment_likes')
+          .insert({
+            user_id: user.id,
+            comment_id: commentId,
+            environment: config.environment,
+            created_at: new Date().toISOString()
+          });
+
+        // Update comment like count
+        const { data: comment } = await supabase
+          .from('comments')
+          .select('like_count')
+          .eq('id', commentId)
+          .eq('environment', config.environment)
+          .single();
+
+        const newCount = (comment?.like_count || 0) + 1;
+        
+        await supabase
+          .from('comments')
+          .update({ like_count: newCount })
+          .eq('id', commentId)
+          .eq('environment', config.environment);
+
+        // Record like activity
+        await this.recordActivity('like', 'comment', commentId);
+
+        return { success: true, liked: true };
+      }
+    } catch (error: any) {
+      console.error('Error toggling comment like:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // **FOLLOW OPERATIONS**
+  static async followUser(userId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to follow users');
+      }
+
+      if (user.id === userId) {
+        throw new Error('Cannot follow yourself');
+      }
+
+      // Check if already following
+      const { data: existingFollow } = await supabase
+        .from('user_follows')
+        .select('id')
+        .eq('follower_id', user.id)
+        .eq('following_id', userId)
+        .eq('follow_type', 'user')
+        .eq('is_active', true)
+        .single();
+
+      if (existingFollow) {
+        return { success: false, error: 'Already following this user' };
+      }
+
+      const { error } = await supabase
+        .from('user_follows')
+        .insert({
+          follower_id: user.id,
+          following_id: userId,
+          follow_type: 'user',
+          is_active: true,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      // Record follow activity
+      await this.recordActivity('follow', 'user', userId);
+
+      // Update follower/following counts
+      await this.updateProfileStats(user.id, 'following_count', 1);
+      await this.updateProfileStats(userId, 'followers_count', 1);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error following user:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async unfollowUser(userId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to unfollow users');
+      }
+
+      const { error } = await supabase
+        .from('user_follows')
+        .update({ is_active: false })
+        .eq('follower_id', user.id)
+        .eq('following_id', userId)
+        .eq('follow_type', 'user');
+
+      if (error) throw error;
+
+      // Record unfollow activity
+      await this.recordActivity('unfollow', 'user', userId);
+
+      // Update follower/following counts
+      await this.updateProfileStats(user.id, 'following_count', -1);
+      await this.updateProfileStats(userId, 'followers_count', -1);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error unfollowing user:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async followCategory(categorySlug: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to follow categories');
+      }
+
+      // Check if already following
+      const { data: existingFollow } = await supabase
+        .from('user_category_follows')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('category_slug', categorySlug)
+        .eq('environment', config.environment)
+        .single();
+
+      if (existingFollow) {
+        return { success: false, error: 'Already following this category' };
+      }
+
+      const { error } = await supabase
+        .from('user_category_follows')
+        .insert({
+          user_id: user.id,
+          category_slug: categorySlug,
+          environment: config.environment,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      // Record activity
+      await this.recordActivity('follow', 'category', categorySlug);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error following category:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async unfollowCategory(categorySlug: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to unfollow categories');
+      }
+
+      const { error } = await supabase
+        .from('user_category_follows')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('category_slug', categorySlug)
+        .eq('environment', config.environment);
+
+      if (error) throw error;
+
+      // Record activity
+      await this.recordActivity('unfollow', 'category', categorySlug);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error unfollowing category:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async followAuthor(authorSlug: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to follow authors');
+      }
+
+      // Check if already following
+      const { data: existingFollow } = await supabase
+        .from('author_follows')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('author_slug', authorSlug)
+        .single();
+
+      if (existingFollow) {
+        return { success: false, error: 'Already following this author' };
+      }
+
+      const { error } = await supabase
+        .from('author_follows')
+        .insert({
+          user_id: user.id,
+          author_slug: authorSlug,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      // Record activity
+      await this.recordActivity('follow', 'author', authorSlug);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error following author:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async unfollowAuthor(authorSlug: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to unfollow authors');
+      }
+
+      const { error } = await supabase
+        .from('author_follows')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('author_slug', authorSlug);
+
+      if (error) throw error;
+
+      // Record activity
+      await this.recordActivity('unfollow', 'author', authorSlug);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error unfollowing author:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // **USER PROFILE AND ACTIVITY**
+  static async getUserActivity(userId: string, limit = 20) {
+    try {
+      const { data, error } = await supabase
+        .from('user_activities')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('environment', config.environment)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error fetching user activity:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+ static async getProfileData(userId: string) {
+  try {
+    // Get profile with all stats
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .eq('environment', config.environment)
+      .single();
+
+    if (profileError) throw profileError;
+
+    // Get following counts using your user_follows table
+    const { count: followingCount } = await supabase
+      .from('user_follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', userId)
+      .eq('follow_type', 'user')
+      .eq('is_active', true);
+
+    const { count: followersCount } = await supabase
+      .from('user_follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', userId)
+      .eq('follow_type', 'user')
+      .eq('is_active', true);
+
+    // Get category follows count
+    const { count: categoryFollowsCount } = await supabase
+      .from('user_category_follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
       .eq('environment', config.environment);
 
-    if (error) {
-      console.error('Error deleting draft:', error);
-      throw error;
-    }
+    // Get author follows count
+    const { count: authorFollowsCount } = await supabase
+      .from('author_follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
 
-    
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error deleting comment draft:', error);
-    return { success: false, error: error.message };
-  }
-}
+    // Get article follows count
+    const { count: articleFollowsCount } = await supabase
+      .from('article_follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
 
-  // **FIX: Use crypto.randomUUID() with fallback for Node.js environments**
-  private static generateUUID(): string {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    // Fallback for environments without crypto.randomUUID
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
+    // Get activity count
+    const { count: activityCount } = await supabase
+      .from('user_activities')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('environment', config.environment);
 
-  // Add comment method with single foreign key relationship
-static async addComment(articleSlug: string, content: string, parentId: string | null = null) {
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError) {
-      console.error('Session error:', sessionError);
-      throw new Error('Authentication error');
-    }
-
-    if (!session?.user) {
-      console.error('No session found');
-      throw new Error('Must be logged in to comment');
-    }
-
-    const user = session.user;
-
-    // Verify the article exists
-    const { data: article, error: articleError } = await supabase
-      .from('articles')
-      .select('slug, title')
-      .eq('slug', articleSlug)
-      .single();
-
-    if (articleError || !article) {
-      console.error('Article not found:', articleSlug, articleError);
-      throw new Error(`Article with slug "${articleSlug}" not found`);
-    }
-
-    // Calculate thread level for replies
-    let threadLevel = 0;
-    if (parentId) {
-      const { data: parentComment } = await supabase
-        .from('comments')
-        .select('thread_level')
-        .eq('id', parentId)
-        .single();
-      
-      if (parentComment) {
-        threadLevel = Math.min((parentComment.thread_level || 0) + 1, 4);
-      }
-    }
-
-    const commentId = this.generateUUID();
-
-    const commentData = {
-      id: commentId,
-      content: content,
-      raw_content: content,
-      user_id: user.id,
-      article_id: articleSlug,
-      parent_id: parentId || null,
-      thread_level: threadLevel,
-      environment: config.environment,
-      moderation_status: 'auto_approved' as const, // **ENSURE AUTO-APPROVAL**
-      auto_approved_reason: 'Auto-approved by content filter',
-      quality_score: 50,
-      like_count: 0,
-      reply_count: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    
-
-    // Insert comment
-    const { data: insertedComment, error: insertError } = await supabase
-      .from('comments')
-      .insert(commentData)
+    // Get recent activities
+    const { data: activities } = await supabase
+      .from('user_activities')
       .select('*')
-      .single();
-
-    if (insertError) {
-      console.error('Insert error:', insertError);
-      throw insertError;
-    }
-
-    
-
-    // Process mentions
-    await this.processMentions(content, insertedComment.id, user.email?.split('@')[0] || 'Someone');
-
-    // Fetch profile separately
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select(`
-        id,
-        display_name,
-        avatar_type,
-        avatar_preset_id,
-        avatar_url,
-        reputation_score,
-        is_admin,
-        membership_type
-      `)
-      .eq('id', user.id)
+      .eq('user_id', userId)
       .eq('environment', config.environment)
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .limit(10);
 
-    if (profileError) {
-      console.error('Profile fetch error:', profileError);
-    }
+    // Get article reads count
+    const { count: articlesReadCount } = await supabase
+      .from('article_reads')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
 
-    // **DELETE DRAFT AFTER SUCCESSFUL COMMENT**
-    try {
-      await this.deleteCommentDraft(articleSlug);
-      
-    } catch (draftError) {
-      console.warn('⚠️ Could not delete draft:', draftError);
-      // Don't fail the comment creation if draft deletion fails
-    }
+    // Get comments count
+    const { count: commentsCount } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('environment', config.environment)
+      .eq('is_deleted', false);
 
-    // Combine the data
-    const finalData = {
-      ...insertedComment,
-      profiles: profileData || {
-        id: user.id,
-        display_name: user.email?.split('@')[0] || 'User',
-        avatar_type: 'preset' as const,
-        avatar_preset_id: 1,
-        avatar_url: null,
-        reputation_score: 0,
-        is_admin: false,
-        membership_type: 'free' as const
+    // Get article likes count
+    const { count: articleLikesCount } = await supabase
+      .from('article_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    // Get article saves count
+    const { count: articleSavesCount } = await supabase
+      .from('article_saves')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    // Get comment likes count
+    const { count: commentLikesCount } = await supabase
+      .from('comment_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('environment', config.environment);
+
+    // Get comment saves count
+    const { count: commentSavesCount } = await supabase
+      .from('comment_saves')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    // Get comment bookmarks count
+    const { count: commentBookmarksCount } = await supabase
+      .from('comment_bookmarks')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('environment', config.environment);
+
+    return {
+      success: true,
+      data: {
+        ...profile,
+        // Following counts
+        following_count: followingCount || 0,
+        followers_count: followersCount || 0,
+        category_follows_count: categoryFollowsCount || 0,
+        author_follows_count: authorFollowsCount || 0,
+        article_follows_count: articleFollowsCount || 0,
+        
+        // Activity counts
+        activity_count: activityCount || 0,
+        articles_read_count: articlesReadCount || 0,
+        comments_count: commentsCount || 0,
+        
+        // Interaction counts
+        article_likes_count: articleLikesCount || 0,
+        article_saves_count: articleSavesCount || 0,
+        comment_likes_count: commentLikesCount || 0,
+        comment_saves_count: commentSavesCount || 0,
+        comment_bookmarks_count: commentBookmarksCount || 0,
+        
+        // Recent activities
+        recent_activities: activities || []
       }
     };
-
-    
-
-    return { success: true, data: finalData };
-
   } catch (error: any) {
-    console.error('Error adding comment:', error);
+    console.error('Error fetching profile data:', error);
     return { success: false, error: error.message };
   }
 }
 
-  // Process mentions helper method
+  // **COMMENT DRAFTS**
+  static async saveCommentDraft(articleId: string, content: string, draftKey?: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to save draft');
+      }
+
+      const { data, error } = await supabase
+        .from('comment_drafts')
+        .upsert({
+          user_id: user.id,
+          article_id: articleId,
+          content,
+          environment: config.environment,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,article_id,environment',
+          ignoreDuplicates: false
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Draft save error:', error);
+        throw error;
+      }
+      
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error saving comment draft:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async getCommentDraft(articleId: string, draftKey?: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        return { success: false, error: 'Must be logged in to get draft' };
+      }
+
+      // First try current environment
+      let { data, error } = await supabase
+        .from('comment_drafts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('article_id', articleId)
+        .eq('environment', config.environment)
+        .maybeSingle();
+
+      // If not found and we're in production, try development as fallback
+      if (!data && config.environment === 'production') {
+        const { data: devData, error: devError } = await supabase
+          .from('comment_drafts')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('article_id', articleId)
+          .eq('environment', 'development')
+          .maybeSingle();
+
+        if (devData) {
+          // Migrate the draft to production
+          await supabase
+            .from('comment_drafts')
+            .update({ environment: 'production' })
+            .eq('id', devData.id);
+          
+          data = { ...devData, environment: 'production' };
+        }
+      }
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error getting comment draft:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async deleteCommentDraft(articleId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        return { success: false, error: 'Must be logged in to delete draft' };
+      }
+
+      const { error } = await supabase
+        .from('comment_drafts')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('article_id', articleId)
+        .eq('environment', config.environment);
+
+      if (error) {
+        console.error('Error deleting draft:', error);
+        throw error;
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error deleting comment draft:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // **COMMENT ADDITIONAL FEATURES**
+  static async updateComment(commentId: string, content: string, editReason: string | null = null) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to update comment');
+      }
+
+      // First, get the comment to check ownership and time
+      const { data: existingComment, error: fetchError } = await supabase
+        .from('comments')
+        .select('user_id, created_at, editable_until')
+        .eq('id', commentId)
+        .eq('environment', config.environment)
+        .single();
+
+      if (fetchError || !existingComment) {
+        throw new Error('Comment not found');
+      }
+
+      // Check ownership
+      if (existingComment.user_id !== user.id) {
+        throw new Error('You can only edit your own comments');
+      }
+
+      // Check time limit (15 minutes)
+      const createdAt = new Date(existingComment.created_at);
+      const now = new Date();
+      const diffInMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+
+      if (diffInMinutes > 15) {
+        throw new Error('Comments can only be edited within 15 minutes of posting');
+      }
+
+      // Update the comment
+      const { data, error } = await supabase
+        .from('comments')
+        .update({
+          content,
+          raw_content: content,
+          edit_reason: editReason || null,
+          is_edited: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', commentId)
+        .eq('user_id', user.id)
+        .eq('environment', config.environment)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async deleteComment(commentId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to delete comment');
+      }
+
+      const { error } = await supabase
+        .from('comments')
+        .update({
+          is_deleted: true,
+          deleted_at: new Date().toISOString(),
+          deleted_by: user.id
+        })
+        .eq('id', commentId)
+        .eq('user_id', user.id)
+        .eq('environment', config.environment);
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error deleting comment:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async toggleCommentBookmark(commentId: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to bookmark comments');
+      }
+
+      // Check if already bookmarked
+      const { data: existingBookmark } = await supabase
+        .from('comment_bookmarks')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('comment_id', commentId)
+        .eq('environment', config.environment)
+        .single();
+
+      if (existingBookmark) {
+        // Remove bookmark
+        await supabase
+          .from('comment_bookmarks')
+          .delete()
+          .eq('id', existingBookmark.id);
+
+        return { success: true, bookmarked: false };
+      } else {
+        // Add bookmark
+        await supabase
+          .from('comment_bookmarks')
+          .insert({
+            user_id: user.id,
+            comment_id: commentId,
+            environment: config.environment,
+            created_at: new Date().toISOString()
+          });
+
+        // Record bookmark activity
+        await this.recordActivity('bookmark', 'comment', commentId);
+
+        return { success: true, bookmarked: true };
+      }
+    } catch (error: any) {
+      console.error('Error toggling bookmark:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async toggleCommentReaction(commentId: string, reactionType: string) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      if (!user) {
+        throw new Error('Must be logged in to react to comments');
+      }
+
+      // Check if already reacted
+      const { data: existingReaction } = await supabase
+        .from('comment_reactions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('comment_id', commentId)
+        .eq('reaction_type', reactionType)
+        .eq('environment', config.environment)
+        .single();
+
+      if (existingReaction) {
+        // Remove reaction
+        await supabase
+          .from('comment_reactions')
+          .delete()
+          .eq('id', existingReaction.id);
+
+        // Get updated count
+        const { count } = await supabase
+          .from('comment_reactions')
+          .select('*', { count: 'exact', head: true })
+          .eq('comment_id', commentId)
+          .eq('reaction_type', reactionType)
+          .eq('environment', config.environment);
+
+        return { success: true, reacted: false, count: count || 0 };
+      } else {
+        // Add reaction
+        await supabase
+          .from('comment_reactions')
+          .insert({
+            user_id: user.id,
+            comment_id: commentId,
+            reaction_type: reactionType,
+            environment: config.environment,
+            created_at: new Date().toISOString()
+          });
+
+        // Get updated count
+        const { count } = await supabase
+          .from('comment_reactions')
+          .select('*', { count: 'exact', head: true })
+          .eq('comment_id', commentId)
+          .eq('reaction_type', reactionType)
+          .eq('environment', config.environment);
+
+        return { success: true, reacted: true, count: count || 0 };
+      }
+    } catch (error: any) {
+      console.error('Error toggling reaction:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // **MENTIONS AND NOTIFICATIONS**
   static async processMentions(content: string, commentId: string, mentionerName: string) {
     try {
       const mentionRegex = /@(\w+)/g;
@@ -846,7 +1976,6 @@ static async addComment(articleSlug: string, content: string, parentId: string |
     }
   }
 
-  // Get mentionable users
   static async getMentionableUsers(query: string = '') {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -890,7 +2019,6 @@ static async addComment(articleSlug: string, content: string, parentId: string |
     }
   }
 
-  // Create mention notification
   static async createMentionNotification(commentId: string, mentionedUserId: string, mentionerName: string) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -935,7 +2063,6 @@ static async addComment(articleSlug: string, content: string, parentId: string |
     }
   }
 
-  // Get user notifications
   static async getUserNotifications(limit = 20) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -976,7 +2103,6 @@ static async addComment(articleSlug: string, content: string, parentId: string |
     }
   }
 
-  // Mark notification as read
   static async markNotificationAsRead(notificationId: string) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -1002,7 +2128,6 @@ static async addComment(articleSlug: string, content: string, parentId: string |
     }
   }
 
-  // Get unread notification count
   static async getUnreadNotificationCount() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -1028,378 +2153,7 @@ static async addComment(articleSlug: string, content: string, parentId: string |
     }
   }
 
-  // Update comment with environment awareness
-  static async updateComment(commentId: string, content: string, editReason: string | null = null) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
-        throw new Error('Must be logged in to update comment');
-      }
-
-      // First, get the comment to check ownership and time
-      const { data: existingComment, error: fetchError } = await supabase
-        .from('comments')
-        .select('user_id, created_at, editable_until')
-        .eq('id', commentId)
-        .eq('environment', config.environment)
-        .single();
-
-      if (fetchError || !existingComment) {
-        throw new Error('Comment not found');
-      }
-
-      // Check ownership
-      if (existingComment.user_id !== user.id) {
-        throw new Error('You can only edit your own comments');
-      }
-
-      // Check time limit (15 minutes)
-      const createdAt = new Date(existingComment.created_at);
-      const now = new Date();
-      const diffInMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-
-      if (diffInMinutes > 15) {
-        throw new Error('Comments can only be edited within 15 minutes of posting');
-      }
-
-      // Update the comment
-      const { data, error } = await supabase
-        .from('comments')
-        .update({
-          content,
-          raw_content: content,
-          edit_reason: editReason || null,
-          is_edited: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', commentId)
-        .eq('user_id', user.id)
-        .eq('environment', config.environment)
-        .select('*')
-        .single();
-
-      if (error) throw error;
-
-      return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Delete comment with environment awareness
-  static async deleteComment(commentId: string) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
-        throw new Error('Must be logged in to delete comment');
-      }
-
-      const { error } = await supabase
-        .from('comments')
-        .update({
-          is_deleted: true,
-          deleted_at: new Date().toISOString(),
-          deleted_by: user.id
-        })
-        .eq('id', commentId)
-        .eq('user_id', user.id)
-        .eq('environment', config.environment);
-
-      if (error) throw error;
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error deleting comment:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Toggle comment like with environment awareness
-  static async toggleCommentLike(commentId: string) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
-        throw new Error('Must be logged in to like comments');
-      }
-
-      // Check if already liked
-      const { data: existingLike } = await supabase
-        .from('comment_likes')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('comment_id', commentId)
-        .eq('environment', config.environment)
-        .single();
-
-      if (existingLike) {
-        // Remove like
-        await supabase
-          .from('comment_likes')
-          .delete()
-          .eq('id', existingLike.id)
-          .eq('environment', config.environment);
-
-        // Get current like count and decrement
-        const { data: comment } = await supabase
-          .from('comments')
-          .select('like_count')
-          .eq('id', commentId)
-          .eq('environment', config.environment)
-          .single();
-
-        const newCount = Math.max((comment?.like_count || 1) - 1, 0);
-        
-        await supabase
-          .from('comments')
-          .update({ like_count: newCount })
-          .eq('id', commentId)
-          .eq('environment', config.environment);
-
-        return { success: true, liked: false };
-      } else {
-        // Add like
-        await supabase
-          .from('comment_likes')
-          .insert({
-            user_id: user.id,
-            comment_id: commentId,
-            environment: config.environment,
-            created_at: new Date().toISOString()
-          });
-
-        // Get current like count and increment
-        const { data: comment } = await supabase
-          .from('comments')
-          .select('like_count')
-          .eq('id', commentId)
-          .eq('environment', config.environment)
-          .single();
-
-        const newCount = (comment?.like_count || 0) + 1;
-        
-        await supabase
-          .from('comments')
-          .update({ like_count: newCount })
-          .eq('id', commentId)
-          .eq('environment', config.environment);
-
-        return { success: true, liked: true };
-      }
-    } catch (error: any) {
-      console.error('Error toggling comment like:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
- // Save comment draft with environment awareness
-static async saveCommentDraft(articleId: string, content: string, draftKey?: string) {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const user = session?.user;
-
-    if (!user) {
-      throw new Error('Must be logged in to save draft');
-    }
-
-    
-
-    // **FIX: Remove draft_key entirely to avoid constraint conflicts**
-    const { data, error } = await supabase
-      .from('comment_drafts')
-      .upsert({
-        user_id: user.id,
-        article_id: articleId,
-        content,
-        environment: config.environment,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,article_id,environment',
-        ignoreDuplicates: false
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('❌ Draft save error:', error);
-      throw error;
-    }
-    
-    
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('Error saving comment draft:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-  // Toggle comment bookmark
-  static async toggleCommentBookmark(commentId: string) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
-        throw new Error('Must be logged in to bookmark comments');
-      }
-
-      // Check if already bookmarked
-      const { data: existingBookmark } = await supabase
-        .from('comment_bookmarks')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('comment_id', commentId)
-        .eq('environment', config.environment)
-        .single();
-
-      if (existingBookmark) {
-        // Remove bookmark
-        await supabase
-          .from('comment_bookmarks')
-          .delete()
-          .eq('id', existingBookmark.id);
-
-        return { success: true, bookmarked: false };
-      } else {
-        // Add bookmark
-        await supabase
-          .from('comment_bookmarks')
-          .insert({
-            user_id: user.id,
-            comment_id: commentId,
-            environment: config.environment,
-            created_at: new Date().toISOString()
-          });
-
-        return { success: true, bookmarked: true };
-      }
-    } catch (error: any) {
-      console.error('Error toggling bookmark:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Toggle comment reaction
-  static async toggleCommentReaction(commentId: string, reactionType: string) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
-        throw new Error('Must be logged in to react to comments');
-      }
-
-      // Check if already reacted
-      const { data: existingReaction } = await supabase
-        .from('comment_reactions')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('comment_id', commentId)
-        .eq('reaction_type', reactionType)
-        .eq('environment', config.environment)
-        .single();
-
-      if (existingReaction) {
-        // Remove reaction
-        await supabase
-          .from('comment_reactions')
-          .delete()
-          .eq('id', existingReaction.id);
-
-        // Get updated count
-        const { count } = await supabase
-          .from('comment_reactions')
-          .select('*', { count: 'exact', head: true })
-          .eq('comment_id', commentId)
-          .eq('reaction_type', reactionType)
-          .eq('environment', config.environment);
-
-        return { success: true, reacted: false, count: count || 0 };
-      } else {
-        // Add reaction
-        await supabase
-          .from('comment_reactions')
-          .insert({
-            user_id: user.id,
-            comment_id: commentId,
-            reaction_type: reactionType,
-            environment: config.environment,
-            created_at: new Date().toISOString()
-          });
-
-        // Get updated count
-        const { count } = await supabase
-          .from('comment_reactions')
-          .select('*', { count: 'exact', head: true })
-          .eq('comment_id', commentId)
-          .eq('reaction_type', reactionType)
-          .eq('environment', config.environment);
-
-        return { success: true, reacted: true, count: count || 0 };
-      }
-    } catch (error: any) {
-      console.error('Error toggling reaction:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Get comment draft with environment awareness
-static async getCommentDraft(articleId: string, draftKey?: string) {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const user = session?.user;
-
-    if (!user) {
-      return { success: false, error: 'Must be logged in to get draft' };
-    }
-
-    // First try current environment
-    let { data, error } = await supabase
-      .from('comment_drafts')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('article_id', articleId)
-      .eq('environment', config.environment)
-      .maybeSingle();
-
-    // If not found and we're in production, try development as fallback
-    if (!data && config.environment === 'production') {
-      
-      const { data: devData, error: devError } = await supabase
-        .from('comment_drafts')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('article_id', articleId)
-        .eq('environment', 'development')
-        .maybeSingle();
-
-      if (devData) {
-        
-        // Migrate the draft to production
-        await supabase
-          .from('comment_drafts')
-          .update({ environment: 'production' })
-          .eq('id', devData.id);
-        
-        data = { ...devData, environment: 'production' };
-      }
-    }
-
-    if (error && error.code !== 'PGRST116') throw error;
-
-    return { success: true, data };
-  } catch (error: any) {
-    console.error('Error getting comment draft:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-  // Category operations
+  // **CATEGORY OPERATIONS**
   static async getCategories() {
     try {
       const { data, error } = await supabase
@@ -1416,109 +2170,7 @@ static async getCommentDraft(articleId: string, draftKey?: string) {
     }
   }
 
-  // Toggle article like
-  static async toggleArticleLike(articleId: string) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
-        throw new Error('Must be logged in to like articles');
-      }
-
-      // Check if already liked
-      const { data: existingLike } = await supabase
-        .from('article_likes')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('article_id', articleId)
-        .single();
-
-      if (existingLike) {
-        // Remove like
-        await supabase
-          .from('article_likes')
-          .delete()
-          .eq('id', existingLike.id);
-
-        return { success: true, liked: false };
-      } else {
-        // Add like
-        await supabase
-          .from('article_likes')
-          .insert({
-            user_id: user.id,
-            article_id: articleId,
-            created_at: new Date().toISOString()
-          });
-
-        return { success: true, liked: true };
-      }
-    } catch (error: any) {
-      console.error('Error toggling article like:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Follow user
-  static async followUser(userId: string) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
-        throw new Error('Must be logged in to follow users');
-      }
-
-      if (user.id === userId) {
-        throw new Error('Cannot follow yourself');
-      }
-
-      const { error } = await supabase
-        .from('user_follows')
-        .insert({
-          follower_id: user.id,
-          following_id: userId,
-          follow_type: 'user',
-          created_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error following user:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Unfollow user
-  static async unfollowUser(userId: string) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
-      if (!user) {
-        throw new Error('Must be logged in to unfollow users');
-      }
-
-      const { error } = await supabase
-        .from('user_follows')
-        .delete()
-        .eq('follower_id', user.id)
-        .eq('following_id', userId)
-        .eq('follow_type', 'user');
-
-      if (error) throw error;
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error unfollowing user:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Newsletter operations
+  // **NEWSLETTER OPERATIONS**
   static async subscribeToNewsletter(email: string, name?: string) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -1546,7 +2198,6 @@ static async getCommentDraft(articleId: string, draftKey?: string) {
     }
   }
 
-  // Get user's newsletter subscriptions
   static async getUserNewsletterSubscriptions() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -1572,7 +2223,7 @@ static async getCommentDraft(articleId: string, draftKey?: string) {
     }
   }
 
-  // Search operations
+  // **SEARCH OPERATIONS**
   static async searchContent(query: string, type: 'articles' | 'users' | 'all' = 'all') {
     try {
       const results: any = {};
@@ -1611,26 +2262,7 @@ static async getCommentDraft(articleId: string, draftKey?: string) {
     }
   }
 
-  // Get user activity
-  static async getUserActivity(userId: string, limit = 20) {
-    try {
-      const { data, error } = await supabase
-        .from('user_activities')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-
-      return { success: true, data };
-    } catch (error: any) {
-      console.error('Error fetching user activity:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  // Admin operations
+  // **ADMIN OPERATIONS**
   static async moderateComment(commentId: string, action: 'approve' | 'flag' | 'hide' | 'delete', reason?: string) {
     try {
       const { data: { session } } = await supabase.auth.getSession();

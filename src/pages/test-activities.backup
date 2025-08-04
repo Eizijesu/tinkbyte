@@ -1,0 +1,218 @@
+---
+// src/pages/test-activities.astro
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Test Activities">
+  <div class="container mx-auto p-8">
+    <h1 class="text-3xl font-bold mb-8">Activity System Test</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Test Buttons -->
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-4">Test Actions</h2>
+        <div class="space-y-4">
+          <button
+            id="test-article-read"
+            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Test Article Read
+          </button>
+          <button
+            id="test-comment"
+            class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          >
+            Test Comment
+          </button>
+          <button
+            id="test-like"
+            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Test Like
+          </button>
+          <button
+            id="test-follow"
+            class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+          >
+            Test Follow
+          </button>
+          <button
+            id="get-profile"
+            class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+          >
+            Get Profile Data
+          </button>
+        </div>
+      </div>
+
+      <!-- Results Display -->
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-4">Results</h2>
+        <div
+          id="results"
+          class="bg-gray-100 p-4 rounded min-h-[200px] overflow-auto"
+        >
+          <p class="text-gray-500">Click buttons to test...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Feed -->
+    <div class="mt-8 bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-semibold mb-4">Recent Activities</h2>
+      <div id="activities" class="space-y-2">
+        <p class="text-gray-500">Loading activities...</p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { TinkByteAPI } from "../lib/supabase";
+
+  const resultsDiv = document.getElementById("results");
+  const activitiesDiv = document.getElementById("activities");
+
+  function displayResult(title: string, result: any) {
+    if (resultsDiv) {
+      resultsDiv.innerHTML = `
+        <div class="mb-4">
+          <h3 class="font-semibold text-green-600">${title}</h3>
+          <pre class="bg-white p-2 rounded text-sm overflow-auto">${JSON.stringify(result, null, 2)}</pre>
+        </div>
+      `;
+    }
+  }
+
+  function displayError(title: string, error: any) {
+    if (resultsDiv) {
+      resultsDiv.innerHTML = `
+        <div class="mb-4">
+          <h3 class="font-semibold text-red-600">${title} - ERROR</h3>
+          <pre class="bg-red-50 p-2 rounded text-sm overflow-auto">${JSON.stringify(error, null, 2)}</pre>
+        </div>
+      `;
+    }
+  }
+
+  async function loadActivities() {
+    try {
+      // Get current user first
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) {
+        if (activitiesDiv) {
+          activitiesDiv.innerHTML =
+            '<p class="text-orange-500">Please log in to see activities</p>';
+        }
+        return;
+      }
+
+      const result = await TinkByteAPI.getUserActivity(session.user.id, 10);
+      if (result.success && activitiesDiv) {
+        if (result.data.length === 0) {
+          activitiesDiv.innerHTML =
+            '<p class="text-gray-500">No activities yet. Try the test buttons above!</p>';
+        } else {
+          activitiesDiv.innerHTML = result.data
+            .map(
+              (activity: any) => `
+            <div class="border-l-4 border-blue-500 pl-4 py-2">
+              <p class="font-medium">${activity.description}</p>
+              <p class="text-sm text-gray-500">${activity.activity_type} • ${activity.entity_type} • ${new Date(activity.created_at).toLocaleString()}</p>
+            </div>
+          `
+            )
+            .join("");
+        }
+      }
+    } catch (error) {
+      console.error("Error loading activities:", error);
+      if (activitiesDiv) {
+        activitiesDiv.innerHTML =
+          '<p class="text-red-500">Error loading activities</p>';
+      }
+    }
+  }
+
+  // Test Article Read
+  document
+    .getElementById("test-article-read")
+    ?.addEventListener("click", async () => {
+      try {
+        const result = await TinkByteAPI.recordArticleRead(
+          "test-article-slug",
+          100,
+          30
+        );
+        displayResult("Article Read Test", result);
+        loadActivities();
+      } catch (error) {
+        displayError("Article Read Test", error);
+      }
+    });
+
+  // Test Comment (you'll need a real article slug)
+  document
+    .getElementById("test-comment")
+    ?.addEventListener("click", async () => {
+      try {
+        const result = await TinkByteAPI.addComment(
+          "test-article-slug",
+          "This is a test comment from the activity system!"
+        );
+        displayResult("Comment Test", result);
+        loadActivities();
+      } catch (error) {
+        displayError("Comment Test", error);
+      }
+    });
+
+  // Test Like (you'll need a real article ID)
+  document.getElementById("test-like")?.addEventListener("click", async () => {
+    try {
+      const result = await TinkByteAPI.toggleArticleLike("test-article-slug");
+      displayResult("Like Test", result);
+      loadActivities();
+    } catch (error) {
+      displayError("Like Test", error);
+    }
+  });
+
+  // Test Follow Category
+  document
+    .getElementById("test-follow")
+    ?.addEventListener("click", async () => {
+      try {
+        const result = await TinkByteAPI.followCategory("ai"); // Use a real category slug
+        displayResult("Follow Test", result);
+        loadActivities();
+      } catch (error) {
+        displayError("Follow Test", error);
+      }
+    });
+
+  // Get Profile Data
+  document
+    .getElementById("get-profile")
+    ?.addEventListener("click", async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session?.user) {
+          displayError("Profile Test", { error: "Please log in first" });
+          return;
+        }
+
+        const result = await TinkByteAPI.getProfileData(session.user.id);
+        displayResult("Profile Data Test", result);
+      } catch (error) {
+        displayError("Profile Test", error);
+      }
+    });
+
+  // Load activities on page load
+  loadActivities();
+</script>

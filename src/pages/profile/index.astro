@@ -166,7 +166,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     color: #f8fafc;
   }
 
-  /* CRITICAL FIX: Proper container constraints */
+  /* Container constraints */
   .profile-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -178,7 +178,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     box-sizing: border-box;
   }
 
-  /* FIXED: Profile Header Card - Proper width constraints */
+  /* Profile Header Card */
   .profile-header-card {
     background: white;
     border: 2px solid #e2e8f0;
@@ -194,7 +194,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     border-color: #334155;
   }
 
-  /* FIXED: Profile Info Layout - Prevent overflow */
+  /* Profile Info Layout */
   .profile-info {
     display: flex;
     gap: 2rem;
@@ -308,7 +308,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     color: #94a3b8;
   }
 
-  /* FIXED: Profile Stats - Proper width constraints */
+  /* Profile Stats */
   .profile-stats {
     flex-shrink: 0;
     min-width: 300px;
@@ -343,7 +343,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     color: #94a3b8;
   }
 
-  /* FIXED: Stats Row - Prevent overflow */
+  /* Stats Row - 2x2 grid */
   .stats-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -366,6 +366,12 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: normal;
+    word-wrap: break-word;
+    hyphens: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
   }
 
   html.dark .stat-item {
@@ -452,7 +458,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     border-color: #ef4444;
   }
 
-  /* Stats Grid - UPDATED: Only 2 columns now */
+  /* Stats Grid - 2 columns */
   .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -741,7 +747,7 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     color: #94a3b8;
   }
 
-  /* Responsive */
+  /* Responsive - Mobile */
   @media (max-width: 768px) {
     .profile-container {
       padding: 1rem;
@@ -752,15 +758,63 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       flex-direction: column;
       text-align: center;
       gap: 1rem;
+      align-items: center; /* Center all items */
     }
 
+    /* Center the avatar section on mobile */
+    .avatar-section {
+      align-self: center;
+      margin: 0 auto;
+    }
+
+    /* Center profile details */
+    .profile-details {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+    }
+
+    /* Center profile stats container */
     .profile-stats {
       min-width: auto;
       max-width: none;
+      width: 100%;
+      display: flex;
+      justify-content: center;
     }
 
+    .following-stats {
+      padding: 1rem;
+      width: 100%;
+      max-width: 320px; /* Limit width to prevent stretching */
+    }
+
+    .following-label {
+      margin-bottom: 0.75rem;
+      font-size: 0.75rem;
+      text-align: center;
+    }
+
+    /* KEEP 2x2 grid but handle long numbers */
     .stats-row {
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .stat-item {
+      padding: 0.75rem 0.25rem;
+      font-size: 0.7rem; /* Slightly smaller for long numbers */
+      line-height: 1.1;
+      min-height: 60px; /* Consistent height */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      word-break: break-all; /* Break long numbers if needed */
+      overflow-wrap: break-word;
+      hyphens: none; /* Don't hyphenate numbers */
     }
 
     .content-grid {
@@ -792,6 +846,19 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
     .notification-timeline {
       padding: 1rem;
       max-height: 300px;
+    }
+
+    /* Additional responsive text handling for very long numbers */
+    @media (max-width: 480px) {
+      .stat-item {
+        font-size: 0.65rem;
+        padding: 0.5rem 0.25rem;
+        min-height: 55px;
+      }
+
+      .following-stats {
+        max-width: 280px;
+      }
     }
   }
 
@@ -838,8 +905,6 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       if (this.initialized) return;
 
       try {
-        
-
         // Initialize auth manager
         await this.authManager.initialize();
 
@@ -848,12 +913,9 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         const profile = this.authManager.getProfile();
 
         if (!user) {
-          
           window.location.href = "/auth/signin";
           return;
         }
-
-        
 
         // Update UI immediately with available data
         this.updateProfileUI(user, profile, null);
@@ -876,7 +938,6 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
         );
 
         this.initialized = true;
-        
       } catch (error) {
         console.error("❌ Profile Page: Initialization failed:", error);
         this.showError("Failed to load profile data");
@@ -910,8 +971,6 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
     private async loadBackgroundData(userId: string) {
       try {
-        
-
         const [stats, activities] = await Promise.all([
           this.getUserStats(userId),
           this.getRecentActivities(userId),
@@ -925,8 +984,6 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
         // Load notifications
         await this.loadProfileNotifications();
-
-        
       } catch (error) {
         console.error("❌ Error loading background data:", error);
       }
@@ -937,28 +994,48 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       let stats = this.getCachedData(cacheKey);
 
       if (stats) {
-        
         return stats;
       }
 
       try {
-        
+        // USE THE NEW API METHOD WE BUILT
+        const result = await TinkByteAPI.getProfileData(userId);
 
-        const [followedArticles, followingTopics, followingUsers] =
-          await Promise.all([
-            TinkByteAPI.searchContent("", "users"), // Placeholder - replace with actual API calls
-            Promise.resolve({ data: [] }), // Topics following
-            Promise.resolve({ data: [] }), // Users following
-          ]);
-
-        stats = {
-          followers: 0,
-          followed_articles: 0,
-          following_topics: 0,
-          following_users: 0,
-          articles_read: 0,
-          comments_posted: 0,
-        };
+        if (result.success) {
+          stats = {
+            followers: result.data.followers_count || 0,
+            followed_articles: result.data.article_follows_count || 0,
+            following_topics: result.data.category_follows_count || 0,
+            following_users: result.data.following_count || 0,
+            following_authors: result.data.author_follows_count || 0,
+            articles_read: result.data.articles_read_count || 0,
+            comments_posted: result.data.comments_count || 0,
+            // Add these new stats
+            article_likes: result.data.article_likes_count || 0,
+            article_saves: result.data.article_saves_count || 0,
+            comment_likes: result.data.comment_likes_count || 0,
+            comment_saves: result.data.comment_saves_count || 0,
+            comment_bookmarks: result.data.comment_bookmarks_count || 0,
+            activities: result.data.recent_activities || [],
+          };
+        } else {
+          // Fallback stats
+          stats = {
+            followers: 0,
+            followed_articles: 0,
+            following_topics: 0,
+            following_users: 0,
+            following_authors: 0,
+            articles_read: 0,
+            comments_posted: 0,
+            article_likes: 0,
+            article_saves: 0,
+            comment_likes: 0,
+            comment_saves: 0,
+            comment_bookmarks: 0,
+            activities: [],
+          };
+        }
 
         this.setCachedData(cacheKey, stats, 5);
         return stats;
@@ -969,8 +1046,15 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
           followed_articles: 0,
           following_topics: 0,
           following_users: 0,
+          following_authors: 0,
           articles_read: 0,
           comments_posted: 0,
+          article_likes: 0,
+          article_saves: 0,
+          comment_likes: 0,
+          comment_saves: 0,
+          comment_bookmarks: 0,
+          activities: [],
         };
       }
     }
@@ -980,15 +1064,18 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       let activities = this.getCachedData(cacheKey);
 
       if (activities) {
-        
         return activities;
       }
 
       try {
-        
+        // USE THE NEW API METHOD
+        const result = await TinkByteAPI.getUserActivity(userId, 10);
 
-        // For now, return mock data - replace with actual API call
-        activities = [];
+        if (result.success) {
+          activities = result.data || [];
+        } else {
+          activities = [];
+        }
 
         this.setCachedData(cacheKey, activities, 2);
         return activities;
@@ -1000,8 +1087,6 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
 
     private async loadProfileNotifications() {
       try {
-        
-
         const result = await TinkByteAPI.getUserNotifications(15);
 
         const notificationTimeline = document.getElementById(
@@ -1119,6 +1204,17 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       }
     }
 
+    // NEW: Number formatting method
+    private formatNumber(num: number): string {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+      }
+      if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+      }
+      return num.toString();
+    }
+
     private updateProfileUI(user: any, profile: any, stats: any) {
       const displayName = this.authManager.getDisplayName();
       const avatarUrl = this.authManager.getAvatarUrl();
@@ -1141,16 +1237,35 @@ import ProfileLayout from "../../layouts/ProfileLayout.astro";
       }
 
       if (stats) {
-        this.updateElement("follower-count", `${stats.followers} Followers`);
+        this.updateElement(
+          "follower-count",
+          `${this.formatNumber(stats.followers)} Followers`
+        );
         this.updateElement(
           "articles-count",
-          `${stats.followed_articles} Articles`
+          `${this.formatNumber(stats.followed_articles)} Articles`
         );
-        this.updateElement("topics-count", `${stats.following_topics} Topics`);
-        this.updateElement("authors-count", `0 Authors`);
-        this.updateElement("users-count", `${stats.following_users} Users`);
-        this.updateElement("total-reads", stats.articles_read.toString());
-        this.updateElement("total-comments", stats.comments_posted.toString());
+        this.updateElement(
+          "topics-count",
+          `${this.formatNumber(stats.following_topics)} Topics`
+        );
+        // FIX: Show actual authors count
+        this.updateElement(
+          "authors-count",
+          `${this.formatNumber(stats.following_authors)} Authors`
+        );
+        this.updateElement(
+          "users-count",
+          `${this.formatNumber(stats.following_users)} Users`
+        );
+        this.updateElement(
+          "total-reads",
+          this.formatNumber(stats.articles_read)
+        );
+        this.updateElement(
+          "total-comments",
+          this.formatNumber(stats.comments_posted)
+        );
       }
     }
 

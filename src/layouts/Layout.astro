@@ -535,8 +535,6 @@ const structuredData = getStructuredData();
     <!-- Smart Newsletter Modal - Site-wide -->
     <SimpleNewsletterModal autoShow={true} showDelay={25000} />
 
-
-
     <!-- Clean Supabase Initialization -->
     <script>
       import { supabase, AuthState, TinkByteAPI } from "../lib/supabase.js";
@@ -553,6 +551,193 @@ const structuredData = getStructuredData();
             detail: { supabase, TinkByteAPI, AuthState },
           })
         );
+      });
+    </script>
+
+    <script is:inline>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Simple activity tracker without TypeScript
+        const tracker = {
+          startTime: Date.now(),
+          maxScrollPercent: 0,
+          hasRecordedRead: false,
+          hasRecordedEngagement: false,
+          currentPath: window.location.pathname,
+          skipPaths: [
+            "/admin",
+            "/auth",
+            "/api",
+            "/test-activities",
+            "/profile",
+          ],
+
+          init() {
+            this.shouldTrack = !this.skipPaths.some((path) =>
+              this.currentPath.startsWith(path)
+            );
+            if (!this.shouldTrack) return;
+
+            // Wait for TinkByteAPI to be ready
+            const waitForAPI = () => {
+              if (window.TinkByteAPI) {
+                this.setupTracking();
+              } else {
+                setTimeout(waitForAPI, 100);
+              }
+            };
+            waitForAPI();
+          },
+
+          setupTracking() {
+            this.detectPageType();
+            this.setupScrollTracking();
+            this.setupInteractionTracking();
+          },
+
+          detectPageType() {
+            if (
+              this.currentPath.startsWith("/blog/") &&
+              this.currentPath !== "/blog" &&
+              this.currentPath !== "/blog/"
+            ) {
+              this.setupArticleTracking();
+            }
+          },
+
+          setupArticleTracking() {
+            const articleId = this.getArticleId();
+            if (articleId) {
+              this.recordArticleView(articleId);
+              this.setupArticleScrollTracking(articleId);
+            }
+          },
+
+          getArticleId() {
+            const article = document.querySelector("[data-article-id]");
+            if (article) return article.getAttribute("data-article-id");
+
+            const pathParts = this.currentPath.split("/");
+            if (pathParts.length >= 3 && pathParts[1] === "blog") {
+              return pathParts[2];
+            }
+
+            return window.currentArticleId || null;
+          },
+
+          async recordArticleView(articleId) {
+            try {
+              await window.TinkByteAPI.recordArticleRead(articleId, 5, 2);
+            } catch (error) {
+              console.error("Error recording article view:", error);
+            }
+          },
+
+          setupArticleScrollTracking(articleId) {
+            let scrollTimeout;
+            const throttledScroll = () => {
+              clearTimeout(scrollTimeout);
+              scrollTimeout = setTimeout(
+                () => this.handleArticleScroll(articleId),
+                100
+              );
+            };
+
+            window.addEventListener("scroll", throttledScroll, {
+              passive: true,
+            });
+          },
+
+          async handleArticleScroll(articleId) {
+            const scrollPercent = Math.round(
+              (window.scrollY /
+                (document.body.scrollHeight - window.innerHeight)) *
+                100
+            );
+
+            this.maxScrollPercent = Math.max(
+              this.maxScrollPercent,
+              scrollPercent
+            );
+            const timeSpent = Math.round((Date.now() - this.startTime) / 1000);
+
+            if (!this.hasRecordedRead && scrollPercent > 50) {
+              this.hasRecordedRead = true;
+              try {
+                await window.TinkByteAPI.recordArticleRead(
+                  articleId,
+                  scrollPercent,
+                  timeSpent
+                );
+              } catch (error) {
+                console.error("Error recording article read:", error);
+              }
+            }
+
+            if (!this.hasRecordedEngagement && scrollPercent > 80) {
+              this.hasRecordedEngagement = true;
+              try {
+                await window.TinkByteAPI.recordArticleRead(
+                  articleId,
+                  scrollPercent,
+                  timeSpent
+                );
+              } catch (error) {
+                console.error("Error recording article engagement:", error);
+              }
+            }
+          },
+
+          setupScrollTracking() {
+            if (!this.shouldTrack) return;
+
+            let scrollTimeout;
+            const throttledScroll = () => {
+              clearTimeout(scrollTimeout);
+              scrollTimeout = setTimeout(() => {
+                const scrollPercent = Math.round(
+                  (window.scrollY /
+                    (document.body.scrollHeight - window.innerHeight)) *
+                    100
+                );
+                this.maxScrollPercent = Math.max(
+                  this.maxScrollPercent,
+                  scrollPercent
+                );
+              }, 100);
+            };
+
+            window.addEventListener("scroll", throttledScroll, {
+              passive: true,
+            });
+          },
+
+          setupInteractionTracking() {
+            document.addEventListener("click", (e) => {
+              const link = e.target?.closest?.("a");
+              if (link && link.href) {
+                this.trackLinkClick(link);
+              }
+            });
+          },
+
+          async trackLinkClick(link) {
+            if (!this.shouldTrack) return;
+
+            try {
+              const href = link.href;
+              const text = link.textContent?.trim() || "Link";
+
+              await window.TinkByteAPI.recordActivity("click", "link", href, {
+                text: text,
+                page: this.currentPath,
+              });
+            } catch (error) {
+              console.error("Error tracking link click:", error);
+            }
+          },
+        };
+
+        tracker.init();
       });
     </script>
 

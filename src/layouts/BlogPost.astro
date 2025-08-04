@@ -2095,11 +2095,97 @@ if (typeof globalThis !== "undefined") {
 
 <script define:vars={{ articleSlug: articleId }}>
   document.addEventListener("DOMContentLoaded", async function () {
-    // Set up global variables
-    window.currentArticleId =
-      document.querySelector("article")?.getAttribute("data-article-id") ||
-      articleSlug ||
-      "default-slug";
+    // Set up global variables with proper fallbacks
+    const articleElement = document.querySelector("article");
+    const articleIdFromElement =
+      articleElement?.getAttribute("data-article-id");
+    const articleIdFromVar = articleSlug;
+
+    // Determine the article ID with multiple fallbacks
+    const currentArticleId =
+      articleIdFromElement || articleIdFromVar || "unknown-article";
+
+    // Set global variable
+    window.currentArticleId = currentArticleId;
+
+    // Only proceed if we have a valid article ID
+    if (!currentArticleId || currentArticleId === "unknown-article") {
+      console.warn("No valid article ID found, skipping activity tracking");
+      return;
+    }
+
+    // Record article read when user visits
+    try {
+      // Import TinkByteAPI dynamically to avoid SSR issues
+      const { TinkByteAPI } = await import("../lib/supabase");
+
+      // Record initial article view (basic tracking)
+      await TinkByteAPI.recordArticleRead(currentArticleId, 10, 5);
+
+      // Enhanced scroll tracking
+      let hasRecordedRead = false;
+      let hasRecordedEngagement = false;
+      let startTime = Date.now();
+      let maxScrollPercent = 0;
+
+      function handleScroll() {
+        const scrollTop =
+          window.pageYOffset || document.documentElement.scrollTop;
+        const scrollHeight =
+          document.documentElement.scrollHeight - window.innerHeight;
+        const scrollPercent =
+          scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0;
+
+        maxScrollPercent = Math.max(maxScrollPercent, scrollPercent);
+        const timeSpent = Math.round((Date.now() - startTime) / 1000);
+
+        // Record significant read at 50% scroll
+        if (!hasRecordedRead && scrollPercent > 50 && timeSpent > 10) {
+          hasRecordedRead = true;
+          TinkByteAPI.recordArticleRead(
+            currentArticleId,
+            scrollPercent,
+            timeSpent
+          ).catch(console.error);
+        }
+
+        // Record engagement at 80% scroll
+        if (!hasRecordedEngagement && scrollPercent > 80 && timeSpent > 30) {
+          hasRecordedEngagement = true;
+          TinkByteAPI.recordArticleRead(
+            currentArticleId,
+            scrollPercent,
+            timeSpent
+          ).catch(console.error);
+        }
+      }
+
+      // Track scroll with throttling
+      let scrollTimeout;
+      window.addEventListener(
+        "scroll",
+        () => {
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(handleScroll, 150);
+        },
+        { passive: true }
+      );
+
+      // Record final read stats when user leaves
+      window.addEventListener("beforeunload", () => {
+        const finalTimeSpent = Math.round((Date.now() - startTime) / 1000);
+        if (finalTimeSpent > 15) {
+          // Only if they spent more than 15 seconds
+          TinkByteAPI.recordArticleRead(
+            currentArticleId,
+            maxScrollPercent,
+            finalTimeSpent
+          ).catch(console.error);
+        }
+      });
+    } catch (error) {
+      console.error("Error setting up article tracking:", error);
+    }
 
     // Initialize Reading Progress Bar (Top)
     function initTopReadingProgress() {
@@ -2271,13 +2357,15 @@ if (typeof globalThis !== "undefined") {
             try {
               await navigator.clipboard.writeText(url);
               const originalIcon = target.querySelector("i");
-              const originalClass = originalIcon.className;
-              originalIcon.className = "fas fa-check";
-              setTimeout(() => {
-                originalIcon.className = originalClass;
-              }, 2000);
+              if (originalIcon) {
+                const originalClass = originalIcon.className;
+                originalIcon.className = "fas fa-check";
+                setTimeout(() => {
+                  originalIcon.className = originalClass;
+                }, 2000);
+              }
             } catch (error) {
-              
+              console.error("Failed to copy URL:", error);
             }
             break;
         }
