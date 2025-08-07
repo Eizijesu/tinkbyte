@@ -210,54 +210,38 @@ class TinkByteAuthManager {
     }
   }
 
-   private async setUserData(user: User, session: Session): Promise<void> {
-    this.debugLog('📝 Auth: Setting user data for:', user.email);
-    
-    this.currentUser = user;
+private async setUserData(user: User, session: Session): Promise<void> {
+  this.debugLog('📝 Auth: Setting user data for:', user.email);
+  
+  this.currentUser = user;
 
-    try {
-      // ✅ SMART PROFILE LOADING - TRY MULTIPLE APPROACHES
-      let profile = null;
+  try {
+    // ✅ REMOVE ENVIRONMENT FILTER COMPLETELY
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
 
-      // Try with current environment first
-      const { data: envProfile, error: envError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .eq('environment', config.environment)
-        .single();
-
-      if (envProfile) {
-        profile = envProfile;
-        this.debugLog('✅ Profile loaded with environment filter');
-      } else {
-        // Try without environment filter
-        const { data: fallbackProfile, error: fallbackError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-
-        if (fallbackProfile) {
-          profile = fallbackProfile;
-          this.debugLog('✅ Profile loaded without environment filter');
-        } else {
-          // Create new profile
-          this.debugLog('🆕 Creating new profile');
-          await this.createProfile(user);
-          return; // createProfile will set this.currentProfile
-        }
-      }
-
+    if (error && error.code !== 'PGRST116') {
+      this.debugLog('⚠️ Profile not found, creating new one');
+      await this.createProfile(user);
+    } else if (profile) {
+      this.debugLog('✅ Auth: Profile loaded from database');
       this.currentProfile = profile;
-      this.setAuthCache(this.currentUser, this.currentProfile);
-      
-    } catch (error) {
-      this.errorLog('❌ Error in setUserData:', error);
+    } else {
+      this.debugLog('🆕 Auth: Creating new profile');
+      await this.createProfile(user);
     }
 
-    this.updateAuthState();
+    this.setAuthCache(this.currentUser, this.currentProfile);
+    
+  } catch (error) {
+    this.errorLog('❌ Error in setUserData:', error);
   }
+
+  this.updateAuthState();
+}
 
   private updateAuthState(): void {
     this.authState = {
@@ -1118,83 +1102,56 @@ const newProfile = {
     }
   }
 
-  async updateProfile(updates: Partial<Profile>) {
-    if (!this.currentUser) {
-      return { success: false, error: 'Not authenticated' };
-    }
+async updateProfile(updates: Partial<Profile>) {
+  if (!this.currentUser) {
+    return { success: false, error: 'Not authenticated' };
+  }
 
-    try {
-      // ✅ TRY WITH ENVIRONMENT FIRST, THEN FALLBACK
-      let data, error;
-      
-      ({ data, error } = await supabase
-        .from('profiles')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', this.currentUser.id)
-        .eq('environment', config.environment)
-        .select()
-        .single());
+  try {
+    // ✅ REMOVE ENVIRONMENT FILTER
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', this.currentUser.id)
+      .select()
+      .single();
 
-      if (error) {
-        // Fallback without environment filter
-        ({ data, error } = await supabase
-          .from('profiles')
-          .update({
-            ...updates,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', this.currentUser.id)
-          .select()
-          .single());
-      }
+    if (error) throw error;
 
-      if (error) throw error;
+    this.currentProfile = data;
+    this.setAuthCache(this.currentUser, this.currentProfile);
+    this.notifyListeners(this.currentUser, this.currentProfile);
 
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+async refreshProfile() {
+  if (!this.currentUser) return;
+  
+  try {
+    // ✅ REMOVE ENVIRONMENT FILTER
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', this.currentUser.id)
+      .single();
+    
+    if (data) {
       this.currentProfile = data;
       this.setAuthCache(this.currentUser, this.currentProfile);
       this.notifyListeners(this.currentUser, this.currentProfile);
-
-      return { success: true, data };
-    } catch (error: any) {
-      return { success: false, error: error.message };
     }
+  } catch (error) {
+    this.errorLog('Error refreshing profile:', error);
   }
+}
 
-  async refreshProfile() {
-    if (!this.currentUser) return;
-    
-    try {
-      let data, error;
-      
-      // Try with environment first
-      ({ data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', this.currentUser.id)
-        .eq('environment', config.environment)
-        .single());
-      
-      if (error) {
-        // Fallback without environment filter
-        ({ data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', this.currentUser.id)
-          .single());
-      }
-      
-      if (data) {
-        this.currentProfile = data;
-        this.setAuthCache(this.currentUser, this.currentProfile);
-        this.notifyListeners(this.currentUser, this.currentProfile);
-      }
-    } catch (error) {
-      this.errorLog('Error refreshing profile:', error);
-    }
-  }
   private async loadUserStats(userId: string) {
     try {
       const [followedArticles, followingTopics, followingUsers] = await Promise.all([

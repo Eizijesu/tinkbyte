@@ -723,71 +723,50 @@ canStillEdit(createdAtString) {
     await this.authPromise;
   }
 
-   async loadUserProfile() {
-    if (!this.currentUser) return;
+async loadUserProfile() {
+  if (!this.currentUser) return;
+  
+  try {
+    debugLog('🔄 Loading profile for:', this.currentUser.email);
     
-    try {
-      debugLog('🔄 Loading profile for:', this.currentUser.email);
-      debugLog('🌍 Using environment:', this.environment);
+    // ✅ COMPLETELY REMOVE ENVIRONMENT FILTER
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', this.currentUser.id)
+      .single();
+    
+    if (error) {
+      debugLog('⚠️ Profile load failed:', error.message);
       
-      // ✅ SMART PROFILE LOADING WITH DETAILED LOGGING
-      let { data, error } = await this.supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', this.currentUser.id)
-        .eq('environment', this.environment)
-        .single();
-      
-      if (error) {
-        debugLog('⚠️ Profile load with env failed:', error.message);
-        
-        // ✅ FALLBACK WITHOUT ENVIRONMENT FILTER
-        const fallback = await this.supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', this.currentUser.id)
-          .single();
-          
-        if (fallback.data) {
-          data = fallback.data;
-          error = null;
-          debugLog('✅ Profile loaded without environment filter');
-        } else {
-          debugLog('❌ No profile found at all:', fallback.error);
-        }
-      } else {
-        debugLog('✅ Profile loaded with environment filter');
-      }
-      
-      if (error) {
-        // Create default profile
-        this.profile = {
-          id: this.currentUser.id,
-          display_name: this.currentUser.email?.split('@')[0] || 'User',
-          avatar_type: 'preset',
-          avatar_preset_id: 1,
-          avatar_url: null,
-          reputation_score: 0,
-          is_admin: false,
-          membership_type: 'free'
-        };
-        debugLog('⚠️ Using default profile');
-        return;
-      }
-      
-      if (data) {
-        this.profile = data;
-        debugLog('✅ Profile loaded:', {
-          name: this.profile.display_name,
-          avatar_type: this.profile.avatar_type,
-          avatar_url: this.profile.avatar_url
-        });
-      }
-    } catch (error) {
-      handleError(error, 'Failed to load profile');
-      this.profile = null;
+      // Create default profile
+      this.profile = {
+        id: this.currentUser.id,
+        display_name: this.currentUser.email?.split('@')[0] || 'User',
+        avatar_type: this.currentUser.user_metadata?.avatar_url ? 'google' : 'preset',
+        avatar_preset_id: 1,
+        avatar_url: this.currentUser.user_metadata?.avatar_url || this.currentUser.user_metadata?.picture || null,
+        reputation_score: 0,
+        is_admin: false,
+        membership_type: 'free'
+      };
+      debugLog('⚠️ Using default profile');
+      return;
     }
+    
+    if (data) {
+      this.profile = data;
+      debugLog('✅ Profile loaded:', {
+        name: this.profile.display_name,
+        avatar_type: this.profile.avatar_type,
+        avatar_url: this.profile.avatar_url
+      });
+    }
+  } catch (error) {
+    handleError(error, 'Failed to load profile');
+    this.profile = null;
   }
+}
 
 
 initializeUI() {
