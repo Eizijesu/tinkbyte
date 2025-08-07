@@ -2,7 +2,6 @@
 // src/layouts/BlogPost.astro
 import Layout from "./Layout.astro";
 import { Image } from "astro:assets";
-import { supabase } from "../lib/supabase";
 import ShareButtons from "../components/ui/ShareButtons.astro";
 import RelatedPosts from "../components/blog/RelatedPosts.astro";
 import AudioPlayer from "../components/ui/AudioPlayer.astro";
@@ -2117,7 +2116,7 @@ if (typeof globalThis !== "undefined") {
     // Record article read when user visits
     try {
       // Import TinkByteAPI dynamically to avoid SSR issues
-      const { TinkByteAPI } = await import("../lib/supabase");
+      //const { TinkByteAPI } = await import("../lib/supabase");
 
       // Record initial article view (basic tracking)
       await TinkByteAPI.recordArticleRead(currentArticleId, 10, 5);

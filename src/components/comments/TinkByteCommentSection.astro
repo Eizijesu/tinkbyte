@@ -1,6 +1,7 @@
 ---
+// src/components/comments/TinkByteCommentSection.astro - USING YOUR CONFIG
 import { supabase } from "../../lib/supabase";
-import { config } from "../../lib/config";
+import { config, getEnvironmentFor } from "../../lib/config"; // ✅ USE YOUR CONFIG
 import { COMMENT_CONFIG, REACTION_TYPES } from "../../lib/config/comments";
 import { buildCommentTree } from "../../lib/helpers/commentHelpers";
 import CommentCard from "./CommentCard.astro";
@@ -10,7 +11,9 @@ import type { CommentWithProfile } from "../../lib/types/comments";
 
 const { articleId, postSlug, postTitle } = Astro.props;
 
+// ✅ USE YOUR CONFIG FOR ENVIRONMENT
 const ENVIRONMENT = config.environment;
+const COMMENTS_ENV = getEnvironmentFor('comments');
 
 const currentUser = null;
 interface ArticleAuthor {
@@ -58,20 +61,19 @@ try {
   console.error("❌ Error loading article author:", error);
 }
 
-// **FIXED: Load ALL comments but paginate display**
 let totalRootComments = 0;
 let allComments: CommentWithProfile[] = [];
 let initialDisplayComments: any[] = [];
 const COMMENTS_PER_PAGE = 5;
 
 try {
-  // Get total count of ROOT comments only
+  // ✅ USE YOUR CONFIG FOR COMMENT QUERIES
   const { count: rootCount, error: countError } = await supabase
     .from("comments")
     .select("id", { count: "exact", head: true })
     .eq("article_id", articleId)
     .eq("is_deleted", false)
-    .eq("environment", ENVIRONMENT)
+    .eq("environment", COMMENTS_ENV)
     .in("moderation_status", ["approved", "auto_approved"])
     .is("parent_id", null);
 
@@ -83,13 +85,12 @@ try {
   totalRootComments = rootCount || 0;
 
   if (totalRootComments > 0) {
-    // **CHANGED: Load ALL root comments (remove limit)**
     const { data: rootCommentsData, error: rootCommentsError } = await supabase
       .from("comments")
       .select("*")
       .eq("article_id", articleId)
       .eq("is_deleted", false)
-      .eq("environment", "production")
+      .eq("environment", COMMENTS_ENV)
       .in("moderation_status", ["approved", "auto_approved"])
       .is("parent_id", null)
       .order("created_at", { ascending: false });
@@ -102,71 +103,72 @@ try {
     if (rootCommentsData && rootCommentsData.length > 0) {
       const rootCommentIds = rootCommentsData.map((c) => c.id);
 
-      // Get ALL replies for ALL root comments
       const { data: repliesData } = await supabase
         .from("comments")
         .select("*")
         .in("parent_id", rootCommentIds)
         .eq("is_deleted", false)
-        .eq("environment", ENVIRONMENT)
+        .eq("environment", COMMENTS_ENV)
         .in("moderation_status", ["approved", "auto_approved"])
         .order("created_at", { ascending: true });
 
-      // Combine ALL root comments and replies
       const allCommentsForPage = [...rootCommentsData, ...(repliesData || [])];
       const userIds = [...new Set(allCommentsForPage.map((c) => c.user_id))];
 
-      // Fetch profiles for ALL users
-      const { data: profilesData } = await supabase
+      // ✅ USE YOUR CONFIG FOR PROFILE QUERIES WITH FALLBACK
+      let { data: profilesData } = await supabase
         .from("profiles")
-        .select(
-          `
+        .select(`
           id, display_name, avatar_type, avatar_preset_id, avatar_url,
           reputation_score, is_admin, membership_type
-        `
-        )
+        `)
         .in("id", userIds)
         .eq("environment", ENVIRONMENT);
 
-      // Get interactions for ALL comments
-      const allCommentIds = allCommentsForPage.map((c) => c.id);
-      const [reactionsResult, likesResult, bookmarksResult] = await Promise.all(
-        [
-          supabase
-            .from("comment_reactions")
-            .select("*")
-            .in("comment_id", allCommentIds)
-            .eq("environment", ENVIRONMENT),
-          supabase
-            .from("comment_likes")
-            .select("*")
-            .in("comment_id", allCommentIds)
-            .eq("environment", ENVIRONMENT),
-          supabase
-            .from("comment_bookmarks")
-            .select("*")
-            .in("comment_id", allCommentIds)
-            .eq("environment", ENVIRONMENT),
-        ]
-      );
+      // ✅ FALLBACK WITHOUT ENVIRONMENT FILTER IF NO PROFILES FOUND
+      if (!profilesData || profilesData.length === 0) {
+        const fallback = await supabase
+          .from("profiles")
+          .select(`
+            id, display_name, avatar_type, avatar_preset_id, avatar_url,
+            reputation_score, is_admin, membership_type
+          `)
+          .in("id", userIds);
+          
+        profilesData = fallback.data;
+      }
 
-      // Combine ALL data
+      // ✅ INTERACTION QUERIES - SMART ENVIRONMENT HANDLING
+      const allCommentIds = allCommentsForPage.map((c) => c.id);
+      const [reactionsResult, likesResult, bookmarksResult] = await Promise.all([
+        supabase
+          .from("comment_reactions")
+          .select("*")
+          .in("comment_id", allCommentIds)
+          .eq("environment", ENVIRONMENT),
+        supabase
+          .from("comment_likes")
+          .select("*")
+          .in("comment_id", allCommentIds),
+        supabase
+          .from("comment_bookmarks")
+          .select("*")
+          .in("comment_id", allCommentIds)
+          .eq("environment", ENVIRONMENT),
+      ]);
+
       allComments = allCommentsForPage.map((comment) => ({
         ...comment,
         profiles: profilesData?.find((p) => p.id === comment.user_id) || null,
         comment_reactions:
-          reactionsResult.data?.filter((r) => r.comment_id === comment.id) ||
-          [],
+          reactionsResult.data?.filter((r) => r.comment_id === comment.id) || [],
         comment_likes:
           likesResult.data?.filter((l) => l.comment_id === comment.id) || [],
         comment_bookmarks:
-          bookmarksResult.data?.filter((b) => b.comment_id === comment.id) ||
-          [],
+          bookmarksResult.data?.filter((b) => b.comment_id === comment.id) || [],
       }));
 
-      console.log(
-        `✅ Loaded ALL comments: ${rootCommentsData.length} root comments with ${(repliesData || []).length} replies`
-      );
+      console.log(`✅ Loaded comments: ${rootCommentsData.length} root with ${(repliesData || []).length} replies`);
     }
   }
 } catch (error) {
@@ -192,6 +194,7 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
   class="tinkbyte-comment-section"
   id="comments-section"
   data-article-id={postSlug}
+  data-environment={ENVIRONMENT}
   data-config={JSON.stringify(COMMENT_CONFIG)}
   data-total-comments={totalRootComments}
   data-loaded-comments={loadedRootComments}
@@ -313,77 +316,48 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
   </div>
 
   <!-- **UPDATED: Comments Container - Display only first 5** -->
-  <div class="comments-container" id="comments-container">
-    {
-      totalRootComments === 0 ? (
-        <div class="empty-state" id="empty-state">
-          <div class="empty-content">
-            <div class="empty-icon">
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-            </div>
-            <h3 class="empty-title">No comments yet</h3>
-            <p class="empty-description">
-              Be the first to share your thoughts on this article.
-            </p>
-          </div>
+<div class="comments-container" id="comments-container">
+  { totalRootComments === 0 ? (
+    <div class="empty-state" id="empty-state">
+      <div class="empty-content">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
         </div>
-      ) : (
-        <div class="comments-list" id="comments-list">
-          <div class="comments-items" id="comments-items">
-            {initialDisplayComments.map((comment) => (
-              <div class="comment-wrapper" data-comment-id={comment.id}>
-                <CommentCard
-                  comment={comment}
-                  currentUserId={undefined}
-                  reactionTypes={reactionTypes}
-                  isReply={false}
-                />
-                {comment.replies && comment.replies.length > 0 && (
-                  <CommentReplies
-                    replies={comment.replies.slice(0, 3)}
-                    currentUserId={undefined}
-                    reactionTypes={reactionTypes}
-                    maxDepth={4}
-                  />
-                )}
-                {comment.replies && comment.replies.length > 3 && (
-                  <div class="load-more-replies">
-                    <button
-                      class="load-more-replies-btn"
-                      data-comment-id={comment.id}
-                      data-loaded="3"
-                      data-total={comment.replies.length}
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <polyline points="6,9 12,15 18,9" />
-                      </svg>
-                      Show {comment.replies.length - 3} more replies
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+        <h3 class="empty-title">No comments yet</h3>
+        <p class="empty-description">
+          Be the first to share your thoughts on this article.
+        </p>
+      </div>
+    </div>
+  ) : (
+    <div class="comments-list" id="comments-list">
+      <div class="comments-items" id="comments-items">
+        {initialDisplayComments.map((comment) => (
+          <div class="comment-wrapper" data-comment-id={comment.id}>
+            <CommentCard 
+              comment={comment} 
+              currentUserId={undefined} 
+              reactionTypes={reactionTypes} 
+              isReply={false} 
+            />
+            
+            <!-- ✅ RECURSIVE REPLY RENDERING COMPONENT -->
+            {comment.replies && comment.replies.length > 0 && (
+              <CommentReplies 
+                replies={comment.replies}
+                currentUserId={undefined}
+                reactionTypes={reactionTypes}
+                maxDepth={4}
+              />
+            )}
           </div>
-        </div>
-      )
-    }
-  </div>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
 </section>
 
 <!-- **UPDATED: Load More Section** -->
@@ -680,101 +654,48 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
 </style>
 
 <script is:inline>
-  // Initialize auth and comments when page loads
-  document.addEventListener("DOMContentLoaded", async () => {
+  document.addEventListener("DOMContentLoaded", async function () {
+    const config = window.TINKBYTE_CONFIG;
+    const isDev = config?.isDevelopment || false;
+    
     try {
-      console.log("🔄 Initializing TinkByte Comments...");
+      let attempts = 0;
+      while ((!window.supabase || !window.TinkByteAPI) && attempts < 200) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        attempts++;
+      }
 
-      // Import auth manager
-      const { authManager } = await import("/src/lib/auth.js");
-      await authManager.initialize();
+      if (!window.supabase || !window.TinkByteAPI) {
+        throw new Error('Required modules not loaded');
+      }
 
-      // Import supabase and API
-      const { supabase, TinkByteAPI } = await import("/src/lib/supabase.js");
+      window.dispatchEvent(new CustomEvent("authReady", {
+        detail: { 
+          authManager: window.authManager, 
+          supabase: window.supabase,
+          TinkByteAPI: window.TinkByteAPI
+        }
+      }));
 
-      // Make globally available
-      window.authManager = {
-        authState: {
-          currentUser: authManager.getUser(),
-          profile: authManager.getProfile(),
-          isAuthenticated: !!authManager.getUser(),
-        },
-        getCurrentUser: () => authManager.getUser(),
-        getProfile: () => authManager.getProfile(),
-        isUserAuthenticated: () => !!authManager.getUser(),
-        onAuthStateChange: (callback) => authManager.onAuthChange(callback),
-        initialize: () => Promise.resolve(),
-      };
-
-      window.supabase = supabase;
-      window.TinkByteAPI = TinkByteAPI;
-
-      // Dispatch ready event
-      window.dispatchEvent(
-        new CustomEvent("authReady", {
-          detail: {
-            authManager: window.authManager,
-            supabase: window.supabase,
-          },
-        })
-      );
-
-      console.log("✅ TinkByte Comments initialized");
     } catch (error) {
-      console.error("❌ Comment initialization failed:", error);
-
-      // Create fallback objects
-      window.authManager = {
-        authState: { currentUser: null, profile: null, isAuthenticated: false },
-        getCurrentUser: () => null,
-        getProfile: () => null,
-        isUserAuthenticated: () => false,
-        onAuthStateChange: () => () => {},
-        initialize: () => Promise.resolve(),
-      };
-
-      window.TinkByteAPI = {
-        addComment: async () => ({
-          success: false,
-          error: "API not available",
-        }),
-        updateComment: async () => ({
-          success: false,
-          error: "API not available",
-        }),
-        deleteComment: async () => ({
-          success: false,
-          error: "API not available",
-        }),
-        toggleCommentLike: async () => ({
-          success: false,
-          error: "API not available",
-        }),
-        toggleCommentBookmark: async () => ({
-          success: false,
-          error: "API not available",
-        }),
-        saveCommentDraft: async () => ({
-          success: false,
-          error: "API not available",
-        }),
-        getCommentDraft: async () => ({
-          success: false,
-          error: "API not available",
-        }),
-      };
-
-      window.dispatchEvent(
-        new CustomEvent("authReady", {
-          detail: {
-            authManager: window.authManager,
-            supabase: window.supabase,
-          },
-        })
-      );
+      const commentSection = document.getElementById("comments-section");
+      if (commentSection) {
+        commentSection.innerHTML = `
+          <div style="padding: 2rem; text-align: center; background: #fee2e2; border: 1px solid #fecaca; border-radius: 8px; margin: 1rem 0;">
+            <h3 style="color: #dc2626; margin-bottom: 0.5rem;">Comments Temporarily Unavailable</h3>
+            <p style="color: #991b1b; margin-bottom: 1rem;">Please refresh the page or try again later.</p>
+            <button onclick="window.location.reload()" style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+              Retry
+            </button>
+          </div>
+        `;
+      }
+      
+      if (config?.logging?.enabled && isDev) {
+        console.error("Comment initialization failed:", error);
+      }
     }
   });
 </script>
 
-<!-- Load comments script after initialization -->
 <script src="/scripts/comments.js" is:inline></script>

@@ -1,6 +1,7 @@
 ---
-// src/layouts/Layout.astro - Production Ready Clean Version
+// src/layouts/Layout.astro - USING YOUR CONFIG SYSTEM
 import { SITE, getAllCategories } from "../config/site";
+import { config, isDevelopment, isProduction, shouldLog } from "../lib/config"; //
 import Header from "../components/ui/Header.astro";
 import Footer from "../components/ui/Footer.astro";
 import "../styles/global.css";
@@ -13,6 +14,7 @@ declare global {
     supabase?: any;
     TinkByteAPI?: any;
     AuthState?: any;
+    authManager?: any;
     toggleTheme?: () => void;
     currentArticleId?: string;
   }
@@ -168,6 +170,35 @@ const structuredData = getStructuredData();
     <link rel="dns-prefetch" href="//cdnjs.cloudflare.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <script
+      is:inline
+      define:vars={{
+        supabaseUrl: config.supabase.url,
+        supabaseKey: config.supabase.anonKey,
+        environment: config.environment,
+        isDev: isDevelopment(),
+        isProd: isProduction(),
+        loggingEnabled: shouldLog(),
+      }}
+    >
+      window.TINKBYTE_CONFIG = {
+        supabase: {
+          url: supabaseUrl,
+          anonKey: supabaseKey,
+        },
+        environment: environment,
+        isDevelopment: isDev,
+        isProduction: isProd,
+        logging: {
+          enabled: loggingEnabled,
+        },
+      };
+    </script>
+
+    <!-- Add this in your head section if not already there -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" is:inline
+    ></script>
 
     <!-- FontAwesome Icons -->
     <script is:inline>
@@ -535,209 +566,681 @@ const structuredData = getStructuredData();
     <!-- Smart Newsletter Modal - Site-wide -->
     <SimpleNewsletterModal autoShow={true} showDelay={25000} />
 
-    <!-- Clean Supabase Initialization -->
-    <script>
-      import { supabase, AuthState, TinkByteAPI } from "../lib/supabase.js";
-
-      // Expose to window immediately
-      window.supabase = supabase;
-      window.TinkByteAPI = TinkByteAPI;
-      window.AuthState = AuthState;
-
-      // Dispatch ready event immediately
-      document.addEventListener("DOMContentLoaded", function () {
-        window.dispatchEvent(
-          new CustomEvent("authReady", {
-            detail: { supabase, TinkByteAPI, AuthState },
-          })
-        );
-      });
-    </script>
-
     <script is:inline>
-      document.addEventListener("DOMContentLoaded", function () {
-        // Simple activity tracker without TypeScript
-        const tracker = {
-          startTime: Date.now(),
-          maxScrollPercent: 0,
-          hasRecordedRead: false,
-          hasRecordedEngagement: false,
-          currentPath: window.location.pathname,
-          skipPaths: [
-            "/admin",
-            "/auth",
-            "/api",
-            "/test-activities",
-            "/profile",
-          ],
+      document.addEventListener("DOMContentLoaded", async function () {
+        const config = window.TINKBYTE_CONFIG;
+        const isDev = config?.isDevelopment || false;
 
-          init() {
-            this.shouldTrack = !this.skipPaths.some((path) =>
-              this.currentPath.startsWith(path)
-            );
-            if (!this.shouldTrack) return;
+        try {
+          // ✅ CONDITIONAL LOGGING BASED ON YOUR CONFIG
+          const log = (...args) => {
+            if (config?.logging?.enabled && isDev) {
+              console.log(...args);
+            }
+          };
 
-            // Wait for TinkByteAPI to be ready
-            const waitForAPI = () => {
-              if (window.TinkByteAPI) {
-                this.setupTracking();
-              } else {
-                setTimeout(waitForAPI, 100);
+          const logError = (...args) => {
+            if (isDev) {
+              console.error(...args);
+            }
+          };
+
+          log("🔄 Setting up modules...");
+
+          // ✅ WAIT FOR SUPABASE SDK
+          let attempts = 0;
+          while (!window.supabase && attempts < 100) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            attempts++;
+          }
+
+          if (!window.supabase) {
+            throw new Error("Supabase SDK not loaded");
+          }
+
+          if (!config?.supabase?.url || !config?.supabase?.anonKey) {
+            throw new Error("Invalid Supabase configuration");
+          }
+
+          // ✅ CREATE SUPABASE CLIENT
+          const supabaseClient = window.supabase.createClient(
+            config.supabase.url,
+            config.supabase.anonKey,
+            {
+              auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true,
+                flowType: "pkce",
+                storage: window.localStorage,
+                storageKey: `tinkbyte-auth-${config.environment}`,
+              },
+            }
+          );
+
+          // ✅ PRODUCTION-READY TINKBYTE API
+          window.TinkByteAPI = {
+            async addComment(articleId, content, parentId = null) {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user) throw new Error("Authentication required");
+
+                const commentData = {
+                  id: crypto.randomUUID(),
+                  content: content,
+                  raw_content: content,
+                  user_id: session.user.id,
+                  article_id: articleId,
+                  parent_id: parentId,
+                  thread_level: parentId ? 1 : 0,
+                  environment: config.environment,
+                  moderation_status: "auto_approved",
+                  like_count: 0,
+                  reply_count: 0,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                };
+
+                const { data, error } = await supabaseClient
+                  .from("comments")
+                  .insert(commentData)
+                  .select("*")
+                  .single();
+
+                if (error) throw error;
+                return { success: true, data };
+              } catch (error) {
+                return { success: false, error: error.message };
               }
-            };
-            waitForAPI();
-          },
+            },
 
-          setupTracking() {
-            this.detectPageType();
-            this.setupScrollTracking();
-            this.setupInteractionTracking();
-          },
+            async toggleCommentBookmark(commentId) {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user) throw new Error("Authentication required");
 
-          detectPageType() {
-            if (
-              this.currentPath.startsWith("/blog/") &&
-              this.currentPath !== "/blog" &&
-              this.currentPath !== "/blog/"
+                const { data: existing } = await supabaseClient
+                  .from("comment_bookmarks")
+                  .select("id")
+                  .eq("user_id", session.user.id)
+                  .eq("comment_id", commentId)
+                  .eq("environment", config.environment)
+                  .single();
+
+                if (existing) {
+                  await supabaseClient
+                    .from("comment_bookmarks")
+                    .delete()
+                    .eq("id", existing.id);
+                  return { success: true, bookmarked: false };
+                } else {
+                  await supabaseClient.from("comment_bookmarks").insert({
+                    user_id: session.user.id,
+                    comment_id: commentId,
+                    environment: config.environment,
+                    created_at: new Date().toISOString(),
+                  });
+                  return { success: true, bookmarked: true };
+                }
+              } catch (error) {
+                return { success: false, error: error.message };
+              }
+            },
+
+            async toggleCommentReaction(commentId, reactionType) {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user) throw new Error("Authentication required");
+
+                const { data: existing } = await supabaseClient
+                  .from("comment_reactions")
+                  .select("id")
+                  .eq("user_id", session.user.id)
+                  .eq("comment_id", commentId)
+                  .eq("reaction_type", reactionType)
+                  .eq("environment", config.environment)
+                  .single();
+
+                if (existing) {
+                  await supabaseClient
+                    .from("comment_reactions")
+                    .delete()
+                    .eq("id", existing.id);
+
+                  const { count } = await supabaseClient
+                    .from("comment_reactions")
+                    .select("*", { count: "exact", head: true })
+                    .eq("comment_id", commentId)
+                    .eq("reaction_type", reactionType)
+                    .eq("environment", config.environment);
+
+                  return { success: true, reacted: false, count: count || 0 };
+                } else {
+                  await supabaseClient.from("comment_reactions").insert({
+                    user_id: session.user.id,
+                    comment_id: commentId,
+                    reaction_type: reactionType,
+                    environment: config.environment,
+                    created_at: new Date().toISOString(),
+                  });
+
+                  const { count } = await supabaseClient
+                    .from("comment_reactions")
+                    .select("*", { count: "exact", head: true })
+                    .eq("comment_id", commentId)
+                    .eq("reaction_type", reactionType)
+                    .eq("environment", config.environment);
+
+                  return { success: true, reacted: true, count: count || 0 };
+                }
+              } catch (error) {
+                return { success: false, error: error.message };
+              }
+            },
+
+            // ✅ ADD MISSING ARTICLE TRACKING METHODS
+            async recordArticleRead(
+              articleId,
+              readPercentage = 100,
+              timeSpentSeconds = 0
             ) {
-              this.setupArticleTracking();
-            }
-          },
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user)
+                  return { success: false, error: "User not authenticated" };
 
-          setupArticleTracking() {
-            const articleId = this.getArticleId();
-            if (articleId) {
-              this.recordArticleView(articleId);
-              this.setupArticleScrollTracking(articleId);
-            }
-          },
+                log("📖 Recording article read:", {
+                  articleId,
+                  userId: session.user.id,
+                  readPercentage,
+                  timeSpentSeconds,
+                });
 
-          getArticleId() {
-            const article = document.querySelector("[data-article-id]");
-            if (article) return article.getAttribute("data-article-id");
+                // ✅ FIRST CHECK IF RECORD EXISTS (USING UPSERT APPROACH)
+                const { data, error } = await supabaseClient
+                  .from("article_reads")
+                  .upsert(
+                    {
+                      user_id: session.user.id,
+                      article_id: articleId,
+                      read_percentage: readPercentage,
+                      time_spent_seconds: timeSpentSeconds,
+                      updated_at: new Date().toISOString(),
+                    },
+                    {
+                      onConflict: "user_id,article_id",
+                      ignoreDuplicates: false,
+                    }
+                  )
+                  .select()
+                  .single();
 
-            const pathParts = this.currentPath.split("/");
-            if (pathParts.length >= 3 && pathParts[1] === "blog") {
-              return pathParts[2];
-            }
+                if (error) {
+                  logError("❌ Article read recording error:", error);
+                  return { success: false, error: error.message };
+                }
 
-            return window.currentArticleId || null;
-          },
+                log("✅ Article read recorded successfully");
+                return { success: true, data };
+              } catch (error) {
+                logError("❌ Article read recording failed:", error);
+                return { success: false, error: error.message };
+              }
+            },
+            
+            async recordActivity(
+              activityType,
+              entityType,
+              entityId,
+              metadata = {}
+            ) {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user)
+                  return { success: false, error: "User not authenticated" };
 
-          async recordArticleView(articleId) {
-            try {
-              await window.TinkByteAPI.recordArticleRead(articleId, 5, 2);
-            } catch (error) {
-              console.error("Error recording article view:", error);
-            }
-          },
+                let description = "";
+                switch (activityType) {
+                  case "read":
+                    description = `Read an ${entityType}`;
+                    break;
+                  case "comment":
+                    description = `Commented on ${entityType}`;
+                    break;
+                  case "like":
+                    description = `Liked a ${entityType}`;
+                    break;
+                  default:
+                    description = `Performed ${activityType} on ${entityType}`;
+                }
 
-          setupArticleScrollTracking(articleId) {
-            let scrollTimeout;
-            const throttledScroll = () => {
-              clearTimeout(scrollTimeout);
-              scrollTimeout = setTimeout(
-                () => this.handleArticleScroll(articleId),
-                100
+                const { data, error } = await supabaseClient
+                  .from("user_activities")
+                  .insert({
+                    user_id: session.user.id,
+                    activity_type: activityType,
+                    entity_type: entityType,
+                    entity_id: entityId,
+                    description: description,
+                    metadata: metadata,
+                    environment: config.environment,
+                    created_at: new Date().toISOString(),
+                  })
+                  .select()
+                  .single();
+
+                if (error) throw error;
+                return { success: true, data };
+              } catch (error) {
+                return { success: false, error: error.message };
+              }
+            },
+
+            async addComment(articleId, content, parentId = null) {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user) throw new Error("Authentication required");
+
+                const commentData = {
+                  id: crypto.randomUUID(),
+                  content: content,
+                  raw_content: content,
+                  user_id: session.user.id,
+                  article_id: articleId,
+                  parent_id: parentId,
+                  thread_level: parentId ? 1 : 0,
+                  environment: config.environment,
+                  moderation_status: "auto_approved",
+                  like_count: 0,
+                  reply_count: 0,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                };
+
+                const { data, error } = await supabaseClient
+                  .from("comments")
+                  .insert(commentData)
+                  .select("*")
+                  .single();
+
+                if (error) throw error;
+                return { success: true, data };
+              } catch (error) {
+                return { success: false, error: error.message };
+              }
+            },
+
+            async toggleCommentLike(commentId) {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user) throw new Error("Authentication required");
+
+                // ✅ NO ENVIRONMENT FILTER FOR LIKES
+                const { data: existing } = await supabaseClient
+                  .from("comment_likes")
+                  .select("id")
+                  .eq("user_id", session.user.id)
+                  .eq("comment_id", commentId)
+                  .single();
+
+                if (existing) {
+                  await supabaseClient
+                    .from("comment_likes")
+                    .delete()
+                    .eq("id", existing.id);
+                  return { success: true, liked: false };
+                } else {
+                  await supabaseClient.from("comment_likes").insert({
+                    user_id: session.user.id,
+                    comment_id: commentId,
+                    environment: config.environment,
+                    created_at: new Date().toISOString(),
+                  });
+                  return { success: true, liked: true };
+                }
+              } catch (error) {
+                return { success: false, error: error.message };
+              }
+            },
+
+            async updateComment(commentId, content, editReason = null) {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user) throw new Error("Authentication required");
+
+                const { data, error } = await supabaseClient
+                  .from("comments")
+                  .update({
+                    content,
+                    raw_content: content,
+                    edit_reason: editReason,
+                    is_edited: true,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", commentId)
+                  .eq("user_id", session.user.id)
+                  .select("*")
+                  .single();
+
+                if (error) throw error;
+                return { success: true, data };
+              } catch (error) {
+                return { success: false, error: error.message };
+              }
+            },
+
+            async deleteComment(commentId) {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user) throw new Error("Authentication required");
+
+                const { error } = await supabaseClient
+                  .from("comments")
+                  .update({
+                    is_deleted: true,
+                    deleted_at: new Date().toISOString(),
+                    deleted_by: session.user.id,
+                  })
+                  .eq("id", commentId)
+                  .eq("user_id", session.user.id);
+
+                if (error) throw error;
+                return { success: true };
+              } catch (error) {
+                return { success: false, error: error.message };
+              }
+            },
+
+            async saveCommentDraft(articleId, content) {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user || !content) return { success: false };
+
+                const { data, error } = await supabaseClient
+                  .from("comment_drafts")
+                  .upsert(
+                    {
+                      user_id: session.user.id,
+                      article_id: articleId,
+                      content,
+                      environment: config.environment,
+                      updated_at: new Date().toISOString(),
+                    },
+                    {
+                      onConflict: "user_id,article_id,environment",
+                    }
+                  )
+                  .select()
+                  .single();
+
+                return { success: !error, data };
+              } catch (error) {
+                return { success: false, error: error.message };
+              }
+            },
+
+            async getCommentDraft(articleId) {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+                if (!session?.user) return { success: false };
+
+                const { data, error } = await supabaseClient
+                  .from("comment_drafts")
+                  .select("*")
+                  .eq("user_id", session.user.id)
+                  .eq("article_id", articleId)
+                  .eq("environment", config.environment)
+                  .maybeSingle();
+
+                return { success: !error, data };
+              } catch (error) {
+                return { success: false, error: error.message };
+              }
+            },
+          };
+
+          // ✅ PRODUCTION-READY AUTH MANAGER
+          window.authManager = {
+            authState: {
+              currentUser: null,
+              profile: null,
+              isAuthenticated: false,
+            },
+
+            async initialize() {
+              try {
+                const {
+                  data: { session },
+                } = await supabaseClient.auth.getSession();
+
+                if (session?.user) {
+                  this.authState.currentUser = {
+                    id: session.user.id,
+                    email: session.user.email,
+                    user_metadata: session.user.user_metadata, // ✅ PRESERVE USER METADATA
+                  };
+                  this.authState.isAuthenticated = true;
+
+                  // ✅ SMART PROFILE LOADING WITH FALLBACKS
+                  let profile = null;
+
+                  // Try with environment filter first
+                  const { data: envProfile } = await supabaseClient
+                    .from("profiles")
+                    .select("*")
+                    .eq("id", session.user.id)
+                    .eq("environment", config.environment)
+                    .single();
+
+                  if (envProfile) {
+                    profile = envProfile;
+                  } else {
+                    // Fallback without environment filter
+                    const { data: fallbackProfile } = await supabaseClient
+                      .from("profiles")
+                      .select("*")
+                      .eq("id", session.user.id)
+                      .single();
+
+                    if (fallbackProfile) {
+                      profile = fallbackProfile;
+                    } else {
+                      // Create profile if none exists
+                      const displayName =
+                        session.user.user_metadata?.display_name ||
+                        session.user.user_metadata?.full_name ||
+                        session.user.email?.split("@")[0] ||
+                        "User";
+
+                      const newProfile = {
+                        id: session.user.id,
+                        display_name: displayName,
+                        first_name:
+                          session.user.user_metadata?.given_name || null,
+                        last_name:
+                          session.user.user_metadata?.family_name || null,
+                        avatar_url:
+                          session.user.user_metadata?.avatar_url ||
+                          session.user.user_metadata?.picture ||
+                          null,
+                        avatar_type: session.user.user_metadata?.avatar_url
+                          ? "google"
+                          : "preset",
+                        avatar_preset_id: 1,
+                        total_reads: 0,
+                        total_comments: 0,
+                        total_articles: 0,
+                        reputation_score: 0,
+                        following_count: 0,
+                        followers_count: 0,
+                        is_public: true,
+                        membership_type: "free",
+                        is_admin: session.user.email === "tinkbytehq@gmail.com",
+                        environment: config.environment,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                      };
+
+                      const { data: createdProfile } = await supabaseClient
+                        .from("profiles")
+                        .insert(newProfile)
+                        .select()
+                        .single();
+
+                      profile = createdProfile || newProfile;
+                    }
+                  }
+
+                  this.authState.profile = profile;
+                }
+              } catch (error) {
+                if (config.logging.enabled && isDev) {
+                  logError("Auth initialization failed:", error);
+                }
+              }
+            },
+
+            getCurrentUser() {
+              return this.authState.currentUser;
+            },
+
+            getProfile() {
+              return this.authState.profile;
+            },
+
+            isUserAuthenticated() {
+              return this.authState.isAuthenticated;
+            },
+
+            // ✅ ADD MISSING AVATAR HELPER
+            getAvatarUrl() {
+              const profile = this.authState.profile;
+              const user = this.authState.currentUser;
+
+              if (profile?.avatar_type === "uploaded" && profile?.avatar_url) {
+                return profile.avatar_url;
+              }
+
+              if (profile?.avatar_type === "google" && profile?.avatar_url) {
+                return profile.avatar_url;
+              }
+
+              // ✅ FALLBACK TO USER METADATA FOR GOOGLE USERS
+              if (user?.user_metadata?.avatar_url) {
+                return user.user_metadata.avatar_url;
+              }
+
+              if (user?.user_metadata?.picture) {
+                return user.user_metadata.picture;
+              }
+
+              return `/images/avatars/preset-${profile?.avatar_preset_id || 1}.svg`;
+            },
+
+            // ✅ ADD MISSING DISPLAY NAME HELPER
+            getDisplayName() {
+              const profile = this.authState.profile;
+              const user = this.authState.currentUser;
+
+              return (
+                profile?.display_name ||
+                user?.user_metadata?.display_name ||
+                user?.user_metadata?.full_name ||
+                user?.user_metadata?.name ||
+                user?.email?.split("@")[0] ||
+                "User"
               );
-            };
+            },
 
-            window.addEventListener("scroll", throttledScroll, {
-              passive: true,
-            });
-          },
+            onAuthStateChange(callback) {
+              const {
+                data: { subscription },
+              } = supabaseClient.auth.onAuthStateChange(
+                async (event, session) => {
+                  log("🔄 Auth state changed:", event);
 
-          async handleArticleScroll(articleId) {
-            const scrollPercent = Math.round(
-              (window.scrollY /
-                (document.body.scrollHeight - window.innerHeight)) *
-                100
-            );
+                  if (event === "SIGNED_IN" && session?.user) {
+                    this.authState.currentUser = {
+                      id: session.user.id,
+                      email: session.user.email,
+                      user_metadata: session.user.user_metadata, // ✅ PRESERVE METADATA
+                    };
+                    this.authState.isAuthenticated = true;
+                    await this.initialize();
+                    callback(
+                      this.authState.currentUser,
+                      this.authState.profile
+                    );
+                  } else if (event === "SIGNED_OUT") {
+                    this.authState.currentUser = null;
+                    this.authState.profile = null;
+                    this.authState.isAuthenticated = false;
+                    callback(null, null);
+                  }
+                }
+              );
+              return () => subscription.unsubscribe();
+            },
+          };
 
-            this.maxScrollPercent = Math.max(
-              this.maxScrollPercent,
-              scrollPercent
-            );
-            const timeSpent = Math.round((Date.now() - this.startTime) / 1000);
+          // ✅ SET GLOBAL REFERENCES
+          window.supabase = supabaseClient;
+          await window.authManager.initialize();
 
-            if (!this.hasRecordedRead && scrollPercent > 50) {
-              this.hasRecordedRead = true;
-              try {
-                await window.TinkByteAPI.recordArticleRead(
-                  articleId,
-                  scrollPercent,
-                  timeSpent
-                );
-              } catch (error) {
-                console.error("Error recording article read:", error);
-              }
+          log("✅ Modules initialized successfully");
+
+          // ✅ DISPATCH READY EVENT
+          window.dispatchEvent(
+            new CustomEvent("authReady", {
+              detail: {
+                supabase: supabaseClient,
+                TinkByteAPI: window.TinkByteAPI,
+                authManager: window.authManager,
+              },
+            })
+          );
+        } catch (error) {
+          logError("❌ Module setup failed:", error);
+
+          // ✅ SHOW USER-FRIENDLY ERROR
+          const commentSections =
+            document.querySelectorAll("#comments-section");
+          commentSections.forEach((section) => {
+            if (section) {
+              section.innerHTML = `
+                <div style="padding: 2rem; text-align: center; background: #fee2e2; border: 1px solid #fecaca; border-radius: 8px; margin: 1rem 0;">
+                  <h3 style="color: #dc2626; margin-bottom: 0.5rem;">Comments Temporarily Unavailable</h3>
+                  <p style="color: #991b1b; margin-bottom: 1rem;">Please refresh the page or try again later.</p>
+                  <button onclick="window.location.reload()" style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                    Retry
+                  </button>
+                </div>
+              `;
             }
-
-            if (!this.hasRecordedEngagement && scrollPercent > 80) {
-              this.hasRecordedEngagement = true;
-              try {
-                await window.TinkByteAPI.recordArticleRead(
-                  articleId,
-                  scrollPercent,
-                  timeSpent
-                );
-              } catch (error) {
-                console.error("Error recording article engagement:", error);
-              }
-            }
-          },
-
-          setupScrollTracking() {
-            if (!this.shouldTrack) return;
-
-            let scrollTimeout;
-            const throttledScroll = () => {
-              clearTimeout(scrollTimeout);
-              scrollTimeout = setTimeout(() => {
-                const scrollPercent = Math.round(
-                  (window.scrollY /
-                    (document.body.scrollHeight - window.innerHeight)) *
-                    100
-                );
-                this.maxScrollPercent = Math.max(
-                  this.maxScrollPercent,
-                  scrollPercent
-                );
-              }, 100);
-            };
-
-            window.addEventListener("scroll", throttledScroll, {
-              passive: true,
-            });
-          },
-
-          setupInteractionTracking() {
-            document.addEventListener("click", (e) => {
-              const link = e.target?.closest?.("a");
-              if (link && link.href) {
-                this.trackLinkClick(link);
-              }
-            });
-          },
-
-          async trackLinkClick(link) {
-            if (!this.shouldTrack) return;
-
-            try {
-              const href = link.href;
-              const text = link.textContent?.trim() || "Link";
-
-              await window.TinkByteAPI.recordActivity("click", "link", href, {
-                text: text,
-                page: this.currentPath,
-              });
-            } catch (error) {
-              console.error("Error tracking link click:", error);
-            }
-          },
-        };
-
-        tracker.init();
+          });
+        }
       });
     </script>
 

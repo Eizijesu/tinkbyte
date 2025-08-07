@@ -8,7 +8,6 @@ import {
 import { REACTION_TYPES } from "../../lib/config/comments";
 import type { CommentWithProfile } from "../../lib/types/comments";
 
-
 interface ReactionType {
   name: string;
   emoji: string;
@@ -30,11 +29,19 @@ const {
 } = Astro.props;
 
 // Determine user profile data
-const userProfile = comment.profiles || comment.user_profile;
-const displayName =
-  userProfile?.display_name || comment.guest_name || "Anonymous";
+const userProfile = comment.profiles;
+const displayName = userProfile?.display_name || "Anonymous";
 const isAdmin = userProfile?.is_admin || false;
 const avatarUrl = getUserAvatar(userProfile);
+
+// Debug logging
+console.log("CommentCard rendering:", {
+  commentId: comment.id,
+  userId: comment.user_id,
+  displayName: displayName,
+  hasProfile: !!userProfile,
+  profileData: userProfile,
+});
 
 // Thread level styling
 const threadLevel = Math.min(comment.thread_level || 0, 4);
@@ -63,7 +70,7 @@ console.log("CommentCard rendering:", {
   data-comment-id={comment.id}
   data-user-id={comment.user_id || ""}
   data-created-at={comment.created_at || ""}
-  data-thread-level={threadLevel}
+  data-thread-level={threadLevel || 0}
 >
   {isReply && <div class="reply-connector" />}
 

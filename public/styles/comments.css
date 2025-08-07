@@ -3049,3 +3049,44 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Threading and Reply Styling */
+.replies-container {
+  margin-top: 1rem;
+}
+
+.reply-wrapper {
+  position: relative;
+}
+
+.reply-card {
+  border-left: 2px solid var(--border-color);
+  padding-left: 1rem;
+  margin-top: 0.75rem;
+}
+
+.reply-connector {
+  position: absolute;
+  left: -2px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--primary-color);
+  opacity: 0.3;
+}
+
+/* Thread level styling */
+[data-thread-level="1"] { margin-left: 20px; }
+[data-thread-level="2"] { margin-left: 40px; }
+[data-thread-level="3"] { margin-left: 60px; }
+[data-thread-level="4"] { margin-left: 80px; }
+
+/* New comment highlight */
+.new-comment {
+  animation: highlightComment 3s ease-out;
+}
+
+@keyframes highlightComment {
+  0% { background: var(--primary-color); opacity: 0.1; }
+  100% { background: transparent; opacity: 1; }
+}

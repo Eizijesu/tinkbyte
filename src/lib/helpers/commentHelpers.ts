@@ -8,48 +8,57 @@ export function buildCommentTree(comments: CommentWithProfile[]): CommentWithPro
   const commentMap = new Map<string, CommentWithProfile>();
   const rootComments: CommentWithProfile[] = [];
 
-  // First pass: create a map of all comments and initialize replies array
+  // First pass: create a map and initialize replies
   comments.forEach(comment => {
     comment.replies = [];
-    comment.thread_level = 0; // Initialize thread level
+    comment.thread_level = 0;
     commentMap.set(comment.id, comment);
   });
 
-  // Second pass: build the tree structure
+  // Second pass: build parent-child relationships
   comments.forEach(comment => {
-    if (comment.parent_id) {
-      const parent = commentMap.get(comment.parent_id);
-      if (parent) {
-        // Set thread level based on parent
-        comment.thread_level = Math.min((parent.thread_level || 0) + 1, 4);
-        parent.replies = parent.replies || [];
-        parent.replies.push(comment);
-      } else {
-        // Parent not found, treat as root comment
-        comment.thread_level = 0;
-        rootComments.push(comment);
-      }
+    if (comment.parent_id && commentMap.has(comment.parent_id)) {
+      const parent = commentMap.get(comment.parent_id)!;
+      comment.thread_level = Math.min((parent.thread_level || 0) + 1, 4);
+      parent.replies = parent.replies || [];
+      parent.replies.push(comment);
     } else {
-      // Root comment
+      // Root comment or orphaned comment
       comment.thread_level = 0;
       rootComments.push(comment);
     }
   });
 
-  // Sort root comments by creation date (newest first)
-  rootComments.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  // Sort root comments (newest first)
+  rootComments.sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
-  // Sort replies within each thread (oldest first for better conversation flow)
-  function sortReplies(comments: CommentWithProfile[]) {
+  // Sort replies recursively (oldest first for conversation flow)
+  function sortRepliesRecursively(comments: CommentWithProfile[]) {
     comments.forEach(comment => {
       if (comment.replies && comment.replies.length > 0) {
-        comment.replies.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-        sortReplies(comment.replies);
+        comment.replies.sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        sortRepliesRecursively(comment.replies);
       }
     });
   }
 
-  sortReplies(rootComments);
+  sortRepliesRecursively(rootComments);
+
+  console.log('🌳 Comment tree built:', {
+    totalComments: comments.length,
+    rootComments: rootComments.length,
+    tree: rootComments.map(c => ({
+      id: c.id.slice(-6),
+      content: c.content.substring(0, 20),
+      replies: c.replies?.length || 0,
+      replyIds: c.replies?.map(r => r.id.slice(-6)) || []
+    }))
+  });
+
   return rootComments;
 }
 

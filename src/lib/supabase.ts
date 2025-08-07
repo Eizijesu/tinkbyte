@@ -1,16 +1,21 @@
-// src/lib/supabase.ts - COMPLETE WITH ALL METHODS
+// src/lib/supabase.ts - FIXED SINGLETON
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { config } from './config';
 
-// Global singleton - only one instance ever
-let supabaseClient: SupabaseClient | null = null;
+// ✅ GLOBAL SINGLETON - Prevent multiple instances
+declare global {
+  var __supabase_instance: SupabaseClient | undefined;
+}
 
 function createSupabaseClient(): SupabaseClient {
-  // Return existing instance if available
-  if (supabaseClient) {
-    return supabaseClient;
+  // Return existing global instance if available
+  if (globalThis.__supabase_instance) {
+    console.log('🔄 Reusing global Supabase instance');
+    return globalThis.__supabase_instance;
   }
 
+  console.log('🆕 Creating single Supabase instance');
+  
   // Validate environment variables
   const supabaseUrl = config.supabase.url;
   const supabaseAnonKey = config.supabase.anonKey;
@@ -19,15 +24,15 @@ function createSupabaseClient(): SupabaseClient {
     throw new Error('Missing Supabase environment variables');
   }
 
-  // Create single instance
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  // Create single instance with environment-specific storage
+  const client = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
       flowType: 'pkce',
       storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-      storageKey: `tinkbyte-auth-${config.environment}`
+      storageKey: `tinkbyte-auth-${config.environment}` // Environment-specific key
     },
     global: {
       headers: {
@@ -37,12 +42,16 @@ function createSupabaseClient(): SupabaseClient {
     }
   });
 
-  return supabaseClient;
+  // Store globally to prevent multiple instances
+  globalThis.__supabase_instance = client;
+  
+  return client;
 }
 
 // Export the singleton
 export const supabase = createSupabaseClient();
 export { createSupabaseClient as getSupabaseClient };
+
 
 // AuthState class
 export class AuthState {
@@ -578,33 +587,32 @@ export class TinkByteAPI {
   }
 
   // Update profile statistics
-  static async updateProfileStats(userId: string, field: string, increment: number = 1) {
-    try {
-      const { data: profile, error: fetchError } = await supabase
-        .from('profiles')
-        .select(field)
-        .eq('id', userId)
-        .eq('environment', config.environment)
-        .single();
+ static async updateProfileStats(userId: string, field: string, increment: number = 1) {
+  try {
+    // ✅ REMOVE ENVIRONMENT FILTER
+    const { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select(field)
+      .eq('id', userId)
+      .single();
 
-      if (fetchError) throw fetchError;
+    if (fetchError) throw fetchError;
 
-      const currentValue = profile[field] || 0;
-      const newValue = Math.max(0, currentValue + increment);
+    const currentValue = profile[field] || 0;
+    const newValue = Math.max(0, currentValue + increment);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ [field]: newValue })
-        .eq('id', userId)
-        .eq('environment', config.environment);
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ [field]: newValue })
+      .eq('id', userId);
 
-      if (updateError) throw updateError;
-      return { success: true };
-    } catch (error: any) {
-      console.error('Error updating profile stats:', error);
-      return { success: false, error: error.message };
-    }
+    if (updateError) throw updateError;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error updating profile stats:', error);
+    return { success: false, error: error.message };
   }
+}
 
   // **ARTICLE OPERATIONS**
   static async getArticles(options: {
