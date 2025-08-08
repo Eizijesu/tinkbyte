@@ -60,7 +60,23 @@ const formatPost = (post: BlogPost) => {
     }),
     readTime: post.data.readTime || "5 min read",
     slug: post.slug,
-    image: post.data.image || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop",
+    image: (() => {
+  // Check for heroImage structure first
+  if (post.data.heroImage) {
+    if (post.data.heroImage.imageType === "upload" && post.data.heroImage.uploadedImage) {
+      return post.data.heroImage.uploadedImage;
+    }
+    if (post.data.heroImage.imageType === "url" && post.data.heroImage.externalUrl) {
+      return post.data.heroImage.externalUrl;
+    }
+  }
+  // Fallback to legacy image field
+  if (post.data.image) {
+    return post.data.image;
+  }
+  // TinkByte default fallback
+  return "/images/articles/tinkbyte_all_article.png";
+})(),
     tags: post.data.tags || [],
     category: post.data.category,
     author: authorData,

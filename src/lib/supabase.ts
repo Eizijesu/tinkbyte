@@ -970,122 +970,176 @@ static async unfollowArticle(articleSlug: string) {
     }
   }
 
-  static async addComment(articleSlug: string, content: string, parentId: string | null = null) {
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+static async addComment(articleSlug: string, content: string, parentId: string | null = null) {
+  try {
+    console.log('🔍 addComment called with:', { articleSlug, contentLength: content.length, parentId });
+    
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session?.user) {
+      throw new Error('Must be logged in to comment');
+    }
+
+    const user = session.user;
+    console.log('👤 User authenticated:', user.email);
+
+    // ✅ ENHANCED ARTICLE VERIFICATION
+    console.log('🔍 Verifying article exists with slug:', articleSlug);
+    
+    const { data: article, error: articleError } = await supabase
+      .from('articles')
+      .select('slug, title, id')
+      .eq('slug', articleSlug)
+      .single();
+
+    console.log('📊 Article query result:', { article, error: articleError });
+
+    if (articleError || !article) {
+      console.error('❌ Article verification failed:', articleError);
+      throw new Error(`Article with slug "${articleSlug}" not found. Error: ${articleError?.message || 'Not found'}`);
+    }
+
+    console.log('✅ Article verified:', article.title);
+
+    // Calculate thread level for replies
+    let threadLevel = 0;
+    if (parentId) {
+      console.log('🔗 Calculating thread level for parent:', parentId);
       
-      if (sessionError || !session?.user) {
-        throw new Error('Must be logged in to comment');
-      }
-
-      const user = session.user;
-
-      // Verify the article exists
-      const { data: article, error: articleError } = await supabase
-        .from('articles')
-        .select('slug, title')
-        .eq('slug', articleSlug)
-        .single();
-
-      if (articleError || !article) {
-        throw new Error(`Article with slug "${articleSlug}" not found`);
-      }
-
-      // Calculate thread level for replies
-      let threadLevel = 0;
-      if (parentId) {
-        const { data: parentComment } = await supabase
-          .from('comments')
-          .select('thread_level')
-          .eq('id', parentId)
-          .single();
-        
-        if (parentComment) {
-          threadLevel = Math.min((parentComment.thread_level || 0) + 1, 4);
-        }
-      }
-
-      const commentId = this.generateUUID();
-      const commentData = {
-        id: commentId,
-        content: content,
-        raw_content: content,
-        user_id: user.id,
-        article_id: articleSlug,
-        parent_id: parentId || null,
-        thread_level: threadLevel,
-        environment: config.environment,
-        moderation_status: 'auto_approved' as const,
-        auto_approved_reason: 'Auto-approved by content filter',
-        quality_score: 50,
-        like_count: 0,
-        reply_count: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      // Insert comment
-      const { data: insertedComment, error: insertError } = await supabase
+      const { data: parentComment } = await supabase
         .from('comments')
-        .insert(commentData)
-        .select('*')
+        .select('thread_level')
+        .eq('id', parentId)
+        .eq('environment', config.environment)
         .single();
+      
+      if (parentComment) {
+        threadLevel = Math.min((parentComment.thread_level || 0) + 1, 4);
+        console.log('📏 Thread level calculated:', threadLevel);
+      }
+    }
 
-      if (insertError) throw insertError;
+    const commentId = this.generateUUID();
+    console.log('🆔 Generated comment ID:', commentId);
+    
+    const commentData = {
+      id: commentId,
+      content: content,
+      raw_content: content,
+      user_id: user.id,
+      article_id: articleSlug, // ✅ This should match articles.slug exactly
+      parent_id: parentId || null,
+      thread_level: threadLevel,
+      environment: config.environment,
+      moderation_status: 'auto_approved' as const,
+      auto_approved_reason: 'Auto-approved by content filter',
+      quality_score: 50,
+      like_count: 0,
+      reply_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
 
-      // Record activity
-      await this.recordActivity('comment', 'article', articleSlug, {
-        comment_id: commentId,
-        article_title: article.title,
-        is_reply: !!parentId
-      });
+    console.log('💾 Inserting comment data:', {
+      ...commentData,
+      content: content.substring(0, 50) + '...'
+    });
 
-      // Update profile stats
-      await this.updateProfileStats(user.id, 'total_comments', 1);
+    // Insert comment
+    const { data: insertedComment, error: insertError } = await supabase
+      .from('comments')
+      .insert(commentData)
+      .select('*')
+      .single();
 
-      // Process mentions
-      await this.processMentions(content, insertedComment.id, user.email?.split('@')[0] || 'Someone');
+    if (insertError) {
+      console.error('❌ Insert error:', insertError);
+      throw insertError;
+    }
 
-      // Fetch profile separately
-      const { data: profileData, error: profileError } = await supabase
+    console.log('✅ Comment inserted successfully:', insertedComment.id);
+
+    // Record activity
+    await this.recordActivity('comment', 'article', articleSlug, {
+      comment_id: commentId,
+      article_title: article.title,
+      is_reply: !!parentId
+    });
+
+    // Update profile stats
+    await this.updateProfileStats(user.id, 'total_comments', 1);
+
+    // Process mentions
+    await this.processMentions(content, insertedComment.id, user.email?.split('@')[0] || 'Someone');
+
+    // Fetch profile separately - TRY WITHOUT ENVIRONMENT FILTER FIRST
+    console.log('👤 Fetching user profile...');
+    
+    let { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select(`
+        id, display_name, avatar_type, avatar_preset_id, avatar_url,
+        reputation_score, is_admin, membership_type
+      `)
+      .eq('id', user.id)
+      .eq('environment', config.environment)
+      .maybeSingle();
+
+    // ✅ FALLBACK WITHOUT ENVIRONMENT FILTER
+    if (!profileData && config.environment === 'production') {
+      console.log('🔄 Trying profile fetch without environment filter...');
+      
+      const { data: fallbackProfile } = await supabase
         .from('profiles')
         .select(`
           id, display_name, avatar_type, avatar_preset_id, avatar_url,
           reputation_score, is_admin, membership_type
         `)
         .eq('id', user.id)
-        .eq('environment', config.environment)
         .maybeSingle();
-
-      // Delete draft after successful comment
-      try {
-        await this.deleteCommentDraft(articleSlug);
-      } catch (draftError) {
-        console.warn('Could not delete draft:', draftError);
-      }
-
-      // Combine the data
-      const finalData = {
-        ...insertedComment,
-        profiles: profileData || {
-          id: user.id,
-          display_name: user.email?.split('@')[0] || 'User',
-          avatar_type: 'preset' as const,
-          avatar_preset_id: 1,
-          avatar_url: null,
-          reputation_score: 0,
-          is_admin: false,
-          membership_type: 'free' as const
-        }
-      };
-
-      return { success: true, data: finalData };
-
-    } catch (error: any) {
-      console.error('Error adding comment:', error);
-      return { success: false, error: error.message };
+        
+      profileData = fallbackProfile;
     }
+
+    console.log('👤 Profile data:', profileData);
+
+    // Delete draft after successful comment
+    try {
+      await this.deleteCommentDraft(articleSlug);
+    } catch (draftError) {
+      console.warn('Could not delete draft:', draftError);
+    }
+
+    // Combine the data
+    const finalData = {
+      ...insertedComment,
+      profiles: profileData || {
+        id: user.id,
+        display_name: user.email?.split('@')[0] || 'User',
+        avatar_type: 'preset' as const,
+        avatar_preset_id: 1,
+        avatar_url: null,
+        reputation_score: 0,
+        is_admin: false,
+        membership_type: 'free' as const
+      }
+    };
+
+    console.log('🎉 Comment creation successful!');
+    return { success: true, data: finalData };
+
+  } catch (error: any) {
+    console.error('❌ Error adding comment:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint
+    });
+    return { success: false, error: error.message };
   }
+}
+
 
   // **COMMENT SAVES** 
 static async toggleCommentSave(commentId: string) {

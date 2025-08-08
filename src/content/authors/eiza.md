@@ -4,7 +4,7 @@ name: Eiza
 bio: >-
   Solution Architect and AI Product Manager with a passion for building
   meaningful, data-driven products that solve real problems.
-avatar: /images/eiza-author.png
+avatar: /images/authors/eiza-author.jpg
 role: Solution Architect & AI Product Manager
 social:
   twitter: 'https://twitter.com/iamvirtueo'
@@ -12,7 +12,7 @@ social:
 featured: true
 ---
 
-Eiza is a Solution Architect and AI Product Manager who specializes in building meaningful, data-driven products that solve real problems. With extensive experience in both technical architecture and product strategy, she bridges the gap between complex technical solutions and user needs.
+Eiza is a Solution Architect and Product Manager who specializes in building meaningful, data-driven products that solve real problems. With extensive experience in both technical architecture and product strategy, she bridges the gap between complex technical solutions and user needs.
 
 ## Expertise Areas
 

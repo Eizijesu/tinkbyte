@@ -19,6 +19,69 @@ function debugLog(...args) {
   }
 }
 
+// Add these missing utility functions
+function showUserError(message) {
+  console.error('❌ User Error:', message);
+  
+  // Create a toast/notification
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    max-width: 300px;
+    font-size: 14px;
+  `;
+  toast.textContent = message;
+  
+  document.body.appendChild(toast);
+  
+  // Remove after 5 seconds
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+  }, 5000);
+}
+
+function showUserSuccess(message) {
+  console.log('✅ User Success:', message);
+  
+  // Create a success toast
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #d1fae5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    max-width: 300px;
+    font-size: 14px;
+  `;
+  toast.textContent = message;
+  
+  document.body.appendChild(toast);
+  
+  // Remove after 3 seconds
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+    }
+  }, 3000);
+}
+
 function handleError(error, userMessage = "Something went wrong") {
   // Only log in development with your config
   if (getDebugState()) {
@@ -729,12 +792,26 @@ async loadUserProfile() {
   try {
     debugLog('🔄 Loading profile for:', this.currentUser.email);
     
-    // ✅ COMPLETELY REMOVE ENVIRONMENT FILTER
-    const { data, error } = await this.supabase
+    // ✅ TRY WITHOUT ENVIRONMENT FILTER FIRST
+    let { data, error } = await this.supabase
       .from('profiles')
       .select('*')
       .eq('id', this.currentUser.id)
       .single();
+    
+    // ✅ IF STILL FAILS, TRY WITH ENVIRONMENT
+    if (error && this.environment) {
+      debugLog('⚠️ Retrying with environment filter...');
+      const result = await this.supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', this.currentUser.id)
+        .eq('environment', this.environment)
+        .single();
+      
+      data = result.data;
+      error = result.error;
+    }
     
     if (error) {
       debugLog('⚠️ Profile load failed:', error.message);
@@ -1497,87 +1574,117 @@ initializeUI() {
   }
 
   // ✅ OPTIMIZED COMMENT SUBMISSION
-   async handleCommentSubmit(e) {
-    e.preventDefault();
-    e.stopPropagation();
+async handleCommentSubmit(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  debugLog('📝 Comment submit triggered');
+  
+  await this.ensureAuth();
+  
+  if (!this.isAuthenticated || !this.currentUser) {
+    debugLog('🚫 User not authenticated for comment submission');
+    showUserError('Please sign in to comment');
+    return;
+  }
+
+  if (this.isSubmitting) {
+    debugLog('⏳ Comment submission already in progress');
+    return;
+  }
+  
+  this.isSubmitting = true;
+
+  const form = e.target;
+  const formData = new FormData(form);
+  const content = formData.get('content')?.trim();
+
+  debugLog('📝 Comment content length:', content?.length || 0);
+
+  if (!this.validateComment(content)) {
+    this.isSubmitting = false;
+    return;
+  }
+
+  const submitBtn = form.querySelector('.submit-btn');
+  if (submitBtn) submitBtn.disabled = true;
+  
+  this.showLoading(form);
+
+  try {
+    debugLog('🚀 Calling API to add comment');
+    debugLog('📊 Article ID:', this.articleId);
+    debugLog('🌍 Environment:', this.environment);
     
-    debugLog('📝 Comment submit triggered');
-    debugLog('🔐 Auth state:', {
-      initialized: this.authInitialized,
-      authenticated: this.isAuthenticated,
-      user: this.currentUser?.email
-    });
-    
-    await this.ensureAuth();
-    
-    if (!this.isAuthenticated || !this.currentUser) {
-      debugLog('🚫 User not authenticated for comment submission');
-      showUserError('Please sign in to comment');
-      return;
-    }
-
-    if (this.isSubmitting) {
-      debugLog('⏳ Comment submission already in progress');
-      return;
-    }
-    
-    this.isSubmitting = true;
-
-    const form = e.target;
-    const formData = new FormData(form);
-    const content = formData.get('content')?.trim();
-
-    debugLog('📝 Comment content length:', content?.length || 0);
-
-    if (!this.validateComment(content)) {
-      this.isSubmitting = false;
-      return;
-    }
-
-    const submitBtn = form.querySelector('.submit-btn');
-    if (submitBtn) submitBtn.disabled = true;
-    
-    this.showLoading(form);
-
+    // ✅ ENHANCED ERROR HANDLING
+    let result;
     try {
-      debugLog('🚀 Calling API to add comment');
-      
-      const result = await this.callAPI('addComment', [
+      result = await this.callAPI('addComment', [
         this.articleId,
         content, 
         this.replyingTo?.id || null
       ]);
-
-      debugLog('📡 API result:', result);
-
-      if (result.success) {
-        if (['auto_approved', 'approved'].includes(result.data.moderation_status)) {
-          showUserSuccess('Comment posted successfully!');
-          this.addCommentToUI(result.data);
-        } else {
-          showUserSuccess('Comment submitted and pending approval!');
-        }
-        
-        this.resetForm(form);
-        this.clearDraft();
-        this.updateCommentCount(1);
-        this.resetFormState(form);
-      } else {
-        if (result.error && result.error.includes('links are not allowed')) {
-          showUserError('Links are not allowed in comments. Please remove any URLs and try again.');
-        } else {
-          showUserError(result.error || 'Failed to post comment');
-        }
+    } catch (apiError) {
+      debugLog('❌ API call failed:', apiError);
+      
+      // Check if it's a network error
+      if (apiError.message?.includes('Failed to fetch') || apiError.message?.includes('NetworkError')) {
+        throw new Error('Network connection failed. Please check your internet connection and try again.');
       }
-    } catch (error) {
-      debugLog('❌ Comment submission error:', error);
-      handleError(error, 'Network error. Please try again.');
-    } finally {
-      this.hideLoading(form);
-      this.isSubmitting = false;
-      if (submitBtn) submitBtn.disabled = false;
+      
+      // Check if it's a foreign key error
+      if (apiError.message?.includes('foreign key') || apiError.message?.includes('article_slug_fkey')) {
+        throw new Error('Article not found. Please refresh the page and try again.');
+      }
+      
+      throw apiError;
     }
+
+    debugLog('📡 API result:', result);
+
+    if (result && result.success) {
+      if (['auto_approved', 'approved'].includes(result.data?.moderation_status)) {
+        showUserSuccess('Comment posted successfully!');
+        this.addCommentToUI(result.data);
+      } else {
+        showUserSuccess('Comment submitted and pending approval!');
+      }
+      
+      this.resetForm(form);
+      this.clearDraft();
+      this.updateCommentCount(1);
+      this.resetFormState(form);
+    } else {
+      const errorMessage = result?.error || 'Failed to post comment';
+      
+      if (errorMessage.includes('links are not allowed')) {
+        showUserError('Links are not allowed in comments. Please remove any URLs and try again.');
+      } else if (errorMessage.includes('Article with slug') && errorMessage.includes('not found')) {
+        showUserError('This article is not available for comments. Please refresh the page.');
+      } else {
+        showUserError(errorMessage);
+      }
+    }
+  } catch (error) {
+    debugLog('❌ Comment submission error:', error);
+    
+    let userMessage = 'Failed to post comment. Please try again.';
+    
+    if (error.message?.includes('Network connection failed')) {
+      userMessage = error.message;
+    } else if (error.message?.includes('Article not found')) {
+      userMessage = error.message;
+    } else if (error.message?.includes('Must be logged in')) {
+      userMessage = 'Please sign in to comment';
+    }
+    
+    showUserError(userMessage);
+  } finally {
+    this.hideLoading(form);
+    this.isSubmitting = false;
+    if (submitBtn) submitBtn.disabled = false;
   }
+}
 
   // Inline reply setup with optimized auth check
   async handleInlineReplySetup(commentId, author) {

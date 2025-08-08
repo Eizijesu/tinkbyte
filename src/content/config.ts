@@ -55,47 +55,47 @@ const blogCollection = defineCollection({
     image: z.string().optional(),
     imageAlt: z.string().optional(),
 
-    // UPDATED: Add your 21 categories while keeping existing ones for backward compatibility
-    category: z.enum([
-      // Core Themes (6)
-      'build-thinking',
-      'learning-by-doing', 
-      'fail-iterate-ship',
-      'product-lessons',
-      'startup-insight', 
-      'product-strategy',
-      
-      // Specialized Themes (8)
-      'ai-evolution',
-      'developer-stack-tools',
-      'research-bites',
-      'system-thinking',
-      'the-interface',
-      'tech-culture',
-      'global-perspective',
-      'community-innovation',
-      
-      // Extended Themes (7)
-      'career-stacks',
-      'future-stacks',
-      'business-models-monetization',
-      'creator-economy',
-      'consumer-behavior-attention',
-      'ecosystem-shifts-market-maps',
-      'people-systems',
-      
-      // Legacy categories (keep for backward compatibility)
-      'startup-insights', // alias for startup-insight
-      'developer-tools', // alias for developer-stack-tools
-      'research-backed', // alias for research-bites
-      'build-loop', // alias for fail-iterate-ship  
-      'no-fluff-coverage',
-      'privacy-security',
-      'mobile-development',
-      'cloud-technologies',
-      'data-science',
-      'other'
-    ]),
+ //21 categories while keeping existing ones for backward compatibility
+  category: z.enum([
+  // Core Themes (6)
+  'build-thinking',
+  'learning-by-doing', 
+  'fail-iterate-ship',
+  'product-lessons',
+  'startup-insight', 
+  'product-strategy',
+  
+  // Specialized Themes (8)
+  'ai-evolution', // ✅ This matches your header link
+  'developer-stack-tools',
+  'research-bites',
+  'system-thinking',
+  'the-interface',
+  'tech-culture',
+  'global-perspective',
+  'community-innovation',
+  
+  // Extended Themes (7)
+  'career-stacks',
+  'future-stacks',
+  'business-models-monetization',
+  'creator-economy',
+  'consumer-behavior-attention',
+  'ecosystem-shifts-market-maps',
+  'people-systems',
+  
+  // Legacy categories (keep for backward compatibility)
+  'startup-insights', // alias for startup-insight
+  'developer-tools', // alias for developer-stack-tools
+  'research-backed', // alias for research-bites
+  'build-loop', // alias for fail-iterate-ship  
+  'no-fluff-coverage',
+  'privacy-security',
+  'mobile-development',
+  'cloud-technologies',
+  'data-science',
+  'other'
+]),
 
     storyType: z.enum([
       'feature',

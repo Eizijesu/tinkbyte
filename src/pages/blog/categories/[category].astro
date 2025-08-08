@@ -1,5 +1,5 @@
 ---
-// src/pages/blog/categories/[category].astro - FIXED with perfect square design
+// src/pages/blog/categories/[category].astro - FIXED with Newsletter Grid Pattern
 import Layout from "../../../layouts/Layout.astro";
 import ArticleCard from "../../../components/blog/ArticleCard.astro";
 import Button from "../../../components/ui/Button.astro";
@@ -214,7 +214,23 @@ const formatPost = (post: BlogPost) => {
     }),
     readTime: post.data.readTime || "5 min read",
     slug: post.slug,
-    image: post.data.image || "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop",
+    image: (() => {
+  // Check for heroImage structure first
+  if (post.data.heroImage) {
+    if (post.data.heroImage.imageType === "upload" && post.data.heroImage.uploadedImage) {
+      return post.data.heroImage.uploadedImage;
+    }
+    if (post.data.heroImage.imageType === "url" && post.data.heroImage.externalUrl) {
+      return post.data.heroImage.externalUrl;
+    }
+  }
+  // Fallback to legacy image field
+  if (post.data.image) {
+    return post.data.image;
+  }
+  // TinkByte default fallback
+  return "/images/articles/tinkbyte_all_article.png";
+})(),
     tags: ensureTagsArray(post.data.tags), // FIXED: Always returns string[]
     category: post.data.category,
     author: authorData,
@@ -332,47 +348,74 @@ const sortedPosts = posts.sort((a, b) =>
     </div>
   </div>
 
-  <!-- Articles Section -->
-  <main class="articles-section">
-    <div class="container">
+  <!-- Articles Section - USING NEWSLETTER GRID PATTERN -->
+  <main class="newsletter-page" data-theme-aware="true">
+    <div class="max-w-7xl mx-auto px-4 py-16">
       
       {posts.length > 0 ? (
         <>
           <!-- Featured Articles -->
-            {featuredPosts.length > 0 && (
-                <section class="featured-section-fixed">
-                <!-- FIXED: Added proper spacing with mb-6 -->
-                <h2 class="section-title mb-6">
-                  <i class="fas fa-star section-icon"></i>
-                  Featured Articles
-                </h2>
-                <div class="featured-grid">
-                  {featuredPosts.slice(0, 3).map((post: BlogPost) => (
-                    <div class="featured-article">
-                      <ArticleCard {...formatPost(post)} />
+          {featuredPosts.length > 0 && (
+            <section class="newsletter-section">
+              <h2 class="section-title mb-6">
+                <i class="fas fa-star mr-3 text-yellow-500"></i>
+                Featured Articles
+              </h2>
+              <div class="newsletter-grid">
+                {featuredPosts.slice(0, 3).map((post, index) => (
+                  <div class="newsletter-card featured-article" data-newsletter={post.slug}>
+                    <div class="card-content">
+                      <div class="card-header">
+                        <div class="card-frequency">FEATURED</div>
+                      </div>
+                      <h3 class="card-title">
+                        <a href={`/blog/${post.slug}`}>{post.data.title}</a>
+                      </h3>
+                      <p class="card-description">{post.data.excerpt?.slice(0, 100)}...</p>
+                      <div class="card-meta">
+                        <span class="card-audience">
+                          {formatPost(post).date} • {formatPost(post).readTime}
+                        </span>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <!-- All Articles -->
-          <section class="all-articles-section-fixed">
-            <div class="section-header-fixed">
-              <!-- FIXED: Added proper spacing with mb-4 -->
-              <h2 class="section-title mb-4">
-                <i class={categoryIcon} style={`color: ${categoryColor}`}></i>
-                All {categoryName} Articles
-              </h2>
-              <span class="article-count">
-                {posts.length} {posts.length === 1 ? 'article' : 'articles'}
-              </span>
+          <section class="newsletter-section">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title mb-2">
+                  <i class={categoryIcon} style={`color: ${categoryColor}`} class="mr-3"></i>
+                  All {categoryName} Articles
+                </h2>
+                <p class="section-subtitle">{posts.length} {posts.length === 1 ? 'article' : 'articles'} published</p>
+              </div>
             </div>
 
-            <div class="articles-grid">
-              {sortedPosts.map((post: BlogPost, index) => (
-                <div class="article-item" style={`--animation-delay: ${index * 0.1}s`}>
-                  <ArticleCard {...formatPost(post)} />
+            <div class="newsletter-grid">
+              {sortedPosts.map((post, index) => (
+                <div class="newsletter-card" data-newsletter={post.slug}>
+                  <div class="card-content">
+                    <div class="card-header">
+                      <div class="card-frequency">
+                        {post.data.category?.toUpperCase() || "ARTICLE"}
+                      </div>
+                    </div>
+                    <h3 class="card-title">
+                      <a href={`/blog/${post.slug}`}>{post.data.title}</a>
+                    </h3>
+                    <p class="card-description">{post.data.excerpt?.slice(0, 120)}...</p>
+                    <div class="card-meta">
+                      <span class="card-audience">
+                        {formatPost(post).date} • {formatPost(post).readTime}
+                        {post.data.featured && <> • Featured</>}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -381,23 +424,23 @@ const sortedPosts = posts.sort((a, b) =>
       ) : (
         <!-- Empty State -->
         <section class="empty-state">
-          <div class="empty-content">
+          <div class="empty-icon">
             <i class={categoryIcon} style={`color: ${categoryColor}30`}></i>
-            <h3 class="empty-title">No {categoryName} Articles Yet</h3>
-            <p class="empty-description">
-              We're working on creating amazing content for this category. 
-              Check back soon or explore other categories!
-            </p>
-            <div class="empty-actions">
-              <Button href="/blog" variant="primary" className="action-btn">
-                <i class="fas fa-newspaper"></i>
-                EXPLORE ALL ARTICLES
-              </Button>
-              <Button href="/blog/categories" variant="outline" className="action-btn">
-                <i class="fas fa-th-large"></i>
-                ALL CATEGORIES
-              </Button>
-            </div>
+          </div>
+          <h3 class="empty-title">No {categoryName} Articles Yet</h3>
+          <p class="empty-description">
+            We're working on creating amazing content for this category. 
+            Check back soon or explore other categories!
+          </p>
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button href="/blog" variant="primary" className="action-btn">
+              <i class="fas fa-newspaper"></i>
+              EXPLORE ALL ARTICLES
+            </Button>
+            <Button href="/blog/categories" variant="outline" className="action-btn">
+              <i class="fas fa-th-large"></i>
+              ALL CATEGORIES
+            </Button>
           </div>
         </section>
       )}
@@ -584,32 +627,6 @@ const sortedPosts = posts.sort((a, b) =>
     gap: 0.5rem;
   }
 
-  .featured-section-fixed {
-  margin-bottom: 3rem;
-}
-
-.all-articles-section-fixed {
-  margin-bottom: 3rem;
-}
-
-.section-header-fixed {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem; /* Consistent spacing */
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0; /* Remove default margin, use utility classes */
-}
   /* Quick Actions Sidebar */
   .quick-actions {
     position: fixed;
@@ -680,129 +697,221 @@ const sortedPosts = posts.sort((a, b) =>
     color: var(--color-text-primary);
   }
 
-  /* Articles Section */
-  .articles-section {
-    padding: 4rem 0;
+  /* NEWSLETTER PAGE GRID SYSTEM - EXACT SAME AS AUTHOR PAGE */
+  .newsletter-page {
+    font-family: "Space Grotesk", sans-serif;
+    background-color: white;
+    color: rgb(17 24 39);
+    min-height: 100vh;
   }
 
-  .featured-section,
-  .all-articles-section {
+  :global(.dark) .newsletter-page {
+    background-color: rgb(15 23 42);
+    color: rgb(248 250 252);
+  }
+
+  .newsletter-section {
     margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: rgb(17 24 39);
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid rgb(229 231 235);
+    padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+  }
+
+  :global(.dark) .section-title {
+    color: rgb(248 250 252);
+    border-color: rgb(51 65 85);
+  }
+
+  .section-subtitle {
+    font-size: 1.125rem;
+    color: rgb(55 65 81);
+    margin-bottom: 2rem;
+  }
+
+  :global(.dark) .section-subtitle {
+    color: rgb(226 232 240);
   }
 
   .section-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
+    align-items: flex-start;
+    margin-bottom: 3rem;
+  }
+
+  /* NEWSLETTER GRID - EXACT SAME AS AUTHOR PAGE */
+  .newsletter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 1rem;
   }
 
-  .section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-text-primary);
+  .newsletter-card {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin: 0;
-  }
-
-  .section-icon {
-    color: #f59e0b;
-  }
-
-  .article-count {
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-    font-weight: 600;
-  }
-
-  .featured-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
-  }
-
-  .featured-article {
+    gap: 1rem;
+    padding: 1.25rem;
+    background: white;
+    border: 2px solid rgb(229 231 235);
+    transition: all 0.3s ease;
+    cursor: pointer;
     position: relative;
   }
 
-  .featured-article::before {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: linear-gradient(45deg, var(--color-accent), #8b5cf6, #06b6d4);
-    border-radius: var(--tinkbyte-radius-card);
-    z-index: -1;
-    opacity: 0.6;
+  :global(.dark) .newsletter-card {
+    background: rgb(30 41 59);
+    border-color: rgb(51 65 85);
   }
 
-  .articles-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
+  .newsletter-card:hover {
+    border-color: #243788;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  .article-item {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp 0.6s ease forwards;
-    animation-delay: var(--animation-delay, 0s);
-    transition: transform 0.3s ease;
+  :global(.dark) .newsletter-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
-  .article-item:hover {
-    transform: translateY(-4px);
+  .featured-article {
+    border-color: #243788;
   }
 
-  @keyframes fadeInUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .card-content {
+    flex: 1;
+    min-width: 0;
+    display: block;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-frequency {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: rgb(248 250 252);
+    color: rgb(55 65 81);
+    border: 1px solid rgb(229 231 235);
+  }
+
+  :global(.dark) .card-frequency {
+    background: rgb(30 41 59);
+    color: rgb(226 232 240);
+    border-color: rgb(51 65 85);
+  }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: rgb(17 24 39);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  :global(.dark) .card-title {
+    color: rgb(248 250 252);
+  }
+
+  .card-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .card-title a:hover {
+    color: #243788;
+  }
+
+  :global(.dark) .card-title a:hover {
+    color: rgb(96 165 250);
+  }
+
+  .card-description {
+    font-size: 0.875rem;
+    color: rgb(55 65 81);
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+
+  :global(.dark) .card-description {
+    color: rgb(226 232 240);
+  }
+
+  .card-meta {
+    margin-bottom: 1rem;
+  }
+
+  .card-audience {
+    font-size: 0.75rem;
+    color: rgb(107 114 128);
+    font-style: italic;
+    word-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.2;
+  }
+
+  :global(.dark) .card-audience {
+    color: rgb(148 163 184);
   }
 
   /* Empty State */
   .empty-state {
     text-align: center;
-    padding: 4rem 0;
+    padding: 4rem 2rem;
   }
 
-  .empty-content {
-    max-width: 500px;
-    margin: 0 auto;
-  }
-
-  .empty-content i {
+  .empty-icon {
     font-size: 4rem;
-    margin-bottom: 2rem;
-    display: block;
+    color: rgb(107 114 128);
+    margin-bottom: 1.5rem;
+  }
+
+  :global(.dark) .empty-icon {
+    color: rgb(148 163 184);
   }
 
   .empty-title {
     font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-text-primary);
+    font-weight: 800;
+    color: rgb(17 24 39);
     margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  :global(.dark) .empty-title {
+    color: rgb(248 250 252);
   }
 
   .empty-description {
     font-size: 1rem;
-    color: var(--color-text-secondary);
-    line-height: 1.6;
+    color: rgb(55 65 81);
     margin-bottom: 2rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  .empty-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
+  :global(.dark) .empty-description {
+    color: rgb(226 232 240);
   }
 
   /* Toast Notification */
@@ -832,21 +941,18 @@ const sortedPosts = posts.sort((a, b) =>
     }
   }
 
-  /* Mobile Responsive */
-  @media (max-width: 1024px) {
-    .quick-actions {
-      display: none;
-    }
-
-    .featured-grid,
-    .articles-grid {
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-  }
-
-  /* Mobile Breadcrumb Navigation Fix */
+  /* RESPONSIVE DESIGN - SAME AS AUTHOR PAGE */
   @media (max-width: 768px) {
+    .newsletter-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .newsletter-card {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+
     .category-hero {
       padding: 2rem 0;
     }
@@ -855,50 +961,21 @@ const sortedPosts = posts.sort((a, b) =>
       padding: 0 0.75rem;
     }
 
-    /* Mobile Breadcrumb - Clean Straight Line */
     .breadcrumb-nav {
       justify-content: flex-start;
-      padding: 1rem 0;
+      padding: 0.75rem 1rem;
       margin-bottom: 1.5rem;
       font-size: 0.8125rem;
       gap: 0.375rem;
       background: rgba(248, 250, 252, 0.5);
       border-radius: var(--tinkbyte-radius-sm);
-      padding: 0.75rem 1rem;
-      margin-left: -0.75rem;
-      margin-right: -0.75rem;
-      width: calc(100% + 1.5rem);
+      margin-left: 0;
+      margin-right: 0;
+      width: 100%;
     }
 
     :global(.dark) .breadcrumb-nav {
       background: rgba(30, 41, 59, 0.5);
-    }
-
-    .breadcrumb-link {
-      font-size: 0.8125rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--tinkbyte-radius-sm);
-      transition: all 0.2s ease;
-    }
-
-    .breadcrumb-link:hover {
-      background: rgba(59, 130, 246, 0.15);
-      color: #3b82f6;
-    }
-
-    .breadcrumb-separator {
-      font-size: 0.75rem;
-      margin: 0 0.25rem;
-      color: var(--color-text-muted);
-    }
-
-    .breadcrumb-current {
-      font-size: 0.8125rem;
-      padding: 0.25rem 0.75rem;
-      background: rgba(16, 185, 129, 0.15);
-      color: #10b981;
-      border-radius: var(--tinkbyte-radius-sm);
-      font-weight: 700;
     }
 
     .category-title-section {
@@ -928,13 +1005,15 @@ const sortedPosts = posts.sort((a, b) =>
     .section-header {
       flex-direction: column;
       align-items: flex-start;
-      gap: 0.5rem;
+      gap: 1rem;
     }
 
-    .featured-grid,
-    .articles-grid {
-      grid-template-columns: 1fr;
-      gap: 1rem;
+    .section-title {
+      font-size: 1.25rem;
+    }
+
+    .quick-actions {
+      display: none;
     }
   }
 
@@ -947,29 +1026,10 @@ const sortedPosts = posts.sort((a, b) =>
       padding: 0 0.5rem;
     }
 
-    /* Extra Small Mobile Breadcrumb */
     .breadcrumb-nav {
       font-size: 0.75rem;
       gap: 0.25rem;
       padding: 0.5rem 0.75rem;
-      margin-left: -0.5rem;
-      margin-right: -0.5rem;
-      width: calc(100% + 1rem);
-    }
-
-    .breadcrumb-link {
-      font-size: 0.75rem;
-      padding: 0.2rem 0.4rem;
-    }
-
-    .breadcrumb-separator {
-      font-size: 0.6875rem;
-      margin: 0 0.2rem;
-    }
-
-    .breadcrumb-current {
-      font-size: 0.75rem;
-      padding: 0.2rem 0.5rem;
     }
 
     .category-title {
@@ -1009,9 +1069,9 @@ const sortedPosts = posts.sort((a, b) =>
   
   const DEBUG = import.meta.env?.DEV || false;
 
-const debugLog = (message: string, data?: any) => {
-  if (DEBUG) console.log(`[CategoryPage] ${message}`, data || '');
-};
+  const debugLog = (message: string, data?: any) => {
+    if (DEBUG) console.log(`[CategoryPage] ${message}`, data || '');
+  };
 
   document.addEventListener('DOMContentLoaded', async () => {
     const followBtn = document.getElementById('follow-topic') as HTMLButtonElement;
@@ -1188,27 +1248,32 @@ const debugLog = (message: string, data?: any) => {
       }, 3000);
     }
 
-    // Animation setup
-    const articleItems = document.querySelectorAll('.article-item');
-    
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px',
-    };
+    // Make newsletter cards clickable (same as author page)
+    const newsletterCards = document.querySelectorAll(".newsletter-card");
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const element = entry.target as HTMLElement;
-          element.style.opacity = '1';
-          element.style.transform = 'translateY(0)';
-          observer.unobserve(entry.target);
+    newsletterCards.forEach((card) => {
+      card.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "A") return;
+
+        const link = card.querySelector("a");
+        if (link) {
+          window.location.href = link.href;
         }
       });
-    }, observerOptions);
+    });
 
-    articleItems.forEach((item) => {
-      observer.observe(item);
+    // Enhanced hover effects
+    newsletterCards.forEach((card, index) => {
+      const element = card as HTMLElement;
+      
+      card.addEventListener('mouseenter', () => {
+        element.style.transform = 'translateY(-4px) scale(1.02)';
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        element.style.transform = 'translateY(0) scale(1)';
+      });
     });
   });
 </script>

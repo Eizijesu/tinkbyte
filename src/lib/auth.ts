@@ -216,7 +216,6 @@ private async setUserData(user: User, session: Session): Promise<void> {
   this.currentUser = user;
 
   try {
-    // ✅ REMOVE ENVIRONMENT FILTER COMPLETELY
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
@@ -229,6 +228,9 @@ private async setUserData(user: User, session: Session): Promise<void> {
     } else if (profile) {
       this.debugLog('✅ Auth: Profile loaded from database');
       this.currentProfile = profile;
+      
+      // ✅ UPDATE: Sync Google avatar if needed
+      await this.syncGoogleAvatarIfNeeded(user, profile);
     } else {
       this.debugLog('🆕 Auth: Creating new profile');
       await this.createProfile(user);
@@ -243,6 +245,44 @@ private async setUserData(user: User, session: Session): Promise<void> {
   this.updateAuthState();
 }
 
+private async syncGoogleAvatarIfNeeded(user: User, profile: Profile): Promise<void> {
+  const isGoogleUser = user.app_metadata?.provider === 'google';
+  const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+  
+  if (isGoogleUser && googleAvatar) {
+    // Check if profile needs updating
+    const needsUpdate = (
+      profile.avatar_type !== 'google' || 
+      profile.avatar_url !== googleAvatar ||
+      !profile.avatar_url
+    );
+    
+    if (needsUpdate) {
+      this.debugLog('🔄 Syncing Google avatar for user:', user.email);
+      
+      try {
+        const { data: updatedProfile, error } = await supabase
+          .from('profiles')
+          .update({
+            avatar_url: googleAvatar,
+            avatar_type: 'google',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id)
+          .select()
+          .single();
+        
+        if (updatedProfile && !error) {
+          this.currentProfile = updatedProfile;
+          this.debugLog('✅ Google avatar synced successfully');
+        }
+      } catch (error) {
+        this.errorLog('❌ Error syncing Google avatar:', error);
+      }
+    }
+  }
+}
+
   private updateAuthState(): void {
     this.authState = {
       currentUser: this.currentUser,
@@ -251,62 +291,75 @@ private async setUserData(user: User, session: Session): Promise<void> {
     };
   }
 
-  private async createProfile(user: User): Promise<void> {
-    const displayName = user.user_metadata?.display_name || 
-                       user.user_metadata?.full_name || 
-                       user.email?.split('@')[0] || 
-                       'TBMember';
+private async createProfile(user: User): Promise<void> {
+  const displayName = user.user_metadata?.display_name || 
+                     user.user_metadata?.full_name || 
+                     user.user_metadata?.name ||
+                     user.email?.split('@')[0] || 
+                     'TBMember';
 
-const newProfile = {
-  id: user.id,
-  display_name: displayName,
-  first_name: user.user_metadata?.given_name || null,
-  last_name: user.user_metadata?.family_name || null,
-  // ✅ PRESERVE ALL AVATAR TYPES PROPERLY
-  avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
-  avatar_type: this.determineAvatarType(user),
-  avatar_preset_id: 1,
-  total_reads: 0,
-  total_comments: 0,
-  total_articles: 0,
-  reputation_score: 0,
-  following_count: 0,
-  followers_count: 0,
-  is_public: true,
-  membership_type: 'free' as const,
-  is_admin: user.email === 'tinkbytehq@gmail.com',
-  environment: config.environment,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString()
-};
+  const avatarType = this.determineAvatarType(user);
+  const avatarUrl = avatarType === 'google' 
+    ? (user.user_metadata?.avatar_url || user.user_metadata?.picture)
+    : null;
 
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert(newProfile)
-        .select()
-        .single();
+  const newProfile = {
+    id: user.id,
+    display_name: displayName,
+    first_name: user.user_metadata?.given_name || null,
+    last_name: user.user_metadata?.family_name || null,
+    avatar_url: avatarUrl,
+    avatar_type: avatarType,
+    avatar_preset_id: avatarType === 'preset' ? 1 : null,
+    total_reads: 0,
+    total_comments: 0,
+    total_articles: 0,
+    reputation_score: 0,
+    following_count: 0,
+    followers_count: 0,
+    is_public: true,
+    membership_type: 'free' as const,
+    is_admin: user.email === 'tinkbytehq@gmail.com',
+    environment: config.environment,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
 
-      if (error) throw error;
-      
-      this.debugLog('✅ Auth: Profile created successfully');
-      this.currentProfile = data;
-    } catch (error) {
-      this.errorLog('❌ Error creating profile:', error);
-    }
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert(newProfile)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    this.debugLog('✅ Auth: Profile created successfully with avatar type:', avatarType);
+    this.currentProfile = data;
+  } catch (error) {
+    this.errorLog('❌ Error creating profile:', error);
   }
+}
 
   private determineAvatarType(user: User): 'preset' | 'uploaded' | 'google' {
-  // Check if it's a Google OAuth user
+  // Check provider first - most reliable
   const provider = user.app_metadata?.provider;
-  if (provider === 'google' && (user.user_metadata?.avatar_url || user.user_metadata?.picture)) {
+  
+  if (provider === 'google') {
     return 'google';
   }
   
-  // Check if user has uploaded avatar (usually contains specific patterns)
-  const avatarUrl = user.user_metadata?.avatar_url;
+  // Check if it's a Google URL pattern
+  const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture;
   if (avatarUrl) {
-    // If it contains your storage bucket URL or upload patterns, it's uploaded
+    if (avatarUrl.includes('googleusercontent.com') || 
+        avatarUrl.includes('lh3.googleusercontent.com') ||
+        avatarUrl.includes('google.com/avatar') ||
+        avatarUrl.includes('accounts.google.com')) {
+      return 'google';
+    }
+    
+    // Check for uploaded patterns
     if (avatarUrl.includes('supabase') || 
         avatarUrl.includes('storage') || 
         avatarUrl.includes('upload') ||
@@ -315,17 +368,10 @@ const newProfile = {
       return 'uploaded';
     }
     
-    // If it contains Google URLs, it's Google
-    if (avatarUrl.includes('googleusercontent.com') || 
-        avatarUrl.includes('google.com')) {
-      return 'google';
-    }
-    
-    // Default to uploaded if we have a URL but can't determine type
+    // If we have a URL but can't determine, assume uploaded
     return 'uploaded';
   }
   
-  // No avatar URL means preset
   return 'preset';
 }
 
@@ -386,30 +432,37 @@ const newProfile = {
            'Builder';
   }
 
-  getAvatarUrl(): string {
-    const profile = this.currentProfile;
-    const user = this.currentUser;
-    
-    // ✅ GOOGLE AVATAR PRIORITY
-    if (profile?.avatar_type === 'google' && profile?.avatar_url) {
+getAvatarUrl(): string {
+  const profile = this.currentProfile;
+  const user = this.currentUser;
+  
+  // ✅ PRIORITY 1: Check if user is Google OAuth user
+  if (user?.app_metadata?.provider === 'google') {
+    // Try profile first (if it was saved)
+    if (profile?.avatar_url && profile?.avatar_type === 'google') {
       return profile.avatar_url;
     }
     
-    if (profile?.avatar_type === 'uploaded' && profile?.avatar_url) {
-      return profile.avatar_url;
+    // ✅ FALLBACK: Always check user metadata for Google users
+    const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+    if (googleAvatar) {
+      return googleAvatar;
     }
-    
-    // ✅ FALLBACK TO USER METADATA FOR GOOGLE
-    if (user?.user_metadata?.avatar_url) {
-      return user.user_metadata.avatar_url;
-    }
-    
-    if (user?.user_metadata?.picture) {
-      return user.user_metadata.picture;
-    }
-    
-    return `/images/avatars/preset-${profile?.avatar_preset_id || 1}.svg`;
   }
+  
+  // ✅ PRIORITY 2: Uploaded avatars
+  if (profile?.avatar_type === 'uploaded' && profile?.avatar_url) {
+    return profile.avatar_url;
+  }
+  
+  // ✅ PRIORITY 3: Other profile avatars
+  if (profile?.avatar_url && profile?.avatar_type !== 'preset') {
+    return profile.avatar_url;
+  }
+  
+  // ✅ FALLBACK: Preset avatar
+  return `/images/avatars/preset-${profile?.avatar_preset_id || 1}.svg`;
+}
 
   async isAuthenticated(): Promise<boolean> {
     try {

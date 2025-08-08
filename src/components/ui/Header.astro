@@ -1737,6 +1737,88 @@ const featuredTopics = allTopics.slice(0, 6);
   :global(.dark) .mobile-avatar-button:focus {
     outline-color: #b4bce1;
   }
+
+  /* Fix CTA button contrast in light theme */
+  .cta-button-secondary-clean {
+    background: transparent;
+    color: white; /* Keep white text */
+    border: 2px solid white;
+  }
+
+  .cta-button-secondary-clean:hover {
+    background: white;
+    color: #243788; /* Dark text on white background */
+  }
+
+  /* Ensure proper contrast for community links */
+  .community-link {
+    background: transparent;
+    color: white; /* Changed from #c9cddd to white for better contrast */
+    border-color: white; /* Changed from #606ca0 to white */
+  }
+
+  .community-link:hover {
+    background: white;
+    color: #243788;
+    border-color: white;
+  }
+
+  /* Mobile community button fix */
+  .mobile-community {
+    background: transparent;
+    color: white; /* Ensure white text */
+    border-color: white;
+  }
+
+  .mobile-community:hover {
+    background: white;
+    color: #243788;
+    border-color: white;
+  }
+
+  /* Fix mobile view-all and community footer links */
+  .mobile-view-all {
+    background: #243788;
+    color: white;
+    border-color: #243788;
+  }
+
+  .mobile-view-all:hover {
+    background: white;
+    color: #243788;
+  }
+
+  /* Dark theme adjustments */
+  :global(.dark) .cta-button-secondary-clean {
+    background: transparent;
+    color: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .cta-button-secondary-clean:hover {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  :global(.dark) .community-link {
+    color: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .community-link:hover {
+    background: #b4bce1;
+    color: #0f172a;
+  }
+
+  :global(.dark) .mobile-community {
+    color: #b4bce1;
+    border-color: #b4bce1;
+  }
+
+  :global(.dark) .mobile-community:hover {
+    background: #b4bce1;
+    color: #0f172a;
+  }
 </style>
 
 <script>
@@ -1768,16 +1850,13 @@ const featuredTopics = allTopics.slice(0, 6);
       // **FIX 1: Load cached auth state IMMEDIATELY**
       const cachedAuth = authManager.getAuthStateSync();
       if (cachedAuth.user) {
-        
         headerStore.setUser(cachedAuth.user, cachedAuth.profile);
       }
 
       // **FIX 2: Initialize auth in background (non-blocking)**
       authManager
         .initialize()
-        .then(() => {
-          
-        })
+        .then(() => {})
         .catch((error) => {
           console.error("❌ Header: Auth initialization failed:", error);
         });
