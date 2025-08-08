@@ -33,8 +33,8 @@ function showUserError(message) {
     border: 1px solid #fecaca;
     color: #dc2626;
     padding: 12px 16px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 0px;
+    box-shadow: 0 4px 2px rgba(0, 0, 0, 0.15);
     z-index: 10000;
     max-width: 300px;
     font-size: 14px;
@@ -64,7 +64,7 @@ function showUserSuccess(message) {
     border: 1px solid #a7f3d0;
     color: #065f46;
     padding: 12px 16px;
-    border-radius: 8px;
+    border-radius: 0px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 10000;
     max-width: 300px;
@@ -184,7 +184,7 @@ function showInitializationError() {
         padding: 2rem;
         text-align: center;
         background: var(--secondary-bg);
-        border-radius: 8px;
+        border-radius: 0px;
         margin: 1rem 0;
       ">
         <div class="error-icon" style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
@@ -195,7 +195,7 @@ function showInitializationError() {
           color: white;
           border: none;
           padding: 0.75rem 1.5rem;
-          border-radius: 6px;
+          border-radius: 0px;
           cursor: pointer;
           font-weight: 500;
         ">
@@ -1284,7 +1284,7 @@ initializeUI() {
       max-height: 300px;
       background: var(--secondary-bg);
       border: 1px solid var(--border-color);
-      border-radius: 8px;
+      border-radius: 0px;
       padding: 0.75rem;
       overflow-y: auto;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
@@ -2931,7 +2931,7 @@ addReplyToUI(replyData, parentId) {
       position: fixed;
       background: var(--secondary-bg);
       border: 1px solid var(--border-color);
-      border-radius: 8px;
+      border-radius: 0px;
       max-height: 200px;
       overflow-y: auto;
       z-index: 1000;
@@ -2958,7 +2958,7 @@ addReplyToUI(replyData, parentId) {
       const avatarUrl = this.getUserAvatar(user);
       
       item.innerHTML = `
-        <div class="mention-item-avatar" style="width: 24px; height: 24px; border-radius: 50%; overflow: hidden;">
+        <div class="mention-item-avatar" style="width: 24px; height: 24px; border-radius: 0%; overflow: hidden;">
           <img src="${avatarUrl}" alt="${user.display_name}" style="width: 100%; height: 100%; object-fit: cover;" />
         </div>
         <div class="mention-item-info">
@@ -3382,7 +3382,7 @@ addReplyToUI(replyData, parentId) {
         padding: 2rem;
         text-align: center;
         background: var(--secondary-bg);
-        border-radius: 8px;
+        border-radius: 0px;
         margin: 1rem 0;
       ">
         <div class="error-icon" style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
@@ -3393,7 +3393,7 @@ addReplyToUI(replyData, parentId) {
           color: white;
           border: none;
           padding: 0.75rem 1.5rem;
-          border-radius: 6px;
+          border-radius: 0px;
           cursor: pointer;
           font-weight: 500;
         ">
