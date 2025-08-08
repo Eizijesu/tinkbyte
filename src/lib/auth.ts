@@ -229,8 +229,11 @@ private async setUserData(user: User, session: Session): Promise<void> {
       this.debugLog('✅ Auth: Profile loaded from database');
       this.currentProfile = profile;
       
-      // ✅ UPDATE: Sync Google avatar if needed
-      await this.syncGoogleAvatarIfNeeded(user, profile);
+      // ✅ ONLY sync Google avatar for NEW users or users with no avatar set
+      const isNewProfile = !profile.avatar_url || profile.avatar_type === 'preset';
+      if (isNewProfile) {
+        await this.syncGoogleAvatarIfNeeded(user, profile);
+      }
     } else {
       this.debugLog('🆕 Auth: Creating new profile');
       await this.createProfile(user);
@@ -250,11 +253,11 @@ private async syncGoogleAvatarIfNeeded(user: User, profile: Profile): Promise<vo
   const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
   
   if (isGoogleUser && googleAvatar) {
-    // Check if profile needs updating
+    // ✅ ONLY sync if profile has NO avatar or is still using preset
     const needsUpdate = (
-      profile.avatar_type !== 'google' || 
-      profile.avatar_url !== googleAvatar ||
-      !profile.avatar_url
+      !profile.avatar_url ||
+      profile.avatar_type === 'preset' ||
+      (profile.avatar_type !== 'uploaded' && profile.avatar_url !== googleAvatar)
     );
     
     if (needsUpdate) {
@@ -436,28 +439,22 @@ getAvatarUrl(): string {
   const profile = this.currentProfile;
   const user = this.currentUser;
   
-  // ✅ PRIORITY 1: Check if user is Google OAuth user
-  if (user?.app_metadata?.provider === 'google') {
-    // Try profile first (if it was saved)
-    if (profile?.avatar_url && profile?.avatar_type === 'google') {
-      return profile.avatar_url;
-    }
-    
-    // ✅ FALLBACK: Always check user metadata for Google users
-    const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
-    if (googleAvatar) {
-      return googleAvatar;
-    }
-  }
-  
-  // ✅ PRIORITY 2: Uploaded avatars
+  // ✅ PRIORITY 1: User uploaded avatar (highest priority)
   if (profile?.avatar_type === 'uploaded' && profile?.avatar_url) {
     return profile.avatar_url;
   }
   
-  // ✅ PRIORITY 3: Other profile avatars
-  if (profile?.avatar_url && profile?.avatar_type !== 'preset') {
+  // ✅ PRIORITY 2: Google avatar (only if no uploaded avatar)
+  if (profile?.avatar_type === 'google' && profile?.avatar_url) {
     return profile.avatar_url;
+  }
+  
+  // ✅ PRIORITY 3: Google user metadata fallback (only if no profile avatar set)
+  if (user?.app_metadata?.provider === 'google' && !profile?.avatar_url) {
+    const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+    if (googleAvatar) {
+      return googleAvatar;
+    }
   }
   
   // ✅ FALLBACK: Preset avatar
