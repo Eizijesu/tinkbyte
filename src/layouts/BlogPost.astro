@@ -312,30 +312,8 @@ if (typeof globalThis !== "undefined") {
       data-article-id={articleId}
       data-article-title={title}
     >
-      <!-- FIXED: Much lighter overlay and proper spacing -->
+      <!-- Article Header -->
       <header class="article-header-integrated">
-        <!-- VERY LIGHT background gradient overlay -->
-        <div class="header-gradient-overlay-light"></div>
-
-        <!-- Hero image as background with MINIMAL overlay -->
-        {
-          imageSrc && (
-            <div class="hero-background-container">
-              <Image
-                src={imageSrc}
-                alt={finalImageAlt}
-                width={1200}
-                height={600}
-                class="hero-background-image"
-                format="webp"
-                loading="eager"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
-              />
-              <div class="hero-image-overlay-light" />
-            </div>
-          )
-        }
-
         <div class="max-w-7xl mx-auto px-4 py-6 relative z-10">
           <!-- Compact Meta Line -->
           <div class="article-meta-compact">
@@ -393,7 +371,7 @@ if (typeof globalThis !== "undefined") {
               )
             }
 
-            <!-- Clean Author Line (No Border, Clean Icons) -->
+            <!-- Clean Author Line -->
             <div class="article-byline-compact">
               <div class="author-compact" data-tina-field="authorInfo">
                 {
@@ -437,7 +415,7 @@ if (typeof globalThis !== "undefined") {
         </div>
       </header>
 
-      <!-- FIXED: Much lower positioned overlapping image -->
+      <!-- Hero Image -->
       {
         imageSrc && (
           <div class="article-image-overlap-fixed">
@@ -466,22 +444,29 @@ if (typeof globalThis !== "undefined") {
         )
       }
 
-      <!-- Keep all your existing audio, content, sidebar, navigation code exactly the same -->
-      <!-- Audio Player Section -->
+      <!-- Compact Collapsible Audio Player -->
       {
         audioUrl ? (
-          <div class="audio-section-enhanced">
+          <div class="audio-section-compact">
             <div class="max-w-7xl mx-auto px-4">
-              <div class="audio-container">
-                <div class="audio-header">
-                  <h3 class="audio-title">
-                    <i class="fas fa-headphones mr-3" />
-                    Listen to this article
-                  </h3>
-                  <p class="audio-subtitle">
-                    Perfect for multitasking or commuting
-                  </p>
+              <div class="audio-toggle-bar" id="audio-toggle">
+                <div class="audio-toggle-content">
+                  <div class="audio-toggle-left">
+                    <i class="fas fa-headphones audio-toggle-icon" />
+                    <span class="audio-toggle-text">
+                      Listen to this article
+                    </span>
+                    <span class="audio-duration-badge">
+                      {audioDuration || "5 min"}
+                    </span>
+                  </div>
+                  <button class="audio-expand-btn" id="audio-expand-btn">
+                    <i class="fas fa-chevron-down" />
+                  </button>
                 </div>
+              </div>
+
+              <div class="audio-player-expandable" id="audio-player-expandable">
                 <AudioPlayer
                   audioUrl={audioUrl}
                   title={title}
@@ -491,30 +476,18 @@ if (typeof globalThis !== "undefined") {
             </div>
           </div>
         ) : (
-          <div class="no-audio-section-enhanced">
+          <div class="audio-section-compact">
             <div class="max-w-7xl mx-auto px-4">
-              <div class="no-audio-placeholder-enhanced">
-                <div class="no-audio-content">
-                  <svg
-                    class="audio-icon-enhanced"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                    />
-                  </svg>
-                  <div>
-                    <span class="no-audio-text-enhanced">
-                      Audio version coming soon
+              <div class="audio-toggle-bar audio-coming-soon">
+                <div class="audio-toggle-content">
+                  <div class="audio-toggle-left">
+                    <i class="fas fa-clock audio-toggle-icon" />
+                    <span class="audio-toggle-text">
+                      Audio not available
                     </span>
-                    <p class="no-audio-subtitle-enhanced">
-                      Reading time: {readTime || "5 min"}
-                    </p>
+                    <span class="reading-time-badge">
+                      {readTime || "5 min read"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -624,7 +597,6 @@ if (typeof globalThis !== "undefined") {
           </div>
         </div>
 
-        <!-- Keep all your existing navigation, comments, related posts code -->
         <!-- Floating Reaction Bar -->
         <ReactionBar postSlug={articleId} postTitle={title} />
 
@@ -811,7 +783,7 @@ if (typeof globalThis !== "undefined") {
     background: rgb(17, 24, 39);
   }
 
-  /* FIXED: Your original glassy light gradient header */
+  /* Article Header */
   .article-header-integrated {
     position: relative;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -831,25 +803,7 @@ if (typeof globalThis !== "undefined") {
     border-bottom-color: rgb(51, 65, 85);
   }
 
-  /* REMOVE: No background image in header */
-  .hero-background-container {
-    display: none;
-  }
-
-  .hero-background-image {
-    display: none;
-  }
-
-  /* REMOVE: No overlay in header */
-  .header-gradient-overlay-light {
-    display: none;
-  }
-
-  .hero-image-overlay-light {
-    display: none;
-  }
-
-  /* Enhanced Transparent Meta Badges */
+  /* Enhanced Meta Badges */
   .article-meta-compact {
     display: flex;
     justify-content: space-between;
@@ -868,25 +822,26 @@ if (typeof globalThis !== "undefined") {
     flex-wrap: wrap;
   }
 
-  /* ENHANCED: Transparent category tag with icon */
-  .category-tag-compact {
+  /* Category Tag Enhanced */
+  .category-tag-enhanced {
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     padding: 0.75rem 1.5rem;
-    border: 0px solid;
+    border: 2px solid;
     border-radius: var(--tinkbyte-radius-button);
     text-decoration: none;
+    background: white;
     display: flex;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     white-space: nowrap;
-    /* Dynamic background and colors will be set inline */
+    flex-shrink: 0;
   }
 
-  :global(.dark) .category-tag-compact {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  :global(.dark) .category-tag-enhanced {
+    background: rgb(17, 24, 39);
   }
 
   .audio-badge-compact {
@@ -904,13 +859,12 @@ if (typeof globalThis !== "undefined") {
     white-space: nowrap;
   }
 
-  /* ENHANCED: Transparent square date with icon */
   .article-date-compact {
     font-size: 0.875rem;
     color: #64748b;
     font-weight: 500;
-    background: rgba(100, 116, 139, 0.1); /* Transparent background */
-    border: 1px solid rgba(100, 116, 139, 0.2); /* Subtle border */
+    background: rgba(100, 116, 139, 0.1);
+    border: 1px solid rgba(100, 116, 139, 0.2);
     padding: 0.5rem 1rem;
     border-radius: var(--tinkbyte-radius-button);
     display: flex;
@@ -927,7 +881,7 @@ if (typeof globalThis !== "undefined") {
     border-color: rgba(148, 163, 184, 0.2);
   }
 
-  /* Header content positioned normally */
+  /* Header content */
   .article-header-content-compact {
     margin-bottom: 1.5rem;
     position: relative;
@@ -994,7 +948,7 @@ if (typeof globalThis !== "undefined") {
     color: rgb(156, 163, 175);
   }
 
-  /* Clean Author Line - No borders, clean design */
+  /* Clean Author Line */
   .article-byline-compact {
     display: flex;
     justify-content: space-between;
@@ -1064,7 +1018,7 @@ if (typeof globalThis !== "undefined") {
     color: rgb(148, 163, 184);
   }
 
-  /* CLEAN SHARE ICONS - No borders, no backgrounds */
+  /* Clean Share Icons */
   .share-compact-clean {
     display: flex;
     gap: 0.5rem;
@@ -1090,7 +1044,7 @@ if (typeof globalThis !== "undefined") {
     color: rgb(59, 130, 246);
   }
 
-  /* FIXED: Hero image moves up slightly as marked */
+  /* Hero Image */
   .article-image-overlap-fixed {
     position: relative;
     z-index: auto;
@@ -1136,20 +1090,41 @@ if (typeof globalThis !== "undefined") {
     font-weight: 500;
   }
 
-  /* Audio Section */
-  .audio-section-enhanced {
-    margin: 1rem 0;
+  /* Compact Audio Section */
+  .audio-section-compact {
+    margin: 0.5rem 0;
+    position: relative;
+    z-index: 10;
   }
 
-  .audio-container {
+  /* Compact Toggle Bar */
+  .audio-toggle-bar {
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border: 2px solid #0ea5e9;
-    border-radius: var(--tinkbyte-radius-card);
-    padding: 2rem;
-    box-shadow: 0 4px 20px rgba(14, 165, 233, 0.1);
+    border: 1px solid #0ea5e9;
+    border-radius: var(--tinkbyte-radius-button);
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);
   }
 
-  :global(.dark) .audio-container {
+  .audio-toggle-bar:hover {
+    border-color: #0284c7;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+  }
+
+  .audio-toggle-bar.audio-coming-soon {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    cursor: default;
+  }
+
+  .audio-toggle-bar.audio-coming-soon:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);
+  }
+
+  :global(.dark) .audio-toggle-bar {
     background: linear-gradient(
       135deg,
       rgb(12, 74, 110) 0%,
@@ -1158,90 +1133,141 @@ if (typeof globalThis !== "undefined") {
     border-color: rgb(34, 197, 94);
   }
 
-  .audio-header {
-    margin-bottom: 1.5rem;
-  }
-
-  .audio-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #0c4a6e;
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-  }
-
-  :global(.dark) .audio-title {
-    color: rgb(125, 211, 252);
-  }
-
-  .audio-subtitle {
-    color: #0369a1;
-    font-size: 0.875rem;
-  }
-
-  :global(.dark) .audio-subtitle {
-    color: rgb(186, 230, 253);
-  }
-
-  /* No Audio Section */
-  .no-audio-section-enhanced {
-    margin: 1rem 0;
-  }
-
-  .no-audio-placeholder-enhanced {
-    background: #f8fafc;
-    border: 2px dashed #cbd5e1;
-    border-radius: var(--tinkbyte-radius-card);
-    padding: 2rem;
-  }
-
-  :global(.dark) .no-audio-placeholder-enhanced {
+  :global(.dark) .audio-toggle-bar.audio-coming-soon {
     background: rgb(30, 41, 59);
     border-color: rgb(71, 85, 105);
   }
 
-  .no-audio-content {
+  .audio-toggle-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .audio-toggle-left {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    justify-content: center;
-    text-align: center;
+    gap: 0.75rem;
   }
 
-  .audio-icon-enhanced {
-    width: 2.5rem;
-    height: 2.5rem;
-    color: #94a3b8;
-  }
-
-  :global(.dark) .audio-icon-enhanced {
-    color: rgb(100, 116, 139);
-  }
-
-  .no-audio-text-enhanced {
+  .audio-toggle-icon {
+    color: #0ea5e9;
     font-size: 1rem;
-    font-weight: 600;
-    color: #475569;
   }
 
-  :global(.dark) .no-audio-text-enhanced {
+  .audio-toggle-bar.audio-coming-soon .audio-toggle-icon {
+    color: #64748b;
+  }
+
+  :global(.dark) .audio-toggle-icon {
+    color: rgb(125, 211, 252);
+  }
+
+  :global(.dark) .audio-toggle-bar.audio-coming-soon .audio-toggle-icon {
     color: rgb(148, 163, 184);
   }
 
-  .no-audio-subtitle-enhanced {
+  .audio-toggle-text {
+    font-weight: 600;
+    color: #0c4a6e;
     font-size: 0.875rem;
-    color: #64748b;
-    margin: 0.5rem 0 0 0;
   }
 
-  :global(.dark) .no-audio-subtitle-enhanced {
-    color: rgb(100, 116, 139);
+  .audio-toggle-bar.audio-coming-soon .audio-toggle-text {
+    color: #475569;
+  }
+
+  :global(.dark) .audio-toggle-text {
+    color: rgb(186, 230, 253);
+  }
+
+  :global(.dark) .audio-toggle-bar.audio-coming-soon .audio-toggle-text {
+    color: rgb(148, 163, 184);
+  }
+
+  .audio-duration-badge,
+  .reading-time-badge {
+    background: rgba(14, 165, 233, 0.2);
+    color: #0c4a6e;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--tinkbyte-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .reading-time-badge {
+    background: rgba(100, 116, 139, 0.2);
+    color: #475569;
+  }
+
+  :global(.dark) .audio-duration-badge {
+    background: rgba(34, 197, 94, 0.3);
+    color: rgb(186, 230, 253);
+  }
+
+  :global(.dark) .reading-time-badge {
+    background: rgba(148, 163, 184, 0.2);
+    color: rgb(148, 163, 184);
+  }
+
+  .audio-expand-btn {
+    background: none;
+    border: none;
+    color: #0ea5e9;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--tinkbyte-radius-sm);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .audio-expand-btn:hover {
+    background: rgba(14, 165, 233, 0.1);
+  }
+
+  .audio-expand-btn i {
+    transition: transform 0.3s ease;
+  }
+
+  .audio-expand-btn.expanded i {
+    transform: rotate(180deg);
+  }
+
+  :global(.dark) .audio-expand-btn {
+    color: rgb(125, 211, 252);
+  }
+
+  :global(.dark) .audio-expand-btn:hover {
+    background: rgba(34, 197, 94, 0.2);
+  }
+
+  /* Expandable Player */
+  .audio-player-expandable {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: white;
+    border: 1px solid #e0f2fe;
+    border-top: none;
+    border-radius: 0 0 var(--tinkbyte-radius-button)
+      var(--tinkbyte-radius-button);
+  }
+
+  .audio-player-expandable.expanded {
+    max-height: 300px;
+    padding: 1rem;
+  }
+
+  :global(.dark) .audio-player-expandable {
+    background: rgb(17, 24, 39);
+    border-color: rgb(34, 197, 94);
   }
 
   /* Content Grid */
   .article-content-wrapper-enhanced {
-    padding: 2rem 0;
+    padding: 1.5rem 0;
   }
 
   .content-grid-enhanced {
@@ -1267,7 +1293,7 @@ if (typeof globalThis !== "undefined") {
     font-size: 2.5rem;
     font-weight: 800;
     color: rgb(15, 23, 42);
-    margin-top: 1rem;
+    margin: 1rem 0;
     line-height: 1.2;
   }
 
@@ -1276,7 +1302,7 @@ if (typeof globalThis !== "undefined") {
     font-size: 2rem;
     font-weight: 700;
     color: rgb(30, 58, 138);
-    margin-top: 1rem;
+    margin: 1rem 0;
     line-height: 1.2;
     position: relative;
     padding-left: 1rem;
@@ -1764,7 +1790,7 @@ if (typeof globalThis !== "undefined") {
     }
   }
 
-  /* Mobile Overflow Prevention and Responsiveness Fixes */
+  /* Mobile Responsive */
   @media (max-width: 768px) {
     /* Prevent horizontal overflow */
     .magazine-article {
@@ -1785,7 +1811,6 @@ if (typeof globalThis !== "undefined") {
       padding-right: 1rem;
     }
 
-    /* Fix article header content width */
     .article-header-content-compact {
       width: 100%;
       max-width: 100%;
@@ -1803,10 +1828,6 @@ if (typeof globalThis !== "undefined") {
       word-wrap: break-word;
       hyphens: auto;
       line-height: 1.1;
-      margin-left: 0;
-      margin-right: 0;
-      padding-left: 0;
-      padding-right: 0;
       font-size: clamp(1.75rem, 4vw, 2.5rem);
       text-align: left;
       margin-bottom: 0.75rem;
@@ -1830,14 +1851,11 @@ if (typeof globalThis !== "undefined") {
       overflow-wrap: break-word;
       word-wrap: break-word;
       hyphens: auto;
-      padding-left: 0;
-      padding-right: 0;
       font-size: 1rem;
       line-height: 1.5;
       text-align: left;
     }
 
-    /* Hide sidebar on mobile */
     .content-sidebar-enhanced {
       display: none !important;
     }
@@ -1856,40 +1874,39 @@ if (typeof globalThis !== "undefined") {
       word-wrap: break-word;
     }
 
-    /* Fix audio and no-audio sections */
-    .audio-section-enhanced,
-    .no-audio-section-enhanced {
+    .audio-section-compact {
       width: 100%;
       max-width: 100%;
       padding-left: 1rem;
       padding-right: 1rem;
-      margin: 1rem 0;
+      margin: 0.75rem 0;
     }
 
-    .audio-container,
-    .no-audio-placeholder-enhanced {
+    .audio-toggle-bar {
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
-      padding: 1.5rem;
+      padding: 0.625rem 0.75rem;
     }
 
-    /* Fix navigation sections */
-    .post-navigation-enhanced,
-    .related-section-enhanced,
-    .comments-section-wrapper {
-      width: 100%;
-      max-width: 100%;
-      overflow-x: hidden;
+    .audio-toggle-left {
+      gap: 0.5rem;
     }
 
-    /* Ensure all containers respect viewport */
+    .audio-toggle-text {
+      font-size: 0.8125rem;
+    }
+
+    .audio-duration-badge,
+    .reading-time-badge {
+      font-size: 0.6875rem;
+      padding: 0.2rem 0.4rem;
+    }
+
     .article-content-wrapper-enhanced {
       width: 100%;
       max-width: 100%;
       overflow-x: hidden;
-      padding-left: 1rem;
-      padding-right: 1rem;
       padding: 1.5rem 0;
     }
 
@@ -1898,7 +1915,6 @@ if (typeof globalThis !== "undefined") {
       max-width: 100%;
     }
 
-    /* Fix any potential wide elements */
     .nav-grid-enhanced {
       width: 100%;
       max-width: 100%;
@@ -1941,19 +1957,11 @@ if (typeof globalThis !== "undefined") {
       padding-bottom: 0.5rem;
     }
 
-    .category-tag-compact {
+    .category-tag-enhanced {
       font-size: 0.6875rem;
       font-weight: 800;
-      text-transform: uppercase;
       letter-spacing: 0.15em;
       padding: 0.75rem 1.25rem;
-      border: 2px solid;
-      border-radius: var(--tinkbyte-radius-button);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      backdrop-filter: blur(10px);
       text-align: center;
       flex-shrink: 0;
     }
@@ -1962,7 +1970,6 @@ if (typeof globalThis !== "undefined") {
       font-size: 0.6875rem;
       font-weight: 700;
       padding: 0.5rem 1rem;
-      border-radius: var(--tinkbyte-radius-button);
       text-align: center;
       justify-content: center;
       flex-shrink: 0;
@@ -1974,13 +1981,10 @@ if (typeof globalThis !== "undefined") {
       text-transform: uppercase;
       letter-spacing: 0.05em;
       padding: 0.5rem 1rem;
-      border-radius: var(--tinkbyte-radius-button);
-      backdrop-filter: blur(5px);
       text-align: center;
       flex-shrink: 0;
     }
 
-    /* MOBILE AUTHOR SECTION - Keep horizontal */
     .article-byline-compact {
       flex-direction: row;
       align-items: center;
@@ -2058,20 +2062,16 @@ if (typeof globalThis !== "undefined") {
   }
 
   @media (max-width: 480px) {
-    /* Extra small screens - more aggressive constraints */
     .max-w-7xl {
       padding-left: 0.75rem;
       padding-right: 0.75rem;
     }
 
     .article-description-compact {
-      padding-left: 0;
-      padding-right: 0;
       font-size: 0.875rem;
     }
 
-    .audio-section-enhanced,
-    .no-audio-section-enhanced {
+    .audio-section-compact {
       padding-left: 0.75rem;
       padding-right: 0.75rem;
     }
@@ -2080,7 +2080,7 @@ if (typeof globalThis !== "undefined") {
       padding: 1rem 0.75rem;
     }
 
-    .category-tag-compact {
+    .category-tag-enhanced {
       font-size: 0.625rem;
       padding: 0.625rem 1rem;
       letter-spacing: 0.1em;
@@ -2108,9 +2108,13 @@ if (typeof globalThis !== "undefined") {
       padding: 1rem;
     }
 
-    .audio-container,
-    .no-audio-placeholder-enhanced {
-      padding: 1rem;
+    .audio-toggle-text {
+      font-size: 0.75rem;
+    }
+
+    .audio-duration-badge,
+    .reading-time-badge {
+      display: none;
     }
 
     .article-image-overlap-fixed {
@@ -2118,7 +2122,6 @@ if (typeof globalThis !== "undefined") {
       margin-bottom: 1.5rem;
     }
 
-    /* EXTRA SMALL MOBILE AUTHOR SECTION */
     .article-byline-compact {
       padding: 0.5rem 0 0 0;
       margin-top: 0.5rem;
@@ -2151,15 +2154,13 @@ if (typeof globalThis !== "undefined") {
     }
   }
 
-  /* Additional safety measures */
+  /* Safety measures */
   @media (max-width: 768px) {
-    /* Prevent any element from causing horizontal scroll */
     * {
       max-width: 100%;
       box-sizing: border-box;
     }
 
-    /* Ensure text doesn't overflow */
     p,
     h1,
     h2,
@@ -2174,101 +2175,12 @@ if (typeof globalThis !== "undefined") {
       hyphens: auto;
     }
 
-    /* Fix pre and code elements that might cause overflow */
     pre,
     code {
       max-width: 100%;
       overflow-x: auto;
       white-space: pre-wrap;
       word-wrap: break-word;
-    }
-  }
-
-  /* Reduce gap between audio section and main content title */
-  .audio-section-enhanced,
-  .no-audio-section-enhanced {
-    margin: 1rem 0;
-  }
-
-  /* Reduce gap specifically before the first content heading */
-  .content-main-enhanced :global(h1:first-child),
-  .content-main-enhanced :global(h2:first-child) {
-    margin-top: 1rem;
-  }
-
-  /* Tighten up the content wrapper padding */
-  .article-content-wrapper-enhanced {
-    padding: 2rem 0;
-  }
-
-  /* Mobile adjustments */
-  @media (max-width: 768px) {
-    .audio-section-enhanced,
-    .no-audio-section-enhanced {
-      margin: 0.75rem 0;
-    }
-
-    .content-main-enhanced :global(h1:first-child),
-    .content-main-enhanced :global(h2:first-child) {
-      margin-top: 0.75rem;
-    }
-
-    .article-content-wrapper-enhanced {
-      padding: 1.5rem 0;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .audio-section-enhanced,
-    .no-audio-section-enhanced {
-      margin: 0.5rem 0;
-    }
-
-    .content-main-enhanced :global(h1:first-child),
-    .content-main-enhanced :global(h2:first-child) {
-      margin-top: 0.5rem;
-    }
-  }
-
-  .category-tag-enhanced {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 0.75rem 1.5rem;
-    border: 2px solid;
-    border-radius: var(--tinkbyte-radius-button);
-    text-decoration: none;
-    background: white;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  :global(.dark) .category-tag-enhanced {
-    background: rgb(17, 24, 39);
-  }
-
-  /* Mobile responsive adjustments */
-  @media (max-width: 768px) {
-    .category-tag-enhanced {
-      font-size: 0.6875rem;
-      font-weight: 800;
-      letter-spacing: 0.15em;
-      padding: 0.75rem 1.25rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      backdrop-filter: blur(10px);
-      text-align: center;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .category-tag-enhanced {
-      font-size: 0.625rem;
-      padding: 0.625rem 1rem;
-      letter-spacing: 0.1em;
     }
   }
 </style>
@@ -2378,8 +2290,38 @@ if (typeof globalThis !== "undefined") {
       updateSidebarProgress();
     }
 
+    function initCompactAudioPlayer() {
+      const audioToggle = document.getElementById("audio-toggle");
+      const audioExpandBtn = document.getElementById("audio-expand-btn");
+      const audioPlayerExpandable = document.getElementById(
+        "audio-player-expandable"
+      );
+
+      if (audioToggle && audioExpandBtn && audioPlayerExpandable) {
+        function toggleAudioPlayer() {
+          const isExpanded =
+            audioPlayerExpandable.classList.contains("expanded");
+
+          if (isExpanded) {
+            audioPlayerExpandable.classList.remove("expanded");
+            audioExpandBtn.classList.remove("expanded");
+          } else {
+            audioPlayerExpandable.classList.add("expanded");
+            audioExpandBtn.classList.add("expanded");
+          }
+        }
+
+        audioToggle.addEventListener("click", toggleAudioPlayer);
+        audioExpandBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleAudioPlayer();
+        });
+      }
+    }
+
     initTopReadingProgress();
     initSidebarReadingProgress();
+    initCompactAudioPlayer();
 
     function generateTOC() {
       const headings = document.querySelectorAll(
@@ -2432,7 +2374,6 @@ if (typeof globalThis !== "undefined") {
       }
     }
 
-    // Enhanced share functionality for CLEAN buttons
     document.querySelectorAll(".share-icon-clean").forEach((icon) => {
       icon.addEventListener("click", async (e) => {
         const target = e.currentTarget;
