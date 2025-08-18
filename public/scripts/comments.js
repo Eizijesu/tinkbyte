@@ -364,6 +364,95 @@ preserveExistingComments() {
   }
 }
 
+
+//new
+
+  // ✅ ADD THESE NEW METHODS ANYWHERE IN THE CLASS
+  updateCachedCommentTree(newComment, parentId = null) {
+    try {
+      const commentSection = document.getElementById('comments-section');
+      if (!commentSection) return;
+      
+      let allCommentTree = [];
+      try {
+        allCommentTree = JSON.parse(commentSection.dataset.allComments || '[]');
+      } catch (e) {
+        debugLog('❌ Error parsing cached comments:', e);
+        return;
+      }
+      
+      if (parentId) {
+        // This is a reply - find the parent and add to its replies
+        this.addReplyToTree(allCommentTree, newComment, parentId);
+      } else {
+        // This is a root comment - add to the beginning
+        allCommentTree.unshift(newComment);
+      }
+      
+      // Update the cached data
+      commentSection.dataset.allComments = JSON.stringify(allCommentTree);
+      
+      // Update counts
+      const totalComments = parseInt(commentSection.dataset.totalComments || '0');
+      commentSection.dataset.totalComments = (totalComments + 1).toString();
+      
+      debugLog('✅ Updated cached comment tree');
+      
+    } catch (error) {
+      debugLog('❌ Error updating cached comment tree:', error);
+    }
+  }
+
+  // Helper method to add reply to the tree recursively
+  addReplyToTree(commentTree, newReply, parentId) {
+    for (let comment of commentTree) {
+      if (comment.id === parentId) {
+        // Found the parent - add reply
+        if (!comment.replies) {
+          comment.replies = [];
+        }
+        comment.replies.push(newReply);
+        return true;
+      }
+      
+      // Check in nested replies
+      if (comment.replies && comment.replies.length > 0) {
+        if (this.addReplyToTree(comment.replies, newReply, parentId)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Debug method
+  debugCachedComments() {
+    const commentSection = document.getElementById('comments-section');
+    if (commentSection) {
+      try {
+        const cached = JSON.parse(commentSection.dataset.allComments || '[]');
+        console.log('📋 Cached comments:', cached);
+        console.log('📊 Total cached:', cached.length);
+        
+        // Count all comments including replies
+        let totalWithReplies = 0;
+        function countComments(comments) {
+          totalWithReplies += comments.length;
+          comments.forEach(comment => {
+            if (comment.replies && comment.replies.length > 0) {
+              countComments(comment.replies);
+            }
+          });
+        }
+        countComments(cached);
+        console.log('📊 Total with replies:', totalWithReplies);
+        
+      } catch (e) {
+        console.error('❌ Error parsing cached comments:', e);
+      }
+    }
+  }
+
 // ADD THIS METHOD:
 updateAllExistingCommentPermissions() {
   debugLog('🔧 Updating permissions for all comments...');
@@ -417,6 +506,19 @@ async init() {
     
     debugLog('🔧 Environment detected:', this.environment);
     
+
+        // ✅ DEBUG: Check if data is available on refresh
+    console.log('🔍 Comment section data on init:', {
+      articleId: commentSection.dataset.articleId,
+      totalComments: commentSection.dataset.totalComments,
+      allComments: commentSection.dataset.allComments ? 'Present' : 'Missing',
+      environment: commentSection.dataset.environment
+    });
+    
+    this.articleId = commentSection.dataset.articleId;
+    this.environment = this.getEnvironment();
+    
+
     // ✅ PRESERVE EXISTING COMMENTS FIRST
     this.preserveExistingComments();
     
@@ -494,81 +596,103 @@ preventFormRefresh() {
 
 
 
-  async _doAuthInitialization() {
-    try {
-      debugLog('🔄 Starting auth initialization...');
-      debugLog('🌍 Environment:', this.environment);
-      debugLog('🏗️ Config:', this.config);
-      
-      const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
-      
-      if (sessionError) {
-        debugLog('⚠️ Session error:', sessionError);
+async _doAuthInitialization() {
+  try {
+    debugLog('🔄 Starting auth initialization...');
+    
+    // ✅ WAIT FOR SUPABASE TO BE READY
+    let attempts = 0;
+    while (!this.supabase && attempts < 50) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+    
+    if (!this.supabase) {
+      throw new Error('Supabase not available after waiting');
+    }
+    
+    debugLog('✅ Supabase is ready');
+    
+    // ✅ GET SESSION WITH RETRY
+    let session = null;
+    let sessionError = null;
+    
+    for (let i = 0; i < 3; i++) {
+      try {
+        const result = await this.supabase.auth.getSession();
+        session = result.data?.session;
+        sessionError = result.error;
+        break;
+      } catch (error) {
+        debugLog(`⚠️ Session attempt ${i + 1} failed:`, error);
+        if (i === 2) sessionError = error;
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
+    }
+    
+    if (sessionError) {
+      debugLog('⚠️ Session error after retries:', sessionError);
+    }
+    
+    if (session?.user) {
+      debugLog('✅ User found:', session.user.email);
       
-      if (session?.user) {
-        debugLog('✅ User found:', session.user.email);
-        debugLog('👤 User metadata:', session.user.user_metadata);
-        
+      this.currentUser = { 
+        id: session.user.id, 
+        email: session.user.email,
+        user_metadata: session.user.user_metadata
+      };
+      this.isAuthenticated = true;
+      
+      await this.loadUserProfile();
+    } else {
+      debugLog('ℹ️ No active session');
+      this.currentUser = null;
+      this.isAuthenticated = false;
+    }
+    
+    this.authInitialized = true;
+    this.updateUI();
+    
+    // ✅ SET UP AUTH LISTENER
+    this.supabase.auth.onAuthStateChange(async (event, session) => {
+      debugLog('🔄 Auth state changed:', event);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
         this.currentUser = { 
           id: session.user.id, 
           email: session.user.email,
-          user_metadata: session.user.user_metadata // ✅ PRESERVE METADATA
+          user_metadata: session.user.user_metadata
         };
         this.isAuthenticated = true;
-        
         await this.loadUserProfile();
-      } else {
-        debugLog('ℹ️ No active session');
+        this.updateUI();
+      } else if (event === 'SIGNED_OUT') {
         this.currentUser = null;
+        this.profile = null;
         this.isAuthenticated = false;
+        this.updateUI();
       }
       
-      this.authInitialized = true;
-      this.updateUI();
-      
-      // ✅ ENHANCED AUTH LISTENER
-      this.supabase.auth.onAuthStateChange((event, session) => {
-        debugLog('🔄 Auth state changed:', event);
-        debugLog('👤 Session user:', session?.user?.email);
-        
-        if (event === 'SIGNED_IN' && session?.user) {
-          this.currentUser = { 
-            id: session.user.id, 
-            email: session.user.email,
-            user_metadata: session.user.user_metadata
-          };
-          this.isAuthenticated = true;
-          this.loadUserProfile().then(() => {
-            debugLog('🎯 UI Update after profile load');
-            this.updateUI();
-          });
-        } else if (event === 'SIGNED_OUT') {
-          this.currentUser = null;
-          this.profile = null;
-          this.isAuthenticated = false;
-          this.updateUI();
-        }
-        
-        setTimeout(() => {
-          this.updateAllCommentPermissions();
-        }, 500);
-      });
-      
-      debugLog('✅ Auth initialization complete:', {
-        authenticated: this.isAuthenticated,
-        user: this.currentUser?.email,
-        profile: this.profile?.display_name
-      });
-      
-    } catch (error) {
-      handleError(error, 'Authentication initialization failed');
-      this.authInitialized = true;
-      this.currentUser = null;
-      this.isAuthenticated = false;
-      this.updateUI();
-    }
+      // Update permissions after auth change
+      setTimeout(() => {
+        this.updateAllCommentPermissions();
+      }, 500);
+    });
+    
+    debugLog('✅ Auth initialization complete:', {
+      authenticated: this.isAuthenticated,
+      user: this.currentUser?.email
+    });
+    
+  } catch (error) {
+    console.error('❌ Auth initialization error:', error);
+    this.authInitialized = true;
+    this.currentUser = null;
+    this.isAuthenticated = false;
+    this.updateUI();
   }
+}
 
 
   async callAPI(method, args = []) {
@@ -792,42 +916,32 @@ async loadUserProfile() {
   try {
     debugLog('🔄 Loading profile for:', this.currentUser.email);
     
-    // ✅ TRY WITHOUT ENVIRONMENT FILTER FIRST
+    // ✅ SIMPLIFIED PROFILE QUERY - Remove environment filter for now
     let { data, error } = await this.supabase
       .from('profiles')
       .select('*')
       .eq('id', this.currentUser.id)
       .single();
     
-    // ✅ IF STILL FAILS, TRY WITH ENVIRONMENT
-    if (error && this.environment) {
-      debugLog('⚠️ Retrying with environment filter...');
-      const result = await this.supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', this.currentUser.id)
-        .eq('environment', this.environment)
-        .single();
-      
-      data = result.data;
-      error = result.error;
-    }
-    
     if (error) {
       debugLog('⚠️ Profile load failed:', error.message);
       
-      // Create default profile
+      // ✅ CREATE DEFAULT PROFILE FROM USER METADATA
       this.profile = {
         id: this.currentUser.id,
-        display_name: this.currentUser.email?.split('@')[0] || 'User',
+        display_name: this.currentUser.user_metadata?.full_name || 
+                     this.currentUser.user_metadata?.name || 
+                     this.currentUser.email?.split('@')[0] || 'User',
         avatar_type: this.currentUser.user_metadata?.avatar_url ? 'google' : 'preset',
         avatar_preset_id: 1,
-        avatar_url: this.currentUser.user_metadata?.avatar_url || this.currentUser.user_metadata?.picture || null,
+        avatar_url: this.currentUser.user_metadata?.avatar_url || 
+                   this.currentUser.user_metadata?.picture || null,
         reputation_score: 0,
         is_admin: false,
-        membership_type: 'free'
+        membership_type: 'free',
+        environment: this.environment
       };
-      debugLog('⚠️ Using default profile');
+      debugLog('⚠️ Using default profile from user metadata');
       return;
     }
     
@@ -840,8 +954,18 @@ async loadUserProfile() {
       });
     }
   } catch (error) {
-    handleError(error, 'Failed to load profile');
-    this.profile = null;
+    debugLog('❌ Profile loading error:', error);
+    // Fallback profile
+    this.profile = {
+      id: this.currentUser.id,
+      display_name: this.currentUser.email?.split('@')[0] || 'User',
+      avatar_type: 'preset',
+      avatar_preset_id: 1,
+      avatar_url: null,
+      reputation_score: 0,
+      is_admin: false,
+      membership_type: 'free'
+    };
   }
 }
 
@@ -1454,42 +1578,59 @@ initializeUI() {
     this.emojiPickerVisible = false;
   }
 
-  setupCommentActions() {
-    document.addEventListener('click', (e) => {
-      // Reply buttons
-      if (e.target.closest('.reply-btn')) {
-        e.preventDefault();
-        const btn = e.target.closest('.reply-btn');
-        this.handleInlineReplySetup(btn.dataset.commentId, btn.dataset.author);
-      }
+setupCommentActions() {
+  document.addEventListener('click', (e) => {
+    // Reply buttons
+    if (e.target.closest('.reply-btn')) {
+      e.preventDefault();
+      const btn = e.target.closest('.reply-btn');
+      this.handleInlineReplySetup(btn.dataset.commentId, btn.dataset.author);
+    }
 
-      // Vote buttons  
-      if (e.target.closest('.vote-btn')) {
-        e.preventDefault();
-        const btn = e.target.closest('.vote-btn');
-        this.handleVote(btn.dataset.commentId, btn.dataset.action || 'upvote');
-      }
+    // Vote buttons  
+    if (e.target.closest('.vote-btn')) {
+      e.preventDefault();
+      const btn = e.target.closest('.vote-btn');
+      this.handleVote(btn.dataset.commentId, btn.dataset.action || 'upvote');
+    }
 
-      // Reaction buttons
-      if (e.target.closest('.reaction-btn')) {
-        e.preventDefault();
-        const btn = e.target.closest('.reaction-btn');
-        this.handleReaction(btn.dataset.commentId, btn.dataset.reaction);
-      }
+    // Reaction buttons
+    if (e.target.closest('.reaction-btn')) {
+      e.preventDefault();
+      const btn = e.target.closest('.reaction-btn');
+      this.handleReaction(btn.dataset.commentId, btn.dataset.reaction);
+    }
 
-      // Menu buttons
-      if (e.target.closest('.menu-btn')) {
-        e.preventDefault();
-        const btn = e.target.closest('.menu-btn');
-        this.toggleDropdown(btn.dataset.commentId);
+    // ✅ UPDATED: Menu buttons with mobile positioning
+    if (e.target.closest('.menu-btn')) {
+      e.preventDefault();
+      const btn = e.target.closest('.menu-btn');
+      const commentId = btn.dataset.commentId;
+      
+      // ✅ ADD MOBILE MENU POSITIONING
+      const dropdown = document.getElementById(`dropdown-${commentId}`);
+      if (dropdown) {
+        // Check if dropdown would go off-screen on mobile
+        const btnRect = btn.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        
+        // If button is in the right half of screen on mobile, flip menu left
+        if (viewportWidth <= 768 && btnRect.right > viewportWidth * 0.7) {
+          btn.closest('.comment-actions-menu').classList.add('flip-left');
+        } else {
+          btn.closest('.comment-actions-menu').classList.remove('flip-left');
+        }
       }
+      
+      this.toggleDropdown(commentId);
+    }
 
-      // Edit buttons
-      if (e.target.closest('.edit-comment-btn')) {
-        e.preventDefault();
-        const btn = e.target.closest('.edit-comment-btn');
-        this.handleInlineEditSetup(btn.dataset.commentId);
-      }
+    // Edit buttons
+    if (e.target.closest('.edit-comment-btn')) {
+      e.preventDefault();
+      const btn = e.target.closest('.edit-comment-btn');
+      this.handleInlineEditSetup(btn.dataset.commentId);
+    }
 
       // Delete buttons
       if (e.target.closest('.delete-comment-btn')) {
@@ -1743,46 +1884,49 @@ async handleCommentSubmit(e) {
 
   // Inline reply submission with optimized auth check
   async handleInlineReply(form) {
-    await this.ensureAuth();
-    
-    if (!this.isAuthenticated) return;
+  await this.ensureAuth();
+  
+  if (!this.isAuthenticated) return;
 
-    const formData = new FormData(form);
-    const content = formData.get('content').trim();
-    const commentId = form.dataset.commentId;
+  const formData = new FormData(form);
+  const content = formData.get('content').trim();
+  const commentId = form.dataset.commentId;
 
-    if (!this.validateComment(content)) return;
+  if (!this.validateComment(content)) return;
 
-    this.showLoading(form);
+  this.showLoading(form);
 
-    try {
-      const result = await this.callAPI('addComment', [
-        this.articleId, 
-        content, 
-        commentId
-      ]);
+  try {
+    const result = await this.callAPI('addComment', [
+      this.articleId, 
+      content, 
+      commentId
+    ]);
 
-      if (result.success) {
-        showUserSuccess('Reply posted successfully!');
-        
-        const container = form.closest('.inline-reply-container');
-        if (container) {
-          container.style.display = 'none';
-          container.innerHTML = '';
-        }
-        
-        this.addReplyToUI(result.data, commentId);
-        this.updateCommentCount(1);
-      } else {
-        showUserError(result.error || 'Failed to post reply');
+    if (result.success) {
+      showUserSuccess('Reply posted successfully!');
+      
+      const container = form.closest('.inline-reply-container');
+      if (container) {
+        container.style.display = 'none';
+        container.innerHTML = '';
       }
-    } catch (error) {
-      debugLog('❌ Reply submission error:', error);
-      showUserError('Network error. Please try again.');
-    } finally {
-      this.hideLoading(form);
+      
+      // ✅ ADD TO CACHED TREE BEFORE ADDING TO UI
+      this.updateCachedCommentTree(result.data, commentId);
+      
+      this.addReplyToUI(result.data, commentId);
+      this.updateCommentCount(1);
+    } else {
+      showUserError(result.error || 'Failed to post reply');
     }
+  } catch (error) {
+    debugLog('❌ Reply submission error:', error);
+    showUserError('Network error. Please try again.');
+  } finally {
+    this.hideLoading(form);
   }
+}
 
   // Inline edit setup with optimized auth check
   async handleInlineEditSetup(commentId) {
@@ -2412,30 +2556,53 @@ addReplyToUI(replyData, parentId) {
     content: replyData.content.substring(0, 30)
   });
 
-  // Find the parent comment wrapper using your structure
-  const parentWrapper = document.querySelector(`[data-comment-id="${parentId}"]`);
+  // ✅ BETTER PARENT FINDING - Look for the comment card first, then get its wrapper
+  const parentCommentCard = document.querySelector(`[data-comment-id="${parentId}"]`);
   
-  if (!parentWrapper) {
-    console.warn('❌ Parent comment not found for reply:', parentId);
+  if (!parentCommentCard) {
+    console.warn('❌ Parent comment card not found for reply:', parentId);
     // Fallback: add to main comments container
     this.addCommentToUI(replyData);
     return;
   }
 
-  // Calculate thread level
-  const parentLevel = parseInt(parentWrapper.dataset.threadLevel || '0');
+  // Get the parent wrapper that contains the comment card
+  const parentWrapper = parentCommentCard.closest('.comment-wrapper');
+  
+  if (!parentWrapper) {
+    console.warn('❌ Parent wrapper not found for reply:', parentId);
+    this.addCommentToUI(replyData);
+    return;
+  }
+
+  // ✅ CALCULATE PROPER THREAD LEVEL
+  const parentLevel = parseInt(parentCommentCard.dataset.threadLevel || '0');
   const replyLevel = Math.min(parentLevel + 1, 4);
   
-  // Find the parent's wrapper (comment-wrapper)
-  const parentCommentWrapper = parentWrapper.closest('.comment-wrapper');
-  
-  // Look for existing replies container or create one
-  let repliesContainer = parentCommentWrapper.querySelector(':scope > .comment-replies, :scope > .replies-container');
+  debugLog('🧵 Threading info:', {
+    parentLevel,
+    replyLevel,
+    parentId,
+    replyId: replyData.id
+  });
+
+  // ✅ FIND OR CREATE REPLIES CONTAINER - Look for direct child only
+  let repliesContainer = parentWrapper.querySelector(':scope > .comment-replies, :scope > .replies-container');
   
   if (!repliesContainer) {
     repliesContainer = document.createElement('div');
     repliesContainer.className = 'comment-replies replies-container';
-    parentCommentWrapper.appendChild(repliesContainer);
+    
+    // ✅ INSERT AFTER INLINE CONTAINERS BUT BEFORE ANY EXISTING REPLIES
+    const inlineContainers = parentWrapper.querySelectorAll('.inline-reply-container, .inline-edit-container');
+    const lastInlineContainer = inlineContainers[inlineContainers.length - 1];
+    
+    if (lastInlineContainer) {
+      lastInlineContainer.insertAdjacentElement('afterend', repliesContainer);
+    } else {
+      parentWrapper.appendChild(repliesContainer);
+    }
+    
     debugLog('✅ Created new replies container for parent:', parentId);
   }
 
@@ -2445,10 +2612,13 @@ addReplyToUI(replyData, parentId) {
   const isAdmin = this.profile?.is_admin || false;
   const membershipType = this.profile?.membership_type || 'free';
   
-  // Create the reply wrapper that matches your component structure
+  // ✅ CREATE REPLY WRAPPER WITH PROPER STRUCTURE
   const replyWrapper = document.createElement('div');
   replyWrapper.className = 'comment-wrapper reply-wrapper';
   replyWrapper.dataset.commentId = replyData.id;
+  
+  // ✅ ADD VISUAL INDENTATION BASED ON THREAD LEVEL
+  replyWrapper.style.marginLeft = `${replyLevel * 20}px`;
   
   replyWrapper.innerHTML = `
     <div class="comment-card reply-card" 
@@ -2518,55 +2688,64 @@ addReplyToUI(replyData, parentId) {
         <div class="comment-text">${this.formatContent(replyData.content)}</div>
       </div>
 
-      <div class="comment-footer">
-        <div class="vote-section">
-          <button class="vote-btn upvote-btn" data-comment-id="${replyData.id}" data-action="upvote">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M7 14l5-5 5 5"></path>
-            </svg>
-          </button>
-          <span class="vote-count">${replyData.like_count || 0}</span>
-        </div>
-        
-        <div class="comment-reactions">
-          <button class="reaction-btn" data-reaction="like" data-comment-id="${replyData.id}">
-            <span class="reaction-emoji">👍</span>
-            <span class="reaction-count" id="reaction-like-${replyData.id}">0</span>
-          </button>
-          <button class="reaction-btn" data-reaction="love" data-comment-id="${replyData.id}">
-            <span class="reaction-emoji">❤️</span>
-            <span class="reaction-count" id="reaction-love-${replyData.id}">0</span>
-          </button>
-        </div>
-
-        <div class="comment-actions">
-          ${replyLevel < 4 ? `
-            <button class="action-btn reply-btn" data-comment-id="${replyData.id}" data-author="${displayName}">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9,17 4,12 9,7"></polyline>
-                <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
-              </svg>
-              Reply
-            </button>
-          ` : ''}
-          
-          <button class="action-btn copy-btn" data-comment-id="${replyData.id}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            Copy
-          </button>
-        </div>
-      </div>
+<div class="comment-footer">
+  <div class="footer-top-row">
+    <div class="vote-section">
+      <button class="vote-btn upvote-btn" data-comment-id="${replyData.id}" data-action="upvote">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 14l5-5 5 5"></path>
+        </svg>
+      </button>
+      <span class="vote-count">${replyData.like_count || 0}</span>
+      <button class="vote-btn downvote-btn" data-comment-id="${replyData.id}" data-action="downvote">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 10l-5 5-5-5"></path>
+        </svg>
+      </button>
     </div>
     
-    <!-- ✅ IMPORTANT: Add the inline containers that JavaScript expects -->
+    <div class="comment-reactions">
+      <button class="reaction-btn" data-reaction="love" data-comment-id="${replyData.id}">
+        <span class="reaction-emoji">❤️</span>
+        <span class="reaction-count" id="reaction-love-${replyData.id}">0</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="comment-actions">
+    ${replyLevel < 4 ? `
+      <button class="action-btn reply-btn" data-comment-id="${replyData.id}" data-author="${displayName}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9,17 4,12 9,7"></polyline>
+          <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+        </svg>
+        Reply
+      </button>
+    ` : ''}
+    
+    <button class="action-btn bookmark-btn" data-comment-id="${replyData.id}">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+      </svg>
+      Save
+    </button>
+    
+    <button class="action-btn copy-btn" data-comment-id="${replyData.id}">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      Copy
+    </button>
+  </div>
+</div>
+    
+    <!-- ✅ INLINE CONTAINERS FOR THIS REPLY -->
     <div class="inline-reply-container" style="display: none;"></div>
     <div class="inline-edit-container" style="display: none;"></div>
   `;
 
-  // Add to the replies container
+  // ✅ ADD TO THE REPLIES CONTAINER (NOT MAIN CONTAINER)
   repliesContainer.appendChild(replyWrapper);
   
   // Add highlight animation
@@ -2585,7 +2764,7 @@ addReplyToUI(replyData, parentId) {
     block: 'center' 
   });
   
-  debugLog('✅ Reply added to UI successfully');
+  debugLog('✅ Reply added to UI successfully with thread level:', replyLevel);
 }
 
   removeCommentFromUI(commentId) {
@@ -3556,49 +3735,57 @@ addReplyToUI(replyData, parentId) {
           <div class="comment-text">${formattedContent}</div>
         </div>
 
-        <div class="comment-footer">
-          <div class="vote-section">
-            <button class="vote-btn upvote-btn" data-comment-id="${comment.id}" data-action="upvote" title="Upvote">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M7 14l5-5 5 5"></path>
-              </svg>
-            </button>
-            <span class="vote-count" id="vote-count-${comment.id}">${comment.like_count || 0}</span>
-            <button class="vote-btn downvote-btn" data-comment-id="${comment.id}" data-action="downvote" title="Downvote">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 10l-5 5-5-5"></path>
-              </svg>
-            </button>
-          </div>
-          
-          <div class="comment-reactions">
-            <button class="reaction-btn" data-reaction="like" data-comment-id="${comment.id}" title="Like">
-              <span class="reaction-emoji">👍</span>
-              <span class="reaction-count" id="reaction-like-${comment.id}">0</span>
-            </button>
-            <button class="reaction-btn" data-reaction="love" data-comment-id="${comment.id}" title="Love">
-              <span class="reaction-emoji">❤️</span>
-              <span class="reaction-count" id="reaction-love-${comment.id}">0</span>
-            </button>
-          </div>
+<div class="comment-footer">
+  <div class="footer-top-row">
+    <div class="vote-section">
+      <button class="vote-btn upvote-btn" data-comment-id="${replyData.id}" data-action="upvote">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 14l5-5 5 5"></path>
+        </svg>
+      </button>
+      <span class="vote-count">${replyData.like_count || 0}</span>
+      <button class="vote-btn downvote-btn" data-comment-id="${replyData.id}" data-action="downvote">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 10l-5 5-5-5"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="comment-reactions">
+      <button class="reaction-btn" data-reaction="love" data-comment-id="${replyData.id}">
+        <span class="reaction-emoji">❤️</span>
+        <span class="reaction-count" id="reaction-love-${replyData.id}">0</span>
+      </button>
+    </div>
+  </div>
 
-          <div class="comment-actions">
-            <button class="action-btn reply-btn" data-comment-id="${comment.id}" data-author="${displayName}" title="Reply">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9,17 4,12 9,7"></polyline>
-                <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
-              </svg>
-              Reply
-            </button>
-            <button class="action-btn copy-btn" data-comment-id="${comment.id}" title="Copy">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
-              </svg>
-              Copy
-            </button>
-          </div>
-        </div>
+  <div class="comment-actions">
+    ${replyLevel < 4 ? `
+      <button class="action-btn reply-btn" data-comment-id="${replyData.id}" data-author="${displayName}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9,17 4,12 9,7"></polyline>
+          <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+        </svg>
+        Reply
+      </button>
+    ` : ''}
+    
+    <button class="action-btn bookmark-btn" data-comment-id="${replyData.id}">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+      </svg>
+      Save
+    </button>
+    
+    <button class="action-btn copy-btn" data-comment-id="${replyData.id}">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      Copy
+    </button>
+  </div>
+</div>
 
         <div class="inline-reply-container" data-comment-id="${comment.id}" style="display: none;"></div>
         <div class="inline-edit-container" data-comment-id="${comment.id}" style="display: none;"></div>

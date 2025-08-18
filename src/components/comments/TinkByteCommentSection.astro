@@ -661,6 +661,8 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
     const config = window.TINKBYTE_CONFIG;
     const isDev = config?.isDevelopment || false;
     
+    console.log('🔍 DOM loaded, checking for required modules...');
+    
     try {
       let attempts = 0;
       while ((!window.supabase || !window.TinkByteAPI) && attempts < 200) {
@@ -671,6 +673,11 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
       if (!window.supabase || !window.TinkByteAPI) {
         throw new Error('Required modules not loaded');
       }
+
+      console.log('✅ Required modules loaded');
+      
+      // ✅ WAIT A BIT MORE FOR AUTH TO BE READY
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       window.dispatchEvent(new CustomEvent("authReady", {
         detail: { 

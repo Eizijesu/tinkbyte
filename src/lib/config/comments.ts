@@ -98,10 +98,10 @@ export const COMMENT_CONFIG = {
 // Move REACTION_TYPES to the main config
 export const REACTION_TYPES = {
   helpful: { emoji: '👍', label: 'Helpful' },
-  insightful: { emoji: '💡', label: 'Insightful' },
-  great: { emoji: '🔥', label: 'Great' },
+  //insightful: { emoji: '💡', label: 'Insightful' },
+  //great: { emoji: '🔥', label: 'Great' },
   love: { emoji: '❤️', label: 'Love' },
-  thinking: { emoji: '🤔', label: 'Thinking' }
+  //thinking: { emoji: '🤔', label: 'Thinking' }
 } as const;
 
 export const THREAD_COLORS = {
