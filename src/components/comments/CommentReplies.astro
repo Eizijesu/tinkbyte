@@ -13,7 +13,7 @@ interface ReactionType {
 interface Props {
   replies: CommentWithProfile[];
   currentUserId?: string;
-  reactionTypes?: ReactionType[]; // Changed from string[] to ReactionType[]
+  reactionTypes?: ReactionType[];
   maxDepth?: number;
 }
 
@@ -24,15 +24,20 @@ const visibleReplies = replies.filter(reply => (reply.thread_level || 0) <= maxD
 ---
 
 {visibleReplies.length > 0 && (
-  <div class="comment-replies">
+  <div class="comment-replies replies-container">
     {visibleReplies.map((reply) => (
-      <div class="reply-wrapper" data-reply-id={reply.id}>
+      <!-- ✅ CHANGE: Use data-comment-id instead of data-reply-id -->
+      <div class="comment-wrapper reply-wrapper" data-comment-id={reply.id}>
         <CommentCard 
           comment={reply}
           currentUserId={currentUserId}
           isReply={true}
           reactionTypes={reactionTypes}
         />
+        
+        <!-- ✅ ADD THESE MISSING INLINE CONTAINERS -->
+        <div class="inline-reply-container" style="display: none;"></div>
+        <div class="inline-edit-container" style="display: none;"></div>
         
         <!-- Nested Replies -->
         {reply.replies && reply.replies.length > 0 && (reply.thread_level || 0) < maxDepth && (

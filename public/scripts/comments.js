@@ -2412,45 +2412,45 @@ addReplyToUI(replyData, parentId) {
     content: replyData.content.substring(0, 30)
   });
 
-  const parentComment = document.querySelector(`[data-comment-id="${parentId}"]`);
-  if (!parentComment) {
-    console.warn('❌ Parent comment not found for reply:', parentId);
-    return;
-  }
-
-  // Find the parent comment wrapper (not just the card)
-  const parentWrapper = parentComment.closest('.comment-wrapper');
-  if (!parentWrapper) {
-    console.warn('❌ Parent wrapper not found for reply:', parentId);
-    return;
-  }
-
-  // Find or create replies container within the parent wrapper
-  let repliesContainer = parentWrapper.querySelector(':scope > .replies-container');
+  // Find the parent comment wrapper using your structure
+  const parentWrapper = document.querySelector(`[data-comment-id="${parentId}"]`);
   
-  if (!repliesContainer) {
-    repliesContainer = document.createElement('div');
-    repliesContainer.className = 'replies-container comment-replies';
-    parentWrapper.appendChild(repliesContainer);
-    debugLog('✅ Created new replies container for parent:', parentId);
+  if (!parentWrapper) {
+    console.warn('❌ Parent comment not found for reply:', parentId);
+    // Fallback: add to main comments container
+    this.addCommentToUI(replyData);
+    return;
   }
 
   // Calculate thread level
-  const parentLevel = parseInt(parentComment.dataset.threadLevel || '0');
+  const parentLevel = parseInt(parentWrapper.dataset.threadLevel || '0');
   const replyLevel = Math.min(parentLevel + 1, 4);
   
+  // Find the parent's wrapper (comment-wrapper)
+  const parentCommentWrapper = parentWrapper.closest('.comment-wrapper');
+  
+  // Look for existing replies container or create one
+  let repliesContainer = parentCommentWrapper.querySelector(':scope > .comment-replies, :scope > .replies-container');
+  
+  if (!repliesContainer) {
+    repliesContainer = document.createElement('div');
+    repliesContainer.className = 'comment-replies replies-container';
+    parentCommentWrapper.appendChild(repliesContainer);
+    debugLog('✅ Created new replies container for parent:', parentId);
+  }
+
   // Use current user's profile data
   const displayName = this.profile?.display_name || this.currentUser?.email?.split('@')[0] || 'User';
   const avatarUrl = this.getUserAvatar(this.profile);
   const isAdmin = this.profile?.is_admin || false;
   const membershipType = this.profile?.membership_type || 'free';
   
-  const replyElement = document.createElement('div');
-  replyElement.className = 'comment-wrapper reply-wrapper';
-  replyElement.dataset.commentId = replyData.id;
-  replyElement.style.marginLeft = `${replyLevel * 20}px`; // Visual indentation
+  // Create the reply wrapper that matches your component structure
+  const replyWrapper = document.createElement('div');
+  replyWrapper.className = 'comment-wrapper reply-wrapper';
+  replyWrapper.dataset.commentId = replyData.id;
   
-  replyElement.innerHTML = `
+  replyWrapper.innerHTML = `
     <div class="comment-card reply-card" 
          data-comment-id="${replyData.id}" 
          data-user-id="${this.currentUser.id}" 
@@ -2557,26 +2557,20 @@ addReplyToUI(replyData, parentId) {
             </svg>
             Copy
           </button>
-          
-          <button class="action-btn bookmark-btn" data-comment-id="${replyData.id}">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-            </svg>
-            Bookmark
-          </button>
         </div>
       </div>
-
-      <div class="inline-reply-container" style="display: none;"></div>
-      <div class="inline-edit-container" style="display: none;"></div>
     </div>
+    
+    <!-- ✅ IMPORTANT: Add the inline containers that JavaScript expects -->
+    <div class="inline-reply-container" style="display: none;"></div>
+    <div class="inline-edit-container" style="display: none;"></div>
   `;
 
-  // ✅ IMPORTANT: Add to the replies container, not the parent comment
-  repliesContainer.appendChild(replyElement);
+  // Add to the replies container
+  repliesContainer.appendChild(replyWrapper);
   
   // Add highlight animation
-  const replyCard = replyElement.querySelector('.reply-card');
+  const replyCard = replyWrapper.querySelector('.reply-card');
   replyCard.classList.add('new-comment');
   
   setTimeout(() => {
@@ -2586,7 +2580,7 @@ addReplyToUI(replyData, parentId) {
   }, 1000);
   
   // Scroll to the new reply
-  replyElement.scrollIntoView({ 
+  replyWrapper.scrollIntoView({ 
     behavior: 'smooth', 
     block: 'center' 
   });

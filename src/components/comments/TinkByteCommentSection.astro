@@ -342,6 +342,9 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
               reactionTypes={reactionTypes} 
               isReply={false} 
             />
+
+            <div class="inline-reply-container" style="display: none;"></div>
+            <div class="inline-edit-container" style="display: none;"></div>
             
             <!-- ✅ RECURSIVE REPLY RENDERING COMPONENT -->
             {comment.replies && comment.replies.length > 0 && (
