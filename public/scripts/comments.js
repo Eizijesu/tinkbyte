@@ -598,8 +598,8 @@ preventFormRefresh() {
 
 async _doAuthInitialization() {
   try {
-    debugLog('🔄 Starting auth initialization...');
-    debugLog('🌍 Environment:', this.environment);
+    debugLog('🔐 Starting auth initialization...');
+    debugLog('🔐 Environment:', this.environment);
     
     // ✅ WAIT FOR YOUR ACTUAL AUTH MANAGER FROM LAYOUT.ASTRO
     let attempts = 0;
