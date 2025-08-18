@@ -599,80 +599,57 @@ preventFormRefresh() {
 async _doAuthInitialization() {
   try {
     debugLog('🔄 Starting auth initialization...');
+    debugLog('🌍 Environment:', this.environment);
     
-    // ✅ WAIT FOR SUPABASE TO BE READY
+    // ✅ WAIT FOR YOUR ACTUAL AUTH MANAGER FROM LAYOUT.ASTRO
     let attempts = 0;
-    while (!this.supabase && attempts < 50) {
+    while (!window.authManager && attempts < 100) {
       await new Promise(resolve => setTimeout(resolve, 100));
       attempts++;
     }
     
-    if (!this.supabase) {
-      throw new Error('Supabase not available after waiting');
+    if (!window.authManager) {
+      throw new Error('Auth manager not available after waiting');
     }
     
-    debugLog('✅ Supabase is ready');
+    debugLog('✅ Auth manager is ready');
     
-    // ✅ GET SESSION WITH RETRY
-    let session = null;
-    let sessionError = null;
+    // ✅ USE YOUR ACTUAL AUTH MANAGER METHODS FROM LAYOUT.ASTRO
+    const currentUser = window.authManager.getCurrentUser();
+    const profile = window.authManager.getProfile();
+    const isAuthenticated = window.authManager.isUserAuthenticated();
     
-    for (let i = 0; i < 3; i++) {
-      try {
-        const result = await this.supabase.auth.getSession();
-        session = result.data?.session;
-        sessionError = result.error;
-        break;
-      } catch (error) {
-        debugLog(`⚠️ Session attempt ${i + 1} failed:`, error);
-        if (i === 2) sessionError = error;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-    
-    if (sessionError) {
-      debugLog('⚠️ Session error after retries:', sessionError);
-    }
-    
-    if (session?.user) {
-      debugLog('✅ User found:', session.user.email);
+    if (currentUser && isAuthenticated) {
+      debugLog('✅ User found:', currentUser.email);
       
-      this.currentUser = { 
-        id: session.user.id, 
-        email: session.user.email,
-        user_metadata: session.user.user_metadata
-      };
+      this.currentUser = currentUser;
+      this.profile = profile;
       this.isAuthenticated = true;
-      
-      await this.loadUserProfile();
     } else {
       debugLog('ℹ️ No active session');
       this.currentUser = null;
+      this.profile = null;
       this.isAuthenticated = false;
     }
     
     this.authInitialized = true;
     this.updateUI();
     
-    // ✅ SET UP AUTH LISTENER
-    this.supabase.auth.onAuthStateChange(async (event, session) => {
-      debugLog('🔄 Auth state changed:', event);
+    // ✅ USE YOUR ACTUAL AUTH STATE CHANGE LISTENER
+    window.authManager.onAuthStateChange((user, profile) => {
+      debugLog('🔄 Auth state changed:', { user: user?.email, profile: profile?.display_name });
       
-      if (event === 'SIGNED_IN' && session?.user) {
-        this.currentUser = { 
-          id: session.user.id, 
-          email: session.user.email,
-          user_metadata: session.user.user_metadata
-        };
+      if (user) {
+        this.currentUser = user;
+        this.profile = profile;
         this.isAuthenticated = true;
-        await this.loadUserProfile();
-        this.updateUI();
-      } else if (event === 'SIGNED_OUT') {
+      } else {
         this.currentUser = null;
         this.profile = null;
         this.isAuthenticated = false;
-        this.updateUI();
       }
+      
+      this.updateUI();
       
       // Update permissions after auth change
       setTimeout(() => {
@@ -682,18 +659,19 @@ async _doAuthInitialization() {
     
     debugLog('✅ Auth initialization complete:', {
       authenticated: this.isAuthenticated,
-      user: this.currentUser?.email
+      user: this.currentUser?.email,
+      profile: this.profile?.display_name
     });
     
   } catch (error) {
     console.error('❌ Auth initialization error:', error);
     this.authInitialized = true;
     this.currentUser = null;
+    this.profile = null;
     this.isAuthenticated = false;
     this.updateUI();
   }
 }
-
 
   async callAPI(method, args = []) {
   try {
@@ -1073,34 +1051,34 @@ initializeUI() {
   }
 
   getUserAvatar(profile) {
-    if (!profile) return "/images/avatars/preset-1.svg";
-    
-    debugLog('🖼️ Getting avatar for profile:', {
-      type: profile.avatar_type,
-      url: profile.avatar_url,
-      preset: profile.avatar_preset_id
-    });
-    
-    if (profile.avatar_type === "google" && profile.avatar_url) {
-      return profile.avatar_url;
-    }
-    
-    if (profile.avatar_type === "uploaded" && profile.avatar_url) {
-      return profile.avatar_url;
-    }
-    
-    // ✅ FALLBACK TO USER METADATA
-    if (this.currentUser?.user_metadata?.avatar_url) {
-      return this.currentUser.user_metadata.avatar_url;
-    }
-    
-    if (this.currentUser?.user_metadata?.picture) {
-      return this.currentUser.user_metadata.picture;
-    }
-    
-    const presetId = profile.avatar_preset_id || 1;
-    return `/images/avatars/preset-${presetId}.svg`;
+  // ✅ USE YOUR ACTUAL AUTH MANAGER'S AVATAR METHOD
+  if (window.authManager && window.authManager.getAvatarUrl) {
+    return window.authManager.getAvatarUrl();
   }
+  
+  // ✅ FALLBACK TO YOUR ORIGINAL LOGIC
+  if (!profile) return "/images/avatars/preset-1.svg";
+  
+  if (profile.avatar_type === "google" && profile.avatar_url) {
+    return profile.avatar_url;
+  }
+  
+  if (profile.avatar_type === "uploaded" && profile.avatar_url) {
+    return profile.avatar_url;
+  }
+  
+  // Fallback to user metadata
+  if (this.currentUser?.user_metadata?.avatar_url) {
+    return this.currentUser.user_metadata.avatar_url;
+  }
+  
+  if (this.currentUser?.user_metadata?.picture) {
+    return this.currentUser.user_metadata.picture;
+  }
+  
+  const presetId = profile.avatar_preset_id || 1;
+  return `/images/avatars/preset-${presetId}.svg`;
+}
 
 
   setupEventListeners() {
