@@ -346,14 +346,42 @@ preserveExistingComments() {
   const commentSection = document.getElementById('comments-section');
   if (!commentSection) return;
   
-  // Get the complete tree data
-  const allCommentsData = commentSection.dataset.allComments;
-  if (allCommentsData) {
+  const serverCommentsData = commentSection.dataset.allComments;
+  if (serverCommentsData) {
     try {
-      this.fullCommentTree = JSON.parse(allCommentsData);
-      debugLog('📋 Preserved comment tree:', this.fullCommentTree.length, 'root comments');
+      const serverCommentTree = JSON.parse(serverCommentsData);
+      debugLog('📋 Server comments loaded:', serverCommentTree.length, 'root comments');
       
-      // Update permissions for all existing comments after a delay
+      // ✅ CHECK FOR CLIENT-SIDE CACHED COMMENTS (from localStorage)
+      const cachedKey = `comments_${this.articleId}_cache`;
+      const clientCachedData = localStorage.getItem(cachedKey);
+      
+      if (clientCachedData) {
+        try {
+          const clientComments = JSON.parse(clientCachedData);
+          debugLog('💾 Found client-cached comments:', clientComments.length);
+          
+          // ✅ MERGE SERVER AND CLIENT COMMENTS
+          const mergedComments = this.mergeCommentTrees(serverCommentTree, clientComments);
+          
+          // ✅ UPDATE THE PAGE DATA WITH MERGED COMMENTS
+          commentSection.dataset.allComments = JSON.stringify(mergedComments);
+          
+          debugLog('🔄 Merged comments - Total:', mergedComments.length);
+          
+          // ✅ UPDATE THE UI WITH MERGED COMMENTS
+          this.refreshCommentsUI(mergedComments);
+          
+        } catch (e) {
+          debugLog('❌ Error parsing client-cached comments:', e);
+          // Clear corrupted cache
+          localStorage.removeItem(cachedKey);
+        }
+      }
+      
+      this.fullCommentTree = JSON.parse(commentSection.dataset.allComments);
+      
+      // Update permissions after a delay
       setTimeout(() => {
         this.updateAllExistingCommentPermissions();
       }, 1000);
@@ -364,44 +392,149 @@ preserveExistingComments() {
   }
 }
 
+refreshCommentsUI(commentTree) {
+  const commentsContainer = document.getElementById('comments-items');
+  if (!commentsContainer) return;
+  
+  // ✅ CLEAR EXISTING COMMENTS
+  commentsContainer.innerHTML = '';
+  
+  // ✅ RE-RENDER WITH MERGED COMMENTS
+  const firstFive = commentTree.slice(0, 5); // Show first 5 like original
+  
+  firstFive.forEach(comment => {
+    const commentElement = this.createCommentElementFromData(comment);
+    if (commentElement) {
+      commentsContainer.appendChild(commentElement);
+    }
+  });
+  
+  // ✅ UPDATE COUNTS
+  const totalComments = this.countAllComments(commentTree);
+  const commentSection = document.getElementById('comments-section');
+  if (commentSection) {
+    commentSection.dataset.totalComments = totalComments.toString();
+    commentSection.dataset.loadedComments = Math.min(5, commentTree.length).toString();
+  }
+  
+  debugLog('🔄 UI refreshed with merged comments');
+}
 
-//new
+countAllComments(commentTree) {
+  let total = 0;
+  
+  function count(comments) {
+    total += comments.length;
+    comments.forEach(comment => {
+      if (comment.replies && comment.replies.length > 0) {
+        count(comment.replies);
+      }
+    });
+  }
+  
+  count(commentTree);
+  return total;
+}
+
+mergeCommentTrees(serverComments, clientComments) {
+  const merged = [...serverComments];
+  const serverCommentIds = new Set();
+  
+  // ✅ COLLECT ALL SERVER COMMENT IDS (INCLUDING NESTED)
+  function collectIds(comments) {
+    comments.forEach(comment => {
+      serverCommentIds.add(comment.id);
+      if (comment.replies && comment.replies.length > 0) {
+        collectIds(comment.replies);
+      }
+    });
+  }
+  collectIds(serverComments);
+  
+  // ✅ ADD CLIENT COMMENTS THAT AREN'T ON SERVER YET
+  clientComments.forEach(clientComment => {
+    if (!serverCommentIds.has(clientComment.id)) {
+      debugLog('➕ Adding client-only comment:', clientComment.id);
+      
+      if (clientComment.parent_id) {
+        // ✅ THIS IS A REPLY - FIND PARENT AND ADD IT
+        this.addReplyToTree(merged, clientComment, clientComment.parent_id);
+      } else {
+        // ✅ THIS IS A ROOT COMMENT - ADD TO BEGINNING
+        merged.unshift(clientComment);
+      }
+    }
+  });
+  
+  return merged;
+}
 
   // ✅ ADD THESE NEW METHODS ANYWHERE IN THE CLASS
-  updateCachedCommentTree(newComment, parentId = null) {
+updateCachedCommentTree(newComment, parentId = null) {
+  try {
+    const commentSection = document.getElementById('comments-section');
+    if (!commentSection) return;
+    
+    // ✅ UPDATE PAGE DATA
+    let allCommentTree = [];
     try {
-      const commentSection = document.getElementById('comments-section');
-      if (!commentSection) return;
-      
-      let allCommentTree = [];
-      try {
-        allCommentTree = JSON.parse(commentSection.dataset.allComments || '[]');
-      } catch (e) {
-        debugLog('❌ Error parsing cached comments:', e);
-        return;
-      }
-      
-      if (parentId) {
-        // This is a reply - find the parent and add to its replies
-        this.addReplyToTree(allCommentTree, newComment, parentId);
-      } else {
-        // This is a root comment - add to the beginning
-        allCommentTree.unshift(newComment);
-      }
-      
-      // Update the cached data
-      commentSection.dataset.allComments = JSON.stringify(allCommentTree);
-      
-      // Update counts
-      const totalComments = parseInt(commentSection.dataset.totalComments || '0');
-      commentSection.dataset.totalComments = (totalComments + 1).toString();
-      
-      debugLog('✅ Updated cached comment tree');
-      
-    } catch (error) {
-      debugLog('❌ Error updating cached comment tree:', error);
+      allCommentTree = JSON.parse(commentSection.dataset.allComments || '[]');
+    } catch (e) {
+      debugLog('❌ Error parsing cached comments:', e);
+      return;
     }
+    
+    if (parentId) {
+      this.addReplyToTree(allCommentTree, newComment, parentId);
+    } else {
+      allCommentTree.unshift(newComment);
+    }
+    
+    // ✅ UPDATE PAGE DATA
+    commentSection.dataset.allComments = JSON.stringify(allCommentTree);
+    
+    // ✅ ALSO SAVE TO LOCALSTORAGE FOR PERSISTENCE ACROSS REFRESHES
+    const cachedKey = `comments_${this.articleId}_cache`;
+    const clientOnlyComments = this.extractClientOnlyComments(allCommentTree);
+    localStorage.setItem(cachedKey, JSON.stringify(clientOnlyComments));
+    
+    // Update counts
+    const totalComments = parseInt(commentSection.dataset.totalComments || '0');
+    commentSection.dataset.totalComments = (totalComments + 1).toString();
+    
+    debugLog('✅ Updated cached comment tree and localStorage');
+    
+  } catch (error) {
+    debugLog('❌ Error updating cached comment tree:', error);
   }
+}
+
+extractClientOnlyComments(allComments) {
+  // ✅ EXTRACT COMMENTS THAT WERE ADDED CLIENT-SIDE (RECENT ONES)
+  const now = new Date();
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  
+  const clientComments = [];
+  
+  function extractRecent(comments) {
+    comments.forEach(comment => {
+      const commentDate = new Date(comment.created_at);
+      if (commentDate > oneHourAgo) {
+        clientComments.push(comment);
+      }
+      
+      if (comment.replies && comment.replies.length > 0) {
+        extractRecent(comment.replies);
+      }
+    });
+  }
+  
+  extractRecent(allComments);
+  return clientComments;
+}
+
+
+
 
   // Helper method to add reply to the tree recursively
   addReplyToTree(commentTree, newReply, parentId) {
@@ -545,6 +678,32 @@ async init() {
     
   } catch (error) {
     console.error('❌ Init error:', error);
+  }
+}
+
+cleanupOldCache() {
+  try {
+    const cachedKey = `comments_${this.articleId}_cache`;
+    const clientCachedData = localStorage.getItem(cachedKey);
+    
+    if (clientCachedData) {
+      const clientComments = JSON.parse(clientCachedData);
+      const now = new Date();
+      const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+      
+      // ✅ REMOVE COMMENTS OLDER THAN 6 HOURS (THEY SHOULD BE ON SERVER BY NOW)
+      const recentComments = clientComments.filter(comment => {
+        const commentDate = new Date(comment.created_at);
+        return commentDate > sixHoursAgo;
+      });
+      
+      if (recentComments.length !== clientComments.length) {
+        localStorage.setItem(cachedKey, JSON.stringify(recentComments));
+        debugLog('🧹 Cleaned up old cached comments');
+      }
+    }
+  } catch (error) {
+    debugLog('❌ Error cleaning cache:', error);
   }
 }
 
