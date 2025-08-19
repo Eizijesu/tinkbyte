@@ -1717,8 +1717,6 @@ async handleCommentSubmit(e) {
   const formData = new FormData(form);
   const content = formData.get('content')?.trim();
 
-  debugLog('📝 Comment content length:', content?.length || 0);
-
   if (!this.validateComment(content)) {
     this.isSubmitting = false;
     return;
@@ -1730,39 +1728,19 @@ async handleCommentSubmit(e) {
   this.showLoading(form);
 
   try {
-    debugLog('🚀 Calling API to add comment');
-    debugLog('📊 Article ID:', this.articleId);
-    debugLog('🌍 Environment:', this.environment);
-    
-    // ✅ ENHANCED ERROR HANDLING
-    let result;
-    try {
-      result = await this.callAPI('addComment', [
-        this.articleId,
-        content, 
-        this.replyingTo?.id || null
-      ]);
-    } catch (apiError) {
-      debugLog('❌ API call failed:', apiError);
-      
-      // Check if it's a network error
-      if (apiError.message?.includes('Failed to fetch') || apiError.message?.includes('NetworkError')) {
-        throw new Error('Network connection failed. Please check your internet connection and try again.');
-      }
-      
-      // Check if it's a foreign key error
-      if (apiError.message?.includes('foreign key') || apiError.message?.includes('article_slug_fkey')) {
-        throw new Error('Article not found. Please refresh the page and try again.');
-      }
-      
-      throw apiError;
-    }
-
-    debugLog('📡 API result:', result);
+    const result = await this.callAPI('addComment', [
+      this.articleId,
+      content, 
+      this.replyingTo?.id || null
+    ]);
 
     if (result && result.success) {
       if (['auto_approved', 'approved'].includes(result.data?.moderation_status)) {
         showUserSuccess('Comment posted successfully!');
+        
+        // ✅ ADD TO CACHED TREE BEFORE ADDING TO UI
+        this.updateCachedCommentTree(result.data, this.replyingTo?.id || null);
+        
         this.addCommentToUI(result.data);
       } else {
         showUserSuccess('Comment submitted and pending approval!');
@@ -1774,29 +1752,11 @@ async handleCommentSubmit(e) {
       this.resetFormState(form);
     } else {
       const errorMessage = result?.error || 'Failed to post comment';
-      
-      if (errorMessage.includes('links are not allowed')) {
-        showUserError('Links are not allowed in comments. Please remove any URLs and try again.');
-      } else if (errorMessage.includes('Article with slug') && errorMessage.includes('not found')) {
-        showUserError('This article is not available for comments. Please refresh the page.');
-      } else {
-        showUserError(errorMessage);
-      }
+      showUserError(errorMessage);
     }
   } catch (error) {
     debugLog('❌ Comment submission error:', error);
-    
-    let userMessage = 'Failed to post comment. Please try again.';
-    
-    if (error.message?.includes('Network connection failed')) {
-      userMessage = error.message;
-    } else if (error.message?.includes('Article not found')) {
-      userMessage = error.message;
-    } else if (error.message?.includes('Must be logged in')) {
-      userMessage = 'Please sign in to comment';
-    }
-    
-    showUserError(userMessage);
+    showUserError('Failed to post comment. Please try again.');
   } finally {
     this.hideLoading(form);
     this.isSubmitting = false;
@@ -2395,19 +2355,7 @@ addCommentToUI(commentData) {
             <span class="reaction-emoji">❤️</span>
             <span class="reaction-count" id="reaction-love-${commentData.id}">0</span>
           </button>
-          <button class="reaction-btn" data-reaction="laugh" data-comment-id="${commentData.id}">
-            <span class="reaction-emoji">😂</span>
-            <span class="reaction-count" id="reaction-laugh-${commentData.id}">0</span>
-          </button>
-          <button class="reaction-btn" data-reaction="wow" data-comment-id="${commentData.id}">
-            <span class="reaction-emoji">😮</span>
-            <span class="reaction-count" id="reaction-wow-${commentData.id}">0</span>
-          </button>
-          <button class="reaction-btn" data-reaction="angry" data-comment-id="${commentData.id}">
-            <span class="reaction-emoji">😠</span>
-            <span class="reaction-count" id="reaction-angry-${commentData.id}">0</span>
-          </button>
-        </div>
+
 
         <div class="comment-actions">
           <button class="action-btn reply-btn" data-comment-id="${commentData.id}" data-author="${displayName}">
@@ -2430,7 +2378,7 @@ addCommentToUI(commentData) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
-            Bookmark
+            Save
           </button>
         </div>
       </div>
@@ -3729,10 +3677,15 @@ addReplyToUI(replyData, parentId) {
     </div>
     
     <div class="comment-reactions">
+      <button class="reaction-btn" data-reaction="like" data-comment-id="${comment.id}" title="Like">
+        <span class="reaction-emoji">👍</span>
+        <span class="reaction-count" id="reaction-like-${comment.id}">${comment.reaction_counts?.like || 0}</span>
+        </button>
       <button class="reaction-btn" data-reaction="love" data-comment-id="${replyData.id}">
         <span class="reaction-emoji">❤️</span>
         <span class="reaction-count" id="reaction-love-${replyData.id}">0</span>
       </button>
+    
     </div>
   </div>
 
@@ -4154,19 +4107,6 @@ addReplyToUI(replyData, parentId) {
               <span class="reaction-emoji">❤️</span>
               <span class="reaction-count" id="reaction-love-${comment.id}">${comment.reaction_counts?.love || 0}</span>
             </button>
-            <button class="reaction-btn" data-reaction="laugh" data-comment-id="${comment.id}" title="Laugh">
-              <span class="reaction-emoji">😂</span>
-              <span class="reaction-count" id="reaction-laugh-${comment.id}">${comment.reaction_counts?.laugh || 0}</span>
-            </button>
-            <button class="reaction-btn" data-reaction="wow" data-comment-id="${comment.id}" title="Wow">
-              <span class="reaction-emoji">😮</span>
-              <span class="reaction-count" id="reaction-wow-${comment.id}">${comment.reaction_counts?.wow || 0}</span>
-            </button>
-            <button class="reaction-btn" data-reaction="angry" data-comment-id="${comment.id}" title="Angry">
-              <span class="reaction-emoji">😠</span>
-              <span class="reaction-count" id="reaction-angry-${comment.id}">${comment.reaction_counts?.angry || 0}</span>
-            </button>
-          </div>
 
           <div class="comment-actions">
             <button class="action-btn reply-btn" data-comment-id="${comment.id}" data-author="${displayName}" title="Reply">
@@ -4180,7 +4120,7 @@ addReplyToUI(replyData, parentId) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
               </svg>
-              Bookmark
+              Save
             </button>
             <button class="action-btn copy-btn" data-comment-id="${comment.id}" title="Copy">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
