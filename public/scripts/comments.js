@@ -596,82 +596,81 @@ preventFormRefresh() {
 
 
 
-async _doAuthInitialization() {
-  try {
-    debugLog('🔐 Starting auth initialization...');
-    debugLog('🔐 Environment:', this.environment);
-    
-    // ✅ WAIT FOR YOUR ACTUAL AUTH MANAGER FROM LAYOUT.ASTRO
-    let attempts = 0;
-    while (!window.authManager && attempts < 100) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      attempts++;
-    }
-    
-    if (!window.authManager) {
-      throw new Error('Auth manager not available after waiting');
-    }
-    
-    debugLog('✅ Auth manager is ready');
-    
-    // ✅ USE YOUR ACTUAL AUTH MANAGER METHODS FROM LAYOUT.ASTRO
-    const currentUser = window.authManager.getCurrentUser();
-    const profile = window.authManager.getProfile();
-    const isAuthenticated = window.authManager.isUserAuthenticated();
-    
-    if (currentUser && isAuthenticated) {
-      debugLog('✅ User found:', currentUser.email);
+  async _doAuthInitialization() {
+    try {
+      debugLog('🔄 Starting auth initialization...');
+      debugLog('🌍 Environment:', this.environment);
+      debugLog('🏗️ Config:', this.config);
       
-      this.currentUser = currentUser;
-      this.profile = profile;
-      this.isAuthenticated = true;
-    } else {
-      debugLog('ℹ️ No active session');
-      this.currentUser = null;
-      this.profile = null;
-      this.isAuthenticated = false;
-    }
-    
-    this.authInitialized = true;
-    this.updateUI();
-    
-    // ✅ USE YOUR ACTUAL AUTH STATE CHANGE LISTENER
-    window.authManager.onAuthStateChange((user, profile) => {
-      debugLog('🔄 Auth state changed:', { user: user?.email, profile: profile?.display_name });
+      const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
       
-      if (user) {
-        this.currentUser = user;
-        this.profile = profile;
+      if (sessionError) {
+        debugLog('⚠️ Session error:', sessionError);
+      }
+      
+      if (session?.user) {
+        debugLog('✅ User found:', session.user.email);
+        debugLog('👤 User metadata:', session.user.user_metadata);
+        
+        this.currentUser = { 
+          id: session.user.id, 
+          email: session.user.email,
+          user_metadata: session.user.user_metadata // ✅ PRESERVE METADATA
+        };
         this.isAuthenticated = true;
+        
+        await this.loadUserProfile();
       } else {
+        debugLog('ℹ️ No active session');
         this.currentUser = null;
-        this.profile = null;
         this.isAuthenticated = false;
       }
       
+      this.authInitialized = true;
       this.updateUI();
       
-      // Update permissions after auth change
-      setTimeout(() => {
-        this.updateAllCommentPermissions();
-      }, 500);
-    });
-    
-    debugLog('✅ Auth initialization complete:', {
-      authenticated: this.isAuthenticated,
-      user: this.currentUser?.email,
-      profile: this.profile?.display_name
-    });
-    
-  } catch (error) {
-    console.error('❌ Auth initialization error:', error);
-    this.authInitialized = true;
-    this.currentUser = null;
-    this.profile = null;
-    this.isAuthenticated = false;
-    this.updateUI();
+      // ✅ ENHANCED AUTH LISTENER
+      this.supabase.auth.onAuthStateChange((event, session) => {
+        debugLog('🔄 Auth state changed:', event);
+        debugLog('👤 Session user:', session?.user?.email);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          this.currentUser = { 
+            id: session.user.id, 
+            email: session.user.email,
+            user_metadata: session.user.user_metadata
+          };
+          this.isAuthenticated = true;
+          this.loadUserProfile().then(() => {
+            debugLog('🎯 UI Update after profile load');
+            this.updateUI();
+          });
+        } else if (event === 'SIGNED_OUT') {
+          this.currentUser = null;
+          this.profile = null;
+          this.isAuthenticated = false;
+          this.updateUI();
+        }
+        
+        setTimeout(() => {
+          this.updateAllCommentPermissions();
+        }, 500);
+      });
+      
+      debugLog('✅ Auth initialization complete:', {
+        authenticated: this.isAuthenticated,
+        user: this.currentUser?.email,
+        profile: this.profile?.display_name
+      });
+      
+    } catch (error) {
+      handleError(error, 'Authentication initialization failed');
+      this.authInitialized = true;
+      this.currentUser = null;
+      this.isAuthenticated = false;
+      this.updateUI();
+    }
   }
-}
 
   async callAPI(method, args = []) {
   try {
