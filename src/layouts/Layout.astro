@@ -162,7 +162,11 @@ const structuredData = getStructuredData();
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
-
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;"
+    />
+    
     <!-- Performance Optimizations -->
     <link rel="dns-prefetch" href="//images.unsplash.com" />
     <link rel="dns-prefetch" href="//fonts.googleapis.com" />
@@ -795,7 +799,7 @@ const structuredData = getStructuredData();
                 return { success: false, error: error.message };
               }
             },
-            
+
             async recordActivity(
               activityType,
               entityType,
@@ -1358,6 +1362,19 @@ const structuredData = getStructuredData();
               });
             }
           });
+        });
+
+        // Add this to your Layout.astro script section
+        window.addEventListener("unhandledrejection", (event) => {
+          if (
+            event.reason?.message?.includes("message channel closed") ||
+            event.reason?.message?.includes(
+              "listener indicated an asynchronous response"
+            )
+          ) {
+            event.preventDefault();
+            console.log("🔇 Suppressed extension-related error");
+          }
         });
 
         // External link handling

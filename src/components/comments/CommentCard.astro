@@ -34,6 +34,15 @@ const displayName = userProfile?.display_name || "Anonymous";
 const isAdmin = userProfile?.is_admin || false;
 const avatarUrl = getUserAvatar(userProfile);
 
+// Debug logging
+console.log("CommentCard rendering:", {
+  commentId: comment.id,
+  userId: comment.user_id,
+  displayName: displayName,
+  hasProfile: !!userProfile,
+  profileData: userProfile,
+});
+
 // Thread level styling
 const threadLevel = Math.min(comment.thread_level || 0, 4);
 const canReply = (comment.thread_level || 0) < 4;
@@ -48,6 +57,7 @@ const reactions =
         label: value.label,
       }));
 
+// *** REMOVE SERVER-SIDE PERMISSION LOGIC - Let JavaScript handle everything ***
 console.log("CommentCard rendering:", {
   commentId: comment.id,
   userId: comment.user_id,
@@ -77,11 +87,10 @@ console.log("CommentCard rendering:", {
             <span class={`username ${isAdmin ? "admin" : ""}`}>
               {displayName}
             </span>
-            <!-- ✅ FIXED: Clock and time on same line -->
             <div class="comment-time-wrapper">
               <svg
-                width="8"
-                height="8"
+                width="12"
+                height="12"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -111,7 +120,7 @@ console.log("CommentCard rendering:", {
         </div>
       </div>
 
-      <!-- Actions Menu -->
+      <!-- Actions Menu - ALWAYS RENDER ALL OPTIONS, LET JAVASCRIPT CONTROL VISIBILITY -->
       <div class="comment-actions-menu">
         <button
           class="menu-btn"
@@ -120,8 +129,8 @@ console.log("CommentCard rendering:", {
           aria-label="Comment options"
         >
           <svg
-            width="12"
-            height="12"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -133,7 +142,9 @@ console.log("CommentCard rendering:", {
           </svg>
         </button>
 
+        <!-- ALWAYS render all dropdown items, hidden by default for JavaScript control -->
         <div class="dropdown-menu" id={`dropdown-${comment.id}`}>
+          <!-- Edit Option - Always render, hidden by default for client-side control -->
           <button
             class="dropdown-item edit-comment-btn"
             data-comment-id={comment.id}
@@ -157,6 +168,7 @@ console.log("CommentCard rendering:", {
             Edit
           </button>
 
+          <!-- Delete Option - Always render, hidden by default for client-side control -->
           <button
             class="dropdown-item delete-comment-btn"
             data-comment-id={comment.id}
@@ -179,6 +191,7 @@ console.log("CommentCard rendering:", {
             Delete
           </button>
 
+          <!-- Report Option - Always show -->
           <button
             class="dropdown-item report-btn"
             data-comment-id={comment.id}
@@ -209,77 +222,75 @@ console.log("CommentCard rendering:", {
       <div class="comment-text" set:html={formatContent(comment.content)} />
     </div>
 
-    <!-- ✅ UPDATED: Mobile-First Comment Footer -->
+    <!-- Comment Footer -->
     <div class="comment-footer">
-      <div class="footer-top-row">
-        <!-- Vote Section -->
-        <div class="vote-section">
-          <button
-            class="vote-btn upvote-btn"
-            data-comment-id={comment.id}
-            data-action="upvote"
-            title="Upvote"
-            aria-label="Upvote comment"
+      <!-- Vote Section -->
+      <div class="vote-section">
+        <button
+          class="vote-btn upvote-btn"
+          data-comment-id={comment.id}
+          data-action="upvote"
+          title="Upvote"
+          aria-label="Upvote comment"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M7 14l5-5 5 5"></path>
-            </svg>
-          </button>
-          <span class="vote-count" id={`vote-count-${comment.id}`}
-            >{comment.like_count || 0}</span
+            <path d="M7 14l5-5 5 5"></path>
+          </svg>
+        </button>
+        <span class="vote-count" id={`vote-count-${comment.id}`}
+          >{comment.like_count || 0}</span
+        >
+        <button
+          class="vote-btn downvote-btn"
+          data-comment-id={comment.id}
+          data-action="downvote"
+          title="Downvote"
+          aria-label="Downvote comment"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
           >
-          <button
-            class="vote-btn downvote-btn"
-            data-comment-id={comment.id}
-            data-action="downvote"
-            title="Downvote"
-            aria-label="Downvote comment"
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M17 10l-5 5-5-5"></path>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Reactions -->
-        <div class="comment-reactions">
-          {
-            reactions.map((reaction) => (
-              <button
-                class="reaction-btn"
-                data-reaction={reaction.name}
-                data-comment-id={comment.id}
-                title={`React with ${reaction.label}`}
-                aria-label={`React with ${reaction.label}`}
-              >
-                <span class="reaction-emoji">{reaction.emoji}</span>
-                <span
-                  class="reaction-count"
-                  id={`reaction-${reaction.name}-${comment.id}`}
-                >
-                  {comment.reaction_counts?.[reaction.name] || 0}
-                </span>
-              </button>
-            ))
-          }
-        </div>
+            <path d="M17 10l-5 5-5-5"></path>
+          </svg>
+        </button>
       </div>
 
-      <!-- Actions Row -->
+      <!-- Reactions -->
+      <div class="comment-reactions">
+        {
+          reactions.map((reaction) => (
+            <button
+              class="reaction-btn"
+              data-reaction={reaction.name}
+              data-comment-id={comment.id}
+              title={`React with ${reaction.label}`}
+              aria-label={`React with ${reaction.label}`}
+            >
+              <span class="reaction-emoji">{reaction.emoji}</span>
+              <span
+                class="reaction-count"
+                id={`reaction-${reaction.name}-${comment.id}`}
+              >
+                {comment.reaction_counts?.[reaction.name] || 0}
+              </span>
+            </button>
+          ))
+        }
+      </div>
+
+      <!-- Actions -->
       <div class="comment-actions">
         {
           canReply && (
@@ -291,8 +302,8 @@ console.log("CommentCard rendering:", {
               aria-label="Reply to comment"
             >
               <svg
-                width="12"
-                height="12"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -313,8 +324,8 @@ console.log("CommentCard rendering:", {
           aria-label="Bookmark comment"
         >
           <svg
-            width="12"
-            height="12"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -332,8 +343,8 @@ console.log("CommentCard rendering:", {
           aria-label="Copy comment text"
         >
           <svg
-            width="12"
-            height="12"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -347,7 +358,7 @@ console.log("CommentCard rendering:", {
       </div>
     </div>
 
-    <!-- Inline Containers -->
+    <!-- Inline Reply Container -->
     <div
       class="inline-reply-container"
       data-comment-id={comment.id}
@@ -355,6 +366,7 @@ console.log("CommentCard rendering:", {
     >
     </div>
 
+    <!-- Inline Edit Container -->
     <div
       class="inline-edit-container"
       data-comment-id={comment.id}
