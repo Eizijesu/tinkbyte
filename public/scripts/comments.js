@@ -1826,21 +1826,14 @@ async handleCommentSubmit(e) {
   e.preventDefault();
   e.stopPropagation();
   
-  debugLog('📝 Comment submit triggered');
-  
   await this.ensureAuth();
   
   if (!this.isAuthenticated || !this.currentUser) {
-    debugLog('🚫 User not authenticated for comment submission');
     showUserError('Please sign in to comment');
     return;
   }
 
-  if (this.isSubmitting) {
-    debugLog('⏳ Comment submission already in progress');
-    return;
-  }
-  
+  if (this.isSubmitting) return;
   this.isSubmitting = true;
 
   const form = e.target;
@@ -1854,7 +1847,6 @@ async handleCommentSubmit(e) {
 
   const submitBtn = form.querySelector('.submit-btn');
   if (submitBtn) submitBtn.disabled = true;
-  
   this.showLoading(form);
 
   try {
@@ -1867,7 +1859,9 @@ async handleCommentSubmit(e) {
     if (result && result.success) {
       if (['auto_approved', 'approved'].includes(result.data?.moderation_status)) {
         showUserSuccess('Comment posted successfully!');
-      
+        
+        // ✅ ADD JUST THIS ONE LINE - Simple caching
+        this.addToPageCache(result.data, this.replyingTo?.id || null);
         
         this.addCommentToUI(result.data);
       } else {
@@ -1879,16 +1873,44 @@ async handleCommentSubmit(e) {
       this.updateCommentCount(1);
       this.resetFormState(form);
     } else {
-      const errorMessage = result?.error || 'Failed to post comment';
-      showUserError(errorMessage);
+      showUserError(result?.error || 'Failed to post comment');
     }
   } catch (error) {
-    debugLog('❌ Comment submission error:', error);
     showUserError('Failed to post comment. Please try again.');
   } finally {
     this.hideLoading(form);
     this.isSubmitting = false;
     if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+// ✅ SIMPLE: update the page's data attribute
+addToPageCache(newComment, parentId = null) {
+  try {
+    const commentSection = document.getElementById('comments-section');
+    if (!commentSection) return;
+    
+    let allComments = JSON.parse(commentSection.dataset.allComments || '[]');
+    
+    if (parentId) {
+      // Add as reply
+      this.addReplyToTree(allComments, newComment, parentId);
+    } else {
+      // Add as root comment
+      allComments.unshift(newComment);
+    }
+    
+    // Update the page data
+    commentSection.dataset.allComments = JSON.stringify(allComments);
+    
+    // Update count
+    const totalComments = parseInt(commentSection.dataset.totalComments || '0');
+    commentSection.dataset.totalComments = (totalComments + 1).toString();
+    
+    debugLog('✅ Updated page cache');
+    
+  } catch (error) {
+    debugLog('❌ Cache update failed:', error);
   }
 }
 
@@ -2368,7 +2390,7 @@ addCommentToUI(commentData) {
     emptyState.style.display = 'none';
   }
 
-  // Use current user's profile data
+  // ✅ USE CURRENT USER'S PROFILE DATA
   const userProfile = this.profile || {
     display_name: this.currentUser?.email?.split('@')[0] || 'User',
     avatar_type: 'preset',
@@ -2388,7 +2410,6 @@ addCommentToUI(commentData) {
   const formattedContent = this.formatContent(commentData.content);
   const displayName = userProfile.display_name || 'User';
   
-  // ✅ UPDATED: New linear layout structure
   commentElement.innerHTML = `
     <div class="comment-card ${commentData.parent_id ? 'reply-card' : ''}" 
          data-comment-id="${commentData.id}" 
@@ -2398,7 +2419,6 @@ addCommentToUI(commentData) {
       
       ${commentData.parent_id ? '<div class="reply-connector"></div>' : ''}
       
-      <!-- ✅ UPDATED: Linear Header Layout -->
       <div class="comment-header">
         <div class="comment-user-info">
           <div class="comment-avatar">
@@ -2408,44 +2428,46 @@ addCommentToUI(commentData) {
           <div class="comment-meta">
             <div class="user-details">
               <span class="username ${userProfile.is_admin ? 'admin' : ''}">${displayName}</span>
-              <div class="comment-time-wrapper">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12,6 12,12 16,14"></polyline>
-                </svg>
-                <span class="comment-time" title="${new Date(commentData.created_at).toLocaleString()}">
-                  Just now
-                </span>
-              </div>
+              ${userProfile.is_admin ? '<span class="admin-badge">Admin</span>' : ''}
+              ${userProfile.membership_type === 'premium' ? '<span class="premium-badge">Premium</span>' : ''}
+            </div>
+            <div class="comment-time-wrapper">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12,6 12,12 16,14"></polyline>
+              </svg>
+              <span class="comment-time" title="${new Date(commentData.created_at).toLocaleString()}">
+                Just now
+              </span>
             </div>
           </div>
         </div>
         
         <div class="comment-actions-menu">
           <button class="menu-btn" data-comment-id="${commentData.id}" aria-label="Comment options">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="1"></circle>
-              <circle cx="19" cy="12" r="1"></circle>
-              <circle cx="5" cy="12" r="1"></circle>
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
             </svg>
           </button>
           <div class="dropdown-menu" id="dropdown-${commentData.id}">
             <button class="dropdown-item edit-comment-btn" data-comment-id="${commentData.id}" style="display: inline-flex;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
               Edit
             </button>
             <button class="dropdown-item delete-comment-btn" data-comment-id="${commentData.id}" style="display: inline-flex;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3,6 5,6 21,6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"></path>
               </svg>
               Delete
             </button>
             <button class="dropdown-item report-btn" data-comment-id="${commentData.id}" style="display: flex;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
                 <line x1="4" y1="22" x2="4" y2="15"></line>
               </svg>
@@ -2459,66 +2481,51 @@ addCommentToUI(commentData) {
         <div class="comment-text">${formattedContent}</div>
       </div>
 
-      <!-- ✅ UPDATED: Linear Footer Layout -->
-      <div class="comment-footer">
-        <!-- Left Side: Voting & Reactions -->
-        <div class="footer-left">
-          <!-- Vote Section -->
-          <div class="vote-section">
-            <button class="vote-btn upvote-btn" data-comment-id="${commentData.id}" data-action="upvote">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M7 14l5-5 5 5"></path>
-              </svg>
-            </button>
-            <span class="vote-count">${commentData.like_count || 0}</span>
-            <button class="vote-btn downvote-btn" data-comment-id="${commentData.id}" data-action="downvote">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M17 10l-5 5-5-5"></path>
-              </svg>
-            </button>
-          </div>
-          
-          <!-- Reactions -->
-          <div class="comment-reactions">
-            <button class="reaction-btn" data-reaction="like" data-comment-id="${commentData.id}">
-              <span class="reaction-emoji">👍</span>
-              <span class="reaction-count">0</span>
-            </button>
-            <button class="reaction-btn" data-reaction="love" data-comment-id="${commentData.id}">
-              <span class="reaction-emoji">❤️</span>
-              <span class="reaction-count">0</span>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Right Side: Actions -->
-        <div class="footer-right">
-          <div class="comment-actions">
-            <button class="action-btn reply-btn" data-comment-id="${commentData.id}" data-author="${displayName}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <polyline points="9,17 4,12 9,7"></polyline>
-                <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
-              </svg>
-              <span>Reply</span>
-            </button>
-            
-            <button class="action-btn bookmark-btn" data-comment-id="${commentData.id}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-              </svg>
-              <span>Save</span>
-            </button>
-            
-            <button class="action-btn copy-btn" data-comment-id="${commentData.id}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
-              </svg>
-              <span>Copy</span>
-            </button>
-          </div>
-        </div>
-      </div>
+<div class="comment-footer">
+  <button class="vote-btn upvote-btn" data-comment-id="${commentData.id}" data-action="upvote">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M7 14l5-5 5 5"></path>
+    </svg>
+  </button>
+  <span class="vote-count">${commentData.like_count || 0}</span>
+  <button class="vote-btn downvote-btn" data-comment-id="${commentData.id}" data-action="downvote">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M17 10l-5 5-5-5"></path>
+    </svg>
+  </button>
+  
+  <button class="reaction-btn" data-reaction="like" data-comment-id="${commentData.id}">
+    <span class="reaction-emoji">👍</span>
+    <span class="reaction-count">0</span>
+  </button>
+  <button class="reaction-btn" data-reaction="love" data-comment-id="${commentData.id}">
+    <span class="reaction-emoji">❤️</span>
+    <span class="reaction-count">0</span>
+  </button>
+  
+  <button class="action-btn reply-btn" data-comment-id="${commentData.id}" data-author="${displayName}">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="9,17 4,12 9,7"></polyline>
+      <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+    </svg>
+    <span class="action-text">Reply</span>
+  </button>
+  
+  <button class="action-btn bookmark-btn" data-comment-id="${commentData.id}">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <span class="action-text">Save</span>
+  </button>
+  
+  <button class="action-btn copy-btn" data-comment-id="${commentData.id}">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
+    </svg>
+    <span class="action-text">Copy</span>
+  </button>
+</div>
 
       <div class="inline-reply-container" style="display: none;"></div>
       <div class="inline-edit-container" style="display: none;"></div>
@@ -2577,7 +2584,6 @@ addCommentToUI(commentData) {
   }
 }
 
-
   async syncCommentsWithDatabase() {
     try {
       const result = await this.callAPI('getComments', [this.articleId]);
@@ -2633,7 +2639,7 @@ getMainCommentsContainer() {
   return commentsContainer;
 }
 
-// ✅ UPDATED: addReplyToUI method
+// THE addReplyToUI METHOD:
 addReplyToUI(replyData, parentId) {
   debugLog('🔄 Adding reply to UI:', {
     replyId: replyData.id,
@@ -2641,7 +2647,7 @@ addReplyToUI(replyData, parentId) {
     content: replyData.content.substring(0, 30)
   });
 
-  // Better parent finding - Look for the comment card first, then get its wrapper
+  // ✅ BETTER PARENT FINDING - Look for the comment card first, then get its wrapper
   const parentCommentCard = document.querySelector(`[data-comment-id="${parentId}"]`);
   
   if (!parentCommentCard) {
@@ -2660,7 +2666,7 @@ addReplyToUI(replyData, parentId) {
     return;
   }
 
-  // Calculate proper thread level
+  // ✅ CALCULATE PROPER THREAD LEVEL
   const parentLevel = parseInt(parentCommentCard.dataset.threadLevel || '0');
   const replyLevel = Math.min(parentLevel + 1, 4);
   
@@ -2671,14 +2677,14 @@ addReplyToUI(replyData, parentId) {
     replyId: replyData.id
   });
 
-  // Find or create replies container - Look for direct child only
+  // ✅ FIND OR CREATE REPLIES CONTAINER - Look for direct child only
   let repliesContainer = parentWrapper.querySelector(':scope > .comment-replies, :scope > .replies-container');
   
   if (!repliesContainer) {
     repliesContainer = document.createElement('div');
     repliesContainer.className = 'comment-replies replies-container';
     
-    // Insert after inline containers but before any existing replies
+    // ✅ INSERT AFTER INLINE CONTAINERS BUT BEFORE ANY EXISTING REPLIES
     const inlineContainers = parentWrapper.querySelectorAll('.inline-reply-container, .inline-edit-container');
     const lastInlineContainer = inlineContainers[inlineContainers.length - 1];
     
@@ -2697,12 +2703,14 @@ addReplyToUI(replyData, parentId) {
   const isAdmin = this.profile?.is_admin || false;
   const membershipType = this.profile?.membership_type || 'free';
   
-  // Create reply wrapper with proper structure
+  // ✅ CREATE REPLY WRAPPER WITH PROPER STRUCTURE
   const replyWrapper = document.createElement('div');
   replyWrapper.className = 'comment-wrapper reply-wrapper';
   replyWrapper.dataset.commentId = replyData.id;
   
-  // ✅ UPDATED: New linear layout structure for replies
+  // ✅ ADD VISUAL INDENTATION BASED ON THREAD LEVEL
+  replyWrapper.style.marginLeft = `${replyLevel * 20}px`;
+  
   replyWrapper.innerHTML = `
     <div class="comment-card reply-card" 
          data-comment-id="${replyData.id}" 
@@ -2711,7 +2719,6 @@ addReplyToUI(replyData, parentId) {
          data-thread-level="${replyLevel}">
       <div class="reply-connector"></div>
       
-      <!-- ✅ UPDATED: Linear Header Layout -->
       <div class="comment-header">
         <div class="comment-user-info">
           <div class="comment-avatar">
@@ -2721,42 +2728,44 @@ addReplyToUI(replyData, parentId) {
           <div class="comment-meta">
             <div class="user-details">
               <span class="username ${isAdmin ? 'admin' : ''}">${displayName}</span>
-              <div class="comment-time-wrapper">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12,6 12,12 16,14"></polyline>
-                </svg>
-                <span class="comment-time" title="${new Date(replyData.created_at).toLocaleString()}">Just now</span>
-              </div>
+              ${isAdmin ? '<span class="admin-badge">Admin</span>' : ''}
+              ${membershipType === 'premium' ? '<span class="premium-badge">Premium</span>' : ''}
+            </div>
+            <div class="comment-time-wrapper">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12,6 12,12 16,14"></polyline>
+              </svg>
+              <span class="comment-time" title="${new Date(replyData.created_at).toLocaleString()}">Just now</span>
             </div>
           </div>
         </div>
         
         <div class="comment-actions-menu">
           <button class="menu-btn" data-comment-id="${replyData.id}" aria-label="Reply options">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="1"></circle>
-              <circle cx="19" cy="12" r="1"></circle>
-              <circle cx="5" cy="12" r="1"></circle>
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
             </svg>
           </button>
           <div class="dropdown-menu" id="dropdown-${replyData.id}">
             <button class="dropdown-item edit-comment-btn" data-comment-id="${replyData.id}" style="display: inline-flex;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
               Edit
             </button>
             <button class="dropdown-item delete-comment-btn" data-comment-id="${replyData.id}" style="display: inline-flex;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3,6 5,6 21,6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"></path>
               </svg>
               Delete
             </button>
             <button class="dropdown-item report-btn" data-comment-id="${replyData.id}" style="display: flex;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
                 <line x1="4" y1="22" x2="4" y2="15"></line>
               </svg>
@@ -2770,76 +2779,56 @@ addReplyToUI(replyData, parentId) {
         <div class="comment-text">${this.formatContent(replyData.content)}</div>
       </div>
 
-      <!-- ✅ UPDATED: Linear Footer Layout -->
-      <div class="comment-footer">
-        <!-- Left Side: Voting & Reactions -->
-        <div class="footer-left">
-          <!-- Vote Section -->
-          <div class="vote-section">
-            <button class="vote-btn upvote-btn" data-comment-id="${replyData.id}" data-action="upvote">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M7 14l5-5 5 5"></path>
-              </svg>
-            </button>
-            <span class="vote-count">${replyData.like_count || 0}</span>
-            <button class="vote-btn downvote-btn" data-comment-id="${replyData.id}" data-action="downvote">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M17 10l-5 5-5-5"></path>
-              </svg>
-            </button>
-          </div>
-          
-          <!-- Reactions -->
-          <div class="comment-reactions">
-            <button class="reaction-btn" data-reaction="like" data-comment-id="${replyData.id}">
-              <span class="reaction-emoji">👍</span>
-              <span class="reaction-count">0</span>
-            </button>
-            <button class="reaction-btn" data-reaction="love" data-comment-id="${replyData.id}">
-              <span class="reaction-emoji">❤️</span>
-              <span class="reaction-count">0</span>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Right Side: Actions -->
-        <div class="footer-right">
-          <div class="comment-actions">
-            ${replyLevel < 4 ? `
-              <button class="action-btn reply-btn" data-comment-id="${replyData.id}" data-author="${displayName}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <polyline points="9,17 4,12 9,7"></polyline>
-                  <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
-                </svg>
-                <span>Reply</span>
-              </button>
-            ` : ''}
-            
-            <button class="action-btn bookmark-btn" data-comment-id="${replyData.id}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-              </svg>
-              <span>Save</span>
-            </button>
-            
-            <button class="action-btn copy-btn" data-comment-id="${replyData.id}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
-              </svg>
-              <span>Copy</span>
-            </button>
-          </div>
-        </div>
-      </div>
+<div class="comment-footer">
+  <button class="vote-btn upvote-btn" data-comment-id="${replyData.id}" data-action="upvote">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M7 14l5-5 5 5"></path>
+    </svg>
+  </button>
+  <span class="vote-count">${replyData.like_count || 0}</span>
+  <button class="vote-btn downvote-btn" data-comment-id="${replyData.id}" data-action="downvote">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M17 10l-5 5-5-5"></path>
+    </svg>
+  </button>
+  
+  <button class="reaction-btn" data-reaction="love" data-comment-id="${replyData.id}">
+    <span class="reaction-emoji">❤️</span>
+    <span class="reaction-count">0</span>
+  </button>
+  
+  ${replyLevel < 4 ? `
+    <button class="action-btn reply-btn" data-comment-id="${replyData.id}" data-author="${displayName}">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9,17 4,12 9,7"></polyline>
+        <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+      </svg>
+      <span class="action-text">Reply</span>
+    </button>
+  ` : ''}
+  
+  <button class="action-btn bookmark-btn" data-comment-id="${replyData.id}">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <span class="action-text">Save</span>
+  </button>
+  
+  <button class="action-btn copy-btn" data-comment-id="${replyData.id}">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
+    </svg>
+    <span class="action-text">Copy</span>
+  </button>
+</div>
     
-      <!-- Inline containers for this reply -->
-      <div class="inline-reply-container" style="display: none;"></div>
-      <div class="inline-edit-container" style="display: none;"></div>
-    </div>
+    <!-- ✅ INLINE CONTAINERS FOR THIS REPLY -->
+    <div class="inline-reply-container" style="display: none;"></div>
+    <div class="inline-edit-container" style="display: none;"></div>
   `;
 
-  // Add to the replies container
+  // ✅ ADD TO THE REPLIES CONTAINER (NOT MAIN CONTAINER)
   repliesContainer.appendChild(replyWrapper);
   
   // Add highlight animation

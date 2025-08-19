@@ -841,10 +841,11 @@
 }
 
 .user-details {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  flex-wrap: wrap !important;
+  flex-direction: row !important; /* This is the key fix */
 }
 
 .username {
@@ -3151,12 +3152,26 @@
 
 /* Fix comment time wrapper alignment */
 .comment-time-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem; /* Smaller gap for tighter alignment */
-  white-space: nowrap; /* Prevent line breaks */
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  white-space: nowrap !important;
+  flex-direction: row !important;
   font-size: 0.75rem;
   color: var(--text-secondary);
+}
+
+
+.comment-time-wrapper svg {
+  width: 12px !important;
+  height: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+.comment-time {
+  font-size: 0.75rem !important;
+  color: var(--text-secondary) !important;
+  white-space: nowrap !important;
 }
 
 .comment-time-wrapper svg {
@@ -3565,3 +3580,19 @@
   height: 12px;
 }
 
+/* Fix clock and time to be on same line */
+.comment-time-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  white-space: nowrap !important;
+}
+
+.comment-time-wrapper svg {
+  flex-shrink: 0 !important;
+}
+
+.comment-time {
+  display: inline !important;
+  white-space: nowrap !important;
+}
