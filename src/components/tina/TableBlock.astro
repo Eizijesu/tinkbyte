@@ -26,38 +26,83 @@ const rowClasses = {
 };
 ---
 
-<div class="my-8 overflow-x-auto">
-  {caption && <h3 class="text-lg font-semibold mb-3 text-center">{caption}</h3>}
+<div class="my-8">
+  {
+    caption && (
+      <h3 class="text-lg font-semibold mb-3 text-center text-gray-800 dark:text-gray-200">
+        {caption}
+      </h3>
+    )
+  }
 
-  <table class={`w-full ${styleClasses[style]}`}>
-    {
-      headers.length > 0 && (
-        <thead>
-          <tr class="bg-gray-100">
-            {headers.map((header) => (
-              <th class="px-4 py-3 text-left font-semibold text-gray-900 border border-gray-300">
+  <!-- ✅ Key: Constrain width + scroll only when needed -->
+  <div
+    class="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900 scrollbar-thin"
+    style="
+      scrollbar-width: thin;
+      scrollbar-color: #d1d5da transparent;
+    "
+  >
+    <!-- Use table-auto (not fixed) for better intrinsic width control -->
+    <table class={`w-full table-auto ${styleClasses[style]} text-left`}>
+      <thead>
+        <tr class="bg-gray-100 dark:bg-gray-800">
+          {
+            headers.map((header) => (
+              <th class="px-3 py-2 sm:px-4 sm:py-3 font-semibold text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 align-top whitespace-normal break-words text-xs sm:text-sm">
                 {header}
               </th>
-            ))}
-          </tr>
-        </thead>
-      )
-    }
+            ))
+          }
+        </tr>
+      </thead>
+      <tbody>
+        {
+          rows.map((row) => (
+            <tr class={rowClasses[style]}>
+              {row.cells.map((cell) => (
+                <td class="px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 align-top break-words max-w-48 sm:max-w-64">
+                  <span class="text-xs sm:text-sm">{cell}</span>
+                </td>
+              ))}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
 
-    <tbody>
-      {
-        rows.map((row, rowIndex) => (
-          <tr class={rowClasses[style]}>
-            {row.cells.map((cell, cellIndex) => (
-              <td
-                class={`px-4 py-3 border border-gray-300 ${style === "compact" ? "py-2" : ""}`}
-              >
+  <!-- Mobile Card View -->
+  <div class="sm:hidden space-y-4 mt-6">
+    {
+      rows.map((row) => (
+        <div class="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-4 shadow-sm">
+          {row.cells.map((cell, i) => (
+            <div class="mb-2 last:mb-0">
+              <span class="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+                {headers[i] || `Field ${i + 1}`}
+              </span>
+              <p class="text-gray-700 dark:text-gray-300 mt-1 text-sm leading-relaxed">
                 {cell}
-              </td>
-            ))}
-          </tr>
-        ))
-      }
-    </tbody>
-  </table>
+              </p>
+            </div>
+          ))}
+        </div>
+      ))
+    }
+  </div>
 </div>
+
+<!-- Keep scrollbar styling -->
+<style is:global>
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #d1d5da;
+    border-radius: 3px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+</style>

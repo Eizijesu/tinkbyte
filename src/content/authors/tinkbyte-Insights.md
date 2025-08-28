@@ -1,6 +1,6 @@
 ---
-slug: tinkbyte-team
-name: TinkByte Team
+slug: tinkbyte-insights
+name: TinkByte Insights
 bio: >-
   The team behind TinkByte, delivering practical tech insights and innovation
   analysis without the hype.
