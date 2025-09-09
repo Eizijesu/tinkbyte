@@ -1,4 +1,4 @@
-// src/types/env.d.ts
+// src/env.d.ts
 /// <reference types="astro/client" />
 
 declare namespace App {

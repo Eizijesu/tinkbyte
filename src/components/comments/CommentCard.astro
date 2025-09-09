@@ -29,10 +29,12 @@ const {
 } = Astro.props;
 
 // Determine user profile data
-const userProfile = comment.profiles;
+const userProfile = comment.profiles || comment.user_profile;
 const displayName = userProfile?.display_name || "Anonymous";
 const isAdmin = userProfile?.is_admin || false;
-const avatarUrl = getUserAvatar(userProfile);
+
+// Fixed: Pass the comment (not just the profile) to getUserAvatar
+const avatarUrl = getUserAvatar(comment);
 
 // Debug logging
 console.log("CommentCard rendering:", {
@@ -56,13 +58,6 @@ const reactions =
         emoji: value.emoji,
         label: value.label,
       }));
-
-// *** REMOVE SERVER-SIDE PERMISSION LOGIC - Let JavaScript handle everything ***
-console.log("CommentCard rendering:", {
-  commentId: comment.id,
-  userId: comment.user_id,
-  displayName,
-});
 ---
 
 <div
@@ -120,7 +115,7 @@ console.log("CommentCard rendering:", {
         </div>
       </div>
 
-      <!-- Actions Menu - ALWAYS RENDER ALL OPTIONS, LET JAVASCRIPT CONTROL VISIBILITY -->
+      <!-- Actions Menu -->
       <div class="comment-actions-menu">
         <button
           class="menu-btn"
@@ -142,9 +137,7 @@ console.log("CommentCard rendering:", {
           </svg>
         </button>
 
-        <!-- ALWAYS render all dropdown items, hidden by default for JavaScript control -->
         <div class="dropdown-menu" id={`dropdown-${comment.id}`}>
-          <!-- Edit Option - Always render, hidden by default for client-side control -->
           <button
             class="dropdown-item edit-comment-btn"
             data-comment-id={comment.id}
@@ -168,7 +161,6 @@ console.log("CommentCard rendering:", {
             Edit
           </button>
 
-          <!-- Delete Option - Always render, hidden by default for client-side control -->
           <button
             class="dropdown-item delete-comment-btn"
             data-comment-id={comment.id}
@@ -191,7 +183,6 @@ console.log("CommentCard rendering:", {
             Delete
           </button>
 
-          <!-- Report Option - Always show -->
           <button
             class="dropdown-item report-btn"
             data-comment-id={comment.id}
@@ -375,3 +366,228 @@ console.log("CommentCard rendering:", {
     </div>
   </div>
 </div>
+
+<script>
+  import { supabase } from "../../lib/supabase";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const getArticleSlug = (): string => {
+      const section = document.getElementById("comments-section");
+      return section?.getAttribute("data-article-id") || "";
+    };
+
+    // Handle reaction buttons
+    const reactionButtons = document.querySelectorAll(".reaction-btn");
+    reactionButtons.forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+
+        const commentId = btn.getAttribute("data-comment-id");
+        const reactionType = btn.getAttribute("data-reaction");
+
+        if (!commentId || !reactionType) return;
+
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+
+          if (!session) {
+            alert("Please sign in to react to comments");
+            return;
+          }
+
+          let result;
+          // Type assertion approach - NO MORE TYPESCRIPT ERRORS
+          const windowWithAPI = window as any;
+          if (windowWithAPI.TinkByteAPI) {
+            result = await windowWithAPI.TinkByteAPI.toggleCommentReaction(
+              commentId,
+              reactionType
+            );
+          } else {
+            const response = await fetch("/api/comments/react", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                comment_id: commentId,
+                reaction_type: reactionType,
+              }),
+            });
+            result = await response.json();
+          }
+
+          if (result.success) {
+            const countElement = btn.querySelector(".reaction-count");
+            if (countElement) {
+              countElement.textContent = result.count?.toString() || "0";
+            }
+            btn.classList.toggle("active", result.reacted);
+          }
+        } catch (error) {
+          console.error("Error reacting to comment:", error);
+        }
+      });
+    });
+
+    // Handle vote buttons
+    const voteButtons = document.querySelectorAll(".vote-btn");
+    voteButtons.forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+
+        const commentId = btn.getAttribute("data-comment-id");
+        const action = btn.getAttribute("data-action");
+
+        if (!commentId || !action) return;
+
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+
+          if (!session) {
+            alert("Please sign in to vote on comments");
+            return;
+          }
+
+          let result;
+          const windowWithAPI = window as any;
+          if (windowWithAPI.TinkByteAPI) {
+            result =
+              await windowWithAPI.TinkByteAPI.toggleCommentLike(commentId);
+          } else {
+            const response = await fetch("/api/comments/vote", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                comment_id: commentId,
+                action: action,
+              }),
+            });
+            result = await response.json();
+          }
+
+          if (result.success) {
+            const voteCountElement = document.getElementById(
+              `vote-count-${commentId}`
+            );
+            if (voteCountElement && typeof result.liked === "boolean") {
+              const currentCount = parseInt(
+                voteCountElement.textContent || "0"
+              );
+              const newCount = result.liked
+                ? currentCount + 1
+                : Math.max(0, currentCount - 1);
+              voteCountElement.textContent = newCount.toString();
+            }
+
+            const upvoteBtn = document.querySelector(
+              `[data-comment-id="${commentId}"][data-action="upvote"]`
+            );
+            const downvoteBtn = document.querySelector(
+              `[data-comment-id="${commentId}"][data-action="downvote"]`
+            );
+
+            if (action === "upvote") {
+              upvoteBtn?.classList.toggle("active", result.liked);
+              downvoteBtn?.classList.remove("active");
+            } else {
+              downvoteBtn?.classList.toggle("active", result.liked);
+              upvoteBtn?.classList.remove("active");
+            }
+          }
+        } catch (error) {
+          console.error("Error voting on comment:", error);
+        }
+      });
+    });
+
+    // Handle bookmark buttons
+    const bookmarkButtons = document.querySelectorAll(".bookmark-btn");
+    bookmarkButtons.forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const commentId = btn.getAttribute("data-comment-id");
+
+        if (!commentId) return;
+
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+
+          if (!session) {
+            alert("Please sign in to bookmark comments");
+            return;
+          }
+
+          let result;
+          const windowWithAPI = window as any;
+          if (windowWithAPI.TinkByteAPI) {
+            result =
+              await windowWithAPI.TinkByteAPI.toggleCommentBookmark(commentId);
+          } else {
+            const response = await fetch("/api/comments/bookmark", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                comment_id: commentId,
+              }),
+            });
+            result = await response.json();
+          }
+
+          if (result.success) {
+            btn.classList.toggle("active", result.bookmarked);
+            const newTitle = result.bookmarked
+              ? "Remove bookmark"
+              : "Bookmark this comment";
+            btn.setAttribute("title", newTitle);
+          }
+        } catch (error) {
+          console.error("Error bookmarking comment:", error);
+        }
+      });
+    });
+
+    // Handle copy buttons
+    const copyButtons = document.querySelectorAll(".copy-btn");
+    copyButtons.forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const commentCard = btn.closest(".comment-card");
+        const commentText =
+          commentCard?.querySelector(".comment-text")?.textContent;
+
+        if (commentText) {
+          try {
+            await navigator.clipboard.writeText(commentText);
+
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20,6 9,17 4,12"></polyline>
+              </svg>
+              Copied
+            `;
+
+            setTimeout(() => {
+              btn.innerHTML = originalText;
+            }, 2000);
+          } catch (error) {
+            console.error("Failed to copy text:", error);
+            alert("Failed to copy comment text");
+          }
+        }
+      });
+    });
+  });
+</script>

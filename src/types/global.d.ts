@@ -1,3 +1,4 @@
+//src/types/global.d.ts
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 declare global {
@@ -13,6 +14,17 @@ declare global {
     toggleTheme?: () => void;
     gtag?: (...args: any[]) => void;
     dataLayer?: any[];
+
+       // **ADD THIS: TinkByteAPI interface**
+    TinkByteAPI?: {
+      toggleCommentReaction: (commentId: string, reactionType: string) => Promise<any>;
+      addComment: (articleSlug: string, content: string, parentId?: string) => Promise<any>;
+      toggleCommentLike: (commentId: string) => Promise<any>;
+      toggleCommentBookmark: (commentId: string) => Promise<any>;
+    };
+    
+    // **ADD THIS: Additional config**
+    TINKBYTE_CONFIG?: any;
   }
 }
 

@@ -1,7 +1,11 @@
 ---
-// src/components/comments/TinkByteCommentSection.astro - USING YOUR CONFIG
+// src/components/comments/TinkByteCommentSection.astro
 import { supabase } from "../../lib/supabase";
-import { config, getEnvironmentFor } from "../../lib/config"; // ✅ USE YOUR CONFIG
+import {
+  config,
+  getCommentsReadEnvironments,
+  getCommentsWriteEnvironment,
+} from "../../lib/config";
 import { COMMENT_CONFIG, REACTION_TYPES } from "../../lib/config/comments";
 import { buildCommentTree } from "../../lib/helpers/commentHelpers";
 import CommentCard from "./CommentCard.astro";
@@ -11,11 +15,19 @@ import type { CommentWithProfile } from "../../lib/types/comments";
 
 const { articleId, postSlug, postTitle } = Astro.props;
 
-// ✅ USE YOUR CONFIG FOR ENVIRONMENT
-const ENVIRONMENT = config.environment;
-const COMMENTS_ENV = getEnvironmentFor('comments');
+// Canonical slug used everywhere
+const articleSlug = String(postSlug || articleId || "").replace(/\/+$/, "");
+
+// **UPDATED: Use comments strategy**
+const WRITE_ENVIRONMENT = getCommentsWriteEnvironment();
+const READ_ENVIRONMENTS = getCommentsReadEnvironments();
+
+console.log(
+  `🔧 Config - Write: ${WRITE_ENVIRONMENT}, Read: [${READ_ENVIRONMENTS.join(", ")}]`
+);
 
 const currentUser = null;
+
 interface ArticleAuthor {
   slug: string;
   name: string;
@@ -34,17 +46,21 @@ interface ArticleWithAuthor {
 }
 
 let articleWithAuthor: ArticleWithAuthor | null = null;
+let totalRootComments = 0;
+let allComments: CommentWithProfile[] = [];
+const COMMENTS_PER_PAGE = COMMENT_CONFIG.pageSize || 5;
 
+// Fetch article with author information
 try {
   const { data: articleData, error: articleError } = await supabase
     .from("articles")
     .select(
       `
       slug, title, author_id,
-      authors!articles_author_id_fkey(slug, name, bio, avatar, is_verified, role, company)
+      authors:authors!articles_author_id_fkey(slug, name, bio, avatar, is_verified, role, company)
     `
     )
-    .eq("slug", articleId)
+    .eq("slug", articleSlug)
     .single();
 
   if (!articleError && articleData) {
@@ -61,130 +77,248 @@ try {
   console.error("❌ Error loading article author:", error);
 }
 
-let totalRootComments = 0;
-let allComments: CommentWithProfile[] = [];
-let initialDisplayComments: any[] = [];
-const COMMENTS_PER_PAGE = 5;
-
+// **UPDATED: Multi-environment comment fetching**
 try {
-  // ✅ USE YOUR CONFIG FOR COMMENT QUERIES
-  const { count: rootCount, error: countError } = await supabase
-    .from("comments")
-    .select("id", { count: "exact", head: true })
-    .eq("article_id", articleId)
-    .eq("is_deleted", false)
-    .eq("environment", COMMENTS_ENV)
-    .in("moderation_status", ["approved", "auto_approved"])
-    .is("parent_id", null);
+  let foundComments = false;
+  let selectedEnvironment = "";
 
-  if (countError) {
-    console.error("❌ Error counting comments:", countError);
-    throw countError;
+  // Try each environment in order (production first)
+  for (const env of READ_ENVIRONMENTS) {
+    console.log(`🔍 Trying environment: ${env} for article: ${articleSlug}`);
+
+    const { count: rootCount, error: countError } = await supabase
+      .from("comments")
+      .select("id", { count: "exact", head: true })
+      .eq("article_id", articleSlug)
+      .eq("is_deleted", false)
+      .eq("environment", env)
+      .in("moderation_status", ["approved", "auto_approved"])
+      .is("parent_id", null);
+
+    // Fix: Handle null rootCount
+    const safeRootCount = rootCount ?? 0;
+    console.log(
+      `📊 Environment ${env}: count=${safeRootCount}, error=${countError?.message || "none"}`
+    );
+
+    if (!countError && safeRootCount > 0) {
+      console.log(`✅ Found ${safeRootCount} comments in ${env}`);
+      totalRootComments = safeRootCount; // Fix: Use safeRootCount instead of rootCount
+      selectedEnvironment = env;
+      foundComments = true;
+      break;
+    }
   }
 
-  totalRootComments = rootCount || 0;
+  if (foundComments && totalRootComments > 0) {
+    console.log(
+      `🎯 Using environment: ${selectedEnvironment} for data fetching`
+    );
 
-  if (totalRootComments > 0) {
-    const { data: rootCommentsData, error: rootCommentsError } = await supabase
+    // Rest of your code stays the same...
+    const { data: rootCommentsData, error: rootError } = await supabase
       .from("comments")
-      .select("*")
-      .eq("article_id", articleId)
+      .select(
+        `
+        id, article_id, user_id, parent_id, content,
+        is_edited, is_deleted, like_count, created_at, updated_at, thread_level,
+        moderation_status, deleted_at, deleted_by, is_pinned, quality_score, mention_users
+      `
+      )
+      .eq("article_id", articleSlug)
       .eq("is_deleted", false)
-      .eq("environment", COMMENTS_ENV)
+      .eq("environment", selectedEnvironment)
       .in("moderation_status", ["approved", "auto_approved"])
       .is("parent_id", null)
       .order("created_at", { ascending: false });
 
-    if (rootCommentsError) {
-      console.error("❌ Error loading root comments:", rootCommentsError);
-      throw rootCommentsError;
-    }
+    // Continue with the rest of your existing code...
+    if (rootError) {
+      console.error("Error fetching root comments:", rootError);
+    } else if (rootCommentsData?.length) {
+      const rootIds = rootCommentsData.map((c) => c.id);
+      console.log(`📝 Fetched ${rootCommentsData.length} root comments`);
 
-    if (rootCommentsData && rootCommentsData.length > 0) {
-      const rootCommentIds = rootCommentsData.map((c) => c.id);
-
-      const { data: repliesData } = await supabase
+      // Fetch replies from same environment
+      const { data: repliesData, error: repliesError } = await supabase
         .from("comments")
-        .select("*")
-        .in("parent_id", rootCommentIds)
+        .select(
+          `
+          id, article_id, user_id, parent_id, content,
+          is_edited, is_deleted, like_count, created_at, updated_at, thread_level,
+          moderation_status, deleted_at, deleted_by, is_pinned, quality_score, mention_users
+        `
+        )
+        .in("parent_id", rootIds)
         .eq("is_deleted", false)
-        .eq("environment", COMMENTS_ENV)
+        .eq("environment", selectedEnvironment)
         .in("moderation_status", ["approved", "auto_approved"])
         .order("created_at", { ascending: true });
 
-      const allCommentsForPage = [...rootCommentsData, ...(repliesData || [])];
-      const userIds = [...new Set(allCommentsForPage.map((c) => c.user_id))];
-
-      // ✅ USE YOUR CONFIG FOR PROFILE QUERIES WITH FALLBACK
-      let { data: profilesData } = await supabase
-        .from("profiles")
-        .select(`
-          id, display_name, avatar_type, avatar_preset_id, avatar_url,
-          reputation_score, is_admin, membership_type
-        `)
-        .in("id", userIds)
-        .eq("environment", ENVIRONMENT);
-
-      // ✅ FALLBACK WITHOUT ENVIRONMENT FILTER IF NO PROFILES FOUND
-      if (!profilesData || profilesData.length === 0) {
-        const fallback = await supabase
-          .from("profiles")
-          .select(`
-            id, display_name, avatar_type, avatar_preset_id, avatar_url,
-            reputation_score, is_admin, membership_type
-          `)
-          .in("id", userIds);
-          
-        profilesData = fallback.data;
+      if (repliesError) {
+        console.error("Error fetching replies:", repliesError);
+      } else {
+        console.log(`💬 Fetched ${repliesData?.length || 0} replies`);
       }
 
-      // ✅ INTERACTION QUERIES - SMART ENVIRONMENT HANDLING
-      const allCommentIds = allCommentsForPage.map((c) => c.id);
-      const [reactionsResult, likesResult, bookmarksResult] = await Promise.all([
+      allComments = [
+        ...rootCommentsData,
+        ...(repliesData || []),
+      ] as CommentWithProfile[];
+
+      // **FIXED: Profile fetching without environment filter**
+      const userIds = [
+        ...new Set(
+          allComments.map((c) => c.user_id).filter(Boolean) as string[]
+        ),
+      ];
+
+      let profilesData: any[] | null = null;
+      if (userIds.length > 0) {
+        console.log(`👥 Fetching profiles for ${userIds.length} users`);
+
+        // Try without environment filter first (most profiles don't have environment column)
+        const { data: profiles, error: profileError } = await supabase
+          .from("profiles")
+          .select(
+            `
+            id, display_name, avatar_type, avatar_preset_id, avatar_url,
+            reputation_score, is_admin, membership_type
+          `
+          )
+          .in("id", userIds);
+
+        if (profiles?.length) {
+          profilesData = profiles;
+          console.log(
+            `✅ Found ${profiles.length} profiles (no environment filter)`
+          );
+        } else if (profileError) {
+          console.warn("Profile fetch error:", profileError);
+        }
+      }
+
+      // **UPDATED: Interactions with same environment as comments**
+      const allCommentIds = allComments.map((c) => c.id);
+      console.log(
+        `🔗 Fetching interactions for ${allCommentIds.length} comments`
+      );
+
+      const [reactions, likes, bookmarks] = await Promise.all([
         supabase
           .from("comment_reactions")
-          .select("*")
+          .select("comment_id, reaction_type, user_id")
           .in("comment_id", allCommentIds)
-          .eq("environment", ENVIRONMENT),
+          .eq("environment", selectedEnvironment),
         supabase
           .from("comment_likes")
-          .select("*")
-          .in("comment_id", allCommentIds),
+          .select("comment_id, user_id")
+          .in("comment_id", allCommentIds)
+          .eq("environment", selectedEnvironment),
         supabase
           .from("comment_bookmarks")
-          .select("*")
+          .select("comment_id, user_id")
           .in("comment_id", allCommentIds)
-          .eq("environment", ENVIRONMENT),
+          .eq("environment", selectedEnvironment),
       ]);
 
-      allComments = allCommentsForPage.map((comment) => ({
-        ...comment,
-        profiles: profilesData?.find((p) => p.id === comment.user_id) || null,
-        comment_reactions:
-          reactionsResult.data?.filter((r) => r.comment_id === comment.id) || [],
-        comment_likes:
-          likesResult.data?.filter((l) => l.comment_id === comment.id) || [],
-        comment_bookmarks:
-          bookmarksResult.data?.filter((b) => b.comment_id === comment.id) || [],
-      }));
+      console.log(
+        `📊 Interactions - Reactions: ${reactions.data?.length || 0}, Likes: ${likes.data?.length || 0}, Bookmarks: ${bookmarks.data?.length || 0}`
+      );
 
-      console.log(`✅ Loaded comments: ${rootCommentsData.length} root with ${(repliesData || []).length} replies`);
+      // Normalize comments with profile and interaction data
+      allComments = allComments.map((comment) => {
+        const profile = profilesData?.find((p) => p.id === comment.user_id);
+        const commentReactions =
+          reactions.data?.filter((r) => r.comment_id === comment.id) || [];
+        const commentLikes =
+          likes.data?.filter((l) => l.comment_id === comment.id) || [];
+        const commentBookmarks =
+          bookmarks.data?.filter((b) => b.comment_id === comment.id) || [];
+
+        return {
+          ...comment,
+          // Ensure all required fields are present
+          thread_level: comment.thread_level ?? 0,
+          status: comment.moderation_status || "approved",
+          moderation_status: comment.moderation_status || "approved",
+          like_count: comment.like_count || 0,
+          is_edited: comment.is_edited || false,
+          is_deleted: comment.is_deleted || false,
+
+          // Profile data
+          profiles: profile
+            ? {
+                id: profile.id,
+                display_name: profile.display_name,
+                avatar_type: profile.avatar_type || "preset",
+                avatar_preset_id: profile.avatar_preset_id || 1,
+                avatar_url: profile.avatar_url,
+                reputation_score: profile.reputation_score || 0,
+                is_admin: profile.is_admin || false,
+              }
+            : null,
+
+          user_profile: profile || null,
+
+          // Interaction data
+          comment_reactions: commentReactions,
+          comment_likes: commentLikes,
+          comment_bookmarks: commentBookmarks,
+
+          // Computed fields
+          reaction_counts: commentReactions.reduce(
+            (acc, reaction) => {
+              acc[reaction.reaction_type] =
+                (acc[reaction.reaction_type] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>
+          ),
+
+          // Tree structure
+          replies: [],
+          reply_count: 0,
+
+          // User interaction states (will be updated on client-side)
+          is_comment_liked: false,
+          is_comment_saved: false,
+          is_comment_bookmarked: false,
+          is_liked: false,
+          is_saved: false,
+          is_bookmarked: false,
+
+          // Computed permissions (will be updated on client-side)
+          can_edit: false,
+          can_delete: false,
+          can_reply: true,
+        } as CommentWithProfile;
+      });
     }
+  } else {
+    console.log(
+      `📭 No comments found in any environment for article: ${articleSlug}`
+    );
   }
 } catch (error) {
-  console.error("❌ Database error loading comments:", error);
+  console.error("Failed to load comments:", error);
   allComments = [];
+  totalRootComments = 0;
 }
 
-// **NEW: Build comment tree with ALL comments**
-const allCommentTree = buildCommentTree(allComments);
+// Build comment tree
+const fullCommentTree = buildCommentTree(allComments);
+console.log(
+  `🌳 Built comment tree with ${fullCommentTree.length} root comments`
+);
 
-// **NEW: Get only first 5 for initial display**
-initialDisplayComments = allCommentTree.slice(0, COMMENTS_PER_PAGE);
+// Get initial comments for display
+const initialDisplayComments = fullCommentTree.slice(0, COMMENTS_PER_PAGE);
 const loadedRootComments = initialDisplayComments.length;
 
-const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
-  name: key,
+// Prepare reaction types for client-side
+const reactionTypes = Object.entries(REACTION_TYPES).map(([name, value]) => ({
+  name,
   emoji: value.emoji,
   label: value.label,
 }));
@@ -193,13 +327,13 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
 <section
   class="tinkbyte-comment-section"
   id="comments-section"
-  data-article-id={postSlug}
-  data-environment={ENVIRONMENT}
+  data-article-id={articleSlug}
+  data-environment={WRITE_ENVIRONMENT}
   data-config={JSON.stringify(COMMENT_CONFIG)}
   data-total-comments={totalRootComments}
   data-loaded-comments={loadedRootComments}
   data-comments-per-page={COMMENTS_PER_PAGE}
-  data-all-comments={JSON.stringify(allCommentTree)}
+  data-reaction-types={JSON.stringify(reactionTypes)}
 >
   <!-- Thread Header -->
   <div class="thread-header">
@@ -241,26 +375,6 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
     <div class="thread-subtitle">
       We want to hear from you! Share your opinions in the thread below and
       remember to keep it respectful.
-      {
-        articleWithAuthor && articleWithAuthor.authors && (
-          <div class="article-author-info">
-            <span>Article by: </span>
-            <strong>{articleWithAuthor.authors.name}</strong>
-            {articleWithAuthor.authors.role && (
-              <span class="author-role">
-                {" "}
-                • {articleWithAuthor.authors.role}
-              </span>
-            )}
-            {articleWithAuthor.authors.company && (
-              <span class="author-company">
-                {" "}
-                at {articleWithAuthor.authors.company}
-              </span>
-            )}
-          </div>
-        )
-      }
     </div>
   </div>
 
@@ -293,13 +407,12 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
         </div>
       </div>
     </div>
-
     <div
       class="user-comment-form"
       id="user-comment-form"
       style="display: none;"
     >
-      <CommentForm articleId={articleId} />
+      <CommentForm articleId={articleSlug} />
     </div>
   </div>
 
@@ -315,55 +428,61 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
     </div>
   </div>
 
-  <!-- **UPDATED: Comments Container - Display only first 5** -->
-<div class="comments-container" id="comments-container">
-  { totalRootComments === 0 ? (
-    <div class="empty-state" id="empty-state">
-      <div class="empty-content">
-        <div class="empty-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
-        </div>
-        <h3 class="empty-title">No comments yet</h3>
-        <p class="empty-description">
-          Be the first to share your thoughts on this article.
-        </p>
-      </div>
-    </div>
-  ) : (
-    <div class="comments-list" id="comments-list">
-      <div class="comments-items" id="comments-items">
-        {initialDisplayComments.map((comment) => (
-          <div class="comment-wrapper" data-comment-id={comment.id}>
-            <CommentCard 
-              comment={comment} 
-              currentUserId={undefined} 
-              reactionTypes={reactionTypes} 
-              isReply={false} 
-            />
-
-            <div class="inline-reply-container" style="display: none;"></div>
-            <div class="inline-edit-container" style="display: none;"></div>
-            
-            <!-- ✅ RECURSIVE REPLY RENDERING COMPONENT -->
-            {comment.replies && comment.replies.length > 0 && (
-              <CommentReplies 
-                replies={comment.replies}
-                currentUserId={undefined}
-                reactionTypes={reactionTypes}
-                maxDepth={4}
-              />
-            )}
+  <!-- Comments Container -->
+  <div class="comments-container" id="comments-container">
+    {
+      totalRootComments === 0 ? (
+        <div class="empty-state" id="empty-state">
+          <div class="empty-content">
+            <div class="empty-icon">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
+            <h3 class="empty-title">No comments yet</h3>
+            <p class="empty-description">
+              Be the first to share your thoughts on this article.
+            </p>
           </div>
-        ))}
-      </div>
-    </div>
-  )}
-</div>
+        </div>
+      ) : (
+        <div class="comments-list" id="comments-list">
+          <div class="comments-items" id="comments-items">
+            {initialDisplayComments.map((comment) => (
+              <div class="comment-wrapper" data-comment-id={comment.id}>
+                <CommentCard
+                  comment={comment}
+                  currentUserId={undefined}
+                  reactionTypes={reactionTypes}
+                  isReply={false}
+                />
+                <div class="inline-reply-container" style="display: none;" />
+                <div class="inline-edit-container" style="display: none;" />
+                {comment.replies && comment.replies.length > 0 && (
+                  <CommentReplies
+                    replies={comment.replies}
+                    currentUserId={undefined}
+                    reactionTypes={reactionTypes}
+                    maxDepth={4}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+  </div>
 </section>
 
-<!-- **UPDATED: Load More Section** -->
+<!-- Load More Section -->
 <div
   class="load-more-section"
   id="load-more-section"
@@ -399,7 +518,7 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
   </div>
 </div>
 
-<!-- modals and templates... -->
+<!-- Modals and Templates (keeping your existing ones) -->
 <!-- Delete Modal -->
 <div id="delete-modal" class="modal-overlay" style="display: none;">
   <div class="modal-container">
@@ -482,7 +601,7 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
   </div>
 </div>
 
-<!-- Templates -->
+<!-- Templates (keeping your existing templates) -->
 <!-- Inline Reply Template -->
 <template id="inline-reply-template">
   <div class="inline-reply-form">
@@ -652,6 +771,40 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
   </div>
 </template>
 
+
+<!-- Debug: Server-side data -->
+<script is:inline define:vars={{
+  commentTreeLength: fullCommentTree.length,
+  totalComments: totalRootComments,
+  firstComment: fullCommentTree[0]?.id || 'none'
+}}>
+  console.log('🚨 SSR BUILD DATA:', {
+    commentTreeLength,
+    totalComments,
+    firstComment,
+    articleSlug: document.getElementById('comments-section')?.dataset?.articleId
+  });
+</script>
+
+{
+  fullCommentTree.length > 0 && (
+    <script
+      type="application/json"
+      id="tink-comments-data"
+      set:html={JSON.stringify(fullCommentTree)}
+    />
+  )
+}
+
+<!-- Fallback empty array if no comments -->
+{
+  fullCommentTree.length === 0 && (
+    <script type="application/json" id="tink-comments-data">
+      []
+    </script>
+  )
+}
+
 <style is:global>
   @import "../../styles/comments.css";
 </style>
@@ -660,34 +813,45 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
   document.addEventListener("DOMContentLoaded", async function () {
     const config = window.TINKBYTE_CONFIG;
     const isDev = config?.isDevelopment || false;
-    
-    console.log('🔍 DOM loaded, checking for required modules...');
-    
+
+    console.log("🔍 DOM loaded, checking for required modules...");
+
     try {
       let attempts = 0;
-      while ((!window.supabase || !window.TinkByteAPI) && attempts < 200) {
-        await new Promise(resolve => setTimeout(resolve, 50));
+      const maxAttempts = 200;
+
+      // Wait for required modules to load
+      while (
+        (!window.supabase || !window.TinkByteAPI) &&
+        attempts < maxAttempts
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
         attempts++;
       }
 
       if (!window.supabase || !window.TinkByteAPI) {
-        throw new Error('Required modules not loaded');
+        throw new Error("Required modules not loaded after maximum attempts");
       }
 
-      console.log('✅ Required modules loaded');
-      
-      // ✅ WAIT A BIT MORE FOR AUTH TO BE READY
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log("✅ Required modules loaded");
 
-      window.dispatchEvent(new CustomEvent("authReady", {
-        detail: { 
-          authManager: window.authManager, 
-          supabase: window.supabase,
-          TinkByteAPI: window.TinkByteAPI
-        }
-      }));
+      // Additional delay for auth system to be ready
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
+      // Dispatch auth ready event
+      window.dispatchEvent(
+        new CustomEvent("authReady", {
+          detail: {
+            authManager: window.authManager,
+            supabase: window.supabase,
+            TinkByteAPI: window.TinkByteAPI,
+          },
+        })
+      );
     } catch (error) {
+      console.error("Comment initialization failed:", error);
+
+      // Show fallback UI
       const commentSection = document.getElementById("comments-section");
       if (commentSection) {
         commentSection.innerHTML = `
@@ -699,10 +863,6 @@ const reactionTypes = Object.entries(REACTION_TYPES).map(([key, value]) => ({
             </button>
           </div>
         `;
-      }
-      
-      if (config?.logging?.enabled && isDev) {
-        console.error("Comment initialization failed:", error);
       }
     }
   });

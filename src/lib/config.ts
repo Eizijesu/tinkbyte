@@ -32,7 +32,7 @@ const getEnvironment = (): Environment => {
 export const config = {
   environment: getEnvironment(),
   
-  // **NEW: Environment utilities**
+  // **UPDATED: Environment utilities**
   environments: {
     current: getEnvironment(),
     isDevelopment: getEnvironment() === 'development',
@@ -44,6 +44,16 @@ export const config = {
     
     // Get both environments for dual queries
     both: ['development', 'production'] as Environment[],
+    
+    // **NEW: Comments strategy**
+    comments: {
+      // Primary environment for new comments
+      write: getEnvironment(),
+      // Environments to read from (production first for existing data)
+      read: ['production', 'development'] as Environment[],
+      // Fallback for SSR (always check production first)
+      ssr: 'production' as Environment,
+    },
   },
   
   deployment: {
@@ -61,7 +71,6 @@ export const config = {
   admin: {
     emails: ['tinkbytehq@gmail.com'],
     storageKey: 'tinkbyte-admin-session',
-    // **NEW: Admin always uses production for profiles**
     profileEnvironment: 'production' as Environment,
   },
 
@@ -81,7 +90,7 @@ export const config = {
     newsletter: true
   },
   logging: {
-    enabled: false, // DISABLED FOR PRODUCTION
+    enabled: false,
     level: 'error' as const,
     supabase: false,
     deployment: false
@@ -90,22 +99,35 @@ export const config = {
 
 export type Config = typeof config;
 
-// **NEW: Enhanced utility functions**
+// **UPDATED: Enhanced utility functions**
 export const isDevelopment = (): boolean => config.environments.isDevelopment;
 export const isProduction = (): boolean => config.environments.isProduction;
 export const getCurrentEnvironment = (): Environment => config.environments.current;
 export const getBothEnvironments = (): Environment[] => config.environments.both;
 export const shouldLog = (type: keyof typeof config.logging = 'enabled'): boolean => false;
 
-// **NEW: Environment-specific helpers**
+// **UPDATED: Environment-specific helpers with comments strategy**
 export const getEnvironmentFor = (context: 'admin' | 'comments' | 'general'): Environment => {
   switch (context) {
     case 'admin':
-      return config.admin.profileEnvironment; // Always production for admin
+      return config.admin.profileEnvironment;
     case 'comments':
-      return config.environment; // Current environment for comments
+      return config.environments.comments.write; // Use write environment for new comments
     case 'general':
     default:
-      return config.environment; // Current environment for everything else
+      return config.environment;
   }
+};
+
+// **NEW: Comments-specific helpers**
+export const getCommentsReadEnvironments = (): Environment[] => {
+  return config.environments.comments.read;
+};
+
+export const getCommentsWriteEnvironment = (): Environment => {
+  return config.environments.comments.write;
+};
+
+export const getCommentsSSREnvironment = (): Environment => {
+  return config.environments.comments.ssr;
 };

@@ -233,7 +233,7 @@ constructor(authManager, supabase) {
   this.authManager = authManager;
   this.supabase = supabase;
   
-  // ✅ SIMPLE STATE MANAGEMENT
+  // ✅ SIMPLE STATE MANAGEMENT (like original)
   this.currentUser = null;
   this.profile = null;
   this.articleId = null;
@@ -273,7 +273,6 @@ constructor(authManager, supabase) {
   debugLog('✅ TinkByteCommentSystem created, environment:', this.environment);
   this.init();
 }
-
 
 fixMissingDataAttributes() {
   debugLog('🔧 Fixing missing data attributes...');
@@ -345,22 +344,72 @@ flattenCommentTree(commentTree) {
 preserveExistingComments() {
   const commentSection = document.getElementById('comments-section');
   if (!commentSection) return;
+
+  let serverTree = [];
   
-  const allCommentsData = commentSection.dataset.allComments;
-  if (allCommentsData) {
+  // ✅ FIRST TRY TO READ FROM JSON SCRIPT TAG
+  const jsonScript = document.getElementById('tink-comments-data');
+  if (jsonScript) {
     try {
-      this.fullCommentTree = JSON.parse(allCommentsData);
-      debugLog('📋 Preserved comment tree:', this.fullCommentTree.length, 'root comments');
-      
-      // Update permissions after a delay
-      setTimeout(() => {
-        this.updateAllCommentPermissions();
-      }, 1000);
-      
-    } catch (error) {
-      console.error('❌ Error parsing comment tree:', error);
+      const jsonContent = jsonScript.textContent || jsonScript.innerHTML;
+      if (jsonContent && jsonContent.trim() !== '') {
+        serverTree = JSON.parse(jsonContent);
+        debugLog('📋 Loaded comments from JSON script:', serverTree.length);
+        
+        // ✅ UPDATE DATASET FOR OTHER CODE THAT EXPECTS IT THERE
+        commentSection.dataset.allComments = JSON.stringify(serverTree);
+      }
+    } catch (e) {
+      console.error('❌ Failed to parse JSON script:', e);
     }
   }
+  
+  // ✅ FALLBACK TO DATASET (for backward compatibility)
+  if (serverTree.length === 0) {
+    try {
+      serverTree = JSON.parse(commentSection.dataset.allComments || '[]');
+    } catch (e) {
+      console.error('❌ Failed to parse dataset comments:', e);
+      return;
+    }
+  }
+
+
+  const cachedKey = `comments_${this.articleId}_cache`;
+  let clientTree = [];
+  try {
+    const cached = localStorage.getItem(cachedKey);
+    if (cached) clientTree = JSON.parse(cached);
+  } catch (e) {
+    console.warn('❌ Failed to parse localStorage:', e);
+  }
+
+  if (clientTree.length === 0) {
+    this.fullCommentTree = serverTree;
+    return;
+  }
+
+  const merged = [...serverTree];
+  const existingIds = new Set(merged.map(c => c.id));
+
+  clientTree.forEach(comment => {
+    if (!existingIds.has(comment.id)) {
+      if (comment.parent_id) {
+        this.addReplyToTree(merged, comment, comment.parent_id);
+      } else {
+        merged.unshift(comment);
+      }
+      existingIds.add(comment.id);
+    }
+  });
+
+  this.fullCommentTree = merged;
+  commentSection.dataset.allComments = JSON.stringify(merged);
+
+  const totalCount = merged.length;
+  commentSection.dataset.totalComments = totalCount.toString();
+  const counter = document.getElementById('total-comments');
+  if (counter) counter.textContent = totalCount;
 }
 
 refreshCommentsUI(commentTree) {
@@ -610,19 +659,50 @@ async init() {
     
     debugLog('🔧 Environment detected:', this.environment);
     
+    // ✅ FIXED: Proper JSON script reading with error handling (ADD THIS)
+    const jsonScript = document.getElementById('tink-comments-data');
+    let allCommentsData = [];
+    let jsonContent = '';
+    
+    if (jsonScript) {
+      try {
+        jsonContent = jsonScript.textContent || jsonScript.innerHTML || '';
+        jsonContent = jsonContent.trim();
+        
+        debugLog('📄 Raw JSON content length:', jsonContent.length);
+        
+        if (jsonContent && jsonContent !== '' && jsonContent !== '[]') {
+          // Clean up any potential HTML entities or extra whitespace
+          jsonContent = jsonContent.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+          allCommentsData = JSON.parse(jsonContent);
+          debugLog('✅ Successfully parsed JSON:', allCommentsData.length, 'comments');
+        } else {
+          debugLog('⚠️ JSON script is empty or contains empty array');
+        }
+      } catch (parseError) {
+        console.error('❌ Error parsing comments JSON:', parseError);
+        debugLog('❌ Problematic JSON content:', jsonContent);
+        allCommentsData = [];
+      }
+    } else {
+      debugLog('⚠️ JSON script element not found');
+    }
 
-        // ✅ DEBUG: Check if data is available on refresh
+    // ✅ DEBUG: Check if data is available on refresh
     console.log('🔍 Comment section data on init:', {
       articleId: commentSection.dataset.articleId,
       totalComments: commentSection.dataset.totalComments,
-      allComments: commentSection.dataset.allComments ? 'Present' : 'Missing',
-      environment: commentSection.dataset.environment
+      allComments: allCommentsData.length > 0 ? `Found ${allCommentsData.length} comments` : 'Missing',
+      environment: commentSection.dataset.environment,
+      jsonScriptExists: !!jsonScript,
+      jsonContentLength: jsonContent.length
     });
     
-    this.articleId = commentSection.dataset.articleId;
-    this.environment = this.getEnvironment();
+    // ✅ Update dataset if we found data
+    if (allCommentsData.length > 0) {
+      commentSection.dataset.allComments = JSON.stringify(allCommentsData);
+    }
     
-
     // ✅ PRESERVE EXISTING COMMENTS FIRST
     this.preserveExistingComments();
     
@@ -630,7 +710,6 @@ async init() {
     await this.initializeAuth();
 
     this.fixMissingDataAttributes();
-    
     
     // Then initialize UI and event listeners
     this.initializeUI();
@@ -726,81 +805,78 @@ preventFormRefresh() {
 
 
 
-  async _doAuthInitialization() {
-    try {
-      debugLog('🔄 Starting auth initialization...');
-      debugLog('🌍 Environment:', this.environment);
-      debugLog('🏗️ Config:', this.config);
+async _doAuthInitialization() {
+  try {
+    debugLog('🔄 Starting auth initialization...');
+    debugLog('🌍 Environment:', this.environment);
+    
+    const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
+    
+    if (sessionError) {
+      debugLog('⚠️ Session error:', sessionError);
+    }
+    
+    if (session?.user) {
+      debugLog('✅ User found:', session.user.email);
+      debugLog('👤 User metadata:', session.user.user_metadata);
       
-      const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
+      this.currentUser = { 
+        id: session.user.id, 
+        email: session.user.email,
+        user_metadata: session.user.user_metadata
+      };
+      this.isAuthenticated = true;
       
-      if (sessionError) {
-        debugLog('⚠️ Session error:', sessionError);
-      }
+      await this.loadUserProfile();
+    } else {
+      debugLog('ℹ️ No active session');
+      this.currentUser = null;
+      this.isAuthenticated = false;
+    }
+    
+    this.authInitialized = true;
+    this.updateUI();
+    
+    // ✅ SIMPLE AUTH LISTENER (like original)
+    this.supabase.auth.onAuthStateChange(async (event, session) => {
+      debugLog('🔄 Auth state changed:', event);
+      debugLog('👤 Session user:', session?.user?.email);
       
-      if (session?.user) {
-        debugLog('✅ User found:', session.user.email);
-        debugLog('👤 User metadata:', session.user.user_metadata);
-        
+      if (event === 'SIGNED_IN' && session?.user) {
         this.currentUser = { 
           id: session.user.id, 
           email: session.user.email,
-          user_metadata: session.user.user_metadata // ✅ PRESERVE METADATA
+          user_metadata: session.user.user_metadata
         };
         this.isAuthenticated = true;
-        
         await this.loadUserProfile();
-      } else {
-        debugLog('ℹ️ No active session');
+        this.updateUI();
+      } else if (event === 'SIGNED_OUT') {
         this.currentUser = null;
+        this.profile = null;
         this.isAuthenticated = false;
+        this.updateUI();
       }
       
-      this.authInitialized = true;
-      this.updateUI();
-      
-      // ✅ ENHANCED AUTH LISTENER
-      this.supabase.auth.onAuthStateChange((event, session) => {
-        debugLog('🔄 Auth state changed:', event);
-        debugLog('👤 Session user:', session?.user?.email);
-        
-        if (event === 'SIGNED_IN' && session?.user) {
-          this.currentUser = { 
-            id: session.user.id, 
-            email: session.user.email,
-            user_metadata: session.user.user_metadata
-          };
-          this.isAuthenticated = true;
-          this.loadUserProfile().then(() => {
-            debugLog('🎯 UI Update after profile load');
-            this.updateUI();
-          });
-        } else if (event === 'SIGNED_OUT') {
-          this.currentUser = null;
-          this.profile = null;
-          this.isAuthenticated = false;
-          this.updateUI();
-        }
-        
-        setTimeout(() => {
-          this.updateAllCommentPermissions();
-        }, 500);
-      });
-      
-      debugLog('✅ Auth initialization complete:', {
-        authenticated: this.isAuthenticated,
-        user: this.currentUser?.email,
-        profile: this.profile?.display_name
-      });
-      
-    } catch (error) {
-      handleError(error, 'Authentication initialization failed');
-      this.authInitialized = true;
-      this.currentUser = null;
-      this.isAuthenticated = false;
-      this.updateUI();
-    }
+      setTimeout(() => {
+        this.updateAllCommentPermissions();
+      }, 500);
+    });
+    
+    debugLog('✅ Auth initialization complete:', {
+      authenticated: this.isAuthenticated,
+      user: this.currentUser?.email,
+      profile: this.profile?.display_name
+    });
+    
+  } catch (error) {
+    handleError(error, 'Authentication initialization failed');
+    this.authInitialized = true;
+    this.currentUser = null;
+    this.isAuthenticated = false;
+    this.updateUI();
   }
+}
 
   async callAPI(method, args = []) {
   try {
@@ -1126,35 +1202,35 @@ initializeUI() {
     }
   }
 
-  updateUI() {
-    debugLog('🎨 Updating UI, authenticated:', this.isAuthenticated);
-    
-    const guestPrompt = document.getElementById('guest-comment-prompt');
-    const userForm = document.getElementById('user-comment-form');
-    
-    if (this.isAuthenticated) {
-      debugLog('👤 Showing authenticated UI');
-      if (guestPrompt) {
-        guestPrompt.style.display = 'none';
-        debugLog('👻 Guest prompt hidden');
-      }
-      if (userForm) {
-        userForm.style.display = 'block';
-        debugLog('📝 User form shown');
-      }
-      this.updateUserInfo();
-    } else {
-      debugLog('🚫 Showing guest UI');
-      if (guestPrompt) {
-        guestPrompt.style.display = 'flex';
-        debugLog('👻 Guest prompt shown');
-      }
-      if (userForm) {
-        userForm.style.display = 'none';
-        debugLog('📝 User form hidden');
-      }
+updateUI() {
+  debugLog('🎨 Updating UI, authenticated:', this.isAuthenticated);
+  
+  const guestPrompt = document.getElementById('guest-comment-prompt');
+  const userForm = document.getElementById('user-comment-form');
+  
+  if (this.isAuthenticated) {
+    debugLog('👤 Showing authenticated UI');
+    if (guestPrompt) {
+      guestPrompt.style.display = 'none';
+      debugLog('👻 Guest prompt hidden');
+    }
+    if (userForm) {
+      userForm.style.display = 'block';
+      debugLog('📝 User form shown');
+    }
+    this.updateUserInfo();
+  } else {
+    debugLog('🚫 Showing guest UI');
+    if (guestPrompt) {
+      guestPrompt.style.display = 'flex';
+      debugLog('👻 Guest prompt shown');
+    }
+    if (userForm) {
+      userForm.style.display = 'none';
+      debugLog('📝 User form hidden');
     }
   }
+}
 
   updateUserInfo() {
     if (!this.profile) {
@@ -2401,36 +2477,37 @@ addCommentToUI(commentData) {
   };
 
   // Create the comment element
-  const commentElement = document.createElement('div');
-  commentElement.className = commentData.parent_id ? 'comment-wrapper reply-wrapper' : 'comment-wrapper';
-  commentElement.dataset.commentId = commentData.id;
-  
-  const threadLevel = commentData.thread_level || 0;
-  const avatarUrl = this.getUserAvatar(userProfile);
-  const formattedContent = this.formatContent(commentData.content);
-  const displayName = userProfile.display_name || 'User';
-  
-  commentElement.innerHTML = `
-    <div class="comment-card ${commentData.parent_id ? 'reply-card' : ''}" 
-         data-comment-id="${commentData.id}" 
-         data-user-id="${this.currentUser.id}"
-         data-created-at="${commentData.created_at}"
-         data-thread-level="${threadLevel}">
-      
-      ${commentData.parent_id ? '<div class="reply-connector"></div>' : ''}
-      
-      <div class="comment-header">
-        <div class="comment-user-info">
-          <div class="comment-avatar">
-            <img src="${avatarUrl}" alt="${displayName}" loading="lazy" />
-            ${userProfile.is_admin ? '<div class="admin-badge">👑</div>' : ''}
-          </div>
-          <div class="comment-meta">
-            <div class="user-details">
-              <span class="username ${userProfile.is_admin ? 'admin' : ''}">${displayName}</span>
-              ${userProfile.is_admin ? '<span class="admin-badge">Admin</span>' : ''}
-              ${userProfile.membership_type === 'premium' ? '<span class="premium-badge">Premium</span>' : ''}
-            </div>
+// Create the comment element
+const commentElement = document.createElement('div');
+commentElement.className = commentData.parent_id ? 'comment-wrapper reply-wrapper' : 'comment-wrapper';
+commentElement.dataset.commentId = commentData.id;
+
+const threadLevel = commentData.thread_level || 0;
+const avatarUrl = this.getUserAvatar(userProfile);
+const formattedContent = this.formatContent(commentData.content);
+const displayName = userProfile.display_name || 'User';
+
+commentElement.innerHTML = `
+  <div class="comment-card ${commentData.parent_id ? 'reply-card' : ''}" 
+       data-comment-id="${commentData.id}" 
+       data-user-id="${this.currentUser.id}"
+       data-created-at="${commentData.created_at}"
+       data-thread-level="${threadLevel}">
+    
+    ${commentData.parent_id ? '<div class="reply-connector"></div>' : ''}
+    
+    <!-- FIXED COMMENT HEADER - Single Horizontal Line -->
+    <div class="comment-header">
+      <div class="comment-user-info">
+        <div class="comment-avatar">
+          <img src="${avatarUrl}" alt="${displayName}" loading="lazy" />
+          ${userProfile.is_admin ? '<div class="admin-badge">👑</div>' : ''}
+        </div>
+        <!-- FIXED: Flattened structure for single-line layout -->
+        <div class="comment-meta">
+          <div class="user-details">
+            <span class="username ${userProfile.is_admin ? 'admin' : ''}">${displayName}</span>
+            <!-- FIXED: Time wrapper at same level as username -->
             <div class="comment-time-wrapper">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -2440,148 +2517,183 @@ addCommentToUI(commentData) {
                 Just now
               </span>
             </div>
+            ${commentData.is_edited ? '<span class="edit-indicator" title="This comment has been edited">(edited)</span>' : ''}
           </div>
         </div>
-        
-        <div class="comment-actions-menu">
-          <button class="menu-btn" data-comment-id="${commentData.id}" aria-label="Comment options">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="1"></circle>
-              <circle cx="12" cy="5" r="1"></circle>
-              <circle cx="12" cy="19" r="1"></circle>
+      </div>
+      
+      <div class="comment-actions-menu">
+        <button class="menu-btn" data-comment-id="${commentData.id}" aria-label="Comment options">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="19" cy="12" r="1"></circle>
+            <circle cx="5" cy="12" r="1"></circle>
+          </svg>
+        </button>
+        <div class="dropdown-menu" id="dropdown-${commentData.id}">
+          <button class="dropdown-item edit-comment-btn" data-comment-id="${commentData.id}" style="display: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
+            Edit
           </button>
-          <div class="dropdown-menu" id="dropdown-${commentData.id}">
-            <button class="dropdown-item edit-comment-btn" data-comment-id="${commentData.id}" style="display: inline-flex;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              Edit
-            </button>
-            <button class="dropdown-item delete-comment-btn" data-comment-id="${commentData.id}" style="display: inline-flex;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3,6 5,6 21,6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-              Delete
-            </button>
-            <button class="dropdown-item report-btn" data-comment-id="${commentData.id}" style="display: flex;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
-                <line x1="4" y1="22" x2="4" y2="15"></line>
-              </svg>
-              Report
-            </button>
-          </div>
+          <button class="dropdown-item delete-comment-btn" data-comment-id="${commentData.id}" style="display: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3,6 5,6 21,6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete
+          </button>
+          <button class="dropdown-item history-btn" data-comment-id="${commentData.id}" style="display: flex;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3v5h5"></path>
+              <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
+              <path d="M12 7v5l4 2"></path>
+            </svg>
+            History
+          </button>
+          <button class="dropdown-item report-btn" data-comment-id="${commentData.id}" style="display: flex;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+              <line x1="4" y1="22" x2="4" y2="15"></line>
+            </svg>
+            Report
+          </button>
         </div>
       </div>
-
-      <div class="comment-content">
-        <div class="comment-text">${formattedContent}</div>
-      </div>
-
-<div class="comment-footer">
-  <button class="vote-btn upvote-btn" data-comment-id="${commentData.id}" data-action="upvote">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M7 14l5-5 5 5"></path>
-    </svg>
-  </button>
-  <span class="vote-count">${commentData.like_count || 0}</span>
-  <button class="vote-btn downvote-btn" data-comment-id="${commentData.id}" data-action="downvote">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M17 10l-5 5-5-5"></path>
-    </svg>
-  </button>
-  
-  <button class="reaction-btn" data-reaction="like" data-comment-id="${commentData.id}">
-    <span class="reaction-emoji">👍</span>
-    <span class="reaction-count">0</span>
-  </button>
-  <button class="reaction-btn" data-reaction="love" data-comment-id="${commentData.id}">
-    <span class="reaction-emoji">❤️</span>
-    <span class="reaction-count">0</span>
-  </button>
-  
-  <button class="action-btn reply-btn" data-comment-id="${commentData.id}" data-author="${displayName}">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <polyline points="9,17 4,12 9,7"></polyline>
-      <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
-    </svg>
-    <span class="action-text">Reply</span>
-  </button>
-  
-  <button class="action-btn bookmark-btn" data-comment-id="${commentData.id}">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-    </svg>
-    <span class="action-text">Save</span>
-  </button>
-  
-  <button class="action-btn copy-btn" data-comment-id="${commentData.id}">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2 2v1"></path>
-    </svg>
-    <span class="action-text">Copy</span>
-  </button>
-</div>
-
-      <div class="inline-reply-container" style="display: none;"></div>
-      <div class="inline-edit-container" style="display: none;"></div>
-      <div class="replies-container comment-replies"></div>
     </div>
-  `;
 
-  // Add to the appropriate container
-  if (commentData.parent_id) {
-    // This is a reply - find parent and add to its replies container
-    const parentComment = document.querySelector(`[data-comment-id="${commentData.parent_id}"]`);
-    if (parentComment) {
-      let repliesContainer = parentComment.querySelector('.replies-container');
-      if (!repliesContainer) {
-        repliesContainer = document.createElement('div');
-        repliesContainer.className = 'replies-container comment-replies';
-        parentComment.appendChild(repliesContainer);
-      }
-      repliesContainer.appendChild(commentElement);
-    } else {
-      // Parent not found, add to main container
-      commentsContainer.appendChild(commentElement);
+    <div class="comment-content">
+      <div class="comment-text">${formattedContent}</div>
+    </div>
+
+    <!-- FIXED COMMENT FOOTER - Single Horizontal Line -->
+    <div class="comment-footer">
+      <!-- FIXED: Changed to comment-voting and proper structure -->
+      <div class="comment-voting">
+        <button class="vote-btn upvote-btn" data-comment-id="${commentData.id}" data-action="upvote" title="Upvote" aria-label="Upvote comment">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M7 14l5-5 5 5"></path>
+          </svg>
+        </button>
+        <span class="vote-count" id="vote-count-${commentData.id}">${commentData.like_count || 0}</span>
+        <button class="vote-btn downvote-btn" data-comment-id="${commentData.id}" data-action="downvote" title="Downvote" aria-label="Downvote comment">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 10l-5 5-5-5"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Reactions -->
+      <div class="comment-reactions">
+        <button class="reaction-btn" data-reaction="like" data-comment-id="${commentData.id}" title="React with thumbs up" aria-label="React with thumbs up">
+          <span class="reaction-emoji">👍</span>
+          <span class="reaction-count" id="reaction-like-${commentData.id}">0</span>
+        </button>
+        <button class="reaction-btn" data-reaction="love" data-comment-id="${commentData.id}" title="React with heart" aria-label="React with heart">
+          <span class="reaction-emoji">❤️</span>
+          <span class="reaction-count" id="reaction-love-${commentData.id}">0</span>
+        </button>
+        <button class="reaction-btn" data-reaction="laugh" data-comment-id="${commentData.id}" title="React with laugh" aria-label="React with laugh">
+          <span class="reaction-emoji">😂</span>
+          <span class="reaction-count" id="reaction-laugh-${commentData.id}">0</span>
+        </button>
+      </div>
+      
+      <!-- Actions -->
+      <div class="comment-actions">
+        ${threadLevel < 4 ? `
+        <button class="action-btn reply-btn" data-comment-id="${commentData.id}" data-author="${displayName}" title="Reply to this comment" aria-label="Reply to comment">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9,17 4,12 9,7"></polyline>
+            <path d="M20 18v-2a4 4 0 0 0-4-4H4"></path>
+          </svg>
+          Reply
+        </button>
+        ` : ''}
+        
+        <button class="action-btn bookmark-btn" data-comment-id="${commentData.id}" title="Bookmark this comment" aria-label="Bookmark comment">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Save
+        </button>
+        
+        <button class="action-btn copy-btn" data-comment-id="${commentData.id}" title="Copy comment link" aria-label="Copy comment link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          Copy
+        </button>
+        
+        <button class="action-btn share-btn" data-comment-id="${commentData.id}" title="Share comment" aria-label="Share comment">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+            <polyline points="16,6 12,2 8,6"></polyline>
+            <line x1="12" y1="2" x2="12" y2="15"></line>
+          </svg>
+          Share
+        </button>
+      </div>
+    </div>
+
+    <div class="inline-reply-container" data-comment-id="${commentData.id}" style="display: none;"></div>
+    <div class="inline-edit-container" data-comment-id="${commentData.id}" style="display: none;"></div>
+    <div class="comment-replies"></div>
+  </div>
+`;
+
+// Add to the appropriate container
+if (commentData.parent_id) {
+  // This is a reply - find parent and add to its replies container
+  const parentComment = document.querySelector(`[data-comment-id="${commentData.parent_id}"]`);
+  if (parentComment) {
+    let repliesContainer = parentComment.querySelector('.comment-replies');
+    if (!repliesContainer) {
+      repliesContainer = document.createElement('div');
+      repliesContainer.className = 'comment-replies';
+      parentComment.appendChild(repliesContainer);
     }
+    repliesContainer.appendChild(commentElement);
   } else {
-    commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
+    // Parent not found, add to main container
+    commentsContainer.appendChild(commentElement);
   }
+} else {
+  commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
+}
+
+// Highlight the new comment
+const commentCard = commentElement.querySelector('.comment-card');
+commentCard.classList.add('new-comment');
+
+setTimeout(() => {
+  commentCard.classList.remove('new-comment');
+}, 3000);
+
+// Scroll to the new comment
+commentElement.scrollIntoView({ 
+  behavior: 'smooth', 
+  block: 'center' 
+});
+
+// Update permissions for the new comment
+this.updateCommentPermissions(commentData.id);
   
-  // Highlight the new comment
-  const commentCard = commentElement.querySelector('.comment-card');
-  commentCard.classList.add('new-comment');
+if (!commentData.parent_id) {
+  this.totalComments++;
+  this.loadedComments++;
   
-  setTimeout(() => {
-    commentCard.classList.remove('new-comment');
-  }, 3000);
+  const totalCountElement = document.getElementById('total-count');
+  const threadCount = document.getElementById('total-comments');
   
-  // Scroll to the new comment
-  commentElement.scrollIntoView({ 
-    behavior: 'smooth', 
-    block: 'center' 
-  });
+  if (totalCountElement) totalCountElement.textContent = this.totalComments;
+  if (threadCount) threadCount.textContent = this.totalComments;
   
-  // Update permissions for the new comment
-  this.updateCommentPermissions(commentData.id);
-    
-  if (!commentData.parent_id) {
-    this.totalComments++;
-    this.loadedComments++;
-    
-    const totalCountElement = document.getElementById('total-count');
-    const threadCount = document.getElementById('total-comments');
-    
-    if (totalCountElement) totalCountElement.textContent = this.totalComments;
-    if (threadCount) threadCount.textContent = this.totalComments;
-    
-    this.updateLoadMoreUI();
-  }
+  this.updateLoadMoreUI();
+}
 }
 
   async syncCommentsWithDatabase() {

@@ -25,27 +25,26 @@ export interface CommentWithProfile {
   deleted_at?: string;
   deleted_by?: string;
   
-  // Profile data (from join) - UPDATED to include 'google'
-  profiles?: {
-    id: string;
-    display_name: string;
-    avatar_type: 'preset' | 'uploaded' | 'google';
-    avatar_preset_id: number;
-    avatar_url?: string;
-    reputation_score: number;
-    is_admin: boolean;
-  };
-  
-  // Alternative profile field names - UPDATED to include 'google'
-  user_profile?: {
-    id: string;
-    display_name: string;
-    avatar_type: 'preset' | 'uploaded' | 'google';
-    avatar_preset_id: number;
-    avatar_url?: string;
-    reputation_score: number;
-    is_admin: boolean;
-  };
+// FIXED VERSION - Add | null
+profiles?: {
+  id: string;
+  display_name: string;
+  avatar_type: 'preset' | 'uploaded' | 'google';
+  avatar_preset_id: number;
+  avatar_url?: string;
+  reputation_score: number;
+  is_admin: boolean;
+} | null; 
+
+user_profile?: {
+  id: string;
+  display_name: string;
+  avatar_type: 'preset' | 'uploaded' | 'google';
+  avatar_preset_id: number;
+  avatar_url?: string;
+  reputation_score: number;
+  is_admin: boolean;
+} | null; 
 
   // Reaction data
   user_reaction?: string | null;
