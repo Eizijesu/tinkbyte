@@ -304,7 +304,7 @@ export class UIHelpers {
   }
 
   static debounce(func: Function, wait: number): Function {
-    let timeout: NodeJS.Timeout;
+    let timeout: ReturnType<typeof setTimeout>;
     return function executedFunction(...args: any[]) {
       const later = () => {
         clearTimeout(timeout);

@@ -1,241 +1,9 @@
-// src/lib/supabase.ts - FIXED SINGLETON
+
+// src/lib/supabase.ts
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { config } from './config';
 
-// ✅ GLOBAL SINGLETON - Prevent multiple instances
-declare global {
-  var __supabase_instance: SupabaseClient | undefined;
-}
-
-function createSupabaseClient(): SupabaseClient {
-  // Return existing global instance if available
-  if (globalThis.__supabase_instance) {
-    console.log('🔄 Reusing global Supabase instance');
-    return globalThis.__supabase_instance;
-  }
-
-  console.log('🆕 Creating single Supabase instance');
-  
-  // Validate environment variables
-  const supabaseUrl = config.supabase.url;
-  const supabaseAnonKey = config.supabase.anonKey;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables');
-  }
-
-  // Create single instance with environment-specific storage
-  const client = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce',
-      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-      storageKey: `tinkbyte-auth-${config.environment}` // Environment-specific key
-    },
-    global: {
-      headers: {
-        'X-Environment': config.environment,
-        'X-Client-Info': `tinkbyte-static-${config.environment}`
-      }
-    }
-  });
-
-  // Store globally to prevent multiple instances
-  globalThis.__supabase_instance = client;
-  
-  return client;
-}
-
-// Export the singleton
-export const supabase = createSupabaseClient();
-export { createSupabaseClient as getSupabaseClient };
-
-
-// AuthState class
-export class AuthState {
-  private static instance: AuthState | null = null;
-  private currentUser: any = null;
-  private currentSession: any = null;
-  private listeners: Array<(user: any) => void> = [];
-
-  private constructor() {
-    this.initializeAuth();
-  }
-
-  static getInstance(): AuthState {
-    if (!AuthState.instance) {
-      AuthState.instance = new AuthState();
-    }
-    return AuthState.instance;
-  }
-
-  async initialize(): Promise<void> {
-    await this.initializeAuth();
-  }
-
-  private async initializeAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
-    this.currentSession = session;
-    this.currentUser = session?.user || null;
-
-    // Listen for auth changes
-    supabase.auth.onAuthStateChange((event, session) => {
-      this.currentSession = session;
-      this.currentUser = session?.user || null;
-      this.notifyListeners();
-    });
-  }
-
-  getCurrentUser() {
-    return this.currentUser;
-  }
-
-  getCurrentSession() {
-    return this.currentSession;
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.currentUser;
-  }
-
-  onAuthStateChange(callback: (user: any) => void) {
-    this.listeners.push(callback);
-    return () => {
-      this.listeners = this.listeners.filter(listener => listener !== callback);
-    };
-  }
-
-  private notifyListeners() {
-    this.listeners.forEach(listener => listener(this.currentUser));
-  }
-
-  async signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-      this.currentUser = null;
-      this.currentSession = null;
-      this.notifyListeners();
-    }
-    return { error };
-  }
-}
-
-// Database helpers
-export const db = {
-  profiles: () => supabase.from('profiles'),
-  comments: () => supabase.from('comments'),
-  commentLikes: () => supabase.from('comment_likes'),
-  commentModeration: () => supabase.from('comment_moderation'),
-  commentReactions: () => supabase.from('comment_reactions'),
-  commentBookmarks: () => supabase.from('comment_bookmarks'),
-  commentDrafts: () => supabase.from('comment_drafts'),
-  commentSaves: () => supabase.from('comment_saves'),
-  commentEditHistory: () => supabase.from('comment_edit_history'),
-  commentNotifications: () => supabase.from('comment_notifications'),
-  userRateLimits: () => supabase.from('user_rate_limits'),
-  newsletterSubscriptions: () => supabase.from('newsletter_subscriptions'),
-  userCategoryFollows: () => supabase.from('user_category_follows'),
-  articles: () => supabase.from('articles'),
-  articleLikes: () => supabase.from('article_likes'),
-  articleReads: () => supabase.from('article_reads'),
-  articleFollows: () => supabase.from('article_follows'),
-  articleSaves: () => supabase.from('article_saves'),
-  authorFollows: () => supabase.from('author_follows'),
-  moderationRules: () => supabase.from('moderation_rules'),
-  categories: () => supabase.from('categories'),
-  authors: () => supabase.from('authors'),
-  podcasts: () => supabase.from('podcasts'),
-  threads: () => supabase.from('threads'),
-  userActivities: () => supabase.from('user_activities'),
-  userFollows: () => supabase.from('user_follows'),
-  userPreferences: () => supabase.from('user_preferences'),
-};
-
-// Environment-aware query helpers
-export const envDb = {
-  profiles: {
-    select: (columns: string = '*') => db.profiles().select(columns).eq('environment', config.environment),
-    insert: (data: Partial<Profile>) => db.profiles().insert({ ...data, environment: config.environment } as any),
-    update: (data: Partial<Profile>) => db.profiles().update({ ...data, environment: config.environment } as any),
-    delete: () => db.profiles().delete().eq('environment', config.environment),
-  },
-  comments: {
-    select: (columns: string = '*') => db.comments().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.comments().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.comments().update({ ...data, environment: config.environment }),
-    delete: () => db.comments().delete().eq('environment', config.environment),
-  },
-  commentLikes: {
-    select: (columns: string = '*') => db.commentLikes().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.commentLikes().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.commentLikes().update({ ...data, environment: config.environment }),
-    delete: () => db.commentLikes().delete().eq('environment', config.environment),
-  },
-  commentModeration: {
-    select: (columns: string = '*') => db.commentModeration().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.commentModeration().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.commentModeration().update({ ...data, environment: config.environment }),
-    delete: () => db.commentModeration().delete().eq('environment', config.environment),
-  },
-  commentReactions: {
-    select: (columns: string = '*') => db.commentReactions().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.commentReactions().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.commentReactions().update({ ...data, environment: config.environment }),
-    delete: () => db.commentReactions().delete().eq('environment', config.environment),
-  },
-  commentBookmarks: {
-    select: (columns: string = '*') => db.commentBookmarks().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.commentBookmarks().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.commentBookmarks().update({ ...data, environment: config.environment }),
-    delete: () => db.commentBookmarks().delete().eq('environment', config.environment),
-  },
-  commentDrafts: {
-    select: (columns: string = '*') => db.commentDrafts().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.commentDrafts().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.commentDrafts().update({ ...data, environment: config.environment }),
-    delete: () => db.commentDrafts().delete().eq('environment', config.environment),
-  },
-  commentNotifications: {
-    select: (columns: string = '*') => db.commentNotifications().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.commentNotifications().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.commentNotifications().update({ ...data, environment: config.environment }),
-    delete: () => db.commentNotifications().delete().eq('environment', config.environment),
-  },
-  userRateLimits: {
-    select: (columns: string = '*') => db.userRateLimits().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.userRateLimits().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.userRateLimits().update({ ...data, environment: config.environment }),
-    delete: () => db.userRateLimits().delete().eq('environment', config.environment),
-  },
-  userCategoryFollows: {
-    select: (columns: string = '*') => db.userCategoryFollows().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.userCategoryFollows().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.userCategoryFollows().update({ ...data, environment: config.environment }),
-    delete: () => db.userCategoryFollows().delete().eq('environment', config.environment),
-  },
-  newsletterSubscriptions: {
-    select: (columns: string = '*') => db.newsletterSubscriptions().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.newsletterSubscriptions().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.newsletterSubscriptions().update({ ...data, environment: config.environment }),
-    delete: () => db.newsletterSubscriptions().delete().eq('environment', config.environment),
-  },
-  userActivities: {
-    select: (columns: string = '*') => db.userActivities().select(columns).eq('environment', config.environment),
-    insert: (data: any) => db.userActivities().insert({ ...data, environment: config.environment }),
-    update: (data: any) => db.userActivities().update({ ...data, environment: config.environment }),
-    delete: () => db.userActivities().delete().eq('environment', config.environment),
-  },
-};
-
-// Utility for RPC calls
-export const rpc = (fn: string, params: object) => 
-  supabase.rpc(fn, params);
-
-export type TableName = keyof typeof db;
-
-// All your interfaces - keeping them exactly as they were
+// Interface definitions moved to top for availability
 export interface User {
   id: string;
   email?: string;
@@ -464,6 +232,240 @@ export interface Newsletter {
   updated_at: string;
 }
 
+// ✅ GLOBAL SINGLETON - Prevent multiple instances
+declare global {
+  var __supabase_instance: SupabaseClient | undefined;
+}
+
+function createSupabaseClient(): SupabaseClient {
+  // Return existing global instance if available
+  if (globalThis.__supabase_instance) {
+    console.log('🔄 Reusing global Supabase instance');
+    return globalThis.__supabase_instance;
+  }
+
+  console.log('🆕 Creating single Supabase instance');
+  
+  // Validate environment variables
+  const supabaseUrl = config.supabase.url;
+  const supabaseAnonKey = config.supabase.anonKey;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+
+  // Create single instance with environment-specific storage
+  const client = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      storageKey: `tinkbyte-auth-${config.environment}` // Environment-specific key
+    },
+    global: {
+      headers: {
+        'X-Environment': config.environment,
+        'X-Client-Info': `tinkbyte-static-${config.environment}`
+      }
+    }
+  });
+
+  // Store globally to prevent multiple instances
+  globalThis.__supabase_instance = client;
+  
+  return client;
+}
+
+// Export the singleton
+export const supabase = createSupabaseClient();
+export { createSupabaseClient as getSupabaseClient };
+
+
+// AuthState class
+export class AuthState {
+  private static instance: AuthState | null = null;
+  private currentUser: any = null;
+  private currentSession: any = null;
+  private listeners: Array<(user: any) => void> = [];
+
+  private constructor() {
+    this.initializeAuth();
+  }
+
+  static getInstance(): AuthState {
+    if (!AuthState.instance) {
+      AuthState.instance = new AuthState();
+    }
+    return AuthState.instance;
+  }
+
+  async initialize(): Promise<void> {
+    await this.initializeAuth();
+  }
+
+  private async initializeAuth() {
+    const { data: { session } } = await (supabase.auth as any).getSession();
+    this.currentSession = session;
+    this.currentUser = session?.user || null;
+
+    // Listen for auth changes
+    (supabase.auth as any).onAuthStateChange((event: any, session: any) => {
+      this.currentSession = session;
+      this.currentUser = session?.user || null;
+      this.notifyListeners();
+    });
+  }
+
+  getCurrentUser() {
+    return this.currentUser;
+  }
+
+  getCurrentSession() {
+    return this.currentSession;
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.currentUser;
+  }
+
+  onAuthStateChange(callback: (user: any) => void) {
+    this.listeners.push(callback);
+    return () => {
+      this.listeners = this.listeners.filter(listener => listener !== callback);
+    };
+  }
+
+  private notifyListeners() {
+    this.listeners.forEach(listener => listener(this.currentUser));
+  }
+
+  async signOut() {
+    const { error } = await (supabase.auth as any).signOut();
+    if (!error) {
+      this.currentUser = null;
+      this.currentSession = null;
+      this.notifyListeners();
+    }
+    return { error };
+  }
+}
+
+// Database helpers
+export const db = {
+  profiles: () => supabase.from('profiles'),
+  comments: () => supabase.from('comments'),
+  commentLikes: () => supabase.from('comment_likes'),
+  commentModeration: () => supabase.from('comment_moderation'),
+  commentReactions: () => supabase.from('comment_reactions'),
+  commentBookmarks: () => supabase.from('comment_bookmarks'),
+  commentDrafts: () => supabase.from('comment_drafts'),
+  commentSaves: () => supabase.from('comment_saves'),
+  commentEditHistory: () => supabase.from('comment_edit_history'),
+  commentNotifications: () => supabase.from('comment_notifications'),
+  userRateLimits: () => supabase.from('user_rate_limits'),
+  newsletterSubscriptions: () => supabase.from('newsletter_subscriptions'),
+  userCategoryFollows: () => supabase.from('user_category_follows'),
+  articles: () => supabase.from('articles'),
+  articleLikes: () => supabase.from('article_likes'),
+  articleReads: () => supabase.from('article_reads'),
+  articleFollows: () => supabase.from('article_follows'),
+  articleSaves: () => supabase.from('article_saves'),
+  authorFollows: () => supabase.from('author_follows'),
+  moderationRules: () => supabase.from('moderation_rules'),
+  categories: () => supabase.from('categories'),
+  authors: () => supabase.from('authors'),
+  podcasts: () => supabase.from('podcasts'),
+  threads: () => supabase.from('threads'),
+  userActivities: () => supabase.from('user_activities'),
+  userFollows: () => supabase.from('user_follows'),
+  userPreferences: () => supabase.from('user_preferences'),
+};
+
+// Environment-aware query helpers
+export const envDb = {
+  profiles: {
+    select: (columns: string = '*') => db.profiles().select(columns).eq('environment', config.environment),
+    insert: (data: Partial<Profile>) => db.profiles().insert({ ...data, environment: config.environment } as any),
+    update: (data: Partial<Profile>) => db.profiles().update({ ...data, environment: config.environment } as any),
+    delete: () => db.profiles().delete().eq('environment', config.environment),
+  },
+  comments: {
+    select: (columns: string = '*') => db.comments().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.comments().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.comments().update({ ...data, environment: config.environment }),
+    delete: () => db.comments().delete().eq('environment', config.environment),
+  },
+  commentLikes: {
+    select: (columns: string = '*') => db.commentLikes().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentLikes().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentLikes().update({ ...data, environment: config.environment }),
+    delete: () => db.commentLikes().delete().eq('environment', config.environment),
+  },
+  commentModeration: {
+    select: (columns: string = '*') => db.commentModeration().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentModeration().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentModeration().update({ ...data, environment: config.environment }),
+    delete: () => db.commentModeration().delete().eq('environment', config.environment),
+  },
+  commentReactions: {
+    select: (columns: string = '*') => db.commentReactions().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentReactions().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentReactions().update({ ...data, environment: config.environment }),
+    delete: () => db.commentReactions().delete().eq('environment', config.environment),
+  },
+  commentBookmarks: {
+    select: (columns: string = '*') => db.commentBookmarks().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentBookmarks().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentBookmarks().update({ ...data, environment: config.environment }),
+    delete: () => db.commentBookmarks().delete().eq('environment', config.environment),
+  },
+  commentDrafts: {
+    select: (columns: string = '*') => db.commentDrafts().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentDrafts().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentDrafts().update({ ...data, environment: config.environment }),
+    delete: () => db.commentDrafts().delete().eq('environment', config.environment),
+  },
+  commentNotifications: {
+    select: (columns: string = '*') => db.commentNotifications().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.commentNotifications().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.commentNotifications().update({ ...data, environment: config.environment }),
+    delete: () => db.commentNotifications().delete().eq('environment', config.environment),
+  },
+  userRateLimits: {
+    select: (columns: string = '*') => db.userRateLimits().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.userRateLimits().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.userRateLimits().update({ ...data, environment: config.environment }),
+    delete: () => db.userRateLimits().delete().eq('environment', config.environment),
+  },
+  userCategoryFollows: {
+    select: (columns: string = '*') => db.userCategoryFollows().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.userCategoryFollows().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.userCategoryFollows().update({ ...data, environment: config.environment }),
+    delete: () => db.userCategoryFollows().delete().eq('environment', config.environment),
+  },
+  newsletterSubscriptions: {
+    select: (columns: string = '*') => db.newsletterSubscriptions().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.newsletterSubscriptions().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.newsletterSubscriptions().update({ ...data, environment: config.environment }),
+    delete: () => db.newsletterSubscriptions().delete().eq('environment', config.environment),
+  },
+  userActivities: {
+    select: (columns: string = '*') => db.userActivities().select(columns).eq('environment', config.environment),
+    insert: (data: any) => db.userActivities().insert({ ...data, environment: config.environment }),
+    update: (data: any) => db.userActivities().update({ ...data, environment: config.environment }),
+    delete: () => db.userActivities().delete().eq('environment', config.environment),
+  },
+};
+
+// Utility for RPC calls
+export const rpc = (fn: string, params: object) => 
+  supabase.rpc(fn, params);
+
+export type TableName = keyof typeof db;
+
+
 // Helper function for retry logic
 export async function withRetry(operation: () => Promise<any>, maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
@@ -527,7 +529,7 @@ export class TinkByteAPI {
   // **CORE ACTIVITY RECORDING METHODS**
   static async recordActivity(activityType: string, entityType: string, entityId: string, metadata?: any) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) return { success: false, error: 'User not authenticated' };
@@ -589,16 +591,17 @@ export class TinkByteAPI {
   // Update profile statistics
  static async updateProfileStats(userId: string, field: string, increment: number = 1) {
   try {
-    // ✅ REMOVE ENVIRONMENT FILTER
+    // ✅ REMOVE ENVIRONMENT FILTER and use maybeSingle to prevent 406
     const { data: profile, error: fetchError } = await supabase
       .from('profiles')
       .select(field)
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (fetchError) throw fetchError;
+    if (!profile) return { success: false, error: 'Profile not found' };
 
-    const currentValue = profile[field] || 0;
+    const currentValue = (profile as any)[field] || 0;
     const newValue = Math.max(0, currentValue + increment);
 
     const { error: updateError } = await supabase
@@ -705,7 +708,7 @@ export class TinkByteAPI {
   // **ARTICLE READ TRACKING**
   static async recordArticleRead(articleSlug: string, readPercentage: number = 100, timeSpentSeconds: number = 0) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) return { success: false, error: 'User not authenticated' };
@@ -761,7 +764,7 @@ export class TinkByteAPI {
   // **ARTICLE FOLLOWS**
 static async followArticle(articleSlug: string) {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await (supabase.auth as any).getSession();
     const user = session?.user;
 
     if (!user) {
@@ -802,7 +805,7 @@ static async followArticle(articleSlug: string) {
 
 static async unfollowArticle(articleSlug: string) {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await (supabase.auth as any).getSession();
     const user = session?.user;
 
     if (!user) {
@@ -830,7 +833,7 @@ static async unfollowArticle(articleSlug: string) {
   // **ARTICLE LIKES**
   static async toggleArticleLike(articleId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -880,7 +883,7 @@ static async unfollowArticle(articleSlug: string) {
   // **ARTICLE SAVES**
   static async toggleArticleSave(articleId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -927,6 +930,11 @@ static async unfollowArticle(articleSlug: string) {
   // **COMMENT OPERATIONS**
   static async getComments(articleId: string) {
     try {
+      // ✅ Allow fetching comments from both environments in development
+      const environments = config.environment === 'development' 
+        ? ['development', 'production'] 
+        : [config.environment];
+
       const { data, error } = await supabase
         .from('comments')
         .select(`
@@ -953,7 +961,7 @@ static async unfollowArticle(articleSlug: string) {
           )
         `)
         .eq('article_id', articleId)
-        .eq('environment', config.environment)
+        .in('environment', environments) // ✅ Use .in() for multiple envs
         .eq('is_deleted', false)
         .in('moderation_status', ['approved', 'auto_approved'])
         .order('created_at', { ascending: false });
@@ -974,7 +982,7 @@ static async addComment(articleSlug: string, content: string, parentId: string |
   try {
     console.log('🔍 addComment called with:', { articleSlug, contentLength: content.length, parentId });
     
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await (supabase.auth as any).getSession();
     
     if (sessionError || !session?.user) {
       throw new Error('Must be logged in to comment');
@@ -1082,7 +1090,7 @@ static async addComment(articleSlug: string, content: string, parentId: string |
         reputation_score, is_admin, membership_type
       `)
       .eq('id', user.id)
-      .eq('environment', config.environment)
+      //.eq('environment', config.environment)
       .maybeSingle();
 
     // ✅ FALLBACK WITHOUT ENVIRONMENT FILTER
@@ -1144,7 +1152,7 @@ static async addComment(articleSlug: string, content: string, parentId: string |
   // **COMMENT SAVES** 
 static async toggleCommentSave(commentId: string) {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await (supabase.auth as any).getSession();
     const user = session?.user;
 
     if (!user) {
@@ -1190,7 +1198,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async toggleCommentLike(commentId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1275,7 +1283,7 @@ static async toggleCommentSave(commentId: string) {
   // **FOLLOW OPERATIONS**
   static async followUser(userId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1328,7 +1336,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async unfollowUser(userId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1360,7 +1368,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async followCategory(categorySlug: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1403,7 +1411,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async unfollowCategory(categorySlug: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1431,7 +1439,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async followAuthor(authorSlug: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1472,7 +1480,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async unfollowAuthor(authorSlug: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1524,8 +1532,8 @@ static async toggleCommentSave(commentId: string) {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .eq('environment', config.environment)
-      .single();
+      //.eq('environment', config.environment)
+      .maybeSingle();
 
     if (profileError) throw profileError;
 
@@ -1661,7 +1669,7 @@ static async toggleCommentSave(commentId: string) {
   // **COMMENT DRAFTS**
   static async saveCommentDraft(articleId: string, content: string, draftKey?: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1697,7 +1705,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async getCommentDraft(articleId: string, draftKey?: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1745,7 +1753,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async deleteCommentDraft(articleId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1774,7 +1782,7 @@ static async toggleCommentSave(commentId: string) {
   // **COMMENT ADDITIONAL FEATURES**
   static async updateComment(commentId: string, content: string, editReason: string | null = null) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1833,7 +1841,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async deleteComment(commentId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1862,7 +1870,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async toggleCommentBookmark(commentId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -1910,7 +1918,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async toggleCommentReaction(commentId: string, reactionType: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -2040,7 +2048,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async getMentionableUsers(query: string = '') {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -2083,7 +2091,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async createMentionNotification(commentId: string, mentionedUserId: string, mentionerName: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -2127,7 +2135,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async getUserNotifications(limit = 20) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -2167,7 +2175,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async markNotificationAsRead(notificationId: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -2192,7 +2200,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async getUnreadNotificationCount() {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -2235,7 +2243,7 @@ static async toggleCommentSave(commentId: string) {
   // **NEWSLETTER OPERATIONS**
   static async subscribeToNewsletter(email: string, name?: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       const { data, error } = await supabase
@@ -2262,7 +2270,7 @@ static async toggleCommentSave(commentId: string) {
 
   static async getUserNewsletterSubscriptions() {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {
@@ -2327,7 +2335,7 @@ static async toggleCommentSave(commentId: string) {
   // **ADMIN OPERATIONS**
   static async moderateComment(commentId: string, action: 'approve' | 'flag' | 'hide' | 'delete', reason?: string) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await (supabase.auth as any).getSession();
       const user = session?.user;
 
       if (!user) {

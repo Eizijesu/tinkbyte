@@ -11,6 +11,7 @@ import { SITE } from "../config/site";
 import { getCollection } from "astro:content";
 import MDXProvider from "../components/MDXProvider.astro";
 import TinkByteCommentSection from "../components/comments/TinkByteCommentSection.astro";
+import CommentSection from "../components/reactcomments/CommentSection";
 import FeedbackWidget from "../components/ui/FeedbackWidget.astro";
 
 // Import TinaCMS components properly
@@ -679,7 +680,7 @@ if (typeof globalThis !== "undefined") {
             <!-- Enhanced Comments Section -->
             <div class="comments-section-wrapper">
               <div class="comments-container-enhanced">
-                <TinkByteCommentSection
+                <CommentSection
                   articleId={articleId}
                   postSlug={articleId}
                   postTitle={title}

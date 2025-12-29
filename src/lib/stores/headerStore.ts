@@ -26,7 +26,7 @@ class HeaderStore {
   };
 
   private listeners = new Set<(state: HeaderState) => void>();
-  private notificationInterval: NodeJS.Timeout | null = null;
+  private notificationInterval: ReturnType<typeof setInterval> | null = null;
 
   subscribe(listener: (state: HeaderState) => void) {
     this.listeners.add(listener);

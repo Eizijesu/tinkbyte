@@ -4,8 +4,14 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import dotenv from 'dotenv';
+import process from 'process';
 
 dotenv.config();
+
+// Environment handling
+// @ts-ignore
+const environment = process.argv.includes('--env=production') ? 'production' : 'development';
+console.log(`🌍 Syncing content for environment: ${environment}`);
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY;
@@ -26,7 +32,13 @@ const COLLECTIONS = {
 };
 
 // Helper function to ensure author exists
-async function ensureAuthor(authorSlug, authorData = {}) {
+/**
+ * @param {string} authorSlug
+ * @param {any} [authorDataInput]
+ */
+async function ensureAuthor(authorSlug, authorDataInput) {
+  const authorData = /** @type {any} */ (authorDataInput || {});
+
   if (!authorSlug) {
     console.log('⚠️  No author slug provided, using default');
     authorSlug = 'tinkbyte-team';
@@ -130,6 +142,55 @@ async function syncAuthors() {
   }
 }
 
+// Enhanced helper functions
+async function ensureCategory(categorySlug) {
+  try {
+    const { data: existingCategory, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('slug', categorySlug)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error(`❌ Error checking category ${categorySlug}:`, error.message);
+      return categorySlug;
+    }
+
+    if (existingCategory) {
+      return existingCategory.slug;
+    }
+
+    // Create default category
+    const categoryData = {
+      slug: categorySlug,
+      name: categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      description: `Auto-created category for ${categorySlug}`,
+      color: 'blue',
+      icon: 'tag',
+      is_premium: false,
+      is_featured: false,
+      sort_order: 0,
+      created_at: new Date().toISOString()
+    };
+
+    const { error: createError } = await supabase
+      .from('categories')
+      .insert(categoryData);
+
+    if (createError) {
+      console.error(`❌ Error creating category ${categorySlug}:`, createError.message);
+    } else {
+      console.log(`✅ Auto-created category: ${categoryData.name}`);
+    }
+
+    return categorySlug;
+  } catch (error) {
+    console.error(`❌ Error ensuring category ${categorySlug}:`, error.message);
+    return categorySlug;
+  }
+}
+
+
 // Sync Categories
 async function syncCategories() {
   console.log('🔄 Syncing categories...');
@@ -219,7 +280,7 @@ async function syncAllTopics() {
   }
 }
 
-// UPDATED: Sync Blog Articles - Now handles drafts properly
+// Sync Blog Articles
 async function syncArticles() {
   console.log('🔄 Syncing articles...');
   
@@ -230,72 +291,17 @@ async function syncArticles() {
       const { data, content } = readMarkdownFile(filePath);
       const slug = path.basename(filePath, path.extname(filePath));
       
-      // 🔥 FIXED: Don't skip drafts, sync them with correct publication status
-      const isDraft = data.draft === true;
-      const isPublished = !isDraft;
-      
-      console.log(`📝 Processing: ${data.title} (${isDraft ? 'DRAFT' : 'PUBLISHED'})`);
-      
-      // Handle author - support your TinaCMS structure
-      let authorSlug;
-      let authorData = {};
-      
-      if (data.authorInfo) {
-        const authorName = data.authorInfo.name;
-        if (authorName) {
-          authorSlug = authorName
-            .toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/[^\w-]+/g, '');
-          
-          authorData = {
-            name: authorName,
-            bio: data.authorInfo.bio || '',
-            avatar: data.authorInfo.avatar || '/images/default-avatar.png',
-            role: data.authorInfo.role || 'Contributor'
-          };
-        }
+      if (data.draft) {
+        console.log(`⏭️  Skipping draft: ${data.title}`);
+        continue;
       }
       
-      // Support legacy author formats
-      if (!authorSlug && data.author_slug) authorSlug = data.author_slug;
-      if (!authorSlug && data.author_id) authorSlug = data.author_id;
-      if (!authorSlug && data.author) {
-        if (typeof data.author === 'string') {
-          authorSlug = data.author;
-        } else if (data.author.slug) {
-          authorSlug = data.author.slug;
-        }
-      }
-      
-      if (!authorSlug) authorSlug = 'tinkbyte-team';
-
-      const validAuthorSlug = await ensureAuthor(authorSlug, authorData);
+      // Handle author with environment context
+      let authorSlug = await ensureAuthor(data.authorInfo?.name || 'tinkbyte-team', data.authorInfo || {});
 
       // Ensure category exists
       const categorySlug = data.category || 'general';
-      const { data: categoryExists } = await supabase
-        .from('categories')
-        .select('slug')
-        .eq('slug', categorySlug)
-        .single();
-
-      if (!categoryExists) {
-        console.log(`⚠️  Category ${categorySlug} not found, creating default`);
-        await supabase
-          .from('categories')
-          .insert({
-            slug: categorySlug,
-            name: categorySlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            description: `Auto-created category for ${categorySlug}`,
-            color: 'blue',
-            icon: 'tag',
-            is_premium: false,
-            is_featured: false,
-            sort_order: 0,
-            created_at: new Date().toISOString()
-          });
-      }
+      await ensureCategory(categorySlug);
       
       // Get image URL
       let imageUrl = null;
@@ -313,17 +319,17 @@ async function syncArticles() {
         subtitle: data.subtitle || null,
         excerpt: data.excerpt || data.description || content.substring(0, 200) + '...',
         content: content,
-        author_id: validAuthorSlug,
+        author_id: authorSlug,
         category_slug: categorySlug,
         featured_image_url: imageUrl,
-        is_published: isPublished, // 🔥 FIXED: Properly set publication status
+        is_published: !data.draft,
         is_premium: data.premium || false,
         is_featured: data.featured || false,
         read_time_minutes: calculateReadTime(data.readTime, content),
         view_count: 0,
         like_count: 0,
         comment_count: 0,
-        published_at: isPublished && data.pubDate ? new Date(data.pubDate).toISOString() : null, // Only set if published
+        published_at: data.pubDate ? new Date(data.pubDate).toISOString() : new Date().toISOString(),
         created_at: data.pubDate ? new Date(data.pubDate).toISOString() : new Date().toISOString(),
         updated_at: data.updatedDate ? new Date(data.updatedDate).toISOString() : new Date().toISOString(),
         is_deleted: false,
@@ -336,7 +342,7 @@ async function syncArticles() {
       if (error) {
         console.error(`❌ Error with article ${data.title}:`, error.message);
       } else {
-        console.log(`✅ Synced article: ${data.title} (${isPublished ? 'Published' : 'Draft'})`);
+        console.log(`✅ Synced article: ${data.title}`);
       }
       
     } catch (error) {
@@ -345,7 +351,7 @@ async function syncArticles() {
   }
 }
 
-// UPDATED: Sync Podcasts - Also handle draft status
+// Sync Podcasts
 async function syncPodcasts() {
   console.log('🔄 Syncing podcasts...');
   
@@ -361,11 +367,6 @@ async function syncPodcasts() {
       const { data, content } = readMarkdownFile(filePath);
       const slug = path.basename(filePath, path.extname(filePath));
       
-      const isDraft = data.draft === true || data.status === 'draft';
-      const isPublished = !isDraft;
-      
-      console.log(`🎙️ Processing podcast: ${data.title} (${isDraft ? 'DRAFT' : 'PUBLISHED'})`);
-      
       const podcastData = {
         slug: slug,
         title: data.title,
@@ -373,10 +374,10 @@ async function syncPodcasts() {
         duration: data.duration || null,
         audio_url: data.audioUrl || data.audio_url || null,
         image_url: data.imageUrl || data.image_url || data.image || null,
-        episode_number: data.episodeNumber || data.episode_number || data.episode || null,
+        episode_number: data.episodeNumber || data.episode_number || null,
         season_number: data.seasonNumber || data.season_number || null,
-        published_at: isPublished && data.pubDate ? new Date(data.pubDate).toISOString() : null,
-        is_published: isPublished, // 🔥 FIXED: Properly handle draft status
+        published_at: data.pubDate ? new Date(data.pubDate).toISOString() : new Date().toISOString(),
+        is_published: !data.draft,
         featured: data.featured || false,
         created_at: data.createdAt ? new Date(data.createdAt).toISOString() : new Date().toISOString(),
         updated_at: data.updatedAt ? new Date(data.updatedAt).toISOString() : new Date().toISOString()
@@ -389,7 +390,7 @@ async function syncPodcasts() {
       if (error) {
         console.error(`❌ Error with podcast ${data.title}:`, error.message);
       } else {
-        console.log(`✅ Synced podcast: ${data.title} (${isPublished ? 'Published' : 'Draft'})`);
+        console.log(`✅ Synced podcast: ${data.title}`);
       }
     } catch (error) {
       console.error(`❌ Error processing ${filePath}:`, error.message);
@@ -642,8 +643,11 @@ async function main() {
     console.log(`   • ${podcastsCount} podcasts`);
     console.log(`   • ${newslettersCount} newsletters`);
     
+    // @ts-ignore
+    process.exit(0);
   } catch (error) {
     console.error('❌ Sync failed:', error);
+    // @ts-ignore
     process.exit(1);
   }
 }
