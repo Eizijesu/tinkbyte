@@ -1,7 +1,7 @@
 // src/config/site.ts - Complete TinkByte configuration
 export const SITE = {
   name: 'TinkByte',
-  title: 'TinkByte | Digital Tech Innovation Weekly',
+  title: 'TinkByte | Digital Tech Innovation & Magazine Weekly',
   description: 'TinkByte delivers practical tech insights and innovation analysis without the hype. Weekly articles on AI, product development, and emerging technologies for builders who value substance.',
   url: 'https://tinkbyte.com',
   author: 'TinkByte Team',
