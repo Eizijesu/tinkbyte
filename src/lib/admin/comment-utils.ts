@@ -110,7 +110,7 @@ export class CommentRenderer {
       buttons += `
         <button class="action-btn approve" data-action="approve" data-comment-id="${comment.id}">
           <div class="btn-spinner" style="display: none;">
-            <div class="spinner-square small"></div>
+            <div class="simple-spinner small"></div>
           </div>
           <i class="fas fa-check"></i>
           ${status === 'flagged' ? 'Restore' : 'Approve'}
@@ -122,7 +122,7 @@ export class CommentRenderer {
       buttons += `
         <button class="action-btn reject" data-action="reject" data-comment-id="${comment.id}">
           <div class="btn-spinner" style="display: none;">
-            <div class="spinner-square small"></div>
+            <div class="simple-spinner small"></div>
           </div>
           <i class="fas fa-times"></i>
           ${status === 'approved' ? 'Hide' : 'Reject'}
@@ -134,7 +134,7 @@ export class CommentRenderer {
       buttons += `
         <button class="action-btn flag" data-action="flag" data-comment-id="${comment.id}">
           <div class="btn-spinner" style="display: none;">
-            <div class="spinner-square small"></div>
+            <div class="simple-spinner small"></div>
           </div>
           <i class="fas fa-flag"></i>
           Flag
@@ -146,7 +146,7 @@ export class CommentRenderer {
       buttons += `
         <button class="action-btn delete" data-action="hide" data-comment-id="${comment.id}">
           <div class="btn-spinner" style="display: none;">
-            <div class="spinner-square small"></div>
+            <div class="simple-spinner small"></div>
           </div>
           <i class="fas fa-trash"></i>
           Delete

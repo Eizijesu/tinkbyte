@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { authManager } from '../../lib/auth';
 import { config } from '../../lib/config'; // Import config for environment
@@ -16,7 +16,12 @@ interface CommentSectionProps {
 }
 
 export const CommentSection: React.FC<CommentSectionProps> = ({ articleId, postSlug, postTitle }) => {
+  // FORCE LOG - This should ALWAYS appear if component runs
+  console.error('🔥🔥🔥 COMMENT SECTION COMPONENT EXECUTING 🔥🔥🔥', { articleId, postSlug, postTitle });
+  
   const activeId = articleId || postSlug || '';
+  
+  console.log('🎯 CommentSection CLIENT RENDER - activeId:', activeId);
   
   const [comments, setComments] = useState<CommentWithProfile[]>([]);
   const [displayedComments, setDisplayedComments] = useState<CommentWithProfile[]>([]);
@@ -28,6 +33,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ articleId, postS
   
   const COMMENTS_PER_PAGE = 5;
   const [loadedCount, setLoadedCount] = useState(COMMENTS_PER_PAGE);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -38,17 +44,27 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ articleId, postS
     
     const unsubscribe = authManager.onAuthChange((user) => {
         setCurrentUser(user);
-        fetchComments(); 
+        // Don't call fetchComments here - it will be triggered by the other useEffect
     });
-    return () => {};
+    return () => {
+        if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const fetchComments = useCallback(async () => {
     if (!activeId) {
+        console.log('⚠️ No activeId, skipping fetch');
         setIsLoading(false);
         return;
     }
 
+    // Prevent multiple simultaneous fetches
+    if (isFetchingRef.current) {
+        console.log('⚠️ Fetch already in progress, skipping');
+        return;
+    }
+
+    isFetchingRef.current = true;
     setIsLoading(true);
     setError(null);
 
@@ -59,24 +75,84 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ articleId, postS
         ? ['development', 'production'] 
         : [config.environment];
       
-      const { data: rawData, error: supabaseError } = await supabase
+      console.log('🔍 Fetching comments for article:', activeId, 'environments:', environments);
+      console.log('🔍 Supabase client available:', !!supabase);
+      
+      // First, fetch comments without joins to avoid relationship issues
+      const { data: commentsData, error: commentsError } = await supabase
         .from('comments')
-        .select(`
-          *,
-          profiles:user_id (
-            id, display_name, avatar_url, avatar_type, avatar_preset_id, is_admin, reputation_score
-          ),
-          comment_reactions(reaction_type, user_id),
-          comment_likes(user_id),
-          comment_bookmarks(user_id)
-        `)
+        .select('*')
         .eq('article_id', activeId)
-        .in('environment', environments) // ✅ Use .in() for multiple envs
+        .in('environment', environments)
         .eq('is_deleted', false)
         .in('moderation_status', ['approved', 'auto_approved'])
         .order('created_at', { ascending: false });
 
-      if (supabaseError) throw supabaseError;
+      if (commentsError) {
+        console.error('❌ Error fetching comments:', commentsError);
+        throw commentsError;
+      }
+
+      if (!commentsData || commentsData.length === 0) {
+        console.log('✅ No comments found');
+        setTotalCount(0);
+        setComments([]);
+        setDisplayedComments([]);
+        return;
+      }
+
+      // Fetch profiles separately
+      const userIds = [...new Set(commentsData.map(c => c.user_id).filter(Boolean))];
+      let profilesMap = new Map();
+      
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url, avatar_type, avatar_preset_id, is_admin, reputation_score')
+          .in('id', userIds);
+        
+        if (profilesData) {
+          profilesData.forEach(p => profilesMap.set(p.id, p));
+        }
+      }
+
+      // Fetch reactions, likes, bookmarks separately
+      const commentIds = commentsData.map(c => c.id);
+      const [reactionsResult, likesResult, bookmarksResult] = await Promise.all([
+        supabase.from('comment_reactions').select('comment_id, reaction_type, user_id').in('comment_id', commentIds),
+        supabase.from('comment_likes').select('comment_id, user_id').in('comment_id', commentIds),
+        supabase.from('comment_bookmarks').select('comment_id, user_id').in('comment_id', commentIds)
+      ]);
+
+      // Group interactions by comment_id
+      const reactionsMap = new Map();
+      (reactionsResult.data || []).forEach(r => {
+        if (!reactionsMap.has(r.comment_id)) reactionsMap.set(r.comment_id, []);
+        reactionsMap.get(r.comment_id).push(r);
+      });
+
+      const likesMap = new Map();
+      (likesResult.data || []).forEach(l => {
+        if (!likesMap.has(l.comment_id)) likesMap.set(l.comment_id, []);
+        likesMap.get(l.comment_id).push(l);
+      });
+
+      const bookmarksMap = new Map();
+      (bookmarksResult.data || []).forEach(b => {
+        if (!bookmarksMap.has(b.comment_id)) bookmarksMap.set(b.comment_id, []);
+        bookmarksMap.get(b.comment_id).push(b);
+      });
+
+      // Combine data
+      const rawData = commentsData.map(c => ({
+        ...c,
+        profiles: profilesMap.get(c.user_id) || null,
+        comment_reactions: reactionsMap.get(c.id) || [],
+        comment_likes: likesMap.get(c.id) || [],
+        comment_bookmarks: bookmarksMap.get(c.id) || []
+      }));
+      
+      console.log('✅ Comments fetched successfully:', rawData?.length || 0, 'comments');
 
       const user = authManager.getUser();
       const currentUserId = user?.id;
@@ -156,17 +232,23 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ articleId, postS
       setTotalCount(flatList.length); 
       setComments(sortedRoots); 
       setDisplayedComments(sortedRoots.slice(0, loadedCount));
+      console.log('✅ Comments state updated:', sortedRoots.length, 'root comments');
 
     } catch (err: any) {
-      console.error('Error loading comments:', err);
+      console.error('❌ Error loading comments:', err);
       setError(err.message || 'Failed to load comments');
     } finally {
+      console.log('🏁 fetchComments completed, setting isLoading to false');
+      isFetchingRef.current = false;
       setIsLoading(false);
     }
   }, [activeId, sortOrder, loadedCount]);
 
   useEffect(() => {
-    fetchComments();
+    console.log('🔄 useEffect triggered, calling fetchComments for articleId:', activeId);
+    fetchComments().catch((err) => {
+      console.error('❌ fetchComments failed in useEffect:', err);
+    });
   }, [fetchComments]);
 
   const handleLoadMore = () => {

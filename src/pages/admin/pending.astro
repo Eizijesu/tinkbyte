@@ -7,7 +7,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
   <!-- Loading Overlay -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-spinner">
-      <div class="spinner-square"></div>
+      <div class="simple-spinner"></div>
       <span>Loading pending comments...</span>
     </div>
   </div>
@@ -480,21 +480,21 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
               <div class="comment-actions">
                 <button class="action-btn approve" data-action="approve" data-comment-id="${comment.id}">
                   <div class="btn-spinner" style="display: none;">
-                    <div class="spinner-square small"></div>
+                    <div class="simple-spinner small"></div>
                   </div>
                   <i class="fas fa-check"></i>
                   Approve
                 </button>
                 <button class="action-btn reject" data-action="reject" data-comment-id="${comment.id}">
                   <div class="btn-spinner" style="display: none;">
-                    <div class="spinner-square small"></div>
+                    <div class="simple-spinner small"></div>
                   </div>
                   <i class="fas fa-times"></i>
                   Reject
                 </button>
                 <button class="action-btn flag" data-action="flag" data-comment-id="${comment.id}">
                   <div class="btn-spinner" style="display: none;">
-                    <div class="spinner-square small"></div>
+                    <div class="simple-spinner small"></div>
                   </div>
                   <i class="fas fa-flag"></i>
                   Flag

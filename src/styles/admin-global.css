@@ -446,6 +446,16 @@ body {
   align-items: center;
   gap: var(--spacing-md);
   font-weight: 500;
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Ensure text in loading spinners doesn't rotate */
+.loading-spinner span,
+.loading-spinner p,
+.loading-spinner h3 {
+  animation: none !important;
+  transform: none !important;
 }
 
 .loading-overlay p {
@@ -4723,6 +4733,7 @@ body {
 .category-info {
   flex: 1;
   min-width: 0;
+  margin-left: calc(16px + var(--spacing-xs));
 }
 
 .category-name {
@@ -4750,45 +4761,73 @@ body {
 .category-badges {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: 0.5rem;
   align-items: flex-end;
   flex-shrink: 0;
+  min-width: fit-content;
+  width: auto;
+  max-width: none;
 }
 
-.featured-badge {
+/* Override absolute positioning for category card badges */
+.category-card .featured-badge,
+.category-card .premium-badge {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+}
+
+.category-card .featured-badge {
   background: rgba(255, 193, 7, 0.1);
   color: #ffc107;
-  padding: 0.25rem 0.75rem;
-  font-size: var(--font-size-xs);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.65rem;
   font-weight: 600;
   border: 1px solid #ffc107;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
   border-radius: var(--border-radius-sm);
+  white-space: nowrap;
+  width: auto;
+  margin: 0;
+  box-sizing: border-box;
 }
 
-.premium-badge {
+.category-card .premium-badge {
   background: rgba(251, 133, 0, 0.1);
   color: var(--color-warning);
-  padding: 0.25rem 0.75rem;
-  font-size: var(--font-size-xs);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.65rem;
   font-weight: 600;
   border: 1px solid var(--color-warning);
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
   border-radius: var(--border-radius-sm);
+  white-space: nowrap;
+  width: auto;
+  margin: 0;
+  box-sizing: border-box;
 }
 
-.article-count {
+.category-card .article-count {
   background: rgba(66, 133, 244, 0.1);
   color: var(--color-accent-primary);
-  padding: 0.25rem 0.75rem;
-  font-size: var(--font-size-xs);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.65rem;
   font-weight: 600;
   border: 1px solid var(--color-accent-primary);
   border-radius: var(--border-radius-sm);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .category-description {
@@ -4847,55 +4886,87 @@ body {
 
 /* Enhanced category actions for mobile */
 .category-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
   padding: var(--spacing-md) var(--spacing-lg);
   margin-top: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-secondary) transparent;
+}
+
+.category-actions::-webkit-scrollbar {
+  height: 4px;
+}
+
+.category-actions::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.category-actions::-webkit-scrollbar-thumb {
+  background: var(--color-border-secondary);
+  border-radius: 2px;
 }
 
 .category-actions .action-btn {
-  padding: var(--spacing-sm) var(--spacing-xs);
+  padding: 0.5rem 0.75rem;
   background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border-secondary);
-  border-left: none;
   color: var(--color-text-primary);
   cursor: pointer;
-  font-size: var(--font-size-xs);
+  font-size: 0.75rem;
   font-weight: 500;
   transition: all var(--transition-fast);
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xs);
+  gap: 0.375rem;
+  border-radius: var(--border-radius-sm);
+  white-space: nowrap;
+  min-height: 38px;
+  flex: 0 0 auto;
+  position: relative;
+  overflow: visible;
+  text-align: center;
+  line-height: 1.2;
+  min-width: fit-content;
 }
 
-.category-actions .action-btn:first-child {
-  border-left: 1px solid var(--color-border-secondary);
+.category-actions .action-btn svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
 }
 
-.category-actions .action-btn:last-child {
-  border-right: none;
-}
+/* Remove border-left override since we're using gap now */
 
 .category-actions .action-btn:hover {
   background: var(--color-border-secondary);
   z-index: 1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .category-actions .action-btn.edit:hover {
   background: var(--color-accent-primary);
   border-color: var(--color-accent-primary);
+  color: white;
 }
 
 .category-actions .action-btn.view:hover {
   background: var(--color-success);
   border-color: var(--color-success);
+  color: white;
 }
 
 .category-actions .action-btn.articles:hover {
   background: var(--color-warning);
   border-color: var(--color-warning);
+  color: white;
 }
 
 .category-actions .action-btn.feature:hover {
@@ -4907,6 +4978,7 @@ body {
 .category-actions .action-btn.delete:hover {
   background: var(--color-danger);
   border-color: var(--color-danger);
+  color: white;
 }
 
 .empty-state {
@@ -4972,13 +5044,29 @@ body {
   text-align: center;
 }
 
+/* Prevent loading-spinner container from rotating - only child spinners should rotate */
 .loading-spinner {
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Simple circular spinner - use this instead of spinner-square */
+.simple-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--color-border-primary);
-  border-top: 3px solid var(--color-accent-primary);
-  animation: spin 1s linear infinite;
+  border: 4px solid rgba(59, 130, 246, 0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
   margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.simple-spinner.small {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  margin-bottom: 0;
 }
 
 @keyframes spin {
@@ -11059,14 +11147,18 @@ body {
   }
   
   .category-actions {
-    grid-template-columns: repeat(2, 1fr);
+    flex-wrap: wrap;
+    gap: 0.375rem;
   }
   
   .category-actions .action-btn {
-    padding: var(--spacing-md);
-    font-size: var(--font-size-sm);
+    padding: 0.5rem 0.5rem;
+    font-size: 0.65rem;
     justify-content: center;
-    gap: var(--spacing-xs);
+    gap: 0.25rem;
+    min-height: 36px;
+    flex: 1 1 calc(50% - 0.1875rem);
+    min-width: 0;
   }
 
   /* Comment responsive */
@@ -11318,7 +11410,16 @@ body {
   }
   
   .category-actions {
-    grid-template-columns: 1fr;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  
+  .category-actions .action-btn {
+    flex: 0 0 auto;
+    min-width: fit-content;
+    font-size: 0.65rem;
+    padding: 0.5rem 0.5rem;
   }
 
   /* CMS responsive */

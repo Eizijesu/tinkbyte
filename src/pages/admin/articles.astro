@@ -10,7 +10,7 @@ import { config } from "../../lib/config";
   <!-- Loading Overlay -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-spinner">
-      <div class="spinner-square"></div>
+      <div class="simple-spinner"></div>
       <span>Loading articles data...</span>
     </div>
   </div>
@@ -37,7 +37,7 @@ import { config } from "../../lib/config";
       <div class="header-actions">
         <button class="create-article-btn" id="create-article-btn">
           <span class="btn-spinner" id="create-spinner" style="display: none;">
-            <div class="spinner-square small"></div>
+            <div class="simple-spinner small"></div>
           </span>
           <i class="fas fa-plus"></i>
           Create Article
@@ -170,7 +170,7 @@ import { config } from "../../lib/config";
       <!-- Content will be loaded dynamically -->
       <div class="loading-state">
         <div class="loading-spinner">
-          <div class="spinner-square"></div>
+          <div class="simple-spinner"></div>
         </div>
         <h3>Loading articles...</h3>
         <p>Please wait while we load your content library</p>
@@ -312,13 +312,40 @@ import { config } from "../../lib/config";
 
             <div class="form-group">
               <label for="article-content">Content *</label>
+              <!-- Rich Text Editor Toolbar -->
+              <div class="article-formatting-toolbar">
+                <div class="format-buttons">
+                  <button type="button" class="format-btn" data-format="bold" title="Bold">
+                    <strong>B</strong>
+                  </button>
+                  <button type="button" class="format-btn" data-format="italic" title="Italic">
+                    <em>I</em>
+                  </button>
+                  <button type="button" class="format-btn" data-format="code" title="Code">
+                    <code>&lt;/&gt;</code>
+                  </button>
+                  <button type="button" class="format-btn" data-format="link" title="Link">
+                    <span>🔗</span>
+                  </button>
+                  <div class="relative" style="position: relative;">
+                    <button type="button" class="emoji-btn" id="article-emoji-btn" title="Emoji">
+                      <span>😊</span>
+                    </button>
+                    <div id="article-emoji-picker" class="article-emoji-picker" style="display: none;"></div>
+                  </div>
+                </div>
+                <div class="character-count">
+                  <span class="count" id="article-content-count">0</span>
+                  <span> characters</span>
+                </div>
+              </div>
               <textarea
                 id="article-content"
                 name="content"
                 rows="15"
                 required
                 placeholder="Write your article content here..."></textarea>
-              <small class="form-help">You can use Markdown formatting</small>
+              <small class="form-help">You can use Markdown formatting (Bold: **text**, Italic: *text*, Code: `code`)</small>
             </div>
 
             <div class="checkbox-group">
@@ -359,7 +386,7 @@ import { config } from "../../lib/config";
                   id="save-spinner"
                   style="display: none;"
                 >
-                  <div class="spinner-square small"></div>
+                  <div class="simple-spinner small"></div>
                 </span>
                 <i class="fas fa-save"></i>
                 Save Article
@@ -389,6 +416,164 @@ import { config } from "../../lib/config";
   </div>
   <ArticleEngagementModal />
 </AdminLayout>
+
+<style>
+  /* Rich Text Editor Toolbar Styles */
+  .article-formatting-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: var(--primary-bg, #ffffff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    position: relative;
+  }
+
+  .article-formatting-toolbar .format-buttons {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .article-formatting-toolbar .format-btn,
+  .article-formatting-toolbar .emoji-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    background: var(--tertiary-bg, #f9fafb);
+    color: var(--text-primary, #111827);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+  }
+
+  .article-formatting-toolbar .format-btn:hover,
+  .article-formatting-toolbar .emoji-btn:hover {
+    background: var(--border-color, #e5e7eb);
+    border-color: var(--accent-primary, #3b82f6);
+    transform: translateY(-1px);
+  }
+
+  .article-formatting-toolbar .format-btn.active {
+    background: var(--accent-primary, #3b82f6);
+    border-color: var(--accent-primary, #3b82f6);
+    color: white;
+  }
+
+  .article-formatting-toolbar .character-count {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #6b7280);
+    font-weight: 500;
+  }
+
+  .article-formatting-toolbar .character-count .count {
+    font-weight: 600;
+  }
+
+  .article-emoji-picker {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 4px;
+    z-index: 1000;
+  }
+
+  .article-formatting-toolbar + textarea {
+    border-radius: 0 0 6px 6px;
+    border-top: 1px solid var(--border-color, #e5e7eb);
+  }
+
+  /* Simple Circular Spinner */
+  .simple-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(59, 130, 246, 0.1);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spinner-rotate 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spinner-rotate {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Override global CSS - prevent loading-spinner container from rotating */
+  #loading-overlay .loading-spinner,
+  .loading-state .loading-spinner {
+    animation: none !important;
+    transform: none !important;
+    width: auto !important;
+    height: auto !important;
+    border: none !important;
+    margin-bottom: 0 !important;
+  }
+
+  .loading-overlay .simple-spinner {
+    width: 50px;
+    height: 50px;
+    border-width: 5px;
+    margin-bottom: 1rem;
+  }
+
+  .loading-state .simple-spinner {
+    width: 50px;
+    height: 50px;
+    border-width: 5px;
+    margin-bottom: 1rem;
+  }
+
+  /* Small spinner variant for buttons */
+  .simple-spinner.small {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+    margin-bottom: 0;
+  }
+
+  /* Button spinner container - prevent rotation */
+  .btn-spinner {
+    animation: none !important;
+    transform: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Engagement loading - prevent container rotation */
+  .loading-engagement {
+    animation: none !important;
+    transform: none !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .loading-engagement .simple-spinner {
+    margin-bottom: 0;
+  }
+
+  .loading-engagement span {
+    animation: none !important;
+    transform: none !important;
+    display: block;
+  }
+
+  /* Ensure text doesn't rotate */
+  .loading-spinner span {
+    display: block;
+    animation: none !important;
+    transform: none !important;
+  }
+</style>
 
 <script>
   // Re-import everything needed in the script
@@ -464,17 +649,15 @@ import { config } from "../../lib/config";
   // Initialize articles management
   document.addEventListener("DOMContentLoaded", async () => {
     try {
-      
+      // Check for any authenticated user (admin or regular user)
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-      await adminAuthManager.initialize();
-      const user = await adminAuthManager.getCurrentUser();
-
-      if (!user) {
-        throw new Error("Authentication required");
+      if (sessionError || !session?.user) {
+        throw new Error("Authentication required. Please sign in to access this page.");
       }
 
       console.log(
-        "✅ Admin authenticated, initializing articles management..."
+        "✅ User authenticated, initializing articles management..."
       );
       await new Promise((resolve) => setTimeout(resolve, 100));
       await initializeArticlesManagement();
@@ -486,7 +669,8 @@ import { config } from "../../lib/config";
 
       if (error.message.includes("Authentication")) {
         setTimeout(() => {
-          window.location.href = `/auth/admin-signin?error=${encodeURIComponent(error.message)}`;
+          // Redirect to regular sign-in page instead of admin sign-in
+          window.location.href = `/auth/signin?error=${encodeURIComponent(error.message)}&redirect=${encodeURIComponent(window.location.pathname)}`;
         }, 3000);
       }
     }
@@ -863,7 +1047,7 @@ import { config } from "../../lib/config";
               
               <div class="engagement-details" id="engagement-${article.slug}" style="display: none;">
                 <div class="loading-engagement">
-                  <div class="spinner-small"></div>
+                  <div class="simple-spinner small"></div>
                   <span>Loading engagement data...</span>
                 </div>
               </div>
@@ -988,7 +1172,7 @@ import { config } from "../../lib/config";
     if (!action) return;
 
     const originalContent = button.innerHTML;
-    button.innerHTML = '<div class="spinner-square small"></div>';
+    button.innerHTML = '<div class="simple-spinner small"></div>';
     button.disabled = true;
 
     try {
@@ -1344,6 +1528,9 @@ import { config } from "../../lib/config";
     }
 
     modal.style.display = "flex";
+    
+    // Initialize rich text editor after modal opens
+    setTimeout(() => initializeRichTextEditor(), 100);
   }
 
   function closeArticleModal() {
@@ -1370,13 +1557,164 @@ import { config } from "../../lib/config";
     }
   }
 
+  // Rich Text Editor Functions
+  function initializeRichTextEditor() {
+    const textarea = document.getElementById("article-content") as HTMLTextAreaElement;
+    const formatButtons = document.querySelectorAll(".article-formatting-toolbar .format-btn");
+    const emojiBtn = document.getElementById("article-emoji-btn");
+    const emojiPicker = document.getElementById("article-emoji-picker");
+    const charCount = document.getElementById("article-content-count");
+
+    if (!textarea) return;
+
+    // Character count update
+    const updateCharCount = () => {
+      if (charCount) {
+        charCount.textContent = textarea.value.length.toString();
+      }
+    };
+    textarea.addEventListener("input", updateCharCount);
+    updateCharCount(); // Initial count
+
+    // Format button handlers
+    formatButtons.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const format = (btn as HTMLElement).dataset.format;
+        insertFormatting(textarea, format || "");
+      });
+    });
+
+    // Emoji picker
+    if (emojiBtn && emojiPicker) {
+      setupEmojiPicker(emojiBtn, emojiPicker, textarea);
+    }
+  }
+
+  function insertFormatting(textarea: HTMLTextAreaElement, format: string) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    let before = "";
+    let after = "";
+
+    switch (format) {
+      case "bold":
+        before = "**";
+        after = "**";
+        break;
+      case "italic":
+        before = "*";
+        after = "*";
+        break;
+      case "code":
+        before = "`";
+        after = "`";
+        break;
+      case "link":
+        before = "[";
+        after = selectedText ? "](url)" : "text](url)";
+        break;
+    }
+
+    const newValue =
+      textarea.value.substring(0, start) +
+      before +
+      selectedText +
+      after +
+      textarea.value.substring(end);
+
+    textarea.value = newValue;
+    textarea.focus();
+    const newCursorPos = start + before.length + selectedText.length + after.length;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+
+    // Update character count
+    const charCount = document.getElementById("article-content-count");
+    if (charCount) {
+      charCount.textContent = textarea.value.length.toString();
+    }
+  }
+
+  function setupEmojiPicker(btn: HTMLElement, picker: HTMLElement, textarea: HTMLTextAreaElement) {
+    const commonEmojis = [
+      "😀", "😊", "😂", "❤️", "👍", "👎", "🎉", "🔥", "💯", "✨", "🚀", "💪",
+      "🙏", "👏", "🎊", "💡", "⭐", "🌟", "💬", "📝", "📌", "🔗", "💻", "🎯",
+      "✅", "❌", "⚠️", "ℹ️", "📢", "🎨", "📚", "🔍"
+    ];
+
+    // Create emoji grid (only if not already created)
+    if (!picker.querySelector('.emoji-grid')) {
+      picker.innerHTML = `
+        <div class="emoji-grid">
+          ${commonEmojis.map(emoji => `
+            <button type="button" class="emoji-option" data-emoji="${emoji}">
+              ${emoji}
+            </button>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    // Toggle picker
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const isVisible = picker.style.display !== "none";
+      picker.style.display = isVisible ? "none" : "block";
+    });
+
+    // Close on emoji select
+    picker.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      const emojiBtn = target.closest(".emoji-option");
+      if (emojiBtn) {
+        const emoji = (emojiBtn as HTMLElement).dataset.emoji;
+        if (emoji) {
+          insertEmoji(textarea, emoji);
+          picker.style.display = "none";
+        }
+      }
+    });
+
+    // Close on outside click
+    document.addEventListener("click", (e) => {
+      if (!picker.contains(e.target as Node) && !btn.contains(e.target as Node)) {
+        picker.style.display = "none";
+      }
+    });
+  }
+
+  function insertEmoji(textarea: HTMLTextAreaElement, emoji: string) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newValue =
+      textarea.value.substring(0, start) +
+      emoji +
+      textarea.value.substring(end);
+
+    textarea.value = newValue;
+    textarea.focus();
+    const newCursorPos = start + emoji.length;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+
+    // Update character count
+    const charCount = document.getElementById("article-content-count");
+    if (charCount) {
+      charCount.textContent = textarea.value.length.toString();
+    }
+  }
+
   function setupEventListeners() {
     
 
     const createArticleBtn = document.getElementById(
       "create-article-btn"
     ) as HTMLButtonElement;
-    createArticleBtn?.addEventListener("click", () => openArticleModal());
+    createArticleBtn?.addEventListener("click", () => {
+      openArticleModal();
+      // Initialize rich text editor when modal opens
+      setTimeout(() => initializeRichTextEditor(), 100);
+    });
 
     const modalClose = document.getElementById(
       "article-modal-close"

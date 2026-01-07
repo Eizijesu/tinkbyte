@@ -680,7 +680,8 @@ if (typeof globalThis !== "undefined") {
             <!-- Enhanced Comments Section -->
             <div class="comments-section-wrapper">
               <div class="comments-container-enhanced">
-                <TinkByteCommentSection
+                <CommentSection
+                  client:only="react"
                   articleId={articleId}
                   postSlug={articleId}
                   postTitle={title}

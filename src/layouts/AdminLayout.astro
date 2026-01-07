@@ -171,6 +171,7 @@ const { title, description, preloadData = true } = Astro.props;
   <script>
     import { adminAPIManager } from "../lib/admin-api";
     import { adminAuthManager } from "../lib/admin/auth";
+    import { supabase } from "../lib/supabase";
 
     // OPTIMIZED: Faster admin layout management
     class AdminLayout {
@@ -212,13 +213,22 @@ const { title, description, preloadData = true } = Astro.props;
         this.updateLoadingStatus("Verifying authentication...", 30);
 
         try {
-          const [authInit, userCheck] = await Promise.all([
-            adminAuthManager.initialize(),
-            adminAuthManager.getCurrentUser(),
-          ]);
+          // First try admin authentication
+          await adminAuthManager.initialize();
+          let userCheck = await adminAuthManager.getCurrentUser();
 
+          // If not admin, check for any authenticated user
           if (!userCheck) {
-            throw new Error("No admin session found");
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error || !session?.user) {
+              throw new Error("Authentication required");
+            }
+            // Use regular user session
+            userCheck = {
+              id: session.user.id,
+              email: session.user.email,
+              isAdmin: false
+            };
           }
 
           this.isAuthenticated = true;
@@ -475,7 +485,8 @@ const { title, description, preloadData = true } = Astro.props;
         if (reason) params.set("error", reason);
         params.set("redirect", window.location.pathname);
 
-        window.location.href = `/auth/admin-signin?${params.toString()}`;
+        // Redirect to regular sign-in page (not admin-only) to allow all authenticated users
+        window.location.href = `/auth/signin?${params.toString()}`;
       }
 
       private async handleSignOut(): Promise<void> {

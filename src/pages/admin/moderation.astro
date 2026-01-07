@@ -8,7 +8,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay" style="display: none;">
       <div class="loading-spinner">
-        <div class="spinner-square"></div>
+        <div class="simple-spinner"></div>
         <span>Processing moderation action...</span>
       </div>
     </div>
@@ -31,7 +31,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
       <button id="retry-btn" class="retry-btn">
         <span class="btn-text">Retry</span>
         <div class="btn-spinner" style="display: none;">
-          <div class="spinner-square small"></div>
+          <div class="simple-spinner small"></div>
         </div>
       </button>
     </div>
@@ -120,14 +120,14 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
           <div class="bulk-actions">
             <button class="bulk-btn approve-bulk" id="bulk-approve">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-check"></i>
               Approve Selected
             </button>
             <button class="bulk-btn reject-bulk" id="bulk-reject">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-times"></i>
               Reject Selected
@@ -151,14 +151,14 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
           <div class="bulk-actions">
             <button class="bulk-btn approve-bulk" id="bulk-restore">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-undo"></i>
               Restore Selected
             </button>
             <button class="bulk-btn reject-bulk" id="bulk-delete">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-trash"></i>
               Delete Selected
@@ -454,21 +454,21 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
           return `
             <button class="action-btn approve" data-action="approve" data-comment-id="${commentId}">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-check"></i>
               Approve
             </button>
             <button class="action-btn reject" data-action="reject" data-comment-id="${commentId}">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-times"></i>
               Reject
             </button>
             <button class="action-btn flag" data-action="flag" data-comment-id="${commentId}">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-flag"></i>
               Flag
@@ -478,14 +478,14 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
           return `
             <button class="action-btn approve" data-action="approve" data-comment-id="${commentId}">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-check"></i>
               Restore
             </button>
             <button class="action-btn delete" data-action="hide" data-comment-id="${commentId}">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-trash"></i>
               Delete
@@ -495,14 +495,14 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
           return `
             <button class="action-btn flag" data-action="flag" data-comment-id="${commentId}">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-flag"></i>
               Flag
             </button>
             <button class="action-btn hide" data-action="reject" data-comment-id="${commentId}">
               <div class="btn-spinner" style="display: none;">
-                <div class="spinner-square small"></div>
+                <div class="simple-spinner small"></div>
               </div>
               <i class="fas fa-eye-slash"></i>
               Hide
