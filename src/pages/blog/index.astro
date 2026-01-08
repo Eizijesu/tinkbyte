@@ -5,9 +5,57 @@ import ArticleCard from "../../components/blog/ArticleCard.astro";
 import Button from "../../components/ui/Button.astro";
 import { getCollection } from "astro:content";
 import { SITE, getAllCategories } from "../../config/site";
+import { supabase } from "../../lib/supabase";
 
-// Get all published blog posts
-const allPosts = await getCollection("blog", ({ data }) => !data.draft);
+// Get all published blog posts from content collection
+const contentPosts = await getCollection("blog", ({ data }) => !data.draft);
+
+// Get all published articles from Supabase database
+let dbArticles: any[] = [];
+try {
+  const { data, error } = await supabase
+    .from("articles")
+    .select(`
+      *,
+      categories:category_slug(name, slug, color),
+      authors:author_id(name, slug, avatar)
+    `)
+    .eq("is_published", true)
+    .order("created_at", { ascending: false });
+  
+  if (!error && data) {
+    // Transform database articles to match content collection format
+    dbArticles = data.map((article: any) => ({
+      slug: article.slug,
+      data: {
+        title: article.title,
+        excerpt: article.excerpt || article.subtitle || "",
+        pubDate: new Date(article.created_at),
+        updatedDate: article.updated_at ? new Date(article.updated_at) : undefined,
+        readTime: article.read_time_minutes ? `${article.read_time_minutes} min read` : "5 min read",
+        category: article.category_slug || "development",
+        featured: article.is_featured || false,
+        draft: false,
+        image: article.featured_image_url,
+        author: article.authors?.name || "TinkByte Team",
+        authorInfo: article.authors ? {
+          name: article.authors.name,
+          avatar: article.authors.avatar,
+          role: null,
+          bio: null
+        } : null,
+        tags: [],
+        trending: false
+      },
+      _dbArticle: true // Flag to identify database articles
+    }));
+  }
+} catch (error) {
+  console.error("Error fetching articles from database:", error);
+}
+
+// Merge content collection posts and database articles
+const allPosts = [...contentPosts, ...dbArticles];
 
 // Sort posts by publication date (newest first)
 const sortedPosts = allPosts.sort(

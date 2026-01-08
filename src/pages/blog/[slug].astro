@@ -2,6 +2,7 @@
 // src/pages/blog/[slug].astro - FIXED TypeScript errors
 import { type CollectionEntry, getCollection } from "astro:content";
 import BlogPost from "../../layouts/BlogPost.astro";
+import { supabase } from "../../lib/supabase";
 
 // Import TinaCMS components for MDX
 import ImageBlock from "../../components/tina/ImageBlock.astro";
@@ -77,96 +78,149 @@ interface BlogPostProps {
   showReadingProgress?: boolean;
 }
 
-// Enhanced static path generation with better error handling
+// Generate static paths for both content collection and database articles
 export async function getStaticPaths() {
+  const contentPosts = await getCollection("blog", ({ data }) => !data.draft);
+  
+  // Get database articles
+  let dbArticles: any[] = [];
   try {
-    const posts = await getCollection("blog", ({ data }) => {
-      const now = new Date();
-      const postDate = new Date(data.pubDate);
-
-      // Enhanced validation
-      const isValid =
-        data.draft !== true &&
-        postDate <= now &&
-        data.title &&
-        data.title.trim().length > 0 &&
-        (data.excerpt || data.description);
-
-      if (!isValid) {
-        console.warn(`Skipping invalid post: ${data.title || "Untitled"}`);
-      }
-
-      return isValid;
-    });
-
-    const sortedPosts = posts.sort(
-      (a: CollectionEntry<"blog">, b: CollectionEntry<"blog">) =>
-        new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
-    );
-
+    const { data, error } = await supabase
+      .from("articles")
+      .select("slug")
+      .eq("is_published", true);
     
-
-    return sortedPosts.map((post: CollectionEntry<"blog">, index: number) => {
-      const previousPost =
-        index < sortedPosts.length - 1 ? sortedPosts[index + 1] : null;
-      const nextPost = index > 0 ? sortedPosts[index - 1] : null;
-
-      return {
-        params: { slug: post.slug },
-        props: {
-          post,
-          allPosts: sortedPosts,
-          totalPosts: sortedPosts.length,
-          postIndex: index,
-          previousPost,
-          nextPost,
-        },
-      };
-    });
+    if (!error && data) {
+      dbArticles = data;
+    }
   } catch (error) {
-    console.error("Error generating static paths:", error);
-    return [];
+    console.error("Error fetching database articles for paths:", error);
+  }
+  
+  // Return paths for both content and database articles
+  const contentPaths = contentPosts.map((post) => ({
+    params: { slug: post.slug },
+    props: { isDbArticle: false }
+  }));
+  
+  const dbPaths = dbArticles.map((article) => ({
+    params: { slug: article.slug },
+    props: { isDbArticle: true }
+  }));
+  
+  return [...contentPaths, ...dbPaths];
+}
+
+// Get the slug and props from Astro
+const { slug } = Astro.params;
+const { isDbArticle: isDbArticleFromProps } = Astro.props;
+
+// Try to find the post in content collection first
+const contentPosts = await getCollection("blog", ({ data }) => !data.draft);
+let post = contentPosts.find((p) => p.slug === slug);
+let isDbArticle = isDbArticleFromProps || false;
+
+// If not found in content collection, try database
+if (!post) {
+  try {
+    const { data, error } = await supabase
+      .from("articles")
+      .select(`
+        *,
+        categories:category_slug(name, slug, color),
+        authors:author_id(name, slug, avatar)
+      `)
+      .eq("slug", slug)
+      .eq("is_published", true)
+      .single();
+    
+    if (!error && data) {
+      // Transform database article to match content collection format
+      post = {
+        slug: data.slug,
+        id: data.id,
+        collection: "blog" as const,
+        data: {
+          title: data.title,
+          subtitle: data.subtitle,
+          excerpt: data.excerpt || data.subtitle || "",
+          description: data.excerpt || data.subtitle || "",
+          pubDate: new Date(data.created_at),
+          updatedDate: data.updated_at ? new Date(data.updated_at) : undefined,
+          readTime: data.read_time_minutes ? `${data.read_time_minutes} min read` : "5 min read",
+          category: data.category_slug || "development",
+          featured: data.is_featured || false,
+          draft: false,
+          image: data.featured_image_url,
+          author: data.authors?.name || "TinkByte Team",
+          authorInfo: data.authors ? {
+            name: data.authors.name,
+            avatar: data.authors.avatar,
+            role: null,
+            bio: null
+          } : null,
+          tags: [],
+          trending: false
+        },
+        body: data.content, // Use the content field as body
+        render: async () => ({
+          Content: () => null, // We'll handle rendering differently for DB articles
+          headings: []
+        })
+      } as any;
+      isDbArticle = true;
+    }
+  } catch (error) {
+    console.error("Error fetching article from database:", error);
   }
 }
 
-// Get props with enhanced type safety
-const { post, allPosts, totalPosts, postIndex, previousPost, nextPost } =
-  Astro.props as {
-    post: CollectionEntry<"blog">;
-    allPosts: CollectionEntry<"blog">[];
-    totalPosts: number;
-    postIndex: number;
-    previousPost?: CollectionEntry<"blog">;
-    nextPost?: CollectionEntry<"blog">;
-  };
+// If still not found, return 404
+if (!post) {
+  return Astro.redirect("/404");
+}
+
+// For navigation context
+const allPosts = contentPosts;
+const totalPosts = allPosts.length;
+const postIndex = allPosts.findIndex((p) => p.slug === slug);
+const previousPost = postIndex > 0 ? allPosts[postIndex - 1] : null;
+const nextPost = postIndex < allPosts.length - 1 ? allPosts[postIndex + 1] : null;
 
 // Content rendering with enhanced error handling
 let Content: any;
 let headings: any[] = [];
 let renderError: Error | null = null;
+let htmlContent: string | null = null;
 
-try {
-  const rendered = await post.render();
-  Content = rendered.Content;
-  headings = rendered.headings || [];
+if (isDbArticle) {
+  // For database articles, use the HTML content directly
+  htmlContent = post.body || "";
+  // Create a simple component that renders HTML
+  Content = null; // We'll use htmlContent instead
+} else {
+  // For content collection articles, use the MDX renderer
+  try {
+    const rendered = await post.render();
+    Content = rendered.Content;
+    headings = rendered.headings || [];
+  } catch (error) {
+    console.error(`❌ Error rendering post ${post.slug}:`, error);
+    renderError = error as Error;
 
-  
-} catch (error) {
-  console.error(`❌ Error rendering post ${post.slug}:`, error);
-  renderError = error as Error;
-
-  // Fallback content component
-  Content = () => `
-    <div class="error-fallback-content">
-      <div class="error-icon">⚠️</div>
-      <h2>Content Rendering Error</h2>
-      <p>There was an issue rendering this article. The content may contain invalid MDX syntax or missing components.</p>
-      <details class="error-details">
-        <summary>Technical Details</summary>
-        <pre>${error}</pre>
-      </details>
-    </div>
-  `;
+    // Fallback content component
+    Content = () => `
+      <div class="error-fallback-content">
+        <div class="error-icon">⚠️</div>
+        <h2>Content Rendering Error</h2>
+        <p>There was an issue rendering this article. The content may contain invalid MDX syntax or missing components.</p>
+        <details class="error-details">
+          <summary>Technical Details</summary>
+          <pre>${error}</pre>
+        </details>
+      </div>
+    `;
+  }
 }
 
 // Enhanced component mapping for TinaCMS
@@ -391,8 +445,12 @@ processedData.analyticsData = {
           </div>
         </div>
       </div>
-    ) : (
+    ) : isDbArticle && htmlContent ? (
+      <div class="prose prose-lg max-w-none" set:html={htmlContent} />
+    ) : Content ? (
       <Content components={components} />
+    ) : (
+      <p>No content available</p>
     )
   }
 </BlogPost>
