@@ -3,6 +3,7 @@
 import { type CollectionEntry, getCollection } from "astro:content";
 import BlogPost from "../../layouts/BlogPost.astro";
 import { supabase } from "../../lib/supabase";
+import { marked } from "marked";
 
 // Import TinaCMS components for MDX
 import ImageBlock from "../../components/tina/ImageBlock.astro";
@@ -193,10 +194,15 @@ let headings: any[] = [];
 let renderError: Error | null = null;
 let htmlContent: string | null = null;
 
+const looksLikeHtml = (content: string): boolean =>
+  /<\/?[a-z][\s\S]*>/i.test(content);
+
 if (isDbArticle) {
-  // For database articles, use the HTML content directly
-  htmlContent = post.body || "";
-  // Create a simple component that renders HTML
+  const rawContent = post.body || "";
+  // Render Markdown from Supabase to HTML; keep HTML as-is
+  htmlContent = looksLikeHtml(rawContent)
+    ? rawContent
+    : marked.parse(rawContent, { gfm: true, breaks: true }) as string;
   Content = null; // We'll use htmlContent instead
 } else {
   // For content collection articles, use the MDX renderer
