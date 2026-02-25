@@ -194,15 +194,10 @@ let headings: any[] = [];
 let renderError: Error | null = null;
 let htmlContent: string | null = null;
 
-const looksLikeHtml = (content: string): boolean =>
-  /<\/?[a-z][\s\S]*>/i.test(content);
-
 if (isDbArticle) {
   const rawContent = post.body || "";
-  // Render Markdown from Supabase to HTML; keep HTML as-is
-  htmlContent = looksLikeHtml(rawContent)
-    ? rawContent
-    : marked.parse(rawContent, { gfm: true, breaks: true }) as string;
+  // Always render Markdown; raw HTML is preserved by marked.
+  htmlContent = marked.parse(rawContent, { gfm: true, breaks: true }) as string;
   Content = null; // We'll use htmlContent instead
 } else {
   // For content collection articles, use the MDX renderer
