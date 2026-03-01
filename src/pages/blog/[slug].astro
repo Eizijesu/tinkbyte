@@ -4,6 +4,7 @@ import { type CollectionEntry, getCollection } from "astro:content";
 import BlogPost from "../../layouts/BlogPost.astro";
 import { supabase } from "../../lib/supabase";
 import { marked } from "marked";
+import { isMdxLike, renderMdxToHtml } from "../../lib/mdx-render";
 
 // Import TinaCMS components for MDX
 import ImageBlock from "../../components/tina/ImageBlock.astro";
@@ -196,8 +197,13 @@ let htmlContent: string | null = null;
 
 if (isDbArticle) {
   const rawContent = post.body || "";
-  // Always render Markdown; raw HTML is preserved by marked.
-  htmlContent = marked.parse(rawContent, { gfm: true, breaks: true }) as string;
+  // If content includes MDX components (e.g., <TableBlock .../>), render via MDX.
+  if (isMdxLike(rawContent)) {
+    htmlContent = await renderMdxToHtml(rawContent);
+  } else {
+    // Render Markdown; raw HTML is preserved by marked.
+    htmlContent = marked.parse(rawContent, { gfm: true, breaks: true }) as string;
+  }
   Content = null; // We'll use htmlContent instead
 } else {
   // For content collection articles, use the MDX renderer
